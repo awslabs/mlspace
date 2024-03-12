@@ -1,0 +1,54 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "test:RMSE",
+            "metricRegex": "#quality_metric: host=\\S+, test RMSE <loss>=(\\S+)"
+        },
+        {
+            "metricName": "test:mean_wQuantileLoss",
+            "metricRegex": "#quality_metric: host=\\S+, test mean_wQuantileLoss <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:final_loss",
+            "metricRegex": "#quality_metric: host=\\S+, train final_loss <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:loss",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train loss <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:loss:batch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, batch=\\S+ train loss <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:progress",
+            "metricRegex": "#progress_metric: host=\\S+, completed (\\S+) %"
+        },
+        {
+            "metricName": "train:throughput",
+            "metricRegex": "#throughput_metric: host=\\S+, train throughput=(\\S+) records/second"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "test:RMSE",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "test:mean_wQuantileLoss",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "train:final_loss",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "train:loss",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "train:loss:batch",
+            "metricType": "Minimize"
+        }
+    ]
+}

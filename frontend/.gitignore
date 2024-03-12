@@ -1,0 +1,29 @@
+# dependencies
+/node_modules
+
+# testing
+/coverage
+/scripts/venv
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+*.iml
+
+# public
+public/docs
+public/env.js
+public/git-info.js
+
+# docs
+docs/.vitepress/dist
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode
+
+.attach_pid*

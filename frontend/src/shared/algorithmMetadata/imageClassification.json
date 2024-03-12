@@ -1,0 +1,38 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "train:accuracy",
+            "metricRegex": "Epoch\\S* Train-accuracy=(\\S*)"
+        },
+        {
+            "metricName": "train:accuracy:epoch",
+            "metricRegex": "Epoch\\S* Train-accuracy=(\\S*)"
+        },
+        {
+            "metricName": "validation:accuracy",
+            "metricRegex": "Epoch\\S* Validation-accuracy=(\\S*)"
+        },
+        {
+            "metricName": "validation:accuracy:epoch",
+            "metricRegex": "Epoch\\S* Validation-accuracy=(\\S*)"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "train:accuracy",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "validation:accuracy",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "validation:accuracy:epoch",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "train:accuracy:epoch",
+            "metricType": "Maximize"
+        }
+    ]
+}

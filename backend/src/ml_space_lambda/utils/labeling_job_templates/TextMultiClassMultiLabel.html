@@ -1,0 +1,21 @@
+<script src="{ASSET_JS}"></script>
+<crowd-form>
+  <crowd-classifier-multi-select
+    name="crowd-classifier-multi-select"
+    categories="{{ task.input.labels | to_json | escape }}"
+    header="DESCRIPTION_STUB"
+  >
+    <classification-target style="white-space: pre-wrap">
+      {{ task.input.taskObject }}
+    </classification-target>
+    <full-instructions header="Classifier instructions">
+      <!-- full-instructions start marker -->
+      <!-- full-instructions end marker -->
+    </full-instructions>
+  
+    <short-instructions>
+      <!-- short-instructions start marker -->
+      <!-- short-instructions end marker -->
+    </short-instructions>
+  </crowd-classifier-multi-select>
+  </crowd-form>

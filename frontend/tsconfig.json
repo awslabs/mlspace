@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "lib": ["dom", "dom.iterable", "esnext"],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noFallthroughCasesInSwitch": true,
+        "module": "esnext",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "react-jsx",
+        "baseUrl": "./",
+        "paths": {
+            "src/*": ["src/*"]
+        },
+        "declaration": true,
+        "outDir": "./dist/lib",
+        "declarationDir": "./dist/types"
+    },
+    "include": ["src/shared/model/index.ts"],
+    "exclude": ["build", "node_modules", "dist"],
+    "typeRoots": ["src/types"]
+}

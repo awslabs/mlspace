@@ -1,0 +1,21 @@
+<script src="{ASSET_JS}"></script>
+<crowd-form>
+  <crowd-bounding-box
+    name="boundingBox"
+    src="{{ task.input.taskObject | grant_read_access }}"
+    header="DESCRIPTION_STUB"
+    labels="{{ task.input.labels | to_json | escape }}"
+  >
+
+    <full-instructions header="Bounding box instructions">
+      <!-- full-instructions start marker -->
+      <!-- full-instructions end marker -->
+    </full-instructions>
+  
+    <short-instructions>
+      <!-- short-instructions start marker -->
+      <!-- short-instructions end marker -->
+    </short-instructions>
+  
+  </crowd-bounding-box>
+</crowd-form>
