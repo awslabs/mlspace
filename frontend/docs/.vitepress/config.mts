@@ -49,7 +49,7 @@ export default defineConfig({
     title: 'MLSpace Documentation',
     description: 'A collaborative data science environment',
     outDir: '../public/docs',
-    base: '/Prod/docs/',
+    base: process.env.DOCS_BASE_PATH || '/Prod/docs/',
     themeConfig: {
         // https://vitepress.dev/reference/default-theme-config
         nav: [
