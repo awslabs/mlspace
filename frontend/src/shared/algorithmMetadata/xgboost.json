@@ -1,0 +1,114 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "train:rmse",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-rmse:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "train:mae",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-mae:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "train:logloss",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-logloss:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "train:error",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-error:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "train:merror",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-merror:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "train:mlogloss",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-mlogloss:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "train:auc",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-auc:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "train:ndcg",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-ndcg:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "train:map",
+            "metricRegex": ".*\\[[0-9]+\\].*#011train-map:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:rmse",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-rmse:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:mae",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-mae:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:logloss",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-logloss:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:error",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-error:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:merror",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-merror:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:mlogloss",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-mlogloss:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:auc",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-auc:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:ndcg",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-ndcg:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        },
+        {
+            "metricName": "validation:map",
+            "metricRegex": ".*\\[[0-9]+\\].*#011validation-map:([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?).*"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "validation:auc",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "validation:error",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "validation:logloss",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "validation:mae",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "validation:map",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "validation:merror",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "validation:mlogloss",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "validation:ndcg",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "validation:rmse",
+            "metricType": "Minimize"
+        }
+    ]
+}

@@ -1,0 +1,46 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+  pre_build:
+    commands:
+      - cd MLSpace/backend/
+      - python3 -m venv test_venv
+      - . test_venv/bin/activate
+      - pip install --upgrade pip
+      - pip install .
+      - pip install -r requirements.txt
+      - pip install -r test/requirements.txt
+      - mkdir test-reports
+  build:
+    commands:
+      - pytest
+        --html=test-reports/report.html
+        --self-contained-html
+        -s
+        -v
+        --cov=ml_space_lambda
+        --cov-report=xml:coverage.xml
+        --junitxml=test-reports/junit.xml
+        --log-file=test-reports/logs.txt
+        test
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
+reports:
+  coverage:
+    files:
+      - coverage.xml
+    file-format: COBERTURAXML
+    base-directory: 'MLSpace/backend'
+  report:
+    files:
+      - 'junit.xml'
+      - 'report.html'
+      - 'assets/*'
+    base-directory: 'MLSpace/backend/test-reports'
+    discard-paths: yes
+    file-format: JunitXml

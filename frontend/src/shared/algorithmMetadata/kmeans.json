@@ -1,0 +1,34 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "test:msd",
+            "metricRegex": "#quality_metric: host=\\S+, test msd <loss>=(\\S+)"
+        },
+        {
+            "metricName": "test:ssd",
+            "metricRegex": "#quality_metric: host=\\S+, test ssd <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:msd",
+            "metricRegex": "#quality_metric: host=\\S+, train msd <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:progress",
+            "metricRegex": "#progress_metric: host=\\S+, completed (\\S+) %"
+        },
+        {
+            "metricName": "train:throughput",
+            "metricRegex": "#throughput_metric: host=\\S+, train throughput=(\\S+) records/second"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "test:msd",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "test:ssd",
+            "metricType": "Minimize"
+        }
+    ]
+}

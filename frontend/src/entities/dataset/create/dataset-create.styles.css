@@ -1,0 +1,4 @@
+/* overrides token description to render multiple lines with carriage return */
+.awsui_description_1p2cx_1tubf_163 {
+    white-space: pre-line;
+}

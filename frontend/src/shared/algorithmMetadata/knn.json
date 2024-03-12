@@ -1,0 +1,30 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "test:accuracy",
+            "metricRegex": "#quality_metric: host=\\S+, test accuracy <score>=(\\S+)"
+        },
+        {
+            "metricName": "test:mse",
+            "metricRegex": "#quality_metric: host=\\S+, test mse <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:progress",
+            "metricRegex": "#progress_metric: host=\\S+, completed (\\S+) %"
+        },
+        {
+            "metricName": "train:throughput",
+            "metricRegex": "#throughput_metric: host=\\S+, train throughput=(\\S+) records/second"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "test:accuracy",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "test:mse",
+            "metricType": "Minimize"
+        }
+    ]
+}

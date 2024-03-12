@@ -1,0 +1,94 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "test:binary_classification_accuracy",
+            "metricRegex": "#quality_metric: host=\\S+, test binary_classification_accuracy <score>=(\\S+)"
+        },
+        {
+            "metricName": "test:binary_classification_cross_entropy",
+            "metricRegex": "#quality_metric: host=\\S+, test binary_classification_cross_entropy <loss>=(\\S+)"
+        },
+        {
+            "metricName": "test:binary_f_beta",
+            "metricRegex": "#quality_metric: host=\\S+, test binary_f_1.000 <score>=(\\S+)"
+        },
+        {
+            "metricName": "test:rmse",
+            "metricRegex": "#quality_metric: host=\\S+, test rmse <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_classification_accuracy",
+            "metricRegex": "#quality_metric: host=\\S+, train binary_classification_accuracy <score>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_classification_accuracy:batch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, batch=\\S+ train binary_classification_accuracy <score>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_classification_accuracy:epoch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train binary_classification_accuracy <score>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_classification_cross_entropy",
+            "metricRegex": "#quality_metric: host=\\S+, train binary_classification_cross_entropy <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_classification_cross_entropy:batch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, batch=\\S+ train binary_classification_cross_entropy <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_classification_cross_entropy:epoch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train binary_classification_cross_entropy <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_f_beta",
+            "metricRegex": "#quality_metric: host=\\S+, train binary_f_1.000 <score>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_f_beta:batch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, batch=\\S+ train binary_f_1.000 <score>=(\\S+)"
+        },
+        {
+            "metricName": "train:binary_f_beta:epoch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train binary_f_1.000 <score>=(\\S+)"
+        },
+        {
+            "metricName": "train:progress",
+            "metricRegex": "#progress_metric: host=\\S+, completed (\\S+) %"
+        },
+        {
+            "metricName": "train:rmse",
+            "metricRegex": "#quality_metric: host=\\S+, train rmse <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:rmse:batch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, batch=\\S+ train rmse <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:rmse:epoch",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train rmse <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:throughput",
+            "metricRegex": "#throughput_metric: host=\\S+, train throughput=(\\S+) records/second"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "test:binary_classification_accuracy",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "test:binary_classification_cross_entropy",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "test:binary_f_beta",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "test:rmse",
+            "metricType": "Minimize"
+        }
+    ]
+}

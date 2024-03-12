@@ -1,0 +1,19 @@
+<script src="{ASSET_JS}"></script>
+<crowd-form>
+  <crowd-image-classifier
+    name="crowd-image-classifier"
+    src="{{ task.input.taskObject | grant_read_access }}"
+    header="DESCRIPTION_STUB"
+    categories="{{ task.input.labels | to_json | escape }}"
+  >
+    <full-instructions header="Image classification instructions">
+      <!-- full-instructions start marker -->
+      <!-- full-instructions end marker -->
+    </full-instructions>
+  
+    <short-instructions>
+      <!-- short-instructions start marker -->
+      <!-- short-instructions end marker -->
+    </short-instructions>
+  </crowd-image-classifier>
+</crowd-form>

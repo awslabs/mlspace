@@ -1,0 +1,74 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "test:accuracy",
+            "metricRegex": "#quality_metric: host=\\S+, test accuracy <score>=(\\S+)"
+        },
+        {
+            "metricName": "test:cross_entropy",
+            "metricRegex": "#quality_metric: host=\\S+, test cross_entropy <loss>=(\\S+)"
+        },
+        {
+            "metricName": "test:mean_squared_error",
+            "metricRegex": "#quality_metric: host=\\S+, test mean_squared_error <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:accuracy",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train accuracy <score>=(\\S+)"
+        },
+        {
+            "metricName": "train:cross_entropy",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train cross_entropy <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:mean_squared_error",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train mean_squared_error <loss>=(\\S+)"
+        },
+        {
+            "metricName": "train:progress",
+            "metricRegex": "#progress_metric: host=\\S+, completed (\\S+) %"
+        },
+        {
+            "metricName": "train:throughput",
+            "metricRegex": "#throughput_metric: host=\\S+, train throughput=(\\S+) records/second"
+        },
+        {
+            "metricName": "validation:accuracy",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, validation accuracy <score>=(\\S+)"
+        },
+        {
+            "metricName": "validation:cross_entropy",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, validation cross_entropy <loss>=(\\S+)"
+        },
+        {
+            "metricName": "validation:mean_squared_error",
+            "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, validation mean_squared_error <loss>=(\\S+)"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "test:accuracy",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "test:cross_entropy",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "test:mean_squared_error",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "validation:accuracy",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "validation:cross_entropy",
+            "metricType": "Minimize"
+        },
+        {
+            "metricName": "validation:mean_squared_error",
+            "metricType": "Minimize"
+        }
+    ]
+}

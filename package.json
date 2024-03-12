@@ -1,0 +1,42 @@
+{
+    "name": "@amzn/mlspacecdk",
+    "version": "1.0.0",
+    "license": "UNLICENSED",
+    "main": "dist/lib/app.js",
+    "types": "dist/types/app.d.ts",
+    "scripts": {
+        "clean": "rm -rf node_modules dist && rm -rf cdk.out",
+        "build": "tsc",
+        "watch": "tsc -w",
+        "prepare": "npm run-script build",
+        "test": "echo 'No Tests'",
+        "lint:fix": "eslint --fix --ext .ts lib/"
+    },
+    "devDependencies": {
+        "@aws-sdk/client-s3": "^3.400.0",
+        "@stylistic/eslint-plugin": "^1.5.0",
+        "@types/aws-lambda": "8.10.119",
+        "@types/jsonwebtoken": "^9.0.2",
+        "@types/node": "*",
+        "@typescript-eslint/eslint-plugin": "^5.36.1",
+        "@typescript-eslint/parser": "^5.36.1",
+        "aws-cdk-lib": "^2.93.0",
+        "constructs": "^10.0.97",
+        "esbuild": "^0.19.2",
+        "eslint": "^8.23.0",
+        "eslint-import-resolver-typescript": "^3.4.1",
+        "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-simple-import-sort": "^7.0.0",
+        "eslint-plugin-spellcheck": "^0.0.19",
+        "lint-staged": "^13.0.3",
+        "typescript": "~4.7.4"
+    },
+    "dependencies": {
+        "aws-cdk-lib": "^2.93.0"
+    },
+    "lint-staged": {
+        "**/*.{js,jsx,ts,tsx}": [
+            "npx eslint --fix --ext .ts lib/"
+        ]
+    }
+}

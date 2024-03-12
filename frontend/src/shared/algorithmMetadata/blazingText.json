@@ -1,0 +1,26 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "train:mean_rho",
+            "metricRegex": "#mean_rho: (\\S+)"
+        },
+        {
+            "metricName": "train:accuracy",
+            "metricRegex": "#train_accuracy: (\\S+)"
+        },
+        {
+            "metricName": "validation:accuracy",
+            "metricRegex": "#validation_accuracy: (\\S+)"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "train:mean_rho",
+            "metricType": "Maximize"
+        },
+        {
+            "metricName": "validation:accuracy",
+            "metricType": "Maximize"
+        }
+    ]
+}

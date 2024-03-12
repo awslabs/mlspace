@@ -1,0 +1,14 @@
+node_modules
+build
+cdk.out/
+.DS_Store
+dist/
+.mypy_cache
+*.iml
+
+# misc
+.DS_Store
+npm-debug.log*
+.vscode
+.attach_pid*
+cdk.context.json
