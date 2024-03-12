@@ -18,8 +18,6 @@
         "@types/aws-lambda": "8.10.119",
         "@types/jsonwebtoken": "^9.0.2",
         "@types/node": "*",
-        "@types/node-jose": "^1.1.10",
-        "@types/qs": "^6.9.7",
         "@typescript-eslint/eslint-plugin": "^5.36.1",
         "@typescript-eslint/parser": "^5.36.1",
         "aws-cdk-lib": "^2.93.0",
@@ -30,11 +28,7 @@
         "eslint-plugin-import": "^2.26.0",
         "eslint-plugin-simple-import-sort": "^7.0.0",
         "eslint-plugin-spellcheck": "^0.0.19",
-        "husky": "^8.0.0",
-        "jsonwebtoken": "^9.0.1",
         "lint-staged": "^13.0.3",
-        "node-jose": "^2.2.0",
-        "qs": "^6.11.2",
         "typescript": "~4.7.4"
     },
     "dependencies": {

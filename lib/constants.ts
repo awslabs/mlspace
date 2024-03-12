@@ -103,7 +103,7 @@ export const APPLICATION_NAME = 'MLSpace';
 
 /* Web app properties */
 export const IDP_ENDPOINT_SSM_PARAM = '';
-export const OIDC_URL = 'https://5vuj177pdl.execute-api.us-east-1.amazonaws.com/prod/';
+export const OIDC_URL = '';
 // OIDC URL that can be hit by authorizer lambda for token validation. If the OIDC endpoint is
 // exposed publicly and can be hit by from the MLSpace VPC this value does not need to be set.
 // If the OIDC endpoint is not accessible directly from VPC and requires peering or some other
