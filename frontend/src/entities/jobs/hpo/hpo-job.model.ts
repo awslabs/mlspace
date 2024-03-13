@@ -99,7 +99,7 @@ export type InputDataConfig = {
     ContentType: string;
     CompressionType: CompressionType;
     RecordWrapperType: RecordWrapperType;
-    InputMode: InputDataConfigurationInputMode | InputDataConfigurationInputModeExpanded;
+    InputMode?: InputDataConfigurationInputMode | InputDataConfigurationInputModeExpanded;
     ShuffleConfig?: {
         Seed: number;
     };
