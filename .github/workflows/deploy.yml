@@ -39,7 +39,7 @@ jobs:
         run: npm run docs:build
         env:
           CI: ""
-          DOCS_BASE_PATH: '/repo/'
+          DOCS_BASE_PATH: '/mlspace/'
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
