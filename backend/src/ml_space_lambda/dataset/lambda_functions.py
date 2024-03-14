@@ -258,35 +258,85 @@ def list_locations(event, context):
 
 @api_wrapper
 def list_files(event, context):
-    prefix = get_dataset_prefix(
+    env_variables = get_environment_variables()
+    query_string_parameters = event["queryStringParameters"] or {}
+    
+    # map query parameters keys to api parameter names
+    query_string_parameters = map_dict_keys(query_string_parameters, {
+        "nextToken": "ContinuationToken",
+        "pageSize": "MaxKeys",
+        "prefix": "Prefix"
+    })
+    
+    dataset_prefix = get_dataset_prefix(
         event["pathParameters"]["scope"], event["pathParameters"]["datasetName"]
     )
-
-    env_variables = get_environment_variables()
-    keys = []
-
-    if event["queryStringParameters"]:
-        s3_response = s3.list_objects_v2(
-            Bucket=env_variables["DATA_BUCKET"],
-            Prefix=prefix,
-            ContinuationToken=event["queryStringParameters"].get("nextToken", ""),
-        )
-    else:
-        s3_response = s3.list_objects_v2(Bucket=env_variables["DATA_BUCKET"], Prefix=prefix)
-
-    for object in s3_response.get("Contents", []):
-        keys.append({"key": object["Key"], "size": object["Size"]})
-
-    # Note: For s3_response if there are no files, the path to the dataset is returned
-    # Remove the dataset path to correctly reflect there are no files in the dataset
-    if len(keys) == 1 and keys[0]["key"] == prefix:
-        keys = []
-
-    response = {
-        "Keys": keys,
+    computed_prefix = "".join([dataset_prefix, query_string_parameters.get("Prefix", "")])
+    
+    query_parameters = {
+        "Bucket": env_variables["DATA_BUCKET"],
+        "Prefix": computed_prefix,
+        "Delimiter": "/"
     }
+    
+    # constrain which query parameters can be supplied
+    allowed_query_string_parameters = ["MaxKeys", "ContinuationToken"]
+    for key in filter_dict(query_string_parameters, allowed_query_string_parameters):
+        query_parameters[key] = query_string_parameters[key]
 
-    if "NextContinuationToken" in s3_response:
-        response["nextToken"] = s3_response["NextContinuationToken"]
+    s3_response = s3.list_objects_v2(**query_parameters)
 
-    return response
+    # drop unwated fields from response
+    preserved_response_keys = ["IsTruncated", "MaxKeys", "Prefix", "NextContinuationToken"]
+    response = filter_dict(s3_response, preserved_response_keys)
+    
+    response["Contents"] = []
+    
+    # drop unwated fields from contents
+    preserved_content_keys = ["Key", "Size"]
+    if "Contents" in s3_response:
+        response["Contents"].append(list(map(lambda object: filter_dict(object, preserved_content_keys), s3_response["Contents"])))
+    
+    # merge common prefixes with contents
+    if "CommonPrefixes" in s3_response:
+        response["Contents"].append(s3_response["CommonPrefixes"])
+    
+    # map response keys to api parameter names
+    return map_dict_keys(response, {
+        "Contents": "contents",
+        "IsTruncated": "isTruncated",
+        "MaxKeys": "pageSize",
+        "NextContinuationToken": "nextToken",
+        "Prefix": "prefix",
+        "KeyCount": "keyCount"
+    })
+
+
+
+def filter_dict(input: dict, allowed_keys: list[str]):
+    """
+    Returns a copy of input with keys not in allowed_keys removed
+ 
+    Args:
+        input (dict): A dict to filter
+        allowed_keys (list[str]): A list of allowed keys
+ 
+    Returns:
+        dict: A copy of input with only keys specified in allowed_keys
+    """
+    return {key: input.get(key) for key in allowed_keys if input.get(key) is not None}
+
+
+def map_dict_keys(input: dict, mapping: dict):
+    """
+    Returns a copy of input dict with the keys possible renamed using the
+    provided mapping dict. Unspecified keys will be unchanged.
+ 
+    Args:
+        input (dict): A dict with keys to rename
+        mapping (int): A dict of old key names to new key names
+ 
+    Returns:
+        dict: A copy of input with keys possibly renamed
+    """
+    return {mapping.get(key, key): input.get(key) for key in input}
