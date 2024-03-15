@@ -51,7 +51,3 @@ export function ConfigureResources (props: ConfigureResourcesProps) {
         </SpaceBetween>
     );
 }
-
-export default {
-    ConfigureResources,
-};

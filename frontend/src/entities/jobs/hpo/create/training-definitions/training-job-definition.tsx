@@ -465,7 +465,3 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
         />
     );
 }
-
-export default {
-    TrainingJobDefinition,
-};

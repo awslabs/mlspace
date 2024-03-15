@@ -85,7 +85,3 @@ export function ManageSpotTraining (props: ManageSpotTrainingProps) {
         </Container>
     );
 }
-
-export default {
-    ManageSpotTraining,
-};

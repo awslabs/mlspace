@@ -259,11 +259,10 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                         );
                         navigate(`${basePath}/notebook/${requestPayload.NotebookInstanceName}`);
                     } else {
-                        throw {
-                            response: {
-                                data: response.payload,
-                            },
-                        };
+                        notificationService.generateNotification(
+                            `Failed to create notebook instance because: ${response.payload}`,
+                            'error'
+                        );
                     }
                 } catch (err: any) {
                     notificationService.generateNotification(

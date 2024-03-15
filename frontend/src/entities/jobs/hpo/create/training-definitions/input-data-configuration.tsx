@@ -441,7 +441,3 @@ export function Channel (props: ChannelProps) {
         </SpaceBetween>
     );
 }
-
-export default {
-    InputDataConfiguration,
-};
