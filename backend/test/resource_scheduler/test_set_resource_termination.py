@@ -27,16 +27,12 @@ TEST_ENV_CONFIG = {
 }
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.resource_scheduler.lambda_functions import (
-        set_resource_termination as lambda_handler,
-    )
+    from ml_space_lambda.resource_scheduler.lambda_functions import set_resource_termination as lambda_handler
 
 MOCK_PROJECT_NAME = "UnitTestProject"
 
 mock_event = {
-    "requestContext": {
-        "authorizer": {"principalId": "some_username", "projectName": MOCK_PROJECT_NAME}
-    },
+    "requestContext": {"authorizer": {"principalId": "some_username", "projectName": MOCK_PROJECT_NAME}},
     "body": json.dumps(
         {
             "resourceId": "resource-id",
@@ -68,9 +64,7 @@ class TestResourceSchedulerSetTimeout:
 
     @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.get_notebook_stop_time")
     @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.resource_scheduler_dao")
-    def test_set_resource_termination_notebook(
-        self, mock_resource_scheduler_dao, mock_get_notebook_stop_time
-    ):
+    def test_set_resource_termination_notebook(self, mock_resource_scheduler_dao, mock_get_notebook_stop_time):
         notebook_name = "Jack"
         mock_event_notebook = copy.deepcopy(mock_event)
         mock_event_notebook["pathParameters"] = {"notebookName": notebook_name}
@@ -79,9 +73,7 @@ class TestResourceSchedulerSetTimeout:
 
         assert lambda_handler(event=mock_event_notebook, context=mock_context) == expected_response
 
-        mock_get_notebook_stop_time.assert_called_with(
-            time.strftime("%H:%M", time.gmtime(mock_body["terminationTime"]))
-        )
+        mock_get_notebook_stop_time.assert_called_with(time.strftime("%H:%M", time.gmtime(mock_body["terminationTime"])))
         mock_resource_scheduler_dao.update_termination_time.assert_called_with(
             resource_id=notebook_name,
             resource_type=ResourceType.NOTEBOOK,
@@ -91,9 +83,7 @@ class TestResourceSchedulerSetTimeout:
 
     @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.get_notebook_stop_time")
     @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.resource_scheduler_dao")
-    def test_set_resource_termination_no_termination_notebook(
-        self, mock_resource_scheduler_dao, mock_get_notebook_stop_time
-    ):
+    def test_set_resource_termination_no_termination_notebook(self, mock_resource_scheduler_dao, mock_get_notebook_stop_time):
         notebook_name = "Jack"
         mock_event_notebook = copy.deepcopy(mock_event)
         mock_event_notebook["pathParameters"] = {"notebookName": notebook_name}
@@ -108,9 +98,7 @@ class TestResourceSchedulerSetTimeout:
         assert lambda_handler(event=mock_event_notebook, context=mock_context) == expected_response
 
         mock_get_notebook_stop_time.assert_not_called()
-        mock_resource_scheduler_dao.delete.assert_called_with(
-            resource_id=notebook_name, resource_type=ResourceType.NOTEBOOK
-        )
+        mock_resource_scheduler_dao.delete.assert_called_with(resource_id=notebook_name, resource_type=ResourceType.NOTEBOOK)
 
     @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.resource_scheduler_dao")
     def test_set_resource_termination_endpoint(self, mock_resource_scheduler_dao):
@@ -132,9 +120,7 @@ class TestResourceSchedulerSetTimeout:
     def test_set_resource_termination_no_termtime_set(self, mock_resource_scheduler_dao):
         endpoint_name = "Bob"
         new_mock_event = {
-            "requestContext": {
-                "authorizer": {"principalId": "some_username", "projectName": MOCK_PROJECT_NAME}
-            },
+            "requestContext": {"authorizer": {"principalId": "some_username", "projectName": MOCK_PROJECT_NAME}},
             "pathParameters": {"endpointName": endpoint_name},
             "body": json.dumps(
                 {
@@ -147,9 +133,7 @@ class TestResourceSchedulerSetTimeout:
         expected_response = generate_html_response(200, None)
         assert lambda_handler(event=new_mock_event, context=mock_context) == expected_response
 
-        mock_resource_scheduler_dao.delete.assert_called_with(
-            resource_id=endpoint_name, resource_type=ResourceType.ENDPOINT
-        )
+        mock_resource_scheduler_dao.delete.assert_called_with(resource_id=endpoint_name, resource_type=ResourceType.ENDPOINT)
 
     def test_set_resource_termination_unknown_service(self):
         mock_event["pathParameters"] = {"unknownService": "unknown"}

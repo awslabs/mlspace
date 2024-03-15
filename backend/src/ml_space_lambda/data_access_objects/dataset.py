@@ -138,9 +138,7 @@ class DatasetDAO(DynamoDBObjectStore):
             key_condition_expression="#s = :scope",
             filter_expression="#t = :type",
             expression_names={"#s": "scope", "#t": "type"},
-            expression_values=json.loads(
-                dynamodb_json.dumps({":scope": scope, ":type": dataset_type.value})
-            ),
+            expression_values=json.loads(dynamodb_json.dumps({":scope": scope, ":type": dataset_type.value})),
         ).records
 
         return [DatasetModel.from_dict(entry) for entry in json_response]

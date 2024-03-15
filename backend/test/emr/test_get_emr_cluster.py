@@ -60,18 +60,14 @@ def test_get_cluster_success(mock_emr, mock_scheduler):
     mock_emr.describe_cluster.return_value = mock_response
     mock_scheduler.get.return_value = mock_resource_scheduler_model
     mock_response_with_term_time_and_owner = copy.deepcopy(mock_response)
-    mock_response_with_term_time_and_owner[
-        "TerminationTime"
-    ] = mock_resource_scheduler_model.termination_time
+    mock_response_with_term_time_and_owner["TerminationTime"] = mock_resource_scheduler_model.termination_time
     mock_response_with_term_time_and_owner["Owner"] = mock_user_name
     expected_response = generate_html_response(200, mock_response_with_term_time_and_owner)
 
     assert get(mock_event, mock_context) == expected_response
 
     mock_emr.describe_cluster.assert_called_with(ClusterId=cluster_id)
-    mock_scheduler.get.assert_called_with(
-        resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER
-    )
+    mock_scheduler.get.assert_called_with(resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER)
 
 
 @mock.patch("ml_space_lambda.emr.lambda_functions.resource_scheduler_dao")
@@ -91,9 +87,7 @@ def test_get_cluster_success_no_term_time(mock_emr, mock_scheduler):
     assert get(mock_event, mock_context) == expected_response
 
     mock_emr.describe_cluster.assert_called_with(ClusterId=cluster_id)
-    mock_scheduler.get.assert_called_with(
-        resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER
-    )
+    mock_scheduler.get.assert_called_with(resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER)
 
 
 @mock.patch("ml_space_lambda.emr.lambda_functions.resource_scheduler_dao")
@@ -106,6 +100,4 @@ def test_get_cluster_success_no_scheduler(mock_emr, mock_scheduler):
     assert get(mock_event, mock_context) == expected_response
 
     mock_emr.describe_cluster.assert_called_with(ClusterId=cluster_id)
-    mock_scheduler.get.assert_called_with(
-        resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER
-    )
+    mock_scheduler.get.assert_called_with(resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER)

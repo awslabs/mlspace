@@ -22,19 +22,14 @@ import boto3
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    generate_tags,
-    query_resource_metadata,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.groundtruth_utils import (
+    LambdaTypes,
+    TaskTypes,
     generate_labels_configuration_file,
     generate_ui_template,
     get_auto_labeling_arn,
     get_groundtruth_lambda_arn,
-    LambdaTypes,
-    TaskTypes,
 )
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
@@ -89,9 +84,7 @@ def create(event, context):
     labeling_job["LabelingJobName"] = labeling_job_name
 
     # Generate labels config file and store in S3 bucket
-    output_path = labeling_job["OutputConfig"]["S3OutputPath"].replace(
-        "s3://{}/".format(data_bucket_name), ""
-    )
+    output_path = labeling_job["OutputConfig"]["S3OutputPath"].replace("s3://{}/".format(data_bucket_name), "")
     labeling_job["LabelCategoryConfigS3Uri"] = generate_labels_configuration_file(
         labeling_job_request["Labels"], labeling_job_name, data_bucket_name, output_path
     )
@@ -101,9 +94,7 @@ def create(event, context):
         project_user = project_user_dao.get(project_name, username)
         labeling_job["RoleArn"] = project_user.role
 
-    labeling_job["HumanTaskConfig"]["PreHumanTaskLambdaArn"] = get_groundtruth_lambda_arn(
-        LambdaTypes.PRE, task_type
-    )
+    labeling_job["HumanTaskConfig"]["PreHumanTaskLambdaArn"] = get_groundtruth_lambda_arn(LambdaTypes.PRE, task_type)
 
     labeling_job["HumanTaskConfig"]["AnnotationConsolidationConfig"][
         "AnnotationConsolidationLambdaArn"
@@ -125,23 +116,19 @@ def create(event, context):
         raise Exception("Unable to create task template")
 
     if "LabelingJobAlgorithmsConfig" in labeling_job:
-        labeling_job["LabelingJobAlgorithmsConfig"][
-            "LabelingJobAlgorithmSpecificationArn"
-        ] = get_auto_labeling_arn(task_type)
-        labeling_job["LabelingJobAlgorithmsConfig"]["LabelingJobResourceConfig"]["VpcConfig"][
-            "SecurityGroupIds"
-        ] = param_file["pSMSSecurityGroupId"]
-        labeling_job["LabelingJobAlgorithmsConfig"]["LabelingJobResourceConfig"]["VpcConfig"][
-            "Subnets"
-        ] = [param_file["pSMSSubnetIds"].split(",")[0]]
+        labeling_job["LabelingJobAlgorithmsConfig"]["LabelingJobAlgorithmSpecificationArn"] = get_auto_labeling_arn(task_type)
+        labeling_job["LabelingJobAlgorithmsConfig"]["LabelingJobResourceConfig"]["VpcConfig"]["SecurityGroupIds"] = param_file[
+            "pSMSSecurityGroupId"
+        ]
+        labeling_job["LabelingJobAlgorithmsConfig"]["LabelingJobResourceConfig"]["VpcConfig"]["Subnets"] = [
+            param_file["pSMSSubnetIds"].split(",")[0]
+        ]
 
     labeling_job["Tags"] = generate_tags(username, project_name, env_variables["SYSTEM_TAG"])
 
     response = sagemaker.create_labeling_job(**labeling_job)
 
     # Create the record in the resource_metadata table
-    resource_metadata_dao.upsert_record(
-        labeling_job_name, ResourceType.LABELING_JOB, username, project_name, {}
-    )
+    resource_metadata_dao.upsert_record(labeling_job_name, ResourceType.LABELING_JOB, username, project_name, {})
 
     return response

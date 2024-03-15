@@ -94,9 +94,7 @@ def test_describe_compute_types_cached(mock_ec2):
     mock_ec2.get_paginator.assert_not_called()
 
 
-@mock.patch.dict(
-    "ml_space_lambda.metadata.lambda_functions.cached_response_compute_types", {}, clear=True
-)
+@mock.patch.dict("ml_space_lambda.metadata.lambda_functions.cached_response_compute_types", {}, clear=True)
 @mock.patch("ml_space_lambda.metadata.lambda_functions.ec2_client")
 def test_describe_compute_types_client_error(mock_ec2):
     error_msg = {

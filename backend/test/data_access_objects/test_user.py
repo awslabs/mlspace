@@ -16,7 +16,7 @@
 
 import json
 import time
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -82,9 +82,7 @@ class TestUserDAO(TestCase):
             Item=json.loads(dynamodb_json.dumps(self.UPDATE_USER.to_dict())),
         )
 
-        self.DELETE_USER = UserModel(
-            "98765", "tshelby@amazon.com", "Thomas Shelby", False, [Permission.ADMIN]
-        )
+        self.DELETE_USER = UserModel("98765", "tshelby@amazon.com", "Thomas Shelby", False, [Permission.ADMIN])
 
         self.ddb.put_item(
             TableName=self.TEST_TABLE,
@@ -156,9 +154,7 @@ class TestUserDAO(TestCase):
         update_item_key = {
             "username": {"S": self.UPDATE_USER.username},
         }
-        pre_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        pre_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         updated = UserModel.from_dict(self.UPDATE_USER.to_dict())
         updated.username = "99999"
@@ -172,9 +168,7 @@ class TestUserDAO(TestCase):
         updated.last_login = time.time() - 60 * 60 * 72
         self.user_dao.update(self.UPDATE_USER.username, updated)
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         assert pre_update["username"] == post_update["username"]
         assert pre_update["email"] == post_update["email"]

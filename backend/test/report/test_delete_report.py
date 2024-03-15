@@ -38,9 +38,7 @@ def test_delete_sms_report_success(mock_s3):
 
     assert delete(mock_event, mock_context) == expected_response
 
-    mock_s3.delete_object.assert_called_with(
-        Bucket="mlspace-data-bucket", Key="mlspace-report/example_report"
-    )
+    mock_s3.delete_object.assert_called_with(Bucket="mlspace-data-bucket", Key="mlspace-report/example_report")
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
@@ -61,9 +59,7 @@ def test_delete_sms_report_client_error(mock_s3):
     mock_s3.delete_object.side_effect = ClientError(error_msg, "DeleteObject")
     assert delete(mock_event, mock_context) == expected_response
 
-    mock_s3.delete_object.assert_called_with(
-        Bucket="mlspace-data-bucket", Key="mlspace-report/example_report"
-    )
+    mock_s3.delete_object.assert_called_with(Bucket="mlspace-data-bucket", Key="mlspace-report/example_report")
 
 
 def test_delete_sms_report_generic_error():

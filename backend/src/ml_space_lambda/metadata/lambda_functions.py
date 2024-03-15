@@ -72,21 +72,13 @@ def compute_types(event, context):
                     ec2_instances.append(offering["InstanceType"])
 
         for sagemaker_shape in this.sagemaker_shapes:
-            all_instance_types = this.sagemaker_client._service_model.shape_for(
-                sagemaker_shape
-            ).enum
+            all_instance_types = this.sagemaker_client._service_model.shape_for(sagemaker_shape).enum
             deny_by_shape = this.sagemaker_instance_type_deny.get(sagemaker_shape, [])
-            intersection = [
-                it
-                for it in all_instance_types
-                if it not in deny_by_shape and it[3:] in ec2_instances
-            ]
+            intersection = [it for it in all_instance_types if it not in deny_by_shape and it[3:] in ec2_instances]
             response["InstanceTypes"][sagemaker_shape] = intersection
 
         for sagemaker_shape in this.sagemaker_eia_shapes:
-            all_instance_types = this.sagemaker_client._service_model.shape_for(
-                sagemaker_shape
-            ).enum
+            all_instance_types = this.sagemaker_client._service_model.shape_for(sagemaker_shape).enum
             deny_by_shape = this.sagemaker_instance_type_deny.get(sagemaker_shape, [])
             # Note there is no EC2 or other api to filter eia on.
             intersection = [it for it in all_instance_types if it not in deny_by_shape]
@@ -134,14 +126,10 @@ def list_subnets(event, context):
         subnets = this.cached_response_subnets
     else:
         param_file = pull_config_from_s3()
-        response = this.ec2_client.describe_subnets(
-            SubnetIds=param_file["pSMSSubnetIds"].split(",")
-        )
+        response = this.ec2_client.describe_subnets(SubnetIds=param_file["pSMSSubnetIds"].split(","))
         if "Subnets" in response:
             for subnet in response["Subnets"]:
-                subnets.append(
-                    {"subnetId": subnet["SubnetId"], "availabilityZone": subnet["AvailabilityZone"]}
-                )
+                subnets.append({"subnetId": subnet["SubnetId"], "availabilityZone": subnet["AvailabilityZone"]})
         this.cached_response_subnets = subnets
 
     return subnets

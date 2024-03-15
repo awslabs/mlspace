@@ -24,12 +24,7 @@ import botocore
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    generate_tags,
-    query_resource_metadata,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -90,9 +85,7 @@ def create(event, context):
             "InstanceType": resource_config["InstanceType"],
             "InstanceCount": int(resource_config["InstanceCount"]),
             "VolumeSizeInGB": int(resource_config["VolumeSizeInGB"]),
-            "VolumeKmsKeyId": ""
-            if "ml.g" in resource_config["InstanceType"]
-            else param_file["pSMSKMSKeyId"],
+            "VolumeKmsKeyId": "" if "ml.g" in resource_config["InstanceType"] else param_file["pSMSKMSKeyId"],
         },
         VpcConfig={
             "SecurityGroupIds": param_file["pSMSSecurityGroupId"],
@@ -100,18 +93,13 @@ def create(event, context):
         },
         StoppingCondition={"MaxRuntimeInSeconds": int(stopping_condition["MaxRuntimeInSeconds"])},
         Tags=generate_tags(username, project_name, env_variables["SYSTEM_TAG"]),
-        EnableNetworkIsolation=event_body["EnableNetworkIsolation"]
-        if "EnableNetworkIsolation" in event_body
-        else True,
+        EnableNetworkIsolation=event_body["EnableNetworkIsolation"] if "EnableNetworkIsolation" in event_body else True,
         EnableInterContainerTrafficEncryption=True,
     )
     try:
         response = sagemaker.create_training_job(**training_job_definition)
     except botocore.exceptions.ClientError as error:
-        if (
-            "You can't override the metric definitions for Amazon SageMaker algorithms"
-            in error.response["Error"]["Message"]
-        ):
+        if "You can't override the metric definitions for Amazon SageMaker algorithms" in error.response["Error"]["Message"]:
             del training_job_definition["AlgorithmSpecification"]["MetricDefinitions"]
             response = sagemaker.create_training_job(**training_job_definition)
             response["DeletedMetricsDefinitions"] = True

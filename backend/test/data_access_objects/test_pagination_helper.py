@@ -17,10 +17,10 @@
 import pytest
 
 from ml_space_lambda.data_access_objects.pagination_helper import (
-    decode_pagination_token,
     PaginationTokenError,
     PaginationTokenExpiredError,
     PaginationTokenIntegrityError,
+    decode_pagination_token,
 )
 
 VALID_EXPIRED_TOKEN = "v3.local.XY85xJ3PpL0bcqI6md9Bt8FY0AvapjBTMAnC_NgApu_wekmdxrGMtBrLkcUHLS_sO_WiAoXAZBvbXduvy1H_SKseDmh9erIAXfbLJB5k_bCEaL-MPK9kwmQvhfppwf_pflHu3zwujCPmFoB6jaKqwdV7T8LGd14aFFlWn5_2BG5iNl5DKzu8QtI06RKQ9FuUULboJ1px6_7ynDKya4zo6j4K2PMhIK0Svu0"

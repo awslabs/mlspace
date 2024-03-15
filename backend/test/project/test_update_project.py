@@ -22,10 +22,7 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project import ProjectModel
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -199,15 +196,10 @@ def test_update_project_description(mock_project_dao):
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
 def test_update_project_metadata(mock_project_dao):
     expected_response = generate_html_response(200, f"Successfully updated {MOCK_PROJECT_NAME}")
-    updated_metadata = {
-        "terminationConfiguration": {"defaultEndpointTTL": 3, "allowEndpointOwnerOverride": True}
-    }
+    updated_metadata = {"terminationConfiguration": {"defaultEndpointTTL": 3, "allowEndpointOwnerOverride": True}}
     mock_project_dao.get.return_value = mock_project(False)
 
-    assert (
-        lambda_handler(_mock_event(False, metadata=updated_metadata), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(_mock_event(False, metadata=updated_metadata), mock_context) == expected_response
 
     expected_project = mock_project().to_dict()
     mock_project_dao.get.assert_called_with(MOCK_PROJECT_NAME)
@@ -318,18 +310,16 @@ def test_suspend_project_pending_notebook(mock_project_dao, mock_resource_metada
     )
     mock_project_dao.get.return_value = mock_project()
 
-    mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = (
-        _get_all_by_project_side_effect(
-            notebook_results=[
-                ResourceMetadataModel(
-                    "test-notebook",
-                    ResourceType.NOTEBOOK,
-                    "jdoe@amazon.com",
-                    MOCK_PROJECT_NAME,
-                    {"NotebookInstanceStatus": "Pending"},
-                )
-            ]
-        )
+    mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = _get_all_by_project_side_effect(
+        notebook_results=[
+            ResourceMetadataModel(
+                "test-notebook",
+                ResourceType.NOTEBOOK,
+                "jdoe@amazon.com",
+                MOCK_PROJECT_NAME,
+                {"NotebookInstanceStatus": "Pending"},
+            )
+        ]
     )
 
     assert lambda_handler(_mock_event(), mock_context) == expected_response
@@ -345,38 +335,34 @@ def test_suspend_project_pending_notebook(mock_project_dao, mock_resource_metada
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
-def test_suspend_project_all_the_resources(
-    mock_project_dao, mock_sagemaker_client, mock_resource_metadata_dao
-):
+def test_suspend_project_all_the_resources(mock_project_dao, mock_sagemaker_client, mock_resource_metadata_dao):
     expected_response = generate_html_response(200, f"Successfully updated {MOCK_PROJECT_NAME}")
     mock_project_dao.get.return_value = mock_project()
 
     # Mock multiple pages of notebooks
-    mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = (
-        _get_all_by_project_side_effect(
-            notebook_results=[
-                _notebook_entry("notebook1"),
-                _notebook_entry("notebook2", "Stopped"),
-                _notebook_entry("notebook3"),
-                _notebook_entry("notebook4"),
-                _notebook_entry("notebook5", "Failed"),
-                _notebook_entry("notebook5", "Deleting"),
-            ],
-            endpoint_results=[
-                _endpoint_entry("endpoint", "InService"),
-                _endpoint_entry("endpoint2", "Failed"),
-                _endpoint_entry("endpoint3", "Creating"),
-            ],
-            training_job_results=[
-                _training_job_entry("training-job"),
-            ],
-            transform_job_results=[
-                _transform_job_entry("transform-job"),
-            ],
-            hpo_job_results=[
-                _hyper_parameter_job_entry("hpo-job"),
-            ],
-        )
+    mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = _get_all_by_project_side_effect(
+        notebook_results=[
+            _notebook_entry("notebook1"),
+            _notebook_entry("notebook2", "Stopped"),
+            _notebook_entry("notebook3"),
+            _notebook_entry("notebook4"),
+            _notebook_entry("notebook5", "Failed"),
+            _notebook_entry("notebook5", "Deleting"),
+        ],
+        endpoint_results=[
+            _endpoint_entry("endpoint", "InService"),
+            _endpoint_entry("endpoint2", "Failed"),
+            _endpoint_entry("endpoint3", "Creating"),
+        ],
+        training_job_results=[
+            _training_job_entry("training-job"),
+        ],
+        transform_job_results=[
+            _transform_job_entry("transform-job"),
+        ],
+        hpo_job_results=[
+            _hyper_parameter_job_entry("hpo-job"),
+        ],
     )
 
     assert lambda_handler(_mock_event(), mock_context) == expected_response
@@ -392,9 +378,7 @@ def test_suspend_project_all_the_resources(
     # List and suspend training job calls
     mock_sagemaker_client.stop_training_job.assert_called_with(TrainingJobName="training-job")
     # List and suspend hpo job calls
-    mock_sagemaker_client.stop_hyper_parameter_tuning_job.assert_called_with(
-        HyperParameterTuningJobName="hpo-job"
-    )
+    mock_sagemaker_client.stop_hyper_parameter_tuning_job.assert_called_with(HyperParameterTuningJobName="hpo-job")
     # List and suspend transform jobs
     mock_sagemaker_client.stop_transform_job.assert_called_with(TransformJobName="transform-job")
     # Assert endpoint suspend calls
@@ -423,8 +407,7 @@ def test_suspend_project_resource_failure(mock_project_dao):
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling"
-        " the GetItem operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling" " the GetItem operation: Dummy error message.",
     )
 
     mock_project_dao.get.side_effect = ClientError(error_msg, "GetItem")

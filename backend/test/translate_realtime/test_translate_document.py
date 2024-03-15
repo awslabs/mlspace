@@ -141,9 +141,7 @@ mock_api_response["TranslatedDocument"]["Content"] = [
 ]
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.translate_realtime.lambda_functions import (
-        translate_document as lambda_handler,
-    )
+    from ml_space_lambda.translate_realtime.lambda_functions import translate_document as lambda_handler
 
 mock_base_event = {
     "body": json.dumps(mock_base_event_body),

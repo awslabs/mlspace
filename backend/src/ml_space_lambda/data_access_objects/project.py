@@ -99,7 +99,9 @@ class ProjectDAO(DynamoDBObjectStore):
     def update(self, name: str, project: ProjectModel) -> ProjectModel:
         json_key = {"name": name}
         # Only a subset of fields can be modified
-        update_exp = "SET description = :description, suspended = :suspended, lastUpdatedAt = :lastUpdatedAt, metadata = :metadata"
+        update_exp = (
+            "SET description = :description, suspended = :suspended, lastUpdatedAt = :lastUpdatedAt, metadata = :metadata"
+        )
         exp_names = {"#name": "name"}
         exp_values = json.loads(
             dynamodb_json.dumps(

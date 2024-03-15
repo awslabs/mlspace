@@ -33,9 +33,7 @@ mock_context = mock.Mock()
 
 mock_response = {
     "TrainingJobArn": "example_arn",
-    "SecondaryStatusTransitions": [
-        {"EndTime": 1, "StartTime": 1, "Status": "string", "StatusMessage": "string"}
-    ],
+    "SecondaryStatusTransitions": [{"EndTime": 1, "StartTime": 1, "Status": "string", "StatusMessage": "string"}],
     "FinalMetricDataList": [{"MetricName": "string", "Timestamp": 1, "Value": 1}],
 }
 

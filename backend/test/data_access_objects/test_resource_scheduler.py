@@ -15,7 +15,7 @@
 #
 
 import json
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -126,9 +126,7 @@ class TestDatasetDAO(TestCase):
 
     def test_get_all_project_resources(self):
         # Test with a non-existent project
-        fake_project_resources = self.resource_scheduler_dao.get_all_project_resources(
-            "totally-fake-project"
-        )
+        fake_project_resources = self.resource_scheduler_dao.get_all_project_resources("totally-fake-project")
         assert len(fake_project_resources) == 0
 
         # Test with seeded project
@@ -143,9 +141,7 @@ class TestDatasetDAO(TestCase):
         assert from_ddb.to_dict() == self.UPDATE_RECORD.to_dict()
 
     def test_get_resource_scheduler_not_found(self):
-        assert not self.resource_scheduler_dao.get(
-            resource_id="non-existant-resource-id", resource_type="non-existant-type"
-        )
+        assert not self.resource_scheduler_dao.get(resource_id="non-existant-resource-id", resource_type="non-existant-type")
 
     def test_add_resource_scheduler_success(self):
         new_record = ResourceSchedulerModel(
@@ -172,9 +168,7 @@ class TestDatasetDAO(TestCase):
             "resourceId": {"S": self.UPDATE_RECORD.resource_id},
             "resourceType": {"S": self.UPDATE_RECORD.resource_type},
         }
-        pre_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        pre_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         new_termination_time = 9876543211
         self.resource_scheduler_dao.update_termination_time(
@@ -184,9 +178,7 @@ class TestDatasetDAO(TestCase):
             project="SHOULD_NOT_CHANGE",
         )
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         assert pre_update["resourceId"] == post_update["resourceId"]
         assert pre_update["resourceType"] == post_update["resourceType"]
@@ -218,9 +210,7 @@ class TestDatasetDAO(TestCase):
             project=resource_project,
         )
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=upsert_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=upsert_item_key)["Item"])
 
         assert resource_id == post_update["resourceId"]
         assert resource_type == post_update["resourceType"]
@@ -247,8 +237,6 @@ class TestDatasetDAO(TestCase):
 
     def test_get_resources_past_termination_time(self):
         # retrieve the 10 seeded projects we added with single digit termination times
-        expired_resources = self.resource_scheduler_dao.get_resources_past_termination_time(
-            termination_time=10
-        )
+        expired_resources = self.resource_scheduler_dao.get_resources_past_termination_time(termination_time=10)
 
         assert len(expired_resources) == 10

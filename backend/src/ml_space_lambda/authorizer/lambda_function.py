@@ -46,9 +46,7 @@ oidc_keys: Dict[str, str] = {}
 # If using self signed certs on the OIDC endpoint we need to skip ssl verification
 http = urllib3.PoolManager(
     num_pools=2,
-    cert_reqs="CERT_NONE"
-    if os.getenv("OIDC_VERIFY_SSL", "True").lower() == "false"
-    else "CERT_REQUIRED",
+    cert_reqs="CERT_NONE" if os.getenv("OIDC_VERIFY_SSL", "True").lower() == "false" else "CERT_REQUIRED",
 )
 
 
@@ -85,23 +83,17 @@ def lambda_handler(event, context):
                 # Grab public key id from token
                 token_headers = jwt.get_unverified_header(client_token)
                 [public_key, client_name] = _get_oidc_props(token_headers["kid"])
-                token_info = jwt.decode(
-                    client_token, public_key, audience=client_name, algorithms=["RS256"]
-                )
+                token_info = jwt.decode(client_token, public_key, audience=client_name, algorithms=["RS256"])
             except Exception as e:
                 logging.exception(e)
-                logging.info(
-                    "Access Denied. Encountered error validating supplied authentication token."
-                )
+                logging.info("Access Denied. Encountered error validating supplied authentication token.")
                 token_failure = True
         else:
             try:
                 token_info = jwt.decode(client_token, options={"verify_signature": False})
             except Exception as e:
                 logging.exception(e)
-                logging.info(
-                    "Access Denied. Encountered error decoding supplied authentication token."
-                )
+                logging.info("Access Denied. Encountered error decoding supplied authentication token.")
                 token_failure = True
 
     if token_failure:
@@ -137,9 +129,7 @@ def lambda_handler(event, context):
             if (requested_resource == "/login" and request_method == "PUT") or (
                 requested_resource == "/current-user" and request_method == "GET"
             ):
-                logger.info(
-                    f"User: '{username}' is currently suspended. Only login/current-user is allowed."
-                )
+                logger.info(f"User: '{username}' is currently suspended. Only login/current-user is allowed.")
                 policy_statement["Effect"] = "Allow"
             else:
                 logger.info(f"Access Denied. User: '{username}' is currently suspended.")
@@ -169,9 +159,7 @@ def lambda_handler(event, context):
                         # Users can update their own account preferences
                         policy_statement["Effect"] = "Allow"
                     else:
-                        logger.info(
-                            f"Access Denied. User: '{username}' does not have permission to modify users."
-                        )
+                        logger.info(f"Access Denied. User: '{username}' does not have permission to modify users.")
                 # Path params need to be checked individually
                 elif "projectName" in path_params:
                     project_name = path_params["projectName"]
@@ -181,16 +169,9 @@ def lambda_handler(event, context):
                         # User must be an owner or admin to add/remove users
                         if (
                             (request_method == "POST" and requested_resource.endswith("/users"))
-                            or (
-                                request_method in ["PUT", "DELETE"]
-                                and len(path_params) == 2
-                                and "username" in path_params
-                            )
+                            or (request_method in ["PUT", "DELETE"] and len(path_params) == 2 and "username" in path_params)
                         ) and (
-                            (
-                                project_user
-                                and Permission.PROJECT_OWNER not in project_user.permissions
-                            )
+                            (project_user and Permission.PROJECT_OWNER not in project_user.permissions)
                             and Permission.ADMIN not in user.permissions
                         ):
                             logging.info(
@@ -201,16 +182,11 @@ def lambda_handler(event, context):
                             len(path_params) == 1
                             and request_method in ["PUT", "DELETE"]
                             and (
-                                (
-                                    project_user
-                                    and Permission.PROJECT_OWNER not in project_user.permissions
-                                )
+                                (project_user and Permission.PROJECT_OWNER not in project_user.permissions)
                                 and Permission.ADMIN not in user.permissions
                             )
                         ):
-                            logging.info(
-                                f"Access Denied. User: '{username}' does not have project management permission."
-                            )
+                            logging.info(f"Access Denied. User: '{username}' does not have project management permission.")
                         # Check if there is a second param here and we're updating users...
                         else:
                             policy_statement["Effect"] = "Allow"
@@ -220,9 +196,7 @@ def lambda_handler(event, context):
                             policy_statement["Effect"] = "Allow"
                     except Exception as e:
                         logging.exception(e)
-                        logging.info(
-                            "Access Denied. Encountered error while determining EMR access policy."
-                        )
+                        logging.info("Access Denied. Encountered error while determining EMR access policy.")
                 elif "notebookName" in path_params:
                     try:
                         if _handle_notebook_request(
@@ -235,9 +209,7 @@ def lambda_handler(event, context):
                             policy_statement["Effect"] = "Allow"
                     except Exception as e:
                         logging.exception(e)
-                        logging.info(
-                            "Access Denied. Encountered error while determining notebook access policy."
-                        )
+                        logging.info("Access Denied. Encountered error while determining notebook access policy.")
                 elif "scope" in path_params:
                     if (
                         requested_resource.startswith("/dataset-locations/")
@@ -269,16 +241,12 @@ def lambda_handler(event, context):
                                 policy_statement["Effect"] = "Allow"
                         except Exception as e:
                             logging.exception(e)
-                            logging.info(
-                                "Access Denied. Encountered error while determining dataset access policy."
-                            )
+                            logging.info("Access Denied. Encountered error while determining dataset access policy.")
                 elif "jobId" in path_params:
                     if Permission.ADMIN in user.permissions:
                         policy_statement["Effect"] = "Allow"
                     else:
-                        job = resource_metadata_dao.get(
-                            path_params["jobId"], ResourceType.BATCH_TRANSLATE_JOB
-                        )
+                        job = resource_metadata_dao.get(path_params["jobId"], ResourceType.BATCH_TRANSLATE_JOB)
                         response_context["projectName"] = job.project
                         project_user = project_user_dao.get(job.project, user.username)
                         if project_user and Permission.PROJECT_OWNER in project_user.permissions:
@@ -319,15 +287,12 @@ def lambda_handler(event, context):
                             policy_statement["Effect"] = "Allow"
                     except Exception as e:
                         logging.exception(e)
-                        logging.info(
-                            "Access Denied. Encountered error while determining resource access policy."
-                        )
+                        logging.info("Access Denied. Encountered error while determining resource access policy.")
 
             elif requested_resource == "/login" and request_method == "PUT":
                 policy_statement["Effect"] = "Allow"
             elif (
-                (requested_resource == "/config" and request_method == "GET")
-                or requested_resource.startswith("/admin/")
+                (requested_resource == "/config" and request_method == "GET") or requested_resource.startswith("/admin/")
             ) and Permission.ADMIN in user.permissions:
                 policy_statement["Effect"] = "Allow"
             elif requested_resource == "/project" and request_method == "POST":
@@ -337,10 +302,7 @@ def lambda_handler(event, context):
                 # If this is a request for a dataset related presigned url or for
                 # creating a new dataset, we need to determine the underlying dataset
                 # and whether the user should have access to it
-                if (
-                    "x-mlspace-dataset-type" in event["headers"]
-                    and "x-mlspace-dataset-scope" in event["headers"]
-                ):
+                if "x-mlspace-dataset-type" in event["headers"] and "x-mlspace-dataset-scope" in event["headers"]:
                     target_type = event["headers"]["x-mlspace-dataset-type"]
                     target_scope = event["headers"]["x-mlspace-dataset-scope"]
                     if target_type == DatasetType.GLOBAL.value:
@@ -360,8 +322,7 @@ def lambda_handler(event, context):
                         " 'x-mlspace-dataset-scope' for request."
                     )
             elif (
-                requested_resource in ["/metadata/find-public-amis"]
-                or requested_resource.startswith("/translate/realtime")
+                requested_resource in ["/metadata/find-public-amis"] or requested_resource.startswith("/translate/realtime")
             ) and request_method == "POST":
                 policy_statement["Effect"] = "Allow"
             elif (
@@ -436,9 +397,7 @@ def _handle_dataset_request(request_method, path_params, user):
             # If it's a global or project dataset and they aren't the owner
             # they can't update or delete the dataset or any files
             if request_method in ["PUT", "DELETE"]:
-                logger.info(
-                    f"Access Denied. User: '{user.username}' does not own the specified dataset."
-                )
+                logger.info(f"Access Denied. User: '{user.username}' does not own the specified dataset.")
             elif dataset_scope == DatasetType.GLOBAL.value:
                 # If it's not a delete or update but it's a global dataset
                 # then all users should have access
@@ -449,9 +408,7 @@ def _handle_dataset_request(request_method, path_params, user):
                 if project_user:
                     return True
 
-    logger.info(
-        "Access Denied. The specified dataset does not exist or the user does not have access."
-    )
+    logger.info("Access Denied. The specified dataset does not exist or the user does not have access.")
     return False
 
 
@@ -512,9 +469,7 @@ def _handle_notebook_request(
 
     notebook_metadata = resource_metadata_dao.get(notebook_instance_name, ResourceType.NOTEBOOK)
     if notebook_metadata:
-        is_launch_or_start_request = requested_resource.endswith(
-            "/url"
-        ) or requested_resource.endswith("/start")
+        is_launch_or_start_request = requested_resource.endswith("/url") or requested_resource.endswith("/start")
         response_context["projectName"] = notebook_metadata.project
         # Starting and launching a notebook relies on the project not being suspended and the
         # requesting user being an owner of the notebook
@@ -578,13 +533,9 @@ def _allow_project_resource_action(
         return False
 
     if "endpointName" in path_params:
-        resource_metadata = resource_metadata_dao.get(
-            path_params["endpointName"], ResourceType.ENDPOINT
-        )
+        resource_metadata = resource_metadata_dao.get(path_params["endpointName"], ResourceType.ENDPOINT)
     if "endpointConfigName" in path_params:
-        resource_metadata = resource_metadata_dao.get(
-            path_params["endpointConfigName"], ResourceType.ENDPOINT_CONFIG
-        )
+        resource_metadata = resource_metadata_dao.get(path_params["endpointConfigName"], ResourceType.ENDPOINT_CONFIG)
     if "modelName" in path_params:
         resource_metadata = resource_metadata_dao.get(path_params["modelName"], ResourceType.MODEL)
     if "jobName" in path_params:
@@ -619,13 +570,9 @@ def _allow_project_resource_action(
     if method != "GET":
         # Any delete or update actions require the user to be a project owner or the owner
         # of the resource being acted upon
-        if project_user and (
-            owner == user.username or Permission.PROJECT_OWNER in project_user.permissions
-        ):
+        if project_user and (owner == user.username or Permission.PROJECT_OWNER in project_user.permissions):
             return True
-        logger.info(
-            f"Access Denied. User: '{user.username}' does not own the requested {resource_type}."
-        )
+        logger.info(f"Access Denied. User: '{user.username}' does not own the requested {resource_type}.")
     elif project_user:
         return True
 
@@ -644,17 +591,14 @@ def _get_oidc_props(key_id: str) -> Tuple[Optional[str], Optional[str]]:
         oidc_endpoint = os.getenv("OIDC_URL")
         if not oidc_client_name or not oidc_endpoint:
             logging.error(
-                "Unable to retrieve OIDC configuration. Please ensure the environment "
-                "variables are properly configured"
+                "Unable to retrieve OIDC configuration. Please ensure the environment " "variables are properly configured"
             )
             raise ValueError("Missing OIDC environment variables.")
         # Grab cert endpoint from well known config
         response = http.request("GET", f"{oidc_endpoint}/.well-known/openid-configuration")
         well_known_config = json.loads(response.data.decode("utf-8"))
         if "jwks_uri" not in well_known_config:
-            logging.error(
-                "Unable to retrieve OIDC configuration. JWKS_URI not found in well known config."
-            )
+            logging.error("Unable to retrieve OIDC configuration. JWKS_URI not found in well known config.")
             raise ValueError("Missing JWKS_URI.")
         # Grab certs from jwks_uri endpoint
         jwks_response = http.request("GET", f"{well_known_config['jwks_uri']}")

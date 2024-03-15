@@ -67,9 +67,7 @@ class ResourceSchedulerDAO(DynamoDBObjectStore):
     def create(self, resource_scheduler: ResourceSchedulerModel) -> None:
         self._create(resource_scheduler.to_dict())
 
-    def get(
-        self, resource_id: str, resource_type: ResourceType
-    ) -> Optional[ResourceSchedulerModel]:
+    def get(self, resource_id: str, resource_type: ResourceType) -> Optional[ResourceSchedulerModel]:
         json_key = {"resourceId": resource_id, "resourceType": resource_type}
         try:
             json_response = self._retrieve(json_key)
@@ -88,9 +86,7 @@ class ResourceSchedulerDAO(DynamoDBObjectStore):
         json_key = {"resourceId": resource_id, "resourceType": resource_type}
         update_exp = "SET terminationTime = :terminationTime, #p = if_not_exists(#p, :project)"
         exp_names = {"#p": "project"}
-        exp_values = json.loads(
-            dynamodb_json.dumps({":terminationTime": new_termination_time, ":project": project})
-        )
+        exp_values = json.loads(dynamodb_json.dumps({":terminationTime": new_termination_time, ":project": project}))
         self._update(
             json_key=json_key,
             expression_names=exp_names,
@@ -98,9 +94,7 @@ class ResourceSchedulerDAO(DynamoDBObjectStore):
             expression_values=exp_values,
         )
 
-    def get_resources_past_termination_time(
-        self, termination_time: int
-    ) -> List[ResourceSchedulerModel]:
+    def get_resources_past_termination_time(self, termination_time: int) -> List[ResourceSchedulerModel]:
         expression_attribute_values = {":terminationTime": termination_time}
         json_response = self._scan(
             filter_expression="terminationTime < :terminationTime",

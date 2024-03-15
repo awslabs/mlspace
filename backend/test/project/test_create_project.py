@@ -44,9 +44,7 @@ mock_context = mock.Mock()
 def _mock_event(project_name: str = MOCK_PROJECT_NAME):
     return {
         "requestContext": {"authorizer": {"principalId": MOCK_USERNAME}},
-        "body": json.dumps(
-            {"name": project_name, "description": "Project for unit tests", "suspended": False}
-        ),
+        "body": json.dumps({"name": project_name, "description": "Project for unit tests", "suspended": False}),
     }
 
 
@@ -57,9 +55,7 @@ def _mock_event(project_name: str = MOCK_PROJECT_NAME):
 def test_create_project(mock_user_dao, mock_project_dao, mock_project_user_dao, mock_time):
     mlspace_config.env_variables = {}
     mock_project_dao.get.return_value = None
-    expected_response = generate_html_response(
-        200, f"Successfully created project '{MOCK_PROJECT_NAME}'"
-    )
+    expected_response = generate_html_response(200, f"Successfully created project '{MOCK_PROJECT_NAME}'")
 
     mock_user_dao.get.return_value = MOCK_USER
     mock_time.time.return_value = MOCK_TIMESTAMP
@@ -93,9 +89,7 @@ def test_create_project(mock_user_dao, mock_project_dao, mock_project_user_dao, 
 
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
 def test_create_project_invalid_characters(mock_project_dao):
-    expected_response = generate_html_response(
-        400, "Bad Request: Project name contains invalid character."
-    )
+    expected_response = generate_html_response(400, "Bad Request: Project name contains invalid character.")
 
     assert lambda_handler(_mock_event("Crazy!NameFor $$$"), mock_context) == expected_response
     mock_project_dao.get.assert_not_called()
@@ -103,14 +97,9 @@ def test_create_project_invalid_characters(mock_project_dao):
 
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
 def test_create_project_long_name(mock_project_dao):
-    expected_response = generate_html_response(
-        400, "Bad Request: Project name exceeded the maximum allowable length of 24."
-    )
+    expected_response = generate_html_response(400, "Bad Request: Project name exceeded the maximum allowable length of 24.")
 
-    assert (
-        lambda_handler(_mock_event("ThisIsAVeryLongProjectName_TooLongInFact"), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(_mock_event("ThisIsAVeryLongProjectName_TooLongInFact"), mock_context) == expected_response
     mock_project_dao.get.assert_not_called()
 
 
@@ -136,8 +125,7 @@ def test_create_project_name_not_unique(mock_project_dao):
 
     expected_response = generate_html_response(
         400,
-        "Bad Request: Project name already exists. This can "
-        "happen even when the project has been suspended by the PMO.",
+        "Bad Request: Project name already exists. This can " "happen even when the project has been suspended by the PMO.",
     )
 
     assert lambda_handler(_mock_event(), mock_context) == expected_response
@@ -152,8 +140,7 @@ def test_create_project_client_error(mock_project_dao):
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling"
-        " the GetItem operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling" " the GetItem operation: Dummy error message.",
     )
 
     mock_project_dao.get.side_effect = ClientError(error_msg, "GetItem")
@@ -165,9 +152,7 @@ def test_create_project_client_error(mock_project_dao):
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.user_dao")
-def test_create_project_client_error_adding_user(
-    mock_user_dao, mock_project_dao, mock_project_user_dao
-):
+def test_create_project_client_error_adding_user(mock_user_dao, mock_project_dao, mock_project_user_dao):
     mlspace_config.env_variables = {}
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
@@ -175,8 +160,7 @@ def test_create_project_client_error_adding_user(
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling"
-        " the PutItem operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling" " the PutItem operation: Dummy error message.",
     )
     mock_user_dao.get.return_value = MOCK_USER
     mock_project_user_dao.create.side_effect = ClientError(error_msg, "PutItem")

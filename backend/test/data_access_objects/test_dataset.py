@@ -15,7 +15,7 @@
 #
 
 import json
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -157,9 +157,7 @@ class TestDatasetDAO(TestCase):
 
     def test_update_dataset(self):
         update_item_key = {"scope": {"S": self.UPDATE_DS.scope}, "name": {"S": self.UPDATE_DS.name}}
-        pre_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        pre_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         updated = DatasetModel.from_dict(self.UPDATE_DS.to_dict())
         updated.name = "ThisShouldGetDropped"
@@ -172,9 +170,7 @@ class TestDatasetDAO(TestCase):
         updated.type = DatasetType.GLOBAL
         self.dataset_dao.update(self.UPDATE_DS.scope, self.UPDATE_DS.name, updated)
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         assert pre_update["name"] == post_update["name"]
         assert pre_update["scope"] == post_update["scope"]
@@ -220,14 +216,10 @@ class TestDatasetDAO(TestCase):
         self.dataset_dao.delete("InvalidProject", self.UPDATE_DS.name)
 
     def test_get_all_for_scope(self):
-        matching_datasets = self.dataset_dao.get_all_for_scope(
-            DatasetType.PROJECT, SAMPLE_DATASET_PROJECT
-        )
+        matching_datasets = self.dataset_dao.get_all_for_scope(DatasetType.PROJECT, SAMPLE_DATASET_PROJECT)
         assert len(matching_datasets) == 1
         assert matching_datasets[0].to_dict() == self.UPDATE_DS.to_dict()
 
     def test_get_all_for_scope_no_hits(self):
-        matching_datasets = self.dataset_dao.get_all_for_scope(
-            DatasetType.PRIVATE, SAMPLE_DATASET_PROJECT
-        )
+        matching_datasets = self.dataset_dao.get_all_for_scope(DatasetType.PRIVATE, SAMPLE_DATASET_PROJECT)
         assert len(matching_datasets) == 0

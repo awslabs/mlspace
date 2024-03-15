@@ -190,15 +190,10 @@ def create_dataset(event, context):
         scope = "global"
         directory_name = f"global/datasets/{dataset_name}/"
     else:
-        scope = body.get(
-            "datasetScope"
-        )  # username or project name for private/project scope respectively
+        scope = body.get("datasetScope")  # username or project name for private/project scope respectively
         directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
 
-    if (
-        dataset_type != event["headers"]["x-mlspace-dataset-type"]
-        or scope != event["headers"]["x-mlspace-dataset-scope"]
-    ):
+    if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
         raise Exception("Dataset headers do not match expected type and scope.")
 
     if not dataset_dao.get(scope, dataset_name):
@@ -258,9 +253,7 @@ def list_locations(event, context):
 
 @api_wrapper
 def list_files(event, context):
-    prefix = get_dataset_prefix(
-        event["pathParameters"]["scope"], event["pathParameters"]["datasetName"]
-    )
+    prefix = get_dataset_prefix(event["pathParameters"]["scope"], event["pathParameters"]["datasetName"])
 
     env_variables = get_environment_variables()
     keys = []

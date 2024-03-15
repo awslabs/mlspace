@@ -19,6 +19,8 @@ import unittest
 from unittest import mock
 
 from ml_space_lambda.utils.groundtruth_utils import (
+    LambdaTypes,
+    TaskTypes,
     _assets_domain_map,
     _auto_labeling_task_arn_map,
     generate_labels_configuration_file,
@@ -26,8 +28,6 @@ from ml_space_lambda.utils.groundtruth_utils import (
     get_auto_labeling_arn,
     get_groundtruth_assets_domain,
     get_groundtruth_lambda_arn,
-    LambdaTypes,
-    TaskTypes,
 )
 
 
@@ -66,10 +66,7 @@ class GroundTruthUtilsTest(unittest.TestCase):
         output_dir = "outputDir"
         s3_key = f"{output_dir}/{job_name}/annotation-tool/data.json"
         labels = [{"Key": "Value"}]
-        assert (
-            generate_labels_configuration_file(labels, job_name, bucket_name, "outputDir")
-            == f"s3://{bucket_name}/{s3_key}"
-        )
+        assert generate_labels_configuration_file(labels, job_name, bucket_name, "outputDir") == f"s3://{bucket_name}/{s3_key}"
         mock_s3.put_object.assert_called_with(
             Bucket=bucket_name,
             Key=s3_key,

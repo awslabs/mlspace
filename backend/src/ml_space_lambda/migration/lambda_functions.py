@@ -90,9 +90,7 @@ def _sync_notebooks(env_variables):
                         "CreationTime": notebook["CreationTime"],
                         "InstanceType": notebook["InstanceType"],
                         "LastModifiedTime": notebook["LastModifiedTime"],
-                        "NotebookInstanceLifecycleConfigName": notebook[
-                            "NotebookInstanceLifecycleConfigName"
-                        ],
+                        "NotebookInstanceLifecycleConfigName": notebook["NotebookInstanceLifecycleConfigName"],
                         "NotebookInstanceStatus": notebook["NotebookInstanceStatus"],
                     }
                     # Create resource metadata record
@@ -105,9 +103,7 @@ def _sync_notebooks(env_variables):
                             notebook_metadata,
                         )
                     except Exception:
-                        logger.warn(
-                            f'Error generating resource metadata for Notebook: {notebook["NotebookInstanceName"]}'
-                        )
+                        logger.warn(f'Error generating resource metadata for Notebook: {notebook["NotebookInstanceName"]}')
 
 
 def _sync_endpoints(env_variables):
@@ -138,9 +134,7 @@ def _sync_endpoints(env_variables):
                             endpoint_metadata,
                         )
                     except Exception:
-                        logger.warn(
-                            f'Error generating resource metadata for Endpoint: {endpoint["EndpointName"]}'
-                        )
+                        logger.warn(f'Error generating resource metadata for Endpoint: {endpoint["EndpointName"]}')
 
 
 def _sync_models(env_variables):
@@ -169,9 +163,7 @@ def _sync_models(env_variables):
                             model_metadata,
                         )
                     except Exception:
-                        logger.warn(
-                            f'Error generating resource metadata for Model: {model["ModelName"]}'
-                        )
+                        logger.warn(f'Error generating resource metadata for Model: {model["ModelName"]}')
 
 
 def _sync_training_jobs(env_variables):
@@ -186,23 +178,15 @@ def _sync_training_jobs(env_variables):
                     job["TrainingJobArn"], env_variables["SYSTEM_TAG"]
                 )
                 if project and owner and is_mlspace_resource:
-                    job_details = sagemaker.describe_training_job(
-                        TrainingJobName=job["TrainingJobName"]
-                    )
+                    job_details = sagemaker.describe_training_job(TrainingJobName=job["TrainingJobName"])
                     job_metadata = {
                         "CreationTime": job_details["CreationTime"],
                         "TrainingJobArn": job_details["TrainingJobArn"],
                         "TrainingJobStatus": job_details["TrainingJobStatus"],
                         "LastModifiedTime": job_details["LastModifiedTime"],
-                        "TrainingStartTime": job_details["TrainingStartTime"]
-                        if "TrainingStartTime" in job_details
-                        else None,
-                        "TrainingEndTime": job_details["TrainingEndTime"]
-                        if "TrainingEndTime" in job_details
-                        else None,
-                        "FailureReason": job_details["FailureReason"]
-                        if "FailureReason" in job_details
-                        else None,
+                        "TrainingStartTime": job_details["TrainingStartTime"] if "TrainingStartTime" in job_details else None,
+                        "TrainingEndTime": job_details["TrainingEndTime"] if "TrainingEndTime" in job_details else None,
+                        "FailureReason": job_details["FailureReason"] if "FailureReason" in job_details else None,
                     }
                     # Create resource metadata record
                     try:
@@ -214,9 +198,7 @@ def _sync_training_jobs(env_variables):
                             job_metadata,
                         )
                     except Exception:
-                        logger.warn(
-                            f'Error generating resource metadata for Training Job: {job["TrainingJobName"]}'
-                        )
+                        logger.warn(f'Error generating resource metadata for Training Job: {job["TrainingJobName"]}')
 
 
 def _sync_transform_jobs(env_variables):
@@ -239,9 +221,7 @@ def _sync_transform_jobs(env_variables):
                         # TransformStartTime is not available in the summary and isn't totally critical
                         # so we won't bother with a describe call when migrating
                         "TransformStartTime": None,
-                        "TransformEndTime": job["TransformEndTime"]
-                        if "TransformEndTime" in job
-                        else None,
+                        "TransformEndTime": job["TransformEndTime"] if "TransformEndTime" in job else None,
                         "FailureReason": job["FailureReason"] if "FailureReason" in job else None,
                     }
                     # Create resource metadata record
@@ -254,9 +234,7 @@ def _sync_transform_jobs(env_variables):
                             job_metadata,
                         )
                     except Exception:
-                        logger.warn(
-                            f'Error generating resource metadata for Transform Job: {job["TransformJobName"]}'
-                        )
+                        logger.warn(f'Error generating resource metadata for Transform Job: {job["TransformJobName"]}')
 
 
 def _sync_endpoint_configs(env_variables):
@@ -285,9 +263,7 @@ def _sync_endpoint_configs(env_variables):
                             config_metadata,
                         )
                     except Exception:
-                        logger.warn(
-                            f'Error generating resource metadata for Endpoint Config: {config["EndpointConfigName"]}'
-                        )
+                        logger.warn(f'Error generating resource metadata for Endpoint Config: {config["EndpointConfigName"]}')
 
 
 def _sync_hpo_jobs(env_variables):
@@ -331,6 +307,4 @@ def _sync_hpo_jobs(env_variables):
                             job_metadata,
                         )
                     except Exception:
-                        logger.warn(
-                            f'Error generating resource metadata for HPO Job: {job["HyperParameterTuningJobName"]}'
-                        )
+                        logger.warn(f'Error generating resource metadata for HPO Job: {job["HyperParameterTuningJobName"]}')

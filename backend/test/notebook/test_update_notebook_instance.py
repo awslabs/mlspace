@@ -99,9 +99,7 @@ def test_update_notebook_instance_success_with_emr_attachment(
     mock_emr.list_instances.return_value = {
         "Instances": [{"Ec2InstanceId": "ec2_instance_id", "PrivateIpAddress": "some_private_ip"}]
     }
-    mock_ec2.describe_instances.return_value = {
-        "Reservations": [{"Instances": [{"SubnetId": "subnet_id"}]}]
-    }
+    mock_ec2.describe_instances.return_value = {"Reservations": [{"Instances": [{"SubnetId": "subnet_id"}]}]}
     mock_emr.describe_cluster.return_value = {
         "Cluster": {
             "Name": "fakeClusterName",
@@ -146,10 +144,7 @@ def test_update_notebook_instance_success_with_termination_time(
     mock_project_dao.get.return_value = mock_project
     mock_sagemaker.update_notebook_instance.return_value = mock_output
     expected_response = generate_html_response(200, mock_output)
-    assert (
-        lambda_handler(create_mock_event(mock_body_with_term_time), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(create_mock_event(mock_body_with_term_time), mock_context) == expected_response
     mock_sagemaker.update_notebook_instance.assert_called_with(**get_mock_input())
     mock_scheduler_dao.update_termination_time.assert_called_once()
     update_args, update_kwargs = mock_scheduler_dao.update_termination_time.call_args
@@ -190,10 +185,7 @@ def test_update_notebook_instance_success_disable_termination_time(
     mock_project_dao.get.return_value = mock_project
     mock_sagemaker.update_notebook_instance.return_value = mock_output
     expected_response = generate_html_response(200, mock_output)
-    assert (
-        lambda_handler(create_mock_event(mock_body_with_term_time), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(create_mock_event(mock_body_with_term_time), mock_context) == expected_response
     mock_sagemaker.update_notebook_instance.assert_called_with(**get_mock_input())
     mock_scheduler_dao.delete.assert_called_with(
         resource_id=mock_body_with_term_time["NotebookInstanceName"],
@@ -203,17 +195,13 @@ def test_update_notebook_instance_success_disable_termination_time(
 
 @mock.patch("ml_space_lambda.notebook.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.sagemaker")
-def test_update_notebook_instance_client_error(
-    mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_update_notebook_instance_client_error(mock_sagemaker, mock_pull_config, mock_s3_param_json):
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
         "ResponseMetadata": {"HTTPStatusCode": 400},
     }
     mock_pull_config.return_value = mock_s3_param_json
-    mock_sagemaker.update_notebook_instance.side_effect = ClientError(
-        error_msg, "UpdateNotebookInstance"
-    )
+    mock_sagemaker.update_notebook_instance.side_effect = ClientError(error_msg, "UpdateNotebookInstance")
     expected_response = generate_html_response(
         400,
         "An error occurred (ThrottlingException) when calling the UpdateNotebookInstance operation: Dummy error message.",
@@ -224,9 +212,7 @@ def test_update_notebook_instance_client_error(
 
 @mock.patch("ml_space_lambda.notebook.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.sagemaker")
-def test_update_notebook_instance_missing_parameters(
-    mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_update_notebook_instance_missing_parameters(mock_sagemaker, mock_pull_config, mock_s3_param_json):
     mock_event = {"body": json.dumps({})}
     mock_pull_config.return_value = mock_s3_param_json
     expected_response = generate_html_response(
@@ -239,9 +225,7 @@ def test_update_notebook_instance_missing_parameters(
 
 @mock.patch("ml_space_lambda.notebook.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.project_dao")
-def test_update_notebook_instance_exception_with_termination_time(
-    mock_project_dao, mock_pull_config, mock_s3_param_json
-):
+def test_update_notebook_instance_exception_with_termination_time(mock_project_dao, mock_pull_config, mock_s3_param_json):
     mock_body_with_term_time = get_mock_body()
     mock_pull_config.return_value = mock_s3_param_json
     mock_body_with_term_time["NotebookDailyStopTime"] = "15:00"
@@ -261,7 +245,4 @@ def test_update_notebook_instance_exception_with_termination_time(
         "Bad Request: Not allowed to edit notebook termination time for this project.",
     )
 
-    assert (
-        lambda_handler(create_mock_event(mock_body_with_term_time), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(create_mock_event(mock_body_with_term_time), mock_context) == expected_response

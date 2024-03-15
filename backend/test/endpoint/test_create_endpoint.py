@@ -74,9 +74,7 @@ expected_tags = generate_tags(user_name, project_name, "MLSpace")
 @mock.patch("ml_space_lambda.endpoint.lambda_functions.resource_scheduler_dao")
 @mock.patch("ml_space_lambda.endpoint.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.endpoint.lambda_functions.resource_metadata_dao")
-def test_create_endpoint_success(
-    mock_resource_metadata_dao, mock_sagemaker, mock_resource_dao, mock_project_dao
-):
+def test_create_endpoint_success(mock_resource_metadata_dao, mock_sagemaker, mock_resource_dao, mock_project_dao):
     mock_response = {"EndpointArn": "arn:aws:sagemaker:us-east-1:9999999999:resource-id"}
 
     mock_sagemaker.create_endpoint.return_value = mock_response

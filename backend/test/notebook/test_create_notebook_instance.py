@@ -97,9 +97,7 @@ def _mock_event(event_body: Dict[str, Any]) -> Dict:
     }
 
 
-def _validate_resource_schedule_call(
-    resource_schedule: ResourceSchedulerModel, expected_stop: Optional[float] = None
-):
+def _validate_resource_schedule_call(resource_schedule: ResourceSchedulerModel, expected_stop: Optional[float] = None):
     assert resource_schedule.resource_id == mock_full_notebook_name
     assert resource_schedule.resource_type == ResourceType.NOTEBOOK
     if expected_stop:
@@ -250,9 +248,7 @@ def test_create_notebook_instance_success_empty_stop_time(
     )
 
 
-@pytest.mark.parametrize(
-    "additional_payload", [({"NotebookInstanceLifecycleConfigName": "No configuration"}), ({})]
-)
+@pytest.mark.parametrize("additional_payload", [({"NotebookInstanceLifecycleConfigName": "No configuration"}), ({})])
 @mock.patch("ml_space_lambda.utils.common_functions.time")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.random")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.resource_scheduler_dao")
@@ -321,9 +317,7 @@ def test_create_notebook_instance_success_no_additional_settings(
     mock_pull_config.assert_called_once()
     mock_resource_scheduler_dao.create.assert_called_once()
     expected_stop_time = mocked_stop_time + (24 * 60 * 60)
-    _validate_resource_schedule_call(
-        mock_resource_scheduler_dao.create.call_args.args[0], expected_stop_time
-    )
+    _validate_resource_schedule_call(mock_resource_scheduler_dao.create.call_args.args[0], expected_stop_time)
 
     mock_resource_metadata_dao.upsert_record.assert_called_with(
         mock_full_notebook_name,
@@ -379,9 +373,7 @@ def test_create_notebook_instance_success_attached_to_cluster(
     mock_emr.list_instances.return_value = {
         "Instances": [{"Ec2InstanceId": "ec2_instance_id", "PrivateIpAddress": "some_private_ip"}]
     }
-    mock_ec2.describe_instances.return_value = {
-        "Reservations": [{"Instances": [{"SubnetId": "subnet_id"}]}]
-    }
+    mock_ec2.describe_instances.return_value = {"Reservations": [{"Instances": [{"SubnetId": "subnet_id"}]}]}
 
     mock_emr.describe_cluster.return_value = {
         "Cluster": {
@@ -445,9 +437,7 @@ def test_create_notebook_instance_success_attached_to_cluster(
 @mock.patch("ml_space_lambda.notebook.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.sagemaker")
-def test_create_notebook_instance_client_error(
-    mock_sagemaker, mock_pull_config, mock_project_user_dao, mock_s3_param_json
-):
+def test_create_notebook_instance_client_error(mock_sagemaker, mock_pull_config, mock_project_user_dao, mock_s3_param_json):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.env_variables = {}
 
@@ -463,9 +453,7 @@ def test_create_notebook_instance_client_error(
         "userName": user_name,
         "ProjectName": project_name,
     }
-    mock_sagemaker.create_notebook_instance.side_effect = ClientError(
-        error_msg, "CreateNotebookInstance"
-    )
+    mock_sagemaker.create_notebook_instance.side_effect = ClientError(error_msg, "CreateNotebookInstance")
     expected_response = generate_html_response(
         "400",
         "An error occurred (MissingParameter) when calling the CreateNotebookInstance operation: Dummy error message.",
@@ -483,9 +471,7 @@ def test_create_notebook_instance_client_error(
 @mock.patch("ml_space_lambda.notebook.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.sagemaker")
-def test_create_notebook_instance_mismatched_header(
-    mock_sagemaker, mock_pull_config, mock_project_user_dao
-):
+def test_create_notebook_instance_mismatched_header(mock_sagemaker, mock_pull_config, mock_project_user_dao):
     event_body = {
         "NotebookInstanceName": "example-notebook-instance",
         "InstanceType": "example_type",
@@ -513,9 +499,7 @@ def test_create_notebook_instance_mismatched_header(
 @mock.patch("ml_space_lambda.notebook.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.sagemaker")
-def test_create_notebook_instance_missing_parameters(
-    mock_sagemaker, mock_pull_config, mock_project_user_dao
-):
+def test_create_notebook_instance_missing_parameters(mock_sagemaker, mock_pull_config, mock_project_user_dao):
     expected_response = generate_html_response(400, "Missing event parameter: 'requestContext'")
     assert lambda_handler({}, mock_context) == expected_response
     mock_sagemaker.create_notebook_instance.assert_not_called()
@@ -542,9 +526,7 @@ def test_ensure_config_create(mock_sagemaker):
     test_info = {
         "ip": "1.2.3.4",
     }
-    mock_sagemaker.describe_notebook_instance_lifecycle_config.side_effect = Exception(
-        "testException"
-    )
+    mock_sagemaker.describe_notebook_instance_lifecycle_config.side_effect = Exception("testException")
     _ensure_config(test_config, test_info)
     mock_sagemaker.describe_notebook_instance_lifecycle_config.assert_called_with(
         NotebookInstanceLifecycleConfigName="testConfig",
@@ -594,9 +576,7 @@ def test_create_notebook_instance_attached_to_cluster_failure(
     mock_emr.list_instances.return_value = {
         "Instances": [{"Ec2InstanceId": "ec2_instance_id", "PrivateIpAddress": "some_private_ip"}]
     }
-    mock_ec2.describe_instances.return_value = {
-        "Reservations": [{"Instances": [{"SubnetId": "subnet_id"}]}]
-    }
+    mock_ec2.describe_instances.return_value = {"Reservations": [{"Instances": [{"SubnetId": "subnet_id"}]}]}
 
     mock_emr.describe_cluster.return_value = {
         "Cluster": {

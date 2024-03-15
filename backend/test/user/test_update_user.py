@@ -297,17 +297,10 @@ def test_update_user_nonexistent(mock_user_dao, mock_project_user_dao, mock_user
 
 @mock.patch("ml_space_lambda.user.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.user.lambda_functions.user_dao")
-def test_update_user_modify_permissions_unknown_value(
-    mock_user_dao, mock_project_user_dao, mock_user
-):
+def test_update_user_modify_permissions_unknown_value(mock_user_dao, mock_project_user_dao, mock_user):
     mock_user_dao.get.return_value = mock_user
-    expected_response = generate_html_response(
-        400, "Bad Request: 'UNICORN' is not a valid Permission"
-    )
-    assert (
-        lambda_handler(_mock_event(updates={"permissions": ["UNICORN"]}), mock_context)
-        == expected_response
-    )
+    expected_response = generate_html_response(400, "Bad Request: 'UNICORN' is not a valid Permission")
+    assert lambda_handler(_mock_event(updates={"permissions": ["UNICORN"]}), mock_context) == expected_response
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
     mock_project_user_dao.get_projects_for_user.assert_not_called()
     mock_user_dao.update.assert_not_called()
@@ -324,12 +317,9 @@ def test_update_user_client_error(mock_user_dao, mock_project_user_dao):
         "GetItem",
     )
     mock_user_dao.get.side_effect = mock_exception
-    assert lambda_handler(
-        _mock_event({"suspended": True}, mock_user), mock_context
-    ) == generate_html_response(
+    assert lambda_handler(_mock_event({"suspended": True}, mock_user), mock_context) == generate_html_response(
         "400",
-        "An error occurred (MissingParameter) when "
-        "calling the GetItem operation: Dummy error message.",
+        "An error occurred (MissingParameter) when " "calling the GetItem operation: Dummy error message.",
     )
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
     mock_project_user_dao.get_projects_for_user.assert_not_called()

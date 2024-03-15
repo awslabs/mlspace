@@ -30,9 +30,7 @@ TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "DATA_BUCKET": "mlspace-da
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.dataset.lambda_functions import list_locations as lambda_handler
 
-mock_event = {
-    "pathParameters": {"scope": DatasetType.GLOBAL.value, "type": DatasetType.GLOBAL.value}
-}
+mock_event = {"pathParameters": {"scope": DatasetType.GLOBAL.value, "type": DatasetType.GLOBAL.value}}
 mock_context = mock.Mock()
 
 
@@ -71,9 +69,7 @@ def test_list_dataset_locations_success(mock_dataset_dao, mock_global_dataset):
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_dataset_dao.get_all_for_scope.assert_called_with(
-        DatasetType.GLOBAL, DatasetType.GLOBAL.value
-    )
+    mock_dataset_dao.get_all_for_scope.assert_called_with(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
@@ -90,9 +86,7 @@ def test_list_dataset_locations_client_error(mock_dataset_dao):
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_dataset_dao.get_all_for_scope.assert_called_with(
-        DatasetType.GLOBAL, DatasetType.GLOBAL.value
-    )
+    mock_dataset_dao.get_all_for_scope.assert_called_with(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")

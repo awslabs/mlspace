@@ -75,9 +75,7 @@ mock_event = {"pathParameters": {"projectName": MOCK_PROJECT_NAME}}
 @mock.patch("ml_space_lambda.emr.lambda_functions.emr")
 def test_list_emr_clusters_success(mock_emr):
     mock_emr.list_clusters.return_value = list_cluster_response
-    expected_response = generate_html_response(
-        200, {"records": mock_response, "nextToken": FAKE_NEXT_TOKEN}
-    )
+    expected_response = generate_html_response(200, {"records": mock_response, "nextToken": FAKE_NEXT_TOKEN})
 
     assert list_all(mock_event, mock_context) == expected_response
 

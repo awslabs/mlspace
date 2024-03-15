@@ -23,12 +23,7 @@ import boto3
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    generate_tags,
-    query_resource_metadata,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -55,9 +50,7 @@ def _normalize_job_definition(definition, iam_role, param_file):
         definition["VpcConfig"]["Subnets"] = definition["subnetIds"].split(",")
         del definition["subnetIds"]
     else:
-        definition["VpcConfig"]["Subnets"] = random.sample(
-            param_file["pSMSSubnetIds"].split(","), 1
-        )
+        definition["VpcConfig"]["Subnets"] = random.sample(param_file["pSMSSubnetIds"].split(","), 1)
     return definition
 
 
@@ -89,14 +82,11 @@ def create(event, context):
 
     # neither TrainingJobDefinition nor TrainingJobDefinitions are required parameters
     if "TrainingJobDefinition" in hpo_job:
-        args["TrainingJobDefinition"] = _normalize_job_definition(
-            hpo_job["TrainingJobDefinition"], iam_role, param_file
-        )
+        args["TrainingJobDefinition"] = _normalize_job_definition(hpo_job["TrainingJobDefinition"], iam_role, param_file)
 
     elif "TrainingJobDefinitions" in hpo_job:
         args["TrainingJobDefinitions"] = [
-            _normalize_job_definition(definition, iam_role, param_file)
-            for definition in hpo_job["TrainingJobDefinitions"]
+            _normalize_job_definition(definition, iam_role, param_file) for definition in hpo_job["TrainingJobDefinitions"]
         ]
 
     if "WarmStartConfig" in hpo_job:
@@ -131,9 +121,7 @@ def list_resources(event, context):
 @api_wrapper
 def list_training_jobs(event, context):
     hpo_job_name = event["pathParameters"]["jobName"]
-    return sagemaker.list_training_jobs_for_hyper_parameter_tuning_job(
-        HyperParameterTuningJobName=hpo_job_name
-    )
+    return sagemaker.list_training_jobs_for_hyper_parameter_tuning_job(HyperParameterTuningJobName=hpo_job_name)
 
 
 @api_wrapper

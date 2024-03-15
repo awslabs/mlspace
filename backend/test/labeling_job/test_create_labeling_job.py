@@ -67,9 +67,7 @@ def test_create_labeling_job(
         "pSMSSecurityGroupId": "securitygroupid",
     }
 
-    mock_response = {
-        "LabelingJobArn": "arn:aws:sagemaker:us-east-1:012345678910:labeling-job/my-labeling-job"
-    }
+    mock_response = {"LabelingJobArn": "arn:aws:sagemaker:us-east-1:012345678910:labeling-job/my-labeling-job"}
 
     mock_project_user_dao.get().role = "arn:aws:iam::012345678910:role/MyUserRole"
     mock_generate_ui_template.return_value = "s3://bucket/path/to/template.liquid"
@@ -77,11 +75,11 @@ def test_create_labeling_job(
         "arn:aws:lambda::012345678910:PRE-SemanticSegmentation",
         "arn:aws:lambda::012345678910:ACS-SemanticSegmentation",
     ]
-    mock_get_auto_labeling_arn.return_value = "arn:sagemaker:us-east-1:012345678910:labeling-job-algorithm-speicfication/image-classification"
-    mock_sagemaker.create_labeling_job.return_value = mock_response
-    mock_generate_labels_configuration_file.return_value = (
-        "s3://bucket/path/to/output/myjob/annotation-tool/data.json"
+    mock_get_auto_labeling_arn.return_value = (
+        "arn:sagemaker:us-east-1:012345678910:labeling-job-algorithm-speicfication/image-classification"
     )
+    mock_sagemaker.create_labeling_job.return_value = mock_response
+    mock_generate_labels_configuration_file.return_value = "s3://bucket/path/to/output/myjob/annotation-tool/data.json"
 
     # check the happy path
     expected_response = generate_html_response(200, mock_response)
@@ -100,9 +98,7 @@ def test_create_labeling_job(
         "tags": generate_tags("auser", "myproject", "mlspace"),
     }
     mock_sagemaker.create_labeling_job.assert_called_with(**create_labeling_job(**args))
-    mock_generate_labels_configuration_file.assert_called_with(
-        [], "myjob", data_bucket_name, "s3://mybucket/path/to/output"
-    )
+    mock_generate_labels_configuration_file.assert_called_with([], "myjob", data_bucket_name, "s3://mybucket/path/to/output")
 
     # check happy path with app role
     mock_get_environment_variables.return_value = {
@@ -171,9 +167,7 @@ def create_labeling_job(
             "UiConfig": {"UiTemplateS3Uri": ui_template_s3_uri},
             "TaskDescription": "",
             "PreHumanTaskLambdaArn": pre_human_task_lambda_arn,
-            "AnnotationConsolidationConfig": {
-                "AnnotationConsolidationLambdaArn": annotation_consolidation_lambda_arn
-            },
+            "AnnotationConsolidationConfig": {"AnnotationConsolidationLambdaArn": annotation_consolidation_lambda_arn},
         },
         "OutputConfig": {"S3OutputPath": f"s3://mybucket{s3_output_path}"},
         "Tags": tags,
@@ -184,9 +178,7 @@ def create_labeling_job(
     if labeling_job_algorithms_config:
         job_definition["LabelingJobAlgorithmsConfig"] = {
             "LabelingJobAlgorithmSpecificationArn": labeling_job_algorithm_specification_arn,
-            "LabelingJobResourceConfig": {
-                "VpcConfig": {"SecurityGroupIds": security_group_ids, "Subnets": subnets}
-            },
+            "LabelingJobResourceConfig": {"VpcConfig": {"SecurityGroupIds": security_group_ids, "Subnets": subnets}},
         }
 
     return job_definition

@@ -15,7 +15,7 @@
 #
 
 import json
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -388,9 +388,7 @@ class TestProjectDAO(TestCase):
         assert mlspace_projects["Count"] == len(LEGACY_PROJECTS)
         assert mlspace_users["Count"] == len(LEGACY_USERS)
         assert mlspace_project_users["Count"] == len(LEGACY_PROJECT_USERS)
-        assert mlspace_datasets["Count"] == len(
-            LEGACY_GLOBAL_DATASETS + LEGACY_PRIVATE_DATASETS + LEGACY_PROJECT_DATASETS
-        )
+        assert mlspace_datasets["Count"] == len(LEGACY_GLOBAL_DATASETS + LEGACY_PRIVATE_DATASETS + LEGACY_PROJECT_DATASETS)
 
         # Spot check that the data got migrated as expected
         found_admin = False
@@ -435,9 +433,7 @@ class TestProjectDAO(TestCase):
             if member.user == PROJECT_OWNER_USER:
                 assert Permission.PROJECT_OWNER in member.permissions
                 assert Permission.COLLABORATOR in member.permissions
-            elif (
-                member.user == "CN=Jean Rasczak, OU=D004, OU=Division A, OU=Corp, O=Acme Corp, C=US"
-            ):
+            elif member.user == "CN=Jean Rasczak, OU=D004, OU=Division A, OU=Corp, O=Acme Corp, C=US":
                 assert Permission.PROJECT_OWNER in member.permissions
                 assert Permission.COLLABORATOR not in member.permissions
             else:
@@ -458,9 +454,7 @@ class TestProjectDAO(TestCase):
         assert ticonderoga_membership.role == ""
 
         datasets_dao = DatasetDAO(DATASETS_TABLE_NAME, self.ddb)
-        global_datasets = datasets_dao.get_all_for_scope(
-            DatasetType.GLOBAL, DatasetType.GLOBAL.value
-        )
+        global_datasets = datasets_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
         admin_datasets = datasets_dao.get_all_for_scope(DatasetType.PRIVATE, ADMIN_USER)
         project_datasets = datasets_dao.get_all_for_scope(DatasetType.PROJECT, TEST_PROJECT_NAME)
         assert len(global_datasets) == 1
