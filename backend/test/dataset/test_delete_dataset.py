@@ -81,7 +81,7 @@ def test_delete_non_existent_dataset(mock_dataset_dao, mock_s3):
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_bucket.objects.filter.not_called()
+    mock_bucket.objects.filter.assert_not_called()
     mock_dataset_dao.delete.assert_not_called()
 
 

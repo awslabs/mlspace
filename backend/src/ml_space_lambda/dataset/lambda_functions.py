@@ -26,6 +26,7 @@ from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
+from ml_space_lambda.utils.dict_utils import filter_dict, map_dict_keys
 
 s3 = boto3.client(
     "s3",
@@ -259,7 +260,7 @@ def list_locations(event, context):
 @api_wrapper
 def list_files(event, context):
     env_variables = get_environment_variables()
-    query_string_parameters = event["queryStringParameters"] or {}
+    query_string_parameters = event.get("queryStringParameters", {})
     
     # map query parameters keys to api parameter names
     query_string_parameters = map_dict_keys(query_string_parameters, {
@@ -285,58 +286,28 @@ def list_files(event, context):
         query_parameters[key] = query_string_parameters[key]
 
     s3_response = s3.list_objects_v2(**query_parameters)
+    response = {}
 
-    # drop unwated fields from response
-    preserved_response_keys = ["IsTruncated", "MaxKeys", "Prefix", "NextContinuationToken"]
-    response = filter_dict(s3_response, preserved_response_keys)
+    # copy over values with updated keys to response
+    response["pageSize"] = s3_response["MaxKeys"]
+    response["prefix"] = s3_response["Prefix"]
     
-    response["Contents"] = []
+    if "NextContinuationToken" in s3_response:
+        response["nextToken"] = s3_response["NextContinuationToken"]
+
+    response["contents"] = []
     
     # drop unwated fields from contents
-    preserved_content_keys = ["Key", "Size"]
     if "Contents" in s3_response:
-        response["Contents"].append(list(map(lambda object: filter_dict(object, preserved_content_keys), s3_response["Contents"])))
+        for content in s3_response["Contents"]:
+            response["contents"].append({
+                "key": content["Key"],
+                "size": content["Size"]
+            })
     
     # merge common prefixes with contents
     if "CommonPrefixes" in s3_response:
-        response["Contents"].append(s3_response["CommonPrefixes"])
+        for common_prefix in s3_response["CommonPrefixes"]:
+            response["contents"].append({"prefix": common_prefix["Prefix"]})
     
-    # map response keys to api parameter names
-    return map_dict_keys(response, {
-        "Contents": "contents",
-        "IsTruncated": "isTruncated",
-        "MaxKeys": "pageSize",
-        "NextContinuationToken": "nextToken",
-        "Prefix": "prefix",
-        "KeyCount": "keyCount"
-    })
-
-
-
-def filter_dict(input: dict, allowed_keys: list[str]):
-    """
-    Returns a copy of input with keys not in allowed_keys removed
- 
-    Args:
-        input (dict): A dict to filter
-        allowed_keys (list[str]): A list of allowed keys
- 
-    Returns:
-        dict: A copy of input with only keys specified in allowed_keys
-    """
-    return {key: input.get(key) for key in allowed_keys if input.get(key) is not None}
-
-
-def map_dict_keys(input: dict, mapping: dict):
-    """
-    Returns a copy of input dict with the keys possible renamed using the
-    provided mapping dict. Unspecified keys will be unchanged.
- 
-    Args:
-        input (dict): A dict with keys to rename
-        mapping (int): A dict of old key names to new key names
- 
-    Returns:
-        dict: A copy of input with keys possibly renamed
-    """
-    return {mapping.get(key, key): input.get(key) for key in input}
+    return response
