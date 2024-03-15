@@ -96,9 +96,9 @@ def create(event, context):
 
     labeling_job["HumanTaskConfig"]["PreHumanTaskLambdaArn"] = get_groundtruth_lambda_arn(LambdaTypes.PRE, task_type)
 
-    labeling_job["HumanTaskConfig"]["AnnotationConsolidationConfig"][
-        "AnnotationConsolidationLambdaArn"
-    ] = get_groundtruth_lambda_arn(LambdaTypes.ACS, task_type)
+    labeling_job["HumanTaskConfig"]["AnnotationConsolidationConfig"]["AnnotationConsolidationLambdaArn"] = (
+        get_groundtruth_lambda_arn(LambdaTypes.ACS, task_type)
+    )
 
     template_uri = generate_ui_template(
         labeling_job_name,
