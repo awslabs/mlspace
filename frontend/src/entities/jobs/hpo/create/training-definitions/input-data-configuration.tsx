@@ -254,7 +254,7 @@ export function Channel (props: ChannelProps) {
                         onBlur={() => touchFields(['ChannelName'])}
                     />
                 </FormField>
-                <FormField label='Input mode'>
+                <FormField label={<>Input mode - <em>optional</em></>}>
                     <Select
                         selectedOption={{ value: item.InputMode }}
                         options={enumToOptions(InputDataConfigurationInputMode)}
