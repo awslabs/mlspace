@@ -216,7 +216,7 @@ export default function EMRClusterCreate () {
                             <ExpandableSection headerText='Advanced network settings' headingTagOverride='h3'>
                                 <FormField
                                     label='Subnet(s)'
-                                    description='Choose a subnet in an availability zone supported by Amazon SageMaker.'
+                                    description='Choose a subnet in an availability zone supported by EMR.'
                                 >
                                     <Select
                                         selectedOption={{label: state.form.Instances?.Ec2SubnetId, value:state.form.Instances?.Ec2SubnetId}}
