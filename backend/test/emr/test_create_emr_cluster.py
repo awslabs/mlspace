@@ -157,7 +157,7 @@ def _expected_args(custom_ami: Optional[str] = None):
             "Ec2KeyName": mock_cluster_config["ec2-key"],
             "KeepJobFlowAliveWhenNoSteps": True,
             "TerminationProtected": False,
-            "Ec2SubnetIds": ["example_subnet1", "example_subnet2", "example_subnet3"],
+            "Ec2SubnetId": "subnet1",
         },
         "VisibleToAllUsers": True,
         "JobFlowRole": TEST_ENV_CONFIG["EMR_EC2_ROLE_NAME"],
@@ -190,7 +190,7 @@ def _mock_event_body(custom_ami: Optional[str] = None):
     return {
         "clusterName": "example_cluster_name",
         "options": options,
-        "subnetIds": "example_subnet1,example_subnet2,example_subnet3",
+        "Instances": {"Ec2SubnetId": "subnet1"},
     }
 
 
@@ -233,7 +233,6 @@ def _mock_args(random_subnet: Optional[str] = None, custom_ami: Optional[str] = 
     call_args = copy.deepcopy(_expected_args(custom_ami=custom_ami))
     if random_subnet:
         call_args["Instances"]["Ec2SubnetId"] = random_subnet
-        del call_args["Instances"]["Ec2SubnetIds"]
 
     return call_args
 
@@ -241,7 +240,7 @@ def _mock_args(random_subnet: Optional[str] = None, custom_ami: Optional[str] = 
 def _mock_event(include_subnet: Optional[bool] = True, custom_ami: Optional[str] = None):
     event_body = copy.deepcopy(_mock_event_body(custom_ami=custom_ami))
     if not include_subnet:
-        del event_body["subnetIds"]
+        event_body["Instances"]["Ec2SubnetId"] = ""
 
     return {
         "body": json.dumps(event_body),
