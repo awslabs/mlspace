@@ -86,9 +86,7 @@ def _migrate_primary_table(
     )
 
 
-def _migrate_access_table(
-    source_table: str, ddb_client=None, mlspace_datasets_table: Optional[str] = None
-):
+def _migrate_access_table(source_table: str, ddb_client=None, mlspace_datasets_table: Optional[str] = None):
     dataset_dao = DatasetDAO(mlspace_datasets_table, ddb_client)
     source_ddb = DynamoDBObjectStore(source_table, ddb_client)
     existing_data = source_ddb._scan().records

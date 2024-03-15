@@ -51,10 +51,7 @@ def test_get_models_ecr_paths_success():
 def test_get_training_models_ecr_paths_success():
     expected_response = generate_html_response(200, expected_images)
 
-    assert (
-        lambda_handler({"queryStringParameters": {"imageScope": "training"}}, mock_context)
-        == expected_response
-    )
+    assert lambda_handler({"queryStringParameters": {"imageScope": "training"}}, mock_context) == expected_response
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
@@ -65,7 +62,4 @@ def test_get_invalid_models_ecr_paths_success():
         f"Bad Request: Unsupported image scope: {bad_scope}. You may need to upgrade your SDK version (pip install -U sagemaker) for newer image scopes. Supported image scope(s): inference, training.",
     )
 
-    assert (
-        lambda_handler({"queryStringParameters": {"imageScope": bad_scope}}, mock_context)
-        == expected_response
-    )
+    assert lambda_handler({"queryStringParameters": {"imageScope": bad_scope}}, mock_context) == expected_response

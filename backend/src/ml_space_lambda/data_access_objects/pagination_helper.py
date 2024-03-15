@@ -24,9 +24,7 @@ PYSETO_PROTOCOL = 3
 
 # For pagination tokens, encryption is NOT required, we're just making them opaque so a hard coded
 # secret is fine
-_pyseto_key: KeyInterface = Key.new(
-    version=PYSETO_PROTOCOL, purpose="local", key=str.encode("Data Science Is Fun!")
-)
+_pyseto_key: KeyInterface = Key.new(version=PYSETO_PROTOCOL, purpose="local", key=str.encode("Data Science Is Fun!"))
 
 
 class PaginationTokenError(Exception):

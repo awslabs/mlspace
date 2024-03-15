@@ -112,9 +112,7 @@ def test_list_reports_success(mock_s3):
 
     assert list({}, mock_context) == expected_response
 
-    mock_paginator.paginate.assert_called_with(
-        Bucket="mlspace-data-bucket", Prefix="mlspace-report"
-    )
+    mock_paginator.paginate.assert_called_with(Bucket="mlspace-data-bucket", Prefix="mlspace-report")
 
 
 @mock.patch("ml_space_lambda.report.lambda_functions.s3")

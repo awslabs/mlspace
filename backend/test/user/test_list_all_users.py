@@ -55,9 +55,7 @@ def test_list_all(mock_user_dao):
     ]
     mock_user_dao.get_all.return_value = all_users
 
-    assert lambda_handler({}, mock_context) == generate_html_response(
-        200, [user.to_dict() for user in all_users]
-    )
+    assert lambda_handler({}, mock_context) == generate_html_response(200, [user.to_dict() for user in all_users])
 
     mock_user_dao.get_all.assert_called_with(include_suspended=True)
 
@@ -70,8 +68,7 @@ def test_list_all_client_error(mock_user_dao):
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling"
-        " the GetItem operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling" " the GetItem operation: Dummy error message.",
     )
     mock_user_dao.get_all.side_effect = ClientError(error_msg, "GetItem")
 

@@ -105,9 +105,7 @@ def retrieve(
 
     if training_compiler_config and (framework in [HUGGING_FACE_FRAMEWORK, "pytorch"]):
         final_image_scope = image_scope
-        config = _config_for_framework_and_scope(
-            framework + "-training-compiler", final_image_scope, accelerator_type
-        )
+        config = _config_for_framework_and_scope(framework + "-training-compiler", final_image_scope, accelerator_type)
     else:
         _framework = framework
         if framework == HUGGING_FACE_FRAMEWORK or framework in TRAINIUM_ALLOWED_FRAMEWORKS:
@@ -124,9 +122,7 @@ def retrieve(
 
     if framework == HUGGING_FACE_FRAMEWORK:
         if version_config.get("version_aliases"):
-            full_base_framework_version = version_config["version_aliases"].get(
-                base_framework_version, base_framework_version
-            )
+            full_base_framework_version = version_config["version_aliases"].get(base_framework_version, base_framework_version)
         _validate_arg(full_base_framework_version, list(version_config.keys()), "base framework")
         version_config = version_config.get(full_base_framework_version)
 
@@ -140,9 +136,7 @@ def retrieve(
 
     repo = version_config["repository"]
 
-    processor = _processor(
-        instance_type, config.get("processors") or version_config.get("processors")
-    )
+    processor = _processor(instance_type, config.get("processors") or version_config.get("processors"))
 
     # if container version is available in .json file, utilize that
     if version_config.get("container_version"):
@@ -155,9 +149,7 @@ def retrieve(
         container_version = sdk_version + "-" + container_version
 
     if framework == HUGGING_FACE_FRAMEWORK:
-        pt_or_tf_version = (
-            re.compile("^(pytorch|tensorflow)(.*)$").match(base_framework_version).group(2)
-        )
+        pt_or_tf_version = re.compile("^(pytorch|tensorflow)(.*)$").match(base_framework_version).group(2)
         _version = original_version
 
         if repo in [
@@ -174,18 +166,9 @@ def retrieve(
             container_version = sdk_version + "-" + container_version
             if config.get("version_aliases").get(original_version):
                 _version = config.get("version_aliases")[original_version]
-            if (
-                config.get("versions", {})
-                .get(_version, {})
-                .get("version_aliases", {})
-                .get(base_framework_version, {})
-            ):
-                _base_framework_version = config.get("versions")[_version]["version_aliases"][
-                    base_framework_version
-                ]
-                pt_or_tf_version = (
-                    re.compile("^(pytorch|tensorflow)(.*)$").match(_base_framework_version).group(2)
-                )
+            if config.get("versions", {}).get(_version, {}).get("version_aliases", {}).get(base_framework_version, {}):
+                _base_framework_version = config.get("versions")[_version]["version_aliases"][base_framework_version]
+                pt_or_tf_version = re.compile("^(pytorch|tensorflow)(.*)$").match(_base_framework_version).group(2)
 
         tag_prefix = f"{pt_or_tf_version}-transformers{_version}"
     else:
@@ -245,9 +228,7 @@ def _get_image_tag(
     else:
         tag = _format_tag(tag_prefix, processor, py_version, container_version, inference_tool)
 
-        if instance_type is not None and _should_auto_select_container_version(
-            instance_type, distribution
-        ):
+        if instance_type is not None and _should_auto_select_container_version(instance_type, distribution):
             container_versions = {
                 "tensorflow-2.3-gpu-py37": "cu110-ubuntu18.04-v3",
                 "tensorflow-2.3.1-gpu-py37": "cu110-ubuntu18.04",
@@ -277,9 +258,7 @@ def _config_for_framework_and_scope(framework, image_scope, accelerator_type=Non
         _validate_accelerator_type(accelerator_type)
 
         if image_scope not in ("eia", "inference"):
-            logger.warning(
-                "Elastic inference is for inference only. Ignoring image scope: %s.", image_scope
-            )
+            logger.warning("Elastic inference is for inference only. Ignoring image scope: %s.", image_scope)
         image_scope = "eia"
 
     available_scopes = config.get("scope", list(config.keys()))
@@ -307,11 +286,7 @@ def _config_for_framework_and_scope(framework, image_scope, accelerator_type=Non
 def _validate_for_suppported_frameworks_and_instance_type(framework, instance_type):
     """Validate if framework is supported for the instance_type"""
     # Validate for Trainium allowed frameworks
-    if (
-        instance_type is not None
-        and "trn" in instance_type
-        and framework not in TRAINIUM_ALLOWED_FRAMEWORKS
-    ):
+    if instance_type is not None and "trn" in instance_type and framework not in TRAINIUM_ALLOWED_FRAMEWORKS:
         _validate_framework(framework, TRAINIUM_ALLOWED_FRAMEWORKS, "framework", "Trainium")
 
 
@@ -362,9 +337,7 @@ def _validate_version_and_set_if_needed(version, config, framework):
     aliased_versions = list(config.get("version_aliases", {}).keys())
 
     if len(available_versions) == 1 and version not in aliased_versions:
-        log_message = "Defaulting to the only supported framework/algorithm version: {}.".format(
-            available_versions[0]
-        )
+        log_message = "Defaulting to the only supported framework/algorithm version: {}.".format(available_versions[0])
         if version and version != available_versions[0]:
             logger.warning("%s Ignoring framework/algorithm version: %s.", log_message, version)
         elif not version:
@@ -410,8 +383,7 @@ def _processor(instance_type, available_processors):
 
     if not instance_type:
         raise ValueError(
-            "Empty SageMaker instance type. For options, see: "
-            "https://aws.amazon.com/sagemaker/pricing/instance-types"
+            "Empty SageMaker instance type. For options, see: " "https://aws.amazon.com/sagemaker/pricing/instance-types"
         )
 
     if instance_type.startswith("local"):

@@ -82,9 +82,7 @@ mock_event_list = [
                     "ModelDataUrl": "s3://some-s3-bucket",
                     "Environment": {"samplekey": "samplevalue"},
                 },
-                "VpcConfig": {
-                    "Subnets": ["mock_event_subnet1", "mock_event_subnet2", "mock_event_subnet3"]
-                },
+                "VpcConfig": {"Subnets": ["mock_event_subnet1", "mock_event_subnet2", "mock_event_subnet3"]},
             }
         ),
         "requestContext": {
@@ -105,9 +103,7 @@ mock_event_list = [
                     "Image": "example_image",
                     "Mode": "example_mode",
                 },
-                "VpcConfig": {
-                    "Subnets": ["mock_event_subnet1", "mock_event_subnet2", "mock_event_subnet3"]
-                },
+                "VpcConfig": {"Subnets": ["mock_event_subnet1", "mock_event_subnet2", "mock_event_subnet3"]},
             }
         ),
         "requestContext": {
@@ -161,13 +157,9 @@ def test_create_model_success_all_optional_parameters_s3_config(
     mlspace_config.param_file = {}
     mlspace_config.env_variables = {}
 
-    expected_response = generate_html_response(
-        200, {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"}
-    )
+    expected_response = generate_html_response(200, {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"})
 
-    mock_sagemaker.create_model.return_value = {
-        "ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"
-    }
+    mock_sagemaker.create_model.return_value = {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"}
 
     mock_pull_config.return_value = mock_s3_param_json
     mock_project_user_dao.get.return_value = mock_project_user
@@ -218,13 +210,9 @@ def test_create_model_success_all_optional_parameters_iam_role_from_dynamo(
     mlspace_config.param_file = {}
     mlspace_config.env_variables = {}
 
-    expected_response = generate_html_response(
-        200, {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"}
-    )
+    expected_response = generate_html_response(200, {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"})
 
-    mock_sagemaker.create_model.return_value = {
-        "ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"
-    }
+    mock_sagemaker.create_model.return_value = {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"}
     mock_random.sample.return_value = ["mock_event_subnet2"]
     mock_pull_config.return_value = mock_s3_param_json
     mock_project_user_dao.get.return_value = mock_project_user
@@ -272,13 +260,9 @@ def test_create_model_success_no_optional_parameters(
     mlspace_config.param_file = {}
     mlspace_config.env_variables = {}
 
-    expected_response = generate_html_response(
-        200, {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"}
-    )
+    expected_response = generate_html_response(200, {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"})
 
-    mock_sagemaker.create_model.return_value = {
-        "ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"
-    }
+    mock_sagemaker.create_model.return_value = {"ModelArn": f"arn:aws:sagemaker:example:model/{MOCK_MODEL_NAME}"}
 
     mock_pull_config.return_value = mock_s3_param_json
 
@@ -311,9 +295,7 @@ def test_create_model_success_no_optional_parameters(
 @mock.patch("ml_space_lambda.model.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.model.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.model.lambda_functions.project_user_dao")
-def test_create_model_client_error(
-    mock_project_user_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_create_model_client_error(mock_project_user_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.env_variables = {}
     mlspace_config.param_file = {}
@@ -352,9 +334,7 @@ def test_create_model_client_error(
 @mock.patch("ml_space_lambda.model.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.model.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.model.lambda_functions.project_user_dao")
-def test_create_model_mismatched_header(
-    mock_project_user_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_create_model_mismatched_header(mock_project_user_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.env_variables = {}
     mlspace_config.param_file = {}

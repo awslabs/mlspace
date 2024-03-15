@@ -48,9 +48,7 @@ def test_delete_endpoint_config_client_error(mock_sagemaker):
         "ResponseMetadata": {"HTTPStatusCode": 400},
     }
 
-    mock_sagemaker.delete_endpoint_config.side_effect = ClientError(
-        error_msg, "DeleteEndpointConfig"
-    )
+    mock_sagemaker.delete_endpoint_config.side_effect = ClientError(error_msg, "DeleteEndpointConfig")
     expected_response = generate_html_response(
         400,
         "An error occurred (MissingParameter) when calling the DeleteEndpointConfig operation: Dummy error message.",

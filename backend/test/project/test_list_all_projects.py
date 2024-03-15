@@ -114,9 +114,7 @@ def test_list_all_projects_user(mock_project_dao, mock_project_user_dao):
     )
 
     assert lambda_handler(mock_event(False), mock_context) == expected_response
-    mock_project_dao.get_all.assert_called_with(
-        project_names=[project_user.project for project_user in MOCK_PROJECT_USERS]
-    )
+    mock_project_dao.get_all.assert_called_with(project_names=[project_user.project for project_user in MOCK_PROJECT_USERS])
     mock_project_user_dao.get_projects_for_user.assert_called_with(MOCK_USERNAME)
 
 
@@ -129,8 +127,7 @@ def test_list_all_projects_client_error(mock_project_dao, mock_project_user_dao)
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling"
-        " the Scan operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling" " the Scan operation: Dummy error message.",
     )
 
     mock_project_dao.get_all.side_effect = ClientError(error_msg, "Scan")

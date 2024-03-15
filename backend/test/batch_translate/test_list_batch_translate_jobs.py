@@ -20,10 +20,7 @@ from unittest import mock
 
 from botocore.exceptions import ClientError
 
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -38,9 +35,7 @@ MOCK_USERNAME = "jdoe@amazon.com"
 FAKE_NEXT_TOKEN = "Fake-Next-Page-Marker"
 
 
-def _mock_job_metadata(
-    identifier: str, username: Optional[str] = MOCK_USERNAME
-) -> ResourceMetadataModel:
+def _mock_job_metadata(identifier: str, username: Optional[str] = MOCK_USERNAME) -> ResourceMetadataModel:
     return ResourceMetadataModel(
         identifier,
         ResourceType.BATCH_TRANSLATE_JOB,

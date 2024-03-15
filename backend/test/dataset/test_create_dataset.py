@@ -91,9 +91,7 @@ def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, sc
 
     dataset_location = f's3://{TEST_ENV_CONFIG["DATA_BUCKET"]}/{directory_name}'
 
-    test_dataset = generate_dataset_model(
-        event=mock_event, scope=scope, dataset_location=dataset_location
-    )
+    test_dataset = generate_dataset_model(event=mock_event, scope=scope, dataset_location=dataset_location)
     success_response = {"status": "success", "dataset": test_dataset.to_dict()}
     expected_response = generate_html_response(200, success_response)
 
@@ -132,8 +130,7 @@ def test_create_dataset_client_error(mock_s3, mock_dataset_dao):
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling the GeneratePresignedUrl operation: "
-        "Dummy error message.",
+        "An error occurred (ThrottlingException) when calling the GeneratePresignedUrl operation: " "Dummy error message.",
     )
     mock_dataset_dao.get.return_value = None
     mock_s3.put_object.side_effect = ClientError(error_msg, "GeneratePresignedUrl")
@@ -152,9 +149,7 @@ def test_create_dataset_manipulated_type(mock_s3):
     mock_event = generate_event(DatasetType.GLOBAL.value, scope)
     mock_event["headers"] = {"x-mlspace-dataset-type": "private", "x-mlspace-dataset-scope": scope}
 
-    expected_response = generate_html_response(
-        400, "Bad Request: Dataset headers do not match expected type and scope."
-    )
+    expected_response = generate_html_response(400, "Bad Request: Dataset headers do not match expected type and scope.")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
@@ -168,9 +163,7 @@ def test_create_dataset_manipulated_scope(mock_s3):
     mock_event = generate_event(DatasetType.GLOBAL.value, scope)
     mock_event["headers"] = {"x-mlspace-dataset-type": "private", "x-mlspace-dataset-scope": "jdoe"}
 
-    expected_response = generate_html_response(
-        400, "Bad Request: Dataset headers do not match expected type and scope."
-    )
+    expected_response = generate_html_response(400, "Bad Request: Dataset headers do not match expected type and scope.")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 

@@ -23,10 +23,7 @@ import boto3
 
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.data_access_objects.resource_scheduler import (
-    ResourceSchedulerDAO,
-    ResourceSchedulerModel,
-)
+from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import (
     api_wrapper,
@@ -74,9 +71,7 @@ def create(event, context):
         and "defaultEndpointTTL" in project.metadata["terminationConfiguration"]
     ):
         # Endpoint TTL is in hours so we need to convert that to seconds and add to the current time
-        termination_time = time.time() + (
-            int(project.metadata["terminationConfiguration"]["defaultEndpointTTL"]) * 60 * 60
-        )
+        termination_time = time.time() + (int(project.metadata["terminationConfiguration"]["defaultEndpointTTL"]) * 60 * 60)
         resource_scheduler_dao.create(
             ResourceSchedulerModel(
                 resource_id=endpoint_name,
@@ -87,9 +82,7 @@ def create(event, context):
         )
 
     # Create the initial endpoint metadata record
-    resource_metadata_dao.upsert_record(
-        endpoint_name, ResourceType.ENDPOINT, user_name, project_name, {}
-    )
+    resource_metadata_dao.upsert_record(endpoint_name, ResourceType.ENDPOINT, user_name, project_name, {})
 
     return response
 
@@ -110,9 +103,7 @@ def describe(event, context):
     tags = get_tags_for_resource(sagemaker, response["EndpointArn"])
 
     # Add termination time metadata to response
-    scheduler_model = resource_scheduler_dao.get(
-        resource_id=endpoint_name, resource_type=ResourceType.ENDPOINT
-    )
+    scheduler_model = resource_scheduler_dao.get(resource_id=endpoint_name, resource_type=ResourceType.ENDPOINT)
     if scheduler_model and scheduler_model.termination_time:
         response["TerminationTime"] = scheduler_model.termination_time
     for tag in tags:

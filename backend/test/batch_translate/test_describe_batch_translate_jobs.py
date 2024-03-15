@@ -106,23 +106,17 @@ mock_s3_translate_detail_file = {
     "details": [
         {
             "sourceFile": "english_test_doc.txt",
-            "auxiliaryData": {
-                "error": {"errorCode": "MockError", "errorMessage": "Mocking message"}
-            },
+            "auxiliaryData": {"error": {"errorCode": "MockError", "errorMessage": "Mocking message"}},
         }
     ]
 }
 
-mock_s3_get_object_response = {
-    "Body": BytesIO(bytes(json.dumps(mock_s3_translate_detail_file), "utf-8"))
-}
+mock_s3_get_object_response = {"Body": BytesIO(bytes(json.dumps(mock_s3_translate_detail_file), "utf-8"))}
 
 
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.translate")
-def test_describe_batch_translate_job_success_error_in_metadata(
-    mock_translate, mock_resource_metadata_dao
-):
+def test_describe_batch_translate_job_success_error_in_metadata(mock_translate, mock_resource_metadata_dao):
     mock_translate.describe_text_translation_job.return_value = generate_mock_response()
     mock_resource_metadata_dao.get.return_value = generate_mock_metadata_model(True)
 
@@ -131,18 +125,14 @@ def test_describe_batch_translate_job_success_error_in_metadata(
     assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_translate.describe_text_translation_job.assert_called_with(JobId=job_id)
-    mock_resource_metadata_dao.get.assert_called_with(
-        id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB
-    )
+    mock_resource_metadata_dao.get.assert_called_with(id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB)
     mock_resource_metadata_dao.update.assert_not_called()
 
 
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.s3")
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.translate")
-def test_describe_batch_translate_job_success_error_not_in_metadata(
-    mock_translate, mock_resource_metadata_dao, mock_s3
-):
+def test_describe_batch_translate_job_success_error_not_in_metadata(mock_translate, mock_resource_metadata_dao, mock_s3):
     mock_translate.describe_text_translation_job.return_value = generate_mock_response()
     mock_resource_metadata_dao.get.return_value = generate_mock_metadata_model(False)
     mock_resource_metadata_dao.update.return_value = None
@@ -153,9 +143,7 @@ def test_describe_batch_translate_job_success_error_not_in_metadata(
     assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_translate.describe_text_translation_job.assert_called_with(JobId=job_id)
-    mock_resource_metadata_dao.get.assert_called_with(
-        id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB
-    )
+    mock_resource_metadata_dao.get.assert_called_with(id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB)
     mock_resource_metadata_dao.update.assert_called_with(
         id=job_id,
         type=ResourceType.BATCH_TRANSLATE_JOB,
@@ -184,9 +172,7 @@ def test_describe_batch_translate_job_success_error_not_in_metadata_client_error
     assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_translate.describe_text_translation_job.assert_called_with(JobId=job_id)
-    mock_resource_metadata_dao.get.assert_called_with(
-        id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB
-    )
+    mock_resource_metadata_dao.get.assert_called_with(id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB)
     mock_resource_metadata_dao.update.assert_not_called()
     mock_s3.get_object.assert_called_with(Bucket=s3_bucket, Key=f"{s3_key}/{s3_detail_file}")
 
@@ -203,9 +189,7 @@ def test_describe_batch_translate_job_client_error(mock_translate):
         "An error occurred (ResourceNotFoundException) when calling the DescribeTextTranslationJob operation: Dummy error message.",
     )
 
-    mock_translate.describe_text_translation_job.side_effect = ClientError(
-        error_msg, "DescribeTextTranslationJob"
-    )
+    mock_translate.describe_text_translation_job.side_effect = ClientError(error_msg, "DescribeTextTranslationJob")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 

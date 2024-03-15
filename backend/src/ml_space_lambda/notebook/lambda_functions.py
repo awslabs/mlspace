@@ -27,10 +27,7 @@ from botocore.exceptions import ClientError
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.data_access_objects.resource_scheduler import (
-    ResourceSchedulerDAO,
-    ResourceSchedulerModel,
-)
+from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import Permission, ResourceType
 from ml_space_lambda.utils.common_functions import (
@@ -99,9 +96,7 @@ def create(event, context):
         cluster_info = emr.describe_cluster(ClusterId=cluster_id)
         master_info = _get_emr_master_info(cluster_id)
         subnet = master_info["subnet"]
-        lifecycle_config = _get_and_ensure_emr_lifecycle_config(
-            cluster_info, master_info, param_file
-        )
+        lifecycle_config = _get_and_ensure_emr_lifecycle_config(cluster_info, master_info, param_file)
 
     response = sagemaker.create_notebook_instance(
         NotebookInstanceName=inst_name,
@@ -126,15 +121,10 @@ def create(event, context):
         and project.metadata["terminationConfiguration"]
         and "defaultNotebookStopTime" in project.metadata["terminationConfiguration"]
     ):
-        if (
-            "allowNotebookOwnerOverride" in project.metadata["terminationConfiguration"]
-            and "NotebookDailyStopTime" in request
-        ):
+        if "allowNotebookOwnerOverride" in project.metadata["terminationConfiguration"] and "NotebookDailyStopTime" in request:
             daily_stop_time = get_notebook_stop_time(request.get("NotebookDailyStopTime"))
         else:
-            daily_stop_time = get_notebook_stop_time(
-                project.metadata["terminationConfiguration"]["defaultNotebookStopTime"]
-            )
+            daily_stop_time = get_notebook_stop_time(project.metadata["terminationConfiguration"]["defaultNotebookStopTime"])
 
         # If daily_stop_time is None / "" don't schedule termination
         if daily_stop_time:
@@ -148,9 +138,7 @@ def create(event, context):
             )
 
     # Create the record in the resource_metadata table
-    resource_metadata_dao.upsert_record(
-        inst_name, ResourceType.NOTEBOOK, user_name, project.name, {}
-    )
+    resource_metadata_dao.upsert_record(inst_name, ResourceType.NOTEBOOK, user_name, project.name, {})
 
     return response
 
@@ -173,9 +161,7 @@ def describe(event, context):
     tags = get_tags_for_resource(sagemaker, response["NotebookInstanceArn"])
 
     # Add termination time metadata to response
-    scheduler_model = resource_scheduler_dao.get(
-        resource_id=notebook_name, resource_type=ResourceType.NOTEBOOK
-    )
+    scheduler_model = resource_scheduler_dao.get(resource_id=notebook_name, resource_type=ResourceType.NOTEBOOK)
     if scheduler_model and scheduler_model.termination_time:
         response["NotebookDailyStopTime"] = scheduler_model.termination_time
 
@@ -193,17 +179,13 @@ def edit(event, context):
     param_file = pull_config_from_s3()
     event_body = json.loads(event["body"])
     lifecycle_config = (
-        event_body["NotebookInstanceLifecycleConfigName"]
-        if "NotebookInstanceLifecycleConfigName" in event_body
-        else None
+        event_body["NotebookInstanceLifecycleConfigName"] if "NotebookInstanceLifecycleConfigName" in event_body else None
     )
     if "clusterId" in event_body:
         cluster_id = event_body["clusterId"]
         cluster_info = emr.describe_cluster(ClusterId=cluster_id)
         master_info = _get_emr_master_info(cluster_id)
-        lifecycle_config = _get_and_ensure_emr_lifecycle_config(
-            cluster_info, master_info, param_file
-        )
+        lifecycle_config = _get_and_ensure_emr_lifecycle_config(cluster_info, master_info, param_file)
 
     if not lifecycle_config or lifecycle_config.lower() == "no configuration":
         lifecycle_config = param_file["pSMSLifecycleConfigName"]
@@ -232,9 +214,7 @@ def edit(event, context):
                 resource_scheduler_dao.update_termination_time(
                     resource_id=event_body["NotebookInstanceName"],
                     resource_type=ResourceType.NOTEBOOK,
-                    new_termination_time=get_notebook_stop_time(
-                        event_body.get("NotebookDailyStopTime")
-                    ),
+                    new_termination_time=get_notebook_stop_time(event_body.get("NotebookDailyStopTime")),
                     project=project.name,
                 )
         else:
@@ -271,11 +251,7 @@ def list_resources(event, context):
             and project_user
             and Permission.PROJECT_OWNER not in project_user.permissions
         ):
-            response["records"] = [
-                record.to_dict()
-                for record in notebooks_metadata.records
-                if record.user == user.username
-            ]
+            response["records"] = [record.to_dict() for record in notebooks_metadata.records if record.user == user.username]
         else:
             response["records"] = [record.to_dict() for record in notebooks_metadata.records]
     else:
@@ -289,11 +265,7 @@ def list_resources(event, context):
         project_names = [project_user.project for project_user in projects]
         # Need to filter out any notebook records that are associated with a project the user
         # no longer belongs to (even if the user was the creator/owner)
-        response["records"] = [
-            record.to_dict()
-            for record in notebooks_metadata.records
-            if record.project in project_names
-        ]
+        response["records"] = [record.to_dict() for record in notebooks_metadata.records if record.project in project_names]
 
     return response
 
@@ -319,9 +291,7 @@ def stop(event, context):
 
 def _ensure_config(config_name: str, master_info: dict):
     try:
-        sagemaker.describe_notebook_instance_lifecycle_config(
-            NotebookInstanceLifecycleConfigName=config_name
-        )
+        sagemaker.describe_notebook_instance_lifecycle_config(NotebookInstanceLifecycleConfigName=config_name)
     except Exception:
         sagemaker.create_notebook_instance_lifecycle_config(
             NotebookInstanceLifecycleConfigName=config_name,

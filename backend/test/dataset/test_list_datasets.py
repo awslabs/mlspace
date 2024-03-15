@@ -157,6 +157,4 @@ def test_list_datasets_client_error(mock_dataset_dao):
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_dataset_dao.get_all_for_scope.assert_called_with(
-        DatasetType.GLOBAL, DatasetType.GLOBAL.value
-    )
+    mock_dataset_dao.get_all_for_scope.assert_called_with(DatasetType.GLOBAL, DatasetType.GLOBAL.value)

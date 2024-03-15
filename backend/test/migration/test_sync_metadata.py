@@ -31,9 +31,7 @@ mock_context = mock.Mock()
 
 
 def test_sync_no_resource_types():
-    expected_response = generate_html_response(
-        200, {"success": True, "message": "No resource types were specified."}
-    )
+    expected_response = generate_html_response(200, {"success": True, "message": "No resource types were specified."})
     response = lambda_handler({"body": json.dumps({})}, mock_context)
     assert response == expected_response
 
@@ -144,9 +142,7 @@ def test_sync_notebook_metadata(mock_sagemaker, mock_resource_metadata_dao, mock
                     "InstanceType": notebook1_metadata["InstanceType"],
                     "CreationTime": notebook1_metadata["CreationTime"],
                     "LastModifiedTime": notebook1_metadata["LastModifiedTime"],
-                    "NotebookInstanceLifecycleConfigName": notebook1_metadata[
-                        "NotebookInstanceLifecycleConfigName"
-                    ],
+                    "NotebookInstanceLifecycleConfigName": notebook1_metadata["NotebookInstanceLifecycleConfigName"],
                 },
                 {
                     "NotebookInstanceName": "test-notebook-2",
@@ -155,9 +151,7 @@ def test_sync_notebook_metadata(mock_sagemaker, mock_resource_metadata_dao, mock
                     "InstanceType": notebook2_metadata["InstanceType"],
                     "CreationTime": notebook2_metadata["CreationTime"],
                     "LastModifiedTime": notebook2_metadata["LastModifiedTime"],
-                    "NotebookInstanceLifecycleConfigName": notebook2_metadata[
-                        "NotebookInstanceLifecycleConfigName"
-                    ],
+                    "NotebookInstanceLifecycleConfigName": notebook2_metadata["NotebookInstanceLifecycleConfigName"],
                 },
                 {
                     "NotebookInstanceName": "test-notebook-3",
@@ -166,9 +160,7 @@ def test_sync_notebook_metadata(mock_sagemaker, mock_resource_metadata_dao, mock
                     "InstanceType": notebook3_metadata["InstanceType"],
                     "CreationTime": notebook3_metadata["CreationTime"],
                     "LastModifiedTime": notebook3_metadata["LastModifiedTime"],
-                    "NotebookInstanceLifecycleConfigName": notebook3_metadata[
-                        "NotebookInstanceLifecycleConfigName"
-                    ],
+                    "NotebookInstanceLifecycleConfigName": notebook3_metadata["NotebookInstanceLifecycleConfigName"],
                 },
                 {
                     "NotebookInstanceName": "test-notebook-4",
@@ -523,9 +515,7 @@ def test_sync_training_jobs(mock_sagemaker, mock_resource_metadata_dao, mock_get
         None,
         ValueError("Totally fake error"),
     ]
-    response = lambda_handler(
-        {"body": json.dumps({"resourceTypes": ["TrainingJobs"]})}, mock_context
-    )
+    response = lambda_handler({"body": json.dumps({"resourceTypes": ["TrainingJobs"]})}, mock_context)
     assert response == expected_response
     mock_sagemaker.get_paginator.assert_called_with("list_training_jobs")
     mock_get_tags.assert_has_calls(
@@ -648,9 +638,7 @@ def test_sync_transform_metadata(mock_sagemaker, mock_resource_metadata_dao, moc
         None,
         ValueError("Totally fake error"),
     ]
-    response = lambda_handler(
-        {"body": json.dumps({"resourceTypes": ["TransformJobs"]})}, mock_context
-    )
+    response = lambda_handler({"body": json.dumps({"resourceTypes": ["TransformJobs"]})}, mock_context)
     assert response == expected_response
     mock_sagemaker.get_paginator.assert_called_with("list_transform_jobs")
     mock_get_tags.assert_has_calls(
@@ -739,9 +727,7 @@ def test_sync_endpoint_config_metadata(mock_sagemaker, mock_resource_metadata_da
         None,
         ValueError("Totally fake error"),
     ]
-    response = lambda_handler(
-        {"body": json.dumps({"resourceTypes": ["EndpointConfigs"]})}, mock_context
-    )
+    response = lambda_handler({"body": json.dumps({"resourceTypes": ["EndpointConfigs"]})}, mock_context)
     assert response == expected_response
     mock_sagemaker.get_paginator.assert_called_with("list_endpoint_configs")
     mock_get_tags.assert_has_calls(
@@ -843,23 +829,17 @@ def test_sync_hpo_jobs(mock_sagemaker, mock_resource_metadata_dao, mock_get_tags
             "HyperParameterTuningJobSummaries": [
                 {
                     **job1_metadata,
-                    "HyperParameterTuningJobArn": job1_metadata[
-                        "HyperParameterTuningJobArn"
-                    ].lower(),
+                    "HyperParameterTuningJobArn": job1_metadata["HyperParameterTuningJobArn"].lower(),
                     "HyperParameterTuningJobName": "Test-Job-1",
                 },
                 {
                     **job2_metadata,
-                    "HyperParameterTuningJobArn": job2_metadata[
-                        "HyperParameterTuningJobArn"
-                    ].lower(),
+                    "HyperParameterTuningJobArn": job2_metadata["HyperParameterTuningJobArn"].lower(),
                     "HyperParameterTuningJobName": "test-job-2",
                 },
                 {
                     **job3_metadata,
-                    "HyperParameterTuningJobArn": job3_metadata[
-                        "HyperParameterTuningJobArn"
-                    ].lower(),
+                    "HyperParameterTuningJobArn": job3_metadata["HyperParameterTuningJobArn"].lower(),
                     "HyperParameterTuningJobName": "test-job-3",
                 },
             ]

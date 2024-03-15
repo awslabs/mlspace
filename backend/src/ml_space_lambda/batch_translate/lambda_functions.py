@@ -22,11 +22,7 @@ import boto3
 
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    query_resource_metadata,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 translate = boto3.client("translate", config=retry_config)
@@ -74,9 +70,7 @@ def create(event, context):
     # Usually we rely on event bridge notifications to create the initial resource metadata
     # record but due to the lack of tags/arns with translate jobs we do it here to ensure
     # we correctly attribute the user/project
-    job_details = translate.describe_text_translation_job(JobId=response["JobId"])[
-        "TextTranslationJobProperties"
-    ]
+    job_details = translate.describe_text_translation_job(JobId=response["JobId"])["TextTranslationJobProperties"]
 
     # Creates the initial resource metadata record
     resource_metadata_dao.upsert_record(
@@ -117,7 +111,9 @@ def describe(event, context):
                 # and it's possible one target language had errors while the other did not
                 for target_language_code in job["TargetLanguageCodes"]:
                     error_found = False
-                    s3_uri = f"{job['OutputDataConfig']['S3Uri']}details/{target_language_code}.auxiliary-translation-details.json"
+                    s3_uri = (
+                        f"{job['OutputDataConfig']['S3Uri']}details/{target_language_code}.auxiliary-translation-details.json"
+                    )
                     path_parts = s3_uri.replace("s3://", "").split("/")
                     bucket = path_parts.pop(0)
                     key = "/".join(path_parts)
@@ -137,17 +133,13 @@ def describe(event, context):
                             if "errorCode" in error_data and "errorMessage" in error_data:
                                 error_found = True
                                 metadata.metadata["Error"]["ErrorCode"] = error_data["errorCode"]
-                                metadata.metadata["Error"]["ErrorMessage"] = error_data[
-                                    "errorMessage"
-                                ]
+                                metadata.metadata["Error"]["ErrorMessage"] = error_data["errorMessage"]
                         if error_found:
                             break
                     if error_found:
                         metadata.metadata["Error"]["S3ErrorLocation"] = key
                         break
-                resource_metadata_dao.update(
-                    id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB, metadata=metadata.metadata
-                )
+                resource_metadata_dao.update(id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB, metadata=metadata.metadata)
 
             response["TextTranslationJobProperties"]["Error"] = metadata.metadata["Error"]
         except Exception as e:

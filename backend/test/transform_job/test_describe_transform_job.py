@@ -72,9 +72,7 @@ def test_describe_transform_job_client_error(mock_sagemaker):
         "An error occurred (ThrottlingException) when calling the DescribeTransformJob operation: Dummy error message.",
     )
 
-    mock_sagemaker.describe_transform_job.side_effect = ClientError(
-        error_msg, "DescribeTransformJob"
-    )
+    mock_sagemaker.describe_transform_job.side_effect = ClientError(error_msg, "DescribeTransformJob")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 

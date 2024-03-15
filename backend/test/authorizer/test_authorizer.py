@@ -55,21 +55,15 @@ MOCK_PROJECT_NAME = "UnitTestProject"
 MOCK_JOB_NAME = "UnitTestJob"
 MOCK_REPORT_NAME = "UnitTestReport"
 MOCK_SUSPENDED_PROJECT_NAME = "SuspendedTestProject"
-MOCK_PROJECT = ProjectModel(
-    MOCK_PROJECT_NAME, "Project used for unit tests", False, MOCK_OWNER_USER.username
-)
+MOCK_PROJECT = ProjectModel(MOCK_PROJECT_NAME, "Project used for unit tests", False, MOCK_OWNER_USER.username)
 MOCK_SUSPENDED_PROJECT = ProjectModel(
     MOCK_SUSPENDED_PROJECT_NAME,
     "Suspended project used for unit tests",
     True,
     MOCK_OWNER_USER.username,
 )
-MOCK_OWNER_PROJECT_USER = ProjectUserModel(
-    MOCK_OWNER_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.PROJECT_OWNER]
-)
-MOCK_REGULAR_PROJECT_USER = ProjectUserModel(
-    MOCK_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.COLLABORATOR]
-)
+MOCK_OWNER_PROJECT_USER = ProjectUserModel(MOCK_OWNER_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.PROJECT_OWNER])
+MOCK_REGULAR_PROJECT_USER = ProjectUserModel(MOCK_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.COLLABORATOR])
 
 
 def policy_response(
@@ -220,9 +214,7 @@ def test_nonexistent_user(mock_user_dao):
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_suspended_user(mock_user_dao):
     mock_user_dao.get.return_value = MOCK_SUSPENDED_USER
-    assert lambda_handler(mock_event(user=MOCK_SUSPENDED_USER), {}) == policy_response(
-        allow=False, user=MOCK_SUSPENDED_USER
-    )
+    assert lambda_handler(mock_event(user=MOCK_SUSPENDED_USER), {}) == policy_response(allow=False, user=MOCK_SUSPENDED_USER)
     mock_user_dao.get.assert_called_with(MOCK_SUSPENDED_USER.username)
 
 
@@ -891,9 +883,7 @@ def test_get_project_sagemaker_resource(
         mock_project_user_dao.get.return_value = project_user
 
     project_in_context = False
-    if (
-        metadata_resource_type or "clusterId" == path_param_key or resource.endswith("/schedule")
-    ) and (
+    if (metadata_resource_type or "clusterId" == path_param_key or resource.endswith("/schedule")) and (
         metadata_resource_type
         not in [
             ResourceType.HPO_JOB,
@@ -940,14 +930,8 @@ def test_get_project_sagemaker_resource(
             ]
             and user.username == MOCK_ADMIN_USER.username
         ):
-            mock_resource_metadata_dao.get.assert_called_with(
-                path_params[path_param_key], metadata_resource_type
-            )
-    elif (
-        mock_method == "PUT"
-        and user.username == MOCK_OWNER_USER.username
-        and path_param_key != "clusterId"
-    ):
+            mock_resource_metadata_dao.get.assert_called_with(path_params[path_param_key], metadata_resource_type)
+    elif mock_method == "PUT" and user.username == MOCK_OWNER_USER.username and path_param_key != "clusterId":
         mock_sagemaker.list_tags.assert_called_once()
     else:
         mock_sagemaker.list_tags.assert_not_called()
@@ -1295,9 +1279,7 @@ def test_unauthenticated_endpoint_get(
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_unauthenticated_endpoint_post(
-    mock_user_dao, resource: str, path_params: Dict[str, str], user: UserModel
-):
+def test_unauthenticated_endpoint_post(mock_user_dao, resource: str, path_params: Dict[str, str], user: UserModel):
     mock_user_dao.get.return_value = user
     assert lambda_handler(
         mock_event(user=user, resource=resource, method="POST", path_params=path_params),
@@ -1382,9 +1364,9 @@ def test_get_dataset_locations(
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_unhandled_route(mock_user_dao):
     mock_user_dao.get.return_value = MOCK_USER
-    assert lambda_handler(
-        mock_event(user=MOCK_USER, resource="/secret/super-backdoor"), {}
-    ) == policy_response(user=MOCK_USER, allow=False)
+    assert lambda_handler(mock_event(user=MOCK_USER, resource="/secret/super-backdoor"), {}) == policy_response(
+        user=MOCK_USER, allow=False
+    )
     mock_user_dao.get.assert_called_with(MOCK_USER.username)
 
 
@@ -1497,9 +1479,7 @@ def test_notebook_privileged(
 
     mock_resource_metadata_dao.get.assert_called_with(notebook_name, ResourceType.NOTEBOOK)
     mock_user_dao.get.assert_called_with(user.username)
-    if action == "start" or (
-        project_user and Permission.PROJECT_OWNER not in project_user.permissions
-    ):
+    if action == "start" or (project_user and Permission.PROJECT_OWNER not in project_user.permissions):
         mock_project_dao.get.assert_called_with(test_project_name)
 
     # While owners are allowed to act on resources they must still be active members of the project
@@ -1618,11 +1598,7 @@ def test_dataset_routes(
     mock_user_dao.get.assert_called_with(user.username)
     mock_dataset_dao.get.assert_called_with(scope, mock_dataset.name)
     # We'll only grab the project user if it's a GET, not global, and the user wasn't the owner
-    if (
-        scope != DatasetType.GLOBAL.value
-        and method == "GET"
-        and user.username != MOCK_OWNER_USER.username
-    ):
+    if scope != DatasetType.GLOBAL.value and method == "GET" and user.username != MOCK_OWNER_USER.username:
         mock_project_user_dao.get.assert_called_with(scope, user.username)
     else:
         mock_project_user_dao.get.assert_not_called()
@@ -2063,9 +2039,7 @@ def test_stop_batch_translate_job(
     if user == MOCK_ADMIN_USER:
         mock_resource_metadata_dao.get.assert_not_called()
     else:
-        mock_resource_metadata_dao.get.assert_called_with(
-            mock_job_id, ResourceType.BATCH_TRANSLATE_JOB
-        )
+        mock_resource_metadata_dao.get.assert_called_with(mock_job_id, ResourceType.BATCH_TRANSLATE_JOB)
         mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
     mock_user_dao.get.assert_called_with(user.username)
@@ -2080,18 +2054,14 @@ def test_verified_token(mock_http, mock_user_dao, mock_well_known_config, mock_o
         mock_oidc_jwks_keys,
     ]
     mock_user_dao.get.return_value = MOCK_USER
-    assert lambda_handler(
-        mock_event(user=MOCK_USER, resource="/project", method="POST"), {}
-    ) == policy_response(allow=True, user=MOCK_USER)
+    assert lambda_handler(mock_event(user=MOCK_USER, resource="/project", method="POST"), {}) == policy_response(
+        allow=True, user=MOCK_USER
+    )
     mock_user_dao.get.assert_called_with(MOCK_USER.username)
     mock_http.request.assert_has_calls(
         [
-            mock.call(
-                "GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration"
-            ),
-            mock.call(
-                "GET", "https://example-oidc.com/realms/mlspace/protocol/openid-connect/certs"
-            ),
+            mock.call("GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration"),
+            mock.call("GET", "https://example-oidc.com/realms/mlspace/protocol/openid-connect/certs"),
         ]
     )
 
@@ -2109,17 +2079,13 @@ def test_verified_token_bad_well_known_config(mock_http, mock_user_dao, mock_oid
     ) == policy_response(allow=False, valid_token=False)
     mock_user_dao.get.assert_not_called()
     mock_http.request.assert_called_once()
-    mock_http.request.assert_called_with(
-        "GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration"
-    )
+    mock_http.request.assert_called_with("GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration")
 
 
 @mock.patch.dict("os.environ", MOCK_OIDC_ENV, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.http")
-def test_verified_token_bad_unrecognized_key(
-    mock_http, mock_user_dao, mock_well_known_config, mock_oidc_jwks_keys
-):
+def test_verified_token_bad_unrecognized_key(mock_http, mock_user_dao, mock_well_known_config, mock_oidc_jwks_keys):
     mock_http.request.side_effect = [
         mock_well_known_config,
         mock_oidc_jwks_keys,
@@ -2131,12 +2097,8 @@ def test_verified_token_bad_unrecognized_key(
     mock_user_dao.get.assert_not_called()
     mock_http.request.assert_has_calls(
         [
-            mock.call(
-                "GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration"
-            ),
-            mock.call(
-                "GET", "https://example-oidc.com/realms/mlspace/protocol/openid-connect/certs"
-            ),
+            mock.call("GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration"),
+            mock.call("GET", "https://example-oidc.com/realms/mlspace/protocol/openid-connect/certs"),
         ]
     )
 
@@ -2301,9 +2263,7 @@ def test_manage_project_sagemaker_resource_boto_error(
     if path_param_key == "modelName":
         mock_resource_metadata_dao.get.assert_called_with("fakeResourceName", ResourceType.MODEL)
     if path_param_key == "endpointConfigName":
-        mock_resource_metadata_dao.get.assert_called_with(
-            "fakeResourceName", ResourceType.ENDPOINT_CONFIG
-        )
+        mock_resource_metadata_dao.get.assert_called_with("fakeResourceName", ResourceType.ENDPOINT_CONFIG)
     if path_param_key == "clusterId":
         mock_emr.describe_cluster.assert_called_with(ClusterId="fakeResourceName")
     if path_param_key == "datasetName":

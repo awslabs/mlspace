@@ -42,9 +42,7 @@ def test_describe_endpoint_config_success(mock_sagemaker):
     expected_response = generate_html_response(200, mock_response)
 
     assert lambda_handler(mock_event, mock_context) == expected_response
-    mock_sagemaker.describe_endpoint_config.assert_called_with(
-        EndpointConfigName="example_endpoint"
-    )
+    mock_sagemaker.describe_endpoint_config.assert_called_with(EndpointConfigName="example_endpoint")
 
 
 @mock.patch("ml_space_lambda.endpoint_config.lambda_functions.sagemaker")
@@ -55,18 +53,14 @@ def test_describe_endpoint_config_client_error(mock_sagemaker):
         "ResponseMetadata": {"HTTPStatusCode": "400"},
     }
 
-    mock_sagemaker.describe_endpoint_config.side_effect = ClientError(
-        error_msg, "DescribeEndpointConfig"
-    )
+    mock_sagemaker.describe_endpoint_config.side_effect = ClientError(error_msg, "DescribeEndpointConfig")
     expected_response = generate_html_response(
         "400",
         "An error occurred (MissingParameter) when calling the DescribeEndpointConfig operation: Dummy error message.",
     )
 
     assert lambda_handler(mock_event, mock_context) == expected_response
-    mock_sagemaker.describe_endpoint_config.assert_called_with(
-        EndpointConfigName="example_endpoint"
-    )
+    mock_sagemaker.describe_endpoint_config.assert_called_with(EndpointConfigName="example_endpoint")
 
 
 @mock.patch("ml_space_lambda.endpoint_config.lambda_functions.sagemaker")

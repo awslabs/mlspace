@@ -15,7 +15,7 @@
 #
 
 import json
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -143,9 +143,7 @@ class TestProjectDAO(TestCase):
         assert len(all_projects) == 2
 
     def test_get_all_projects_filtered(self):
-        all_projects = self.project_dao.get_all(
-            project_names=[self.UPDATE_PROJECT.name, self.DELETE_PROJECT.name]
-        )
+        all_projects = self.project_dao.get_all(project_names=[self.UPDATE_PROJECT.name, self.DELETE_PROJECT.name])
         assert len(all_projects) == 1
         for project in all_projects:
             assert not project.suspended
@@ -181,9 +179,7 @@ class TestProjectDAO(TestCase):
         update_item_key = {
             "name": {"S": self.UPDATE_PROJECT.name},
         }
-        pre_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        pre_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         updated = ProjectModel.from_dict(self.UPDATE_PROJECT.to_dict())
         updated.name = "ThisShouldGetDropped"
@@ -204,9 +200,7 @@ class TestProjectDAO(TestCase):
         updated.metadata = updated_metadata
         self.project_dao.update(self.UPDATE_PROJECT.name, updated)
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         assert pre_update["name"] == post_update["name"]
         assert pre_update["createdBy"] == post_update["createdBy"]

@@ -104,9 +104,7 @@ def api_wrapper(f):
         ctx_context.set(context)
         code_func_name = f.__name__
         lambda_func_name = context.function_name
-        logger.info(
-            f"Lambda {lambda_func_name}({code_func_name}) invoked with {_sanitize_event(event)}"
-        )
+        logger.info(f"Lambda {lambda_func_name}({code_func_name}) invoked with {_sanitize_event(event)}")
         try:
             result = f(event, context)
             return generate_html_response(200, result)
@@ -122,9 +120,7 @@ def event_wrapper(f):
         ctx_context.set(context)
         code_func_name = f.__name__
         lambda_func_name = context.function_name
-        logger.info(
-            f"Lambda {lambda_func_name}({code_func_name}) invoked with {_sanitize_event(event)}"
-        )
+        logger.info(f"Lambda {lambda_func_name}({code_func_name}) invoked with {_sanitize_event(event)}")
         return f(event, context)
 
     return wrapper
@@ -245,9 +241,7 @@ def list_custom_terminologies_for_project(
     return result
 
 
-def filter_by_project_prefix(
-    response: Dict, prefix: str, output_list: list, key: str, resource_name: str
-):
+def filter_by_project_prefix(response: Dict, prefix: str, output_list: list, key: str, resource_name: str):
     for item in response[key]:
         if item[resource_name].split("-")[0] == prefix:
             output_list.append(item)
@@ -322,11 +316,7 @@ def get_notebook_stop_time(stop_time: str) -> int:
     # but the default is 17:00
     try:
         stop_timestamp = int(
-            time.mktime(
-                time.strptime(
-                    time.strftime(f"%d %b %Y {stop_time}", time.gmtime()), "%d %b %Y %H:%M"
-                )
-            )
+            time.mktime(time.strptime(time.strftime(f"%d %b %Y {stop_time}", time.gmtime()), "%d %b %Y %H:%M"))
         )
         if stop_timestamp <= time.time():
             # Shift the time to the right one day
@@ -359,15 +349,11 @@ def query_resource_metadata(resource_metadata_dao, event, resource_type: Resourc
                 filter_values[expression_key] = states[i]
 
             if resource_type == ResourceType.TRAINING_JOB:
-                kwargs[
-                    "filter_expression"
-                ] = f"metadata.TrainingJobStatus IN ({', '.join(expressions)})"
+                kwargs["filter_expression"] = f"metadata.TrainingJobStatus IN ({', '.join(expressions)})"
                 kwargs["filter_values"] = filter_values
 
     response = {"records": []}
-    job_metadata = resource_metadata_dao.get_all_for_project_by_type(
-        project_name, resource_type, **kwargs
-    )
+    job_metadata = resource_metadata_dao.get_all_for_project_by_type(project_name, resource_type, **kwargs)
     if job_metadata.next_token:
         response["nextToken"] = job_metadata.next_token
     response["records"] = [record.to_dict() for record in job_metadata.records]

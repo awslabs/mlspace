@@ -72,9 +72,7 @@ def test_update_project_user_add_permission(mock_project_user_dao, mock_project_
 
     assert (
         lambda_handler(
-            _mock_event(
-                {"permissions": [Permission.COLLABORATOR.value, Permission.PROJECT_OWNER.value]}
-            ),
+            _mock_event({"permissions": [Permission.COLLABORATOR.value, Permission.PROJECT_OWNER.value]}),
             mock_context,
         )
         == MOCK_SUCCESS
@@ -105,10 +103,7 @@ def test_update_project_user_remove_owner(mock_project_user_dao, mock_project_us
         ),
     ]
 
-    assert (
-        lambda_handler(_mock_event({"permissions": [Permission.COLLABORATOR.value]}), mock_context)
-        == MOCK_SUCCESS
-    )
+    assert lambda_handler(_mock_event({"permissions": [Permission.COLLABORATOR.value]}), mock_context) == MOCK_SUCCESS
 
     mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, MOCK_USERNAME)
     mock_project_user_dao.get_users_for_project.assert_called_with(MOCK_PROJECT_NAME)
@@ -144,13 +139,8 @@ def test_update_project_user_permissions_noop(mock_project_user_dao, mock_projec
 def test_update_project_user_remove_last_owner(mock_project_user_dao, mock_project_user):
     mock_project_user_dao.get.return_value = mock_project_user
     mock_project_user_dao.get_users_for_project.return_value = [mock_project_user]
-    expected_response = generate_html_response(
-        400, f"Bad Request: Cannot remove last Project Owner from {MOCK_PROJECT_NAME}."
-    )
-    assert (
-        lambda_handler(_mock_event({"permissions": [Permission.COLLABORATOR.value]}), mock_context)
-        == expected_response
-    )
+    expected_response = generate_html_response(400, f"Bad Request: Cannot remove last Project Owner from {MOCK_PROJECT_NAME}.")
+    assert lambda_handler(_mock_event({"permissions": [Permission.COLLABORATOR.value]}), mock_context) == expected_response
 
     mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, MOCK_USERNAME)
     mock_project_user_dao.get_users_for_project.assert_called_with(MOCK_PROJECT_NAME)
@@ -173,14 +163,10 @@ def test_update_project_user_nonexistent(mock_project_user_dao):
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 def test_update_project_user_permissions_unknown_value(mock_project_user_dao, mock_project_user):
     mock_project_user_dao.get.return_value = mock_project_user
-    expected_response = generate_html_response(
-        400, "Bad Request: 'UNICORN' is not a valid Permission"
-    )
+    expected_response = generate_html_response(400, "Bad Request: 'UNICORN' is not a valid Permission")
 
     assert (
-        lambda_handler(
-            _mock_event({"permissions": [Permission.PROJECT_OWNER.value, "UNICORN"]}), mock_context
-        )
+        lambda_handler(_mock_event({"permissions": [Permission.PROJECT_OWNER.value, "UNICORN"]}), mock_context)
         == expected_response
     )
 
@@ -203,8 +189,7 @@ def est_update_project_user_client_error(mock_project_user_dao):
         _mock_event({"permissions": [Permission.COLLABORATOR.value]}), mock_context
     ) == generate_html_response(
         "400",
-        "An error occurred (MissingParameter) when calling the "
-        "GetItem operation: Dummy error message.",
+        "An error occurred (MissingParameter) when calling the " "GetItem operation: Dummy error message.",
     )
     mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, MOCK_USERNAME)
     mock_project_user_dao.get_projects_for_user.assert_not_called()

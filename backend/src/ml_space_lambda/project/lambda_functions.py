@@ -61,24 +61,18 @@ project_deny_list = ["global", "project", "private", "global-read-only", "logs",
 
 def _validate_input(input: str, max_length: int, field: str) -> None:
     if len(input) > max_length:
-        logging.error(
-            f"Project {field} with length {len(input)} is over the max length of {max_length}"
-        )
+        logging.error(f"Project {field} with length {len(input)} is over the max length of {max_length}")
         raise Exception(f"Project {field} exceeded the maximum allowable length of {max_length}.")
 
     # Input validation: projectName must not have dashes
-    invalid_char_found = (
-        project_name_regex.search(input) if field == "name" else project_desc_regex.search(input)
-    )
+    invalid_char_found = project_name_regex.search(input) if field == "name" else project_desc_regex.search(input)
 
     if invalid_char_found:
         logging.error(f"Invalid characters in project {field}: {invalid_char_found}")
         raise Exception(f"Project {field} contains invalid character.")
 
 
-def _add_project_user(
-    project_name: str, username: str, permissions: Optional[List[Permission]] = None
-):
+def _add_project_user(project_name: str, username: str, permissions: Optional[List[Permission]] = None):
     env_variables = get_environment_variables()
     iam_role_arn = None
     if env_variables["MANAGE_IAM_ROLES"]:
@@ -112,15 +106,11 @@ def _get_resource_counts(project_name):
             status_counts = Counter(cluster_status)
 
             total_counts = {"Total": len(cluster_status)}
-            total_counts = total_counts | dict(
-                status_counts
-            )  # Merges the dicts and preserves order
+            total_counts = total_counts | dict(status_counts)  # Merges the dicts and preserves order
             resource_counts[resource_type] = total_counts
             continue
 
-        resource_list = resource_metadata_dao.get_all_for_project_by_type(
-            project_name, resource_type, fetch_all=True
-        ).records
+        resource_list = resource_metadata_dao.get_all_for_project_by_type(project_name, resource_type, fetch_all=True).records
 
         if not resource_list:
             resource_counts[resource_type] = {"Total": 0}
@@ -133,9 +123,7 @@ def _get_resource_counts(project_name):
         for data in metadata:
             # We have a different Status Key for each resource so we need to find it
             resource_status += [
-                status.title()
-                for key, status in data.items()
-                if "status" in key.lower() and isinstance(status, str)
+                status.title() for key, status in data.items() if "status" in key.lower() and isinstance(status, str)
             ]
 
         # Count each of the Status
@@ -163,9 +151,9 @@ def get(event, context):
     return {
         "project": project.to_dict(),
         "permissions": serialize_permissions(project_user.permissions) if project_user else [],
-        "resourceCounts": _get_resource_counts(project_name)
-        if event["queryStringParameters"]["includeResourceCounts"] == "true"
-        else {},
+        "resourceCounts": (
+            _get_resource_counts(project_name) if event["queryStringParameters"]["includeResourceCounts"] == "true" else {}
+        ),
     }
 
 
@@ -181,9 +169,7 @@ def create(event, context):
         _validate_input(event_body["description"], 4000, "description")
 
         if project_name in project_deny_list:
-            raise Exception(
-                f"'{project_name}' is a reserved word. You cannot create a project with that name."
-            )
+            raise Exception(f"'{project_name}' is a reserved word. You cannot create a project with that name.")
 
         # Check if the project name already exists in the table
         existing_project = project_dao.get(project_name)
@@ -198,9 +184,7 @@ def create(event, context):
         new_project = ProjectModel.from_dict(event_body)
         project_dao.create(new_project)
         project_created = True
-        _add_project_user(
-            project_name, username, [Permission.PROJECT_OWNER, Permission.COLLABORATOR]
-        )
+        _add_project_user(project_name, username, [Permission.PROJECT_OWNER, Permission.COLLABORATOR])
 
         return f"Successfully created project '{project_name}'"
     except Exception as e:
@@ -244,10 +228,7 @@ def remove_user(event, context):
     if not project_member:
         raise Exception(f"{username} is not a member of {project_name}")
 
-    if (
-        Permission.PROJECT_OWNER not in project_member.permissions
-        or total_project_owners(project_user_dao, project_name) > 1
-    ):
+    if Permission.PROJECT_OWNER not in project_member.permissions or total_project_owners(project_user_dao, project_name) > 1:
         # Terminate any running EMR Clusters the user owns that are associated with the project
         cluster_ids = []
         clusters = list_clusters_for_project(emr, project_name, fetch_all=True)
@@ -269,14 +250,9 @@ def remove_user(event, context):
         # user is added back to the project the notebooks will work again. If a user has a pending
         # instance we're not going to block removing them but the instance will still end up
         # in an unusable state due to the role being deleted.
-        notebooks = resource_metadata_dao.get_all_for_project_by_type(
-            project_name, ResourceType.NOTEBOOK, fetch_all=True
-        )
+        notebooks = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.NOTEBOOK, fetch_all=True)
         for notebook in notebooks.records:
-            if (
-                notebook.user == username
-                and notebook.metadata["NotebookInstanceStatus"] == "InService"
-            ):
+            if notebook.user == username and notebook.metadata["NotebookInstanceStatus"] == "InService":
                 sagemaker.stop_notebook_instance(NotebookInstanceName=notebook.id)
 
         # Stop any ongoing batch translate jobs in this project that were started by this user
@@ -303,9 +279,7 @@ def list_all(event, context):
     if Permission.ADMIN in user.permissions:
         projects = project_dao.get_all(include_suspended=True)
     else:
-        project_names = [
-            project.project for project in project_user_dao.get_projects_for_user(user.username)
-        ]
+        project_names = [project.project for project in project_user_dao.get_projects_for_user(user.username)]
         projects = project_dao.get_all(project_names=project_names)
     return [project.to_dict() for project in projects]
 
@@ -315,9 +289,7 @@ def _suspend_sagemaker_resources(project_name):
     # We need to stop in progress instances and fail if any are pending
     # so we can't set a status filter like we do elsewhere.
 
-    notebook_instances = resource_metadata_dao.get_all_for_project_by_type(
-        project_name, ResourceType.NOTEBOOK, fetch_all=True
-    )
+    notebook_instances = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.NOTEBOOK, fetch_all=True)
     pending_notebooks = False
     for notebook in notebook_instances.records:
         # Possible status values:
@@ -365,9 +337,7 @@ def _suspend_sagemaker_resources(project_name):
     for transform_job in transform_jobs.records:
         sagemaker.stop_transform_job(TransformJobName=transform_job.id)
 
-    endpoints = resource_metadata_dao.get_all_for_project_by_type(
-        project_name, ResourceType.ENDPOINT, fetch_all=True
-    )
+    endpoints = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.ENDPOINT, fetch_all=True)
     for endpoint in endpoints.records:
         sagemaker.delete_endpoint(EndpointName=endpoint.id)
 
@@ -409,22 +379,16 @@ def delete(event, context):
     if not existing_project:
         raise ValueError("Specified project does not exist")
     if not existing_project.suspended:
-        raise ValueError(
-            "Specified project is not suspended. Please suspend the project and try again."
-        )
+        raise ValueError("Specified project is not suspended. Please suspend the project and try again.")
 
     # When deleting sagemaker resources we don't page responses because we need to delete everthing
     # Delete Models
-    models = resource_metadata_dao.get_all_for_project_by_type(
-        project_name, ResourceType.MODEL, fetch_all=True
-    )
+    models = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.MODEL, fetch_all=True)
     for model in models.records:
         sagemaker.delete_model(ModelName=model.id)
 
     # Delete Endpoints
-    endpoints = resource_metadata_dao.get_all_for_project_by_type(
-        project_name, ResourceType.ENDPOINT, fetch_all=True
-    )
+    endpoints = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.ENDPOINT, fetch_all=True)
     for endpoint in endpoints.records:
         sagemaker.delete_endpoint(EndpointName=endpoint.id)
 
@@ -442,9 +406,7 @@ def delete(event, context):
 
     for dataset in project_datasets:
         # Get the files to be deleted
-        dataset_files = s3.list_objects_v2(
-            Bucket=env_variables["DATA_BUCKET"], Prefix=dataset.prefix
-        )
+        dataset_files = s3.list_objects_v2(Bucket=env_variables["DATA_BUCKET"], Prefix=dataset.prefix)
 
         if "Contents" in dataset_files:
             for file in dataset_files["Contents"]:
@@ -455,9 +417,7 @@ def delete(event, context):
         dataset_dao.delete(dataset.scope, dataset.name)
 
     # Delete Notebooks
-    notebook_resources = resource_metadata_dao.get_all_for_project_by_type(
-        project_name, ResourceType.NOTEBOOK, fetch_all=True
-    )
+    notebook_resources = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.NOTEBOOK, fetch_all=True)
     has_pending = False
     for notebook in notebook_resources.records:
         status = notebook.metadata["NotebookInstanceStatus"]
@@ -468,8 +428,7 @@ def delete(event, context):
 
     if has_pending:
         raise ValueError(
-            "All Notebooks need to be Stopped to delete a project, all other "
-            "sagemaker resources have been deleted."
+            "All Notebooks need to be Stopped to delete a project, all other " "sagemaker resources have been deleted."
         )
 
     # Delete all EMR Clusters
@@ -483,9 +442,7 @@ def delete(event, context):
     project_users = project_user_dao.get_users_for_project(project_name)
     # Check the deployment type to confirm IAM Vendor usage
     if env_variables["MANAGE_IAM_ROLES"]:
-        iam_manager.remove_project_user_roles(
-            [user.role for user in project_users], project=project_name
-        )
+        iam_manager.remove_project_user_roles([user.role for user in project_users], project=project_name)
 
     # Remove all project related entries from the user/project table
     for project_user in project_users:
@@ -508,10 +465,7 @@ def update_project_user(event, context):
     if not project_user:
         raise ResourceNotFound(f"User {username} is not a member of {project_name}")
 
-    if (
-        Permission.PROJECT_OWNER in project_user.permissions
-        and Permission.PROJECT_OWNER.value not in updates["permissions"]
-    ):
+    if Permission.PROJECT_OWNER in project_user.permissions and Permission.PROJECT_OWNER.value not in updates["permissions"]:
         if total_project_owners(project_user_dao, project_name) < 2:
             raise Exception(f"Cannot remove last Project Owner from {project_name}.")
 

@@ -45,9 +45,7 @@ mock_notebook_event = {
     "account": "123456789000",
     "time": "2023-09-28T14:49:12Z",
     "region": "us-east-1",
-    "resources": [
-        f"arn:aws:sagemaker:us-east-1:123456789000:notebook-instance/{MOCK_NOTEBOOK_NAME}"
-    ],
+    "resources": [f"arn:aws:sagemaker:us-east-1:123456789000:notebook-instance/{MOCK_NOTEBOOK_NAME}"],
     "detail": {
         "NotebookInstanceArn": f"arn:aws:sagemaker:us-east-1:123456789000:notebook-instance/{MOCK_NOTEBOOK_NAME}",
         "NotebookInstanceName": MOCK_NOTEBOOK_NAME,
@@ -66,9 +64,7 @@ expected_notebook_metadata = {
     "LastModifiedTime": "2023-09-28 14:48:43.501000+00:00",
     "FailureReason": mock_notebook_event["detail"]["FailureReason"],
     "InstanceType": mock_notebook_event["detail"]["InstanceType"],
-    "NotebookInstanceLifecycleConfigName": mock_notebook_event["detail"][
-        "NotebookInstanceLifecycleConfigName"
-    ],
+    "NotebookInstanceLifecycleConfigName": mock_notebook_event["detail"]["NotebookInstanceLifecycleConfigName"],
     "NotebookInstanceStatus": mock_notebook_event["detail"]["NotebookInstanceStatus"],
 }
 
@@ -148,9 +144,7 @@ mock_training_job_event = {
     "account": "123456789000",
     "time": "2023-10-04T13:46:47Z",
     "region": "us-east-1",
-    "resources": [
-        f"arn:aws:sagemaker:us-east-1:123456789000:training-job/{MOCK_TRAINING_JOB_NAME}"
-    ],
+    "resources": [f"arn:aws:sagemaker:us-east-1:123456789000:training-job/{MOCK_TRAINING_JOB_NAME}"],
     "detail": {
         "TrainingJobName": MOCK_TRAINING_JOB_NAME,
         "TrainingJobArn": f"arn:aws:sagemaker:us-east-1:123456789000:training-job/{MOCK_TRAINING_JOB_NAME}",
@@ -189,9 +183,7 @@ mock_transform_job_event = {
     "account": "123456789000",
     "time": "2023-10-04T13:46:47Z",
     "region": "us-east-1",
-    "resources": [
-        f"arn:aws:sagemaker:us-east-1:123456789000:transform-job/{MOCK_TRANSFORM_JOB_NAME}"
-    ],
+    "resources": [f"arn:aws:sagemaker:us-east-1:123456789000:transform-job/{MOCK_TRANSFORM_JOB_NAME}"],
     "detail": {
         "TransformJobName": MOCK_TRANSFORM_JOB_NAME,
         "TransformJobArn": f"arn:aws:sagemaker:us-east-1:123456789000:transform-job/{MOCK_TRANSFORM_JOB_NAME}",
@@ -277,9 +269,7 @@ mock_hpo_event = {
     "account": "123456789000",
     "time": "2023-10-04T13:46:49Z",
     "region": "us-east-1",
-    "resources": [
-        f"arn:aws:sagemaker:us-east-1:123456789000:hyper-parameter-tuning-job/{MOCK_HPO_JOB_NAME}"
-    ],
+    "resources": [f"arn:aws:sagemaker:us-east-1:123456789000:hyper-parameter-tuning-job/{MOCK_HPO_JOB_NAME}"],
     "detail": {
         "HyperParameterTuningJobName": MOCK_HPO_JOB_NAME,
         "HyperParameterTuningJobArn": f"arn:aws:sagemaker:us-east-1:123456789000:hyper-parameter-tuning-job/{MOCK_HPO_JOB_NAME}",
@@ -364,9 +354,7 @@ mock_labeling_terminal_event = {
     "account": "123456789000",
     "time": "2023-11-15T21:53:43Z",
     "region": "us-east-1",
-    "resources": [
-        f"arn:aws:sagemaker:us-east-1:123456789000:labeling-job/{MOCK_LABELING_JOB_NAME}"
-    ],
+    "resources": [f"arn:aws:sagemaker:us-east-1:123456789000:labeling-job/{MOCK_LABELING_JOB_NAME}"],
     "detail": {"LabelingJobStatus": "Completed"},
 }
 
@@ -513,9 +501,7 @@ def _mock_translate_cloudtrail_event(notebook_event=False, is_create=True):
                         "principalId": "AAAAA1AAA11AAA1AAAAAA",
                         "arn": f"arn:aws:iam::123456789000:role/{MOCK_NOTEBOOK_ROLE_NAME if notebook_event else 'mlspace-app-role'}",
                         "accountId": "123456789000",
-                        "userName": MOCK_NOTEBOOK_ROLE_NAME
-                        if notebook_event
-                        else "mlspace-app-role",
+                        "userName": MOCK_NOTEBOOK_ROLE_NAME if notebook_event else "mlspace-app-role",
                     },
                 },
             },
@@ -631,9 +617,7 @@ def _mock_sm_describe_error(resoucrce_type: ResourceType):
     ],
 )
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.resource_metadata_dao")
-def test_process_event_create_missing_user_and_project(
-    mock_resource_metadata_dao, mock_eventbridge_event
-):
+def test_process_event_create_missing_user_and_project(mock_resource_metadata_dao, mock_eventbridge_event):
     missing_tags_event = copy.deepcopy(mock_eventbridge_event)
     missing_tags_event["detail"]["Tags"] = {"system": "MLSpace"}
 
@@ -772,13 +756,9 @@ def test_process_event_create_client_error(
         process_event(mock_eventbridge_event, mock_context)
 
     if resource_type == ResourceType.HPO_JOB:
-        mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(
-            HyperParameterTuningJobName=MOCK_HPO_JOB_NAME
-        )
+        mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(HyperParameterTuningJobName=MOCK_HPO_JOB_NAME)
     if resource_type == ResourceType.LABELING_JOB:
-        mock_sagemaker.describe_labeling_job.assert_called_with(
-            LabelingJobName=MOCK_LABELING_JOB_NAME
-        )
+        mock_sagemaker.describe_labeling_job.assert_called_with(LabelingJobName=MOCK_LABELING_JOB_NAME)
     mock_resource_metadata_dao.upsert_record.assert_called_with(
         resource_id, resource_type, MOCK_USERNAME, MOCK_PROJECT_NAME, expected_metadata
     )
@@ -865,13 +845,9 @@ def test_process_event_upsert(
     process_event(mock_eventbridge_event, mock_context)
 
     if resource_type == ResourceType.HPO_JOB:
-        mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(
-            HyperParameterTuningJobName=MOCK_HPO_JOB_NAME
-        )
+        mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(HyperParameterTuningJobName=MOCK_HPO_JOB_NAME)
     if resource_type == ResourceType.LABELING_JOB:
-        mock_sagemaker.describe_labeling_job.assert_called_with(
-            LabelingJobName=MOCK_LABELING_JOB_NAME
-        )
+        mock_sagemaker.describe_labeling_job.assert_called_with(LabelingJobName=MOCK_LABELING_JOB_NAME)
     mock_resource_metadata_dao.upsert_record.assert_called_with(
         resource_id, resource_type, MOCK_USERNAME, MOCK_PROJECT_NAME, expected_metadata
     )
@@ -938,9 +914,7 @@ def test_resource_deleting(
     mock_resource_metadata_dao.delete.assert_not_called()
     mock_resource_metadata_dao.create.assert_not_called()
     mock_resource_metadata_dao.upsert_record.assert_not_called()
-    mock_resource_metadata_dao.update.assert_called_with(
-        resource_id, resource_type, deleting_metadata
-    )
+    mock_resource_metadata_dao.update.assert_called_with(resource_id, resource_type, deleting_metadata)
 
 
 @pytest.mark.parametrize(
@@ -1062,9 +1036,7 @@ def test_resource_delete(
         if resource_type == ResourceType.MODEL:
             mock_sagemaker.describe_model.assert_called_with(ModelName=resource_id)
         elif resource_type == ResourceType.ENDPOINT_CONFIG:
-            mock_sagemaker.describe_endpoint_config.assert_called_with(
-                EndpointConfigName=resource_id
-            )
+            mock_sagemaker.describe_endpoint_config.assert_called_with(EndpointConfigName=resource_id)
 
 
 @pytest.mark.parametrize(
@@ -1112,9 +1084,7 @@ def test_non_mls_event(mock_resource_metadata_dao, mock_sagemaker, mock_eventbri
 )
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.sagemaker")
-def test_no_tag_resource_still_exists(
-    mock_sagemaker, mock_resource_metadata_dao, mock_eventbridge_event, resource_type
-):
+def test_no_tag_resource_still_exists(mock_sagemaker, mock_resource_metadata_dao, mock_eventbridge_event, resource_type):
     no_tag_event = copy.deepcopy(mock_eventbridge_event)
     no_tag_event["detail"]["Tags"] = {}
     if resource_type == ResourceType.MODEL:
@@ -1144,9 +1114,7 @@ def test_no_tag_resource_still_exists(
     if resource_type == ResourceType.MODEL:
         mock_sagemaker.describe_model.assert_called_with(ModelName=MOCK_MODEL_NAME)
     elif resource_type == ResourceType.ENDPOINT_CONFIG:
-        mock_sagemaker.describe_endpoint_config.assert_called_with(
-            EndpointConfigName=MOCK_CONFIG_NAME
-        )
+        mock_sagemaker.describe_endpoint_config.assert_called_with(EndpointConfigName=MOCK_CONFIG_NAME)
 
 
 # Translate tests are separate because the event processing is so much different than the
@@ -1177,18 +1145,14 @@ def test_no_tag_resource_still_exists(
 )
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.boto3")
-def test_translate_event(
-    mock_boto3, mock_resource_metadata_dao, mock_event, status, manage_iam_roles, expected_action
-):
+def test_translate_event(mock_boto3, mock_resource_metadata_dao, mock_event, status, manage_iam_roles, expected_action):
     # clear out global params if set to make lambda tests independent of each other
     resource_metadata_lambda.translate = {}
     resource_metadata_lambda.env_variables = {"MANAGE_IAM_ROLES": manage_iam_roles}
 
     if expected_action:
         mock_translate = mock.MagicMock()
-        mock_translate.describe_text_translation_job.return_value = _mock_translate_job_describe(
-            job_status=status
-        )
+        mock_translate.describe_text_translation_job.return_value = _mock_translate_job_describe(job_status=status)
         mock_iam = mock.MagicMock()
         mock_paginator = mock.Mock()
         mock_paginator.paginate.return_value = [
@@ -1210,8 +1174,8 @@ def test_translate_event(
             },
         ]
         mock_iam.get_paginator.return_value = mock_paginator
-        mock_boto3.client.side_effect = (
-            lambda client_type, **kwargs: mock_translate if client_type == "translate" else mock_iam
+        mock_boto3.client.side_effect = lambda client_type, **kwargs: (
+            mock_translate if client_type == "translate" else mock_iam
         )
 
     process_event(mock_event, mock_context)
@@ -1244,9 +1208,7 @@ def test_translate_update_event_no_existing_metadata_record(mock_boto3, mock_res
     resource_metadata_lambda.translate = {}
     mock_translate = mock.MagicMock()
     mock_boto3.client.return_value = mock_translate
-    mock_translate.describe_text_translation_job.return_value = _mock_translate_job_describe(
-        "STOP_REQUESTED"
-    )
+    mock_translate.describe_text_translation_job.return_value = _mock_translate_job_describe("STOP_REQUESTED")
     mock_resource_metadata_dao.update.side_effect = ClientError(
         {
             "Error": {
@@ -1301,15 +1263,11 @@ def test_translate_start_job_via_notebook_iam_client_error():
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.iam")
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.translate")
-def test_translate_start_job_via_notebook_missing_tags(
-    mock_translate, mock_iam, mock_resource_metadata_dao
-):
+def test_translate_start_job_via_notebook_missing_tags(mock_translate, mock_iam, mock_resource_metadata_dao):
     # clear out global params if set to make lambda tests independent of each other
     resource_metadata_lambda.env_variables = {"MANAGE_IAM_ROLES": "True"}
 
-    mock_translate.describe_text_translation_job.return_value = _mock_translate_job_describe(
-        job_status="SUBMITTED"
-    )
+    mock_translate.describe_text_translation_job.return_value = _mock_translate_job_describe(job_status="SUBMITTED")
     mock_paginator = mock.Mock()
     mock_paginator.paginate.return_value = [
         {

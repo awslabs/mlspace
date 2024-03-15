@@ -15,7 +15,7 @@
 #
 
 import json
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -161,9 +161,7 @@ class TestDatasetDAO(TestCase):
             "project": {"S": self.UPDATE_RECORD.project},
             "user": {"S": self.UPDATE_RECORD.user},
         }
-        pre_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        pre_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         updated = ProjectUserModel.from_dict(self.UPDATE_RECORD.to_dict())
         updated.user = "username-that-will-get-dropped"
@@ -171,9 +169,7 @@ class TestDatasetDAO(TestCase):
         updated.permissions = [Permission.COLLABORATOR, Permission.PROJECT_OWNER]
         self.project_user_dao.update(self.UPDATE_RECORD.project, self.UPDATE_RECORD.user, updated)
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         assert pre_update["user"] == post_update["user"]
         assert pre_update["project"] == post_update["project"]
@@ -187,17 +183,13 @@ class TestDatasetDAO(TestCase):
             "project": {"S": self.UPDATE_RECORD.project},
             "user": {"S": self.UPDATE_RECORD.user},
         }
-        pre_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        pre_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         updated = ProjectUserModel.from_dict(self.UPDATE_RECORD.to_dict())
         updated.role = "newFancyRole"
         self.project_user_dao.update(self.UPDATE_RECORD.project, self.UPDATE_RECORD.user, updated)
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         assert pre_update["user"] == post_update["user"]
         assert pre_update["project"] == post_update["project"]

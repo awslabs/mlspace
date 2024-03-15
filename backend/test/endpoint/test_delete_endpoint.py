@@ -41,9 +41,7 @@ def test_delete_endpoint_success(mock_sagemaker, mock_resource_dao):
 
     assert lambda_handler(mock_event, mock_context) == expected_response
     mock_sagemaker.delete_endpoint.assert_called_with(EndpointName=mock_endpoint_name)
-    mock_resource_dao.delete.assert_called_with(
-        resource_id=mock_endpoint_name, resource_type=ResourceType.ENDPOINT
-    )
+    mock_resource_dao.delete.assert_called_with(resource_id=mock_endpoint_name, resource_type=ResourceType.ENDPOINT)
 
 
 @mock.patch("ml_space_lambda.endpoint.lambda_functions.resource_scheduler_dao")

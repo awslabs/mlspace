@@ -17,7 +17,7 @@
 import json
 import time
 from typing import List
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -258,9 +258,7 @@ class TestResourceMetadataDAO(TestCase):
         # 20 of the total 29 notebooks should be for TestProject and the other 9 should be for
         # DemoProject
         test_project_notebooks = []
-        results = self.resource_metadata_dao.get_all_for_project_by_type(
-            TEST_PROJECT_NAME, ResourceType.NOTEBOOK, limit=10
-        )
+        results = self.resource_metadata_dao.get_all_for_project_by_type(TEST_PROJECT_NAME, ResourceType.NOTEBOOK, limit=10)
         assert results.next_token is not None
         test_project_notebooks.extend(results.records)
         results = self.resource_metadata_dao.get_all_for_project_by_type(
@@ -270,23 +268,15 @@ class TestResourceMetadataDAO(TestCase):
         )
         assert not results.next_token
         test_project_notebooks.extend(results.records)
-        assert_resources(
-            test_project_notebooks, 20, ResourceType.NOTEBOOK, expected_project=TEST_PROJECT_NAME
-        )
+        assert_resources(test_project_notebooks, 20, ResourceType.NOTEBOOK, expected_project=TEST_PROJECT_NAME)
 
-        results = self.resource_metadata_dao.get_all_for_project_by_type(
-            DEMO_PROJECT_NAME, ResourceType.NOTEBOOK
-        )
+        results = self.resource_metadata_dao.get_all_for_project_by_type(DEMO_PROJECT_NAME, ResourceType.NOTEBOOK)
         assert not results.next_token
-        assert_resources(
-            results.records, 9, ResourceType.NOTEBOOK, expected_project=DEMO_PROJECT_NAME
-        )
+        assert_resources(results.records, 9, ResourceType.NOTEBOOK, expected_project=DEMO_PROJECT_NAME)
 
         # There are a total of 10 batch jobs 4 of them are associated with the DemoProject,
         # i = 0, 15, 30, 45. The other 6 are associated with the TestProject
-        results = self.resource_metadata_dao.get_all_for_project_by_type(
-            TEST_PROJECT_NAME, ResourceType.BATCH_TRANSLATE_JOB
-        )
+        results = self.resource_metadata_dao.get_all_for_project_by_type(TEST_PROJECT_NAME, ResourceType.BATCH_TRANSLATE_JOB)
         assert_resources(
             results.records,
             6,
@@ -295,9 +285,7 @@ class TestResourceMetadataDAO(TestCase):
         )
         assert not results.next_token
 
-        results = self.resource_metadata_dao.get_all_for_project_by_type(
-            DEMO_PROJECT_NAME, ResourceType.BATCH_TRANSLATE_JOB
-        )
+        results = self.resource_metadata_dao.get_all_for_project_by_type(DEMO_PROJECT_NAME, ResourceType.BATCH_TRANSLATE_JOB)
         assert_resources(
             results.records,
             4,
@@ -365,9 +353,7 @@ class TestResourceMetadataDAO(TestCase):
 
     def test_get_resources_for_user(self):
         user_notebooks = []
-        results = self.resource_metadata_dao.get_all_for_user_by_type(
-            TEST_USER_NAME, ResourceType.NOTEBOOK, limit=10
-        )
+        results = self.resource_metadata_dao.get_all_for_user_by_type(TEST_USER_NAME, ResourceType.NOTEBOOK, limit=10)
 
         assert results.next_token is not None
         user_notebooks.extend(results.records)
@@ -445,18 +431,14 @@ class TestResourceMetadataDAO(TestCase):
             "resourceId": {"S": self.UPDATE_RESOURCE_METADATA.id},
             "resourceType": {"S": self.UPDATE_RESOURCE_METADATA.type},
         }
-        pre_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        pre_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         updated_metadata = {"ResourceStatus": "Updated by the unit test"}
         self.resource_metadata_dao.update(
             self.UPDATE_RESOURCE_METADATA.id, self.UPDATE_RESOURCE_METADATA.type, updated_metadata
         )
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         assert pre_update["resourceId"] == post_update["resourceId"]
         assert pre_update["resourceType"] == post_update["resourceType"]
@@ -544,9 +526,7 @@ class TestResourceMetadataDAO(TestCase):
             "resourceId": {"S": self.UPDATE_RESOURCE_METADATA.id},
             "resourceType": {"S": self.UPDATE_RESOURCE_METADATA.type},
         }
-        pre_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        pre_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         updated_metadata = {"ResourceStatus": "Upserted by the upsert update test"}
         self.resource_metadata_dao.upsert_record(
@@ -557,9 +537,7 @@ class TestResourceMetadataDAO(TestCase):
             updated_metadata,
         )
 
-        post_update = dynamodb_json.loads(
-            self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"]
-        )
+        post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
 
         assert pre_update["resourceId"] == post_update["resourceId"]
         assert pre_update["resourceType"] == post_update["resourceType"]

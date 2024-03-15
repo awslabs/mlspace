@@ -101,18 +101,14 @@ def test_describe_notebook_instance_client_error(mock_sagemaker):
         "ResponseMetadata": {"HTTPStatusCode": "400"},
     }
 
-    mock_sagemaker.describe_notebook_instance.side_effect = ClientError(
-        error_msg, "DescribeNotebookInstance"
-    )
+    mock_sagemaker.describe_notebook_instance.side_effect = ClientError(error_msg, "DescribeNotebookInstance")
     expected_response = generate_html_response(
         "400",
         "An error occurred (MissingParameter) when calling the DescribeNotebookInstance operation: Dummy error message.",
     )
 
     assert lambda_handler(mock_event, mock_context) == expected_response
-    mock_sagemaker.describe_notebook_instance.assert_called_with(
-        NotebookInstanceName="example_notebook_instance"
-    )
+    mock_sagemaker.describe_notebook_instance.assert_called_with(NotebookInstanceName="example_notebook_instance")
 
 
 @mock.patch("ml_space_lambda.notebook.lambda_functions.sagemaker")

@@ -25,9 +25,7 @@ from ml_space_lambda.data_access_objects.dataset import DatasetModel
 DATA_BUCKET = "mlspace-data-bucket"
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "DATA_BUCKET": DATA_BUCKET}
 
-MOCK_FRONT_END_PRINCIPAL = (
-    "AWS:AAAAA1AA123AAAAA1AA1A:MLSpace-ApiGW-MLS-mls-lambda-dataset-pres-Q1O9esiMn7KN"
-)
+MOCK_FRONT_END_PRINCIPAL = "AWS:AAAAA1AA123AAAAA1AA1A:MLSpace-ApiGW-MLS-mls-lambda-dataset-pres-Q1O9esiMn7KN"
 MOCK_NOTEBOOK_PRINCIPAL = "arn:aws:iam::123456789:role/mlspace-notebook-role"
 MOCK_DATASET_BASE_KEY = "global/datasets/more-testing/"
 MOCK_KEY = f"{MOCK_DATASET_BASE_KEY}report2.png"
@@ -79,9 +77,7 @@ def mock_event(
 
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.s3_event_put_notification.lambda_function import (
-        lambda_handler as s3_put_handler,
-    )
+    from ml_space_lambda.s3_event_put_notification.lambda_function import lambda_handler as s3_put_handler
 
 
 @mock.patch("ml_space_lambda.s3_event_put_notification.lambda_function.s3")
@@ -229,9 +225,7 @@ def test_handle_notebook_upload(mock_dataset_dao, mock_s3):
     mock_dataset_dao.get.return_value = None
     s3_put_handler(mock_event(principal=MOCK_NOTEBOOK_PRINCIPAL), mock_context)
 
-    mock_s3.put_object_tagging.assert_called_with(
-        Bucket=DATA_BUCKET, Key=MOCK_KEY, Tagging=MOCK_DATASET_TAGS
-    )
+    mock_s3.put_object_tagging.assert_called_with(Bucket=DATA_BUCKET, Key=MOCK_KEY, Tagging=MOCK_DATASET_TAGS)
     mock_dataset_dao.create.assert_called_once()
     _validate_dataset_create_call(mock_dataset_dao.create.call_args, dataset)
 
@@ -290,9 +284,7 @@ def test_handle_notebook_upload_non_200(mock_dataset_dao, mock_s3):
     s3_put_handler(mock_event(principal=MOCK_NOTEBOOK_PRINCIPAL), mock_context)
 
     mock_dataset_dao.create.assert_not_called()
-    mock_s3.put_object_tagging.assert_called_with(
-        Bucket=DATA_BUCKET, Key=MOCK_KEY, Tagging=expected_tags
-    )
+    mock_s3.put_object_tagging.assert_called_with(Bucket=DATA_BUCKET, Key=MOCK_KEY, Tagging=expected_tags)
 
 
 @mock.patch("ml_space_lambda.s3_event_put_notification.lambda_function.s3")
@@ -308,9 +300,7 @@ def test_handle_notebook_upload_s3_error(mock_dataset_dao, mock_s3):
         s3_put_handler(mock_event(principal=MOCK_NOTEBOOK_PRINCIPAL), mock_context)
 
     mock_dataset_dao.create.assert_not_called()
-    mock_s3.put_object_tagging.assert_called_with(
-        Bucket=DATA_BUCKET, Key=MOCK_KEY, Tagging=expected_tags
-    )
+    mock_s3.put_object_tagging.assert_called_with(Bucket=DATA_BUCKET, Key=MOCK_KEY, Tagging=expected_tags)
 
 
 @mock.patch("ml_space_lambda.s3_event_put_notification.lambda_function.s3")
@@ -350,9 +340,7 @@ def test_key_training_job_output(mock_dataset_dao, mock_s3):
         created_by="default-user",
     )
     mock_dataset_dao.get.return_value = None
-    s3_put_handler(
-        mock_event(principal=MOCK_NOTEBOOK_PRINCIPAL, key=training_file_key), mock_context
-    )
+    s3_put_handler(mock_event(principal=MOCK_NOTEBOOK_PRINCIPAL, key=training_file_key), mock_context)
 
     mock_s3.put_object_tagging.assert_called_with(
         Bucket=DATA_BUCKET,

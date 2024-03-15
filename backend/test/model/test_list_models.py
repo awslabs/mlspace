@@ -19,10 +19,7 @@ from unittest import mock
 
 from botocore.exceptions import ClientError
 
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -38,9 +35,7 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 mock_context = mock.Mock()
 
 
-def _mock_model_metadata(
-    identifier: str, username: Optional[str] = MOCK_USERNAME
-) -> ResourceMetadataModel:
+def _mock_model_metadata(identifier: str, username: Optional[str] = MOCK_USERNAME) -> ResourceMetadataModel:
     return ResourceMetadataModel(
         identifier,
         ResourceType.MODEL,

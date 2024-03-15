@@ -111,25 +111,19 @@ def _expected_args(custom_ami: Optional[str] = None):
                                 "Description": "Scaling policy configured in the cluster-config.json",
                                 "Action": {
                                     "SimpleScalingPolicyConfiguration": {
-                                        "ScalingAdjustment": mock_cluster_config["auto-scaling"][
-                                            "scale-out"
-                                        ]["increment"],
-                                        "CoolDown": mock_cluster_config["auto-scaling"][
-                                            "scale-out"
-                                        ]["cooldown"],
+                                        "ScalingAdjustment": mock_cluster_config["auto-scaling"]["scale-out"]["increment"],
+                                        "CoolDown": mock_cluster_config["auto-scaling"]["scale-out"]["cooldown"],
                                     }
                                 },
                                 "Trigger": {
                                     "CloudWatchAlarmDefinition": {
                                         "ComparisonOperator": "LESS_THAN",
-                                        "EvaluationPeriods": mock_cluster_config["auto-scaling"][
-                                            "scale-out"
-                                        ]["eval-periods"],
+                                        "EvaluationPeriods": mock_cluster_config["auto-scaling"]["scale-out"]["eval-periods"],
                                         "MetricName": "YARNMemoryAvailablePercentage",
                                         "Period": 300,
-                                        "Threshold": mock_cluster_config["auto-scaling"][
-                                            "scale-out"
-                                        ]["percentage-mem-available"],
+                                        "Threshold": mock_cluster_config["auto-scaling"]["scale-out"][
+                                            "percentage-mem-available"
+                                        ],
                                         "Unit": "PERCENT",
                                     }
                                 },
@@ -139,25 +133,19 @@ def _expected_args(custom_ami: Optional[str] = None):
                                 "Description": "Scaling policy configured in the cluster-config.json",
                                 "Action": {
                                     "SimpleScalingPolicyConfiguration": {
-                                        "ScalingAdjustment": mock_cluster_config["auto-scaling"][
-                                            "scale-in"
-                                        ]["increment"],
-                                        "CoolDown": mock_cluster_config["auto-scaling"]["scale-in"][
-                                            "cooldown"
-                                        ],
+                                        "ScalingAdjustment": mock_cluster_config["auto-scaling"]["scale-in"]["increment"],
+                                        "CoolDown": mock_cluster_config["auto-scaling"]["scale-in"]["cooldown"],
                                     }
                                 },
                                 "Trigger": {
                                     "CloudWatchAlarmDefinition": {
                                         "ComparisonOperator": "GREATER_THAN",
-                                        "EvaluationPeriods": mock_cluster_config["auto-scaling"][
-                                            "scale-in"
-                                        ]["eval-periods"],
+                                        "EvaluationPeriods": mock_cluster_config["auto-scaling"]["scale-in"]["eval-periods"],
                                         "MetricName": "YARNMemoryAvailablePercentage",
                                         "Period": 300,
-                                        "Threshold": mock_cluster_config["auto-scaling"][
-                                            "scale-in"
-                                        ]["percentage-mem-available"],
+                                        "Threshold": mock_cluster_config["auto-scaling"]["scale-in"][
+                                            "percentage-mem-available"
+                                        ],
                                         "Unit": "PERCENT",
                                     }
                                 },
@@ -309,14 +297,9 @@ def test_create_emr_cluster_success(
 
     expected_response = generate_html_response(200, mock_response)
 
-    assert (
-        emr_handler.create(_mock_event(include_subnet=False, custom_ami=mock_ami_id), mock_context)
-        == expected_response
-    )
+    assert emr_handler.create(_mock_event(include_subnet=False, custom_ami=mock_ami_id), mock_context) == expected_response
 
-    mock_emr.run_job_flow.assert_called_with(
-        **_mock_args(random_subnet=mocked_random_subnet, custom_ami=mock_ami_id)
-    )
+    mock_emr.run_job_flow.assert_called_with(**_mock_args(random_subnet=mocked_random_subnet, custom_ami=mock_ami_id))
     mock_pull_config.assert_called_once()
     mock_s3.get_object.assert_called_with(Bucket="example_bucket", Key="cluster-config.json")
 

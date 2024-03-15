@@ -24,10 +24,7 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.data_access_objects.resource_scheduler import (
-    ResourceSchedulerDAO,
-    ResourceSchedulerModel,
-)
+from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import event_wrapper
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
@@ -81,9 +78,7 @@ def process_event(event, context):
 def _convert_timestamp(event, timestamp_key):
     if timestamp_key in event:
         return (
-            datetime.datetime.utcfromtimestamp(event[timestamp_key] / 1000).strftime(
-                "%Y-%m-%d %H:%M:%S.%f+00:00"
-            )
+            datetime.datetime.utcfromtimestamp(event[timestamp_key] / 1000).strftime("%Y-%m-%d %H:%M:%S.%f+00:00")
             if event[timestamp_key]
             else None
         )
@@ -102,9 +97,7 @@ def _process_notebook_event(details):
                 "FailureReason": details["FailureReason"],
                 "InstanceType": details["InstanceType"],
                 "LastModifiedTime": _convert_timestamp(details, "LastModifiedTime"),
-                "NotebookInstanceLifecycleConfigName": details[
-                    "NotebookInstanceLifecycleConfigName"
-                ],
+                "NotebookInstanceLifecycleConfigName": details["NotebookInstanceLifecycleConfigName"],
                 "NotebookInstanceStatus": details["NotebookInstanceStatus"],
             }
             # It's possible for duplicate CWE to be delivered which means we could end up in a
@@ -114,17 +107,13 @@ def _process_notebook_event(details):
             # opposed to upserts.
             if details["NotebookInstanceStatus"] == "Deleting":
                 try:
-                    resource_metadata_dao.update(
-                        details["NotebookInstanceName"], ResourceType.NOTEBOOK, metadata
-                    )
+                    resource_metadata_dao.update(details["NotebookInstanceName"], ResourceType.NOTEBOOK, metadata)
                 except ClientError as e:
                     # If we get an error due to the resource not existing, that's fine because we
                     # are about to delete the record anyway. For other errors we don't really care
                     # either but we'll log it just in case.
                     if e.response["Error"]["Code"] != "ConditionalCheckFailedException":
-                        logger.error(
-                            f'Error processing notebook deleting event: {details["NotebookInstanceName"]}'
-                        )
+                        logger.error(f'Error processing notebook deleting event: {details["NotebookInstanceName"]}')
             else:
                 resource_metadata_dao.upsert_record(
                     details["NotebookInstanceName"],
@@ -158,9 +147,7 @@ def _process_endpoint_event(details):
                 if project.has_default_stop_time(ResourceType.ENDPOINT):
                     # Endpoint TTL is in hours so we need to convert that to seconds and add to the current time
                     termination_time = time.time() + (
-                        int(project.metadata["terminationConfiguration"]["defaultEndpointTTL"])
-                        * 60
-                        * 60
+                        int(project.metadata["terminationConfiguration"]["defaultEndpointTTL"]) * 60 * 60
                     )
                     resource_scheduler_dao.create(
                         ResourceSchedulerModel(
@@ -177,17 +164,13 @@ def _process_endpoint_event(details):
             # opposed to upserts.
             if details["EndpointStatus"] == "DELETING":
                 try:
-                    resource_metadata_dao.update(
-                        details["EndpointName"], ResourceType.ENDPOINT, metadata
-                    )
+                    resource_metadata_dao.update(details["EndpointName"], ResourceType.ENDPOINT, metadata)
                 except ClientError as e:
                     # If we get an error due to the resource not existing, that's fine because we
                     # are about to delete the record anyway. For other errors we don't really care
                     # either but we'll log it just in case.
                     if e.response["Error"]["Code"] != "ConditionalCheckFailedException":
-                        logger.error(
-                            f'Error processing endpoint deleting event: {details["EndpointName"]}'
-                        )
+                        logger.error(f'Error processing endpoint deleting event: {details["EndpointName"]}')
             else:
                 resource_metadata_dao.upsert_record(
                     details["EndpointName"],
@@ -213,10 +196,7 @@ def _process_model_event(details):
         except ClientError as e:
             # If it's any other client exception we just won't process the event
             if e.response["Error"]["Code"] == "AccessDeniedException":
-                if (
-                    "no identity-based policy allows the sagemaker:DescribeModel action"
-                    in e.response["Error"]["Message"]
-                ):
+                if "no identity-based policy allows the sagemaker:DescribeModel action" in e.response["Error"]["Message"]:
                     resource_metadata_dao.delete(details["ModelName"], ResourceType.MODEL)
                     return
 
@@ -303,9 +283,7 @@ def _process_endpoint_config_event(details):
             if e.response["Error"]["Code"] == "ValidationException":
                 # This must match the actual string that comes back from the API
                 if "Could not find endpoint configuration" in e.response["Error"]["Message"]:
-                    resource_metadata_dao.delete(
-                        details["EndpointConfigName"], ResourceType.ENDPOINT_CONFIG
-                    )
+                    resource_metadata_dao.delete(details["EndpointConfigName"], ResourceType.ENDPOINT_CONFIG)
                     return
 
         raise ValueError("Error processing endpoint config event - missing all tags.")
@@ -351,15 +329,8 @@ def _process_batch_translate_event(details):
         and env_variables["MANAGE_IAM_ROLES"]
         and details.get("userIdentity", {}).get("principalId", "").endswith("SageMaker")
         and details.get("responseElements", {}).get("jobId", None) is not None
-        and details.get("userIdentity", {})
-        .get("sessionContext", {})
-        .get("sessionIssuer", {})
-        .get("type", "")
-        == "Role"
-        and details.get("userIdentity", {})
-        .get("sessionContext", {})
-        .get("sessionIssuer", {})
-        .get("userName", None)
+        and details.get("userIdentity", {}).get("sessionContext", {}).get("sessionIssuer", {}).get("type", "") == "Role"
+        and details.get("userIdentity", {}).get("sessionContext", {}).get("sessionIssuer", {}).get("userName", None)
         is not None
     ):
         # If the event was a job submission and it came from a notebook we need to create a new record.
@@ -389,9 +360,7 @@ def _process_batch_translate_event(details):
         if not translate:
             translate = boto3.client("translate", config=retry_config)
 
-        job_details = translate.describe_text_translation_job(JobId=job_id)[
-            "TextTranslationJobProperties"
-        ]
+        job_details = translate.describe_text_translation_job(JobId=job_id)["TextTranslationJobProperties"]
         metadata = {
             "JobName": job_details["JobName"],
             "JobStatus": job_details["JobStatus"],
@@ -414,9 +383,7 @@ def _process_batch_translate_event(details):
                     metadata,
                 )
             else:
-                raise ValueError(
-                    "Error processing batch translation job event - missing required project and user tags."
-                )
+                raise ValueError("Error processing batch translation job event - missing required project and user tags.")
 
 
 def _process_hpo_event(details):
@@ -433,9 +400,7 @@ def _process_hpo_event(details):
             metadata = {
                 "CreationTime": _convert_timestamp(details, "CreationTime"),
                 "FailureReason": hpo_job["FailureReason"] if "FailureReason" in hpo_job else None,
-                "HyperParameterTuningEndTime": _convert_timestamp(
-                    details, "HyperParameterTuningEndTime"
-                ),
+                "HyperParameterTuningEndTime": _convert_timestamp(details, "HyperParameterTuningEndTime"),
                 "HyperParameterTuningJobArn": hpo_job["HyperParameterTuningJobArn"],
                 "HyperParameterTuningJobStatus": details["HyperParameterTuningJobStatus"],
                 "LastModifiedTime": _convert_timestamp(details, "LastModifiedTime"),
@@ -482,15 +447,8 @@ def _process_labeling_job_event(event):
                 # grab the last string separated by a hyphen. We can then use that in a lookup table
                 # for the official job type name.
                 task_type = "Custom"
-                if (
-                    "HumanTaskConfig" in job_details
-                    and "PreHumanTaskLambdaArn" in job_details["HumanTaskConfig"]
-                ):
-                    pre_human_task_arn_type = (
-                        job_details["HumanTaskConfig"]["PreHumanTaskLambdaArn"]
-                        .split("-")[-1]
-                        .strip()
-                    )
+                if "HumanTaskConfig" in job_details and "PreHumanTaskLambdaArn" in job_details["HumanTaskConfig"]:
+                    pre_human_task_arn_type = job_details["HumanTaskConfig"]["PreHumanTaskLambdaArn"].split("-")[-1].strip()
                     task_type_map = {
                         "BoundingBox": "Bounding box",
                         "ImageMultiClass": "Image classification",
@@ -519,9 +477,7 @@ def _process_labeling_job_event(event):
 
                 metadata = {
                     "CreationTime": job_details["CreationTime"],
-                    "FailureReason": job_details["FailureReason"]
-                    if "FailureReason" in job_details
-                    else None,
+                    "FailureReason": job_details["FailureReason"] if "FailureReason" in job_details else None,
                     "LastModifiedTime": job_details["LastModifiedTime"],
                     "LabelingJobArn": job_arn,
                     "LabelingJobStatus": job_details["LabelingJobStatus"],

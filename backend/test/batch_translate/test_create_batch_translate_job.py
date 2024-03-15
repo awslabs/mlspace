@@ -97,9 +97,7 @@ def create_mock_event(mock_body):
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.translate")
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.resource_metadata_dao")
-def test_create_batch_translate_job_success(
-    mock_resource_metadata_dao, mock_translate, mock_pull_config, mock_s3_param_json
-):
+def test_create_batch_translate_job_success(mock_resource_metadata_dao, mock_translate, mock_pull_config, mock_s3_param_json):
     mock_translate.start_text_translation_job.return_value = mock_response
     mock_translate.describe_text_translation_job.return_value = mock_describe_response
     mock_pull_config.return_value = mock_s3_param_json
@@ -126,10 +124,7 @@ def test_create_batch_translate_job_success(
         },
     }
 
-    assert (
-        lambda_handler(create_mock_event(mock_body_with_optionals), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(create_mock_event(mock_body_with_optionals), mock_context) == expected_response
 
     mock_translate.start_text_translation_job.assert_called_with(**expected_call)
     mock_translate.describe_text_translation_job.assert_called_with(JobId=job_id)
@@ -141,15 +136,9 @@ def test_create_batch_translate_job_success(
         {
             "JobName": mock_describe_response["TextTranslationJobProperties"]["JobName"],
             "JobStatus": mock_describe_response["TextTranslationJobProperties"]["JobStatus"],
-            "SubmittedTime": mock_describe_response["TextTranslationJobProperties"][
-                "SubmittedTime"
-            ],
-            "SourceLanguageCode": mock_describe_response["TextTranslationJobProperties"][
-                "SourceLanguageCode"
-            ],
-            "TargetLanguageCodes": mock_describe_response["TextTranslationJobProperties"][
-                "TargetLanguageCodes"
-            ],
+            "SubmittedTime": mock_describe_response["TextTranslationJobProperties"]["SubmittedTime"],
+            "SourceLanguageCode": mock_describe_response["TextTranslationJobProperties"]["SourceLanguageCode"],
+            "TargetLanguageCodes": mock_describe_response["TextTranslationJobProperties"]["TargetLanguageCodes"],
         },
     )
 
@@ -190,15 +179,9 @@ def test_create_batch_translate_job_no_optional_fields_success(
         {
             "JobName": mock_describe_response["TextTranslationJobProperties"]["JobName"],
             "JobStatus": mock_describe_response["TextTranslationJobProperties"]["JobStatus"],
-            "SubmittedTime": mock_describe_response["TextTranslationJobProperties"][
-                "SubmittedTime"
-            ],
-            "SourceLanguageCode": mock_describe_response["TextTranslationJobProperties"][
-                "SourceLanguageCode"
-            ],
-            "TargetLanguageCodes": mock_describe_response["TextTranslationJobProperties"][
-                "TargetLanguageCodes"
-            ],
+            "SubmittedTime": mock_describe_response["TextTranslationJobProperties"]["SubmittedTime"],
+            "SourceLanguageCode": mock_describe_response["TextTranslationJobProperties"]["SourceLanguageCode"],
+            "TargetLanguageCodes": mock_describe_response["TextTranslationJobProperties"]["TargetLanguageCodes"],
         },
     )
 
@@ -220,9 +203,7 @@ def test_create_batch_translate_job_client_error(
         "An error occurred (MissingParameter) when calling the startTextTranslationJob operation: Dummy error message.",
     )
 
-    mock_translate.start_text_translation_job.side_effect = ClientError(
-        error_msg, "startTextTranslationJob"
-    )
+    mock_translate.start_text_translation_job.side_effect = ClientError(error_msg, "startTextTranslationJob")
 
     assert lambda_handler(create_mock_event(mock_body), mock_context) == expected_response
 

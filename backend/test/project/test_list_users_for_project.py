@@ -76,8 +76,7 @@ def test_list_users_for_project_client_error(mock_project_user_dao):
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling"
-        " the Scan operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling" " the Scan operation: Dummy error message.",
     )
     mock_project_user_dao.get_users_for_project.side_effect = ClientError(error_msg, "Scan")
 

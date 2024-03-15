@@ -72,9 +72,7 @@ def test_update_last_login_success(mock_user_dao, mock_time, mock_user):
     mock_user_dao.get.return_value = mock_user
     mock_time.time.return_value = 1669931346
 
-    assert lambda_handler(_mock_event(), mock_context) == generate_html_response(
-        200, mock_user.to_dict()
-    )
+    assert lambda_handler(_mock_event(), mock_context) == generate_html_response(200, mock_user.to_dict())
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
     # The update arg is the UserModel, we can't do a normal assert_called_with
     # because the arg is a class so the comparison will fail
@@ -89,9 +87,7 @@ def test_update_last_login_user_doesnt_exist(mock_user_dao, mock_time):
     mock_user_dao.get.return_value = None
     mock_time.time.return_value = 1669931346
 
-    assert lambda_handler(_mock_event(), mock_context) == generate_html_response(
-        404, "Specified user does not exist."
-    )
+    assert lambda_handler(_mock_event(), mock_context) == generate_html_response(404, "Specified user does not exist.")
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
     mock_user_dao.update.assert_not_called()
 
@@ -109,8 +105,7 @@ def test_update_user_client_error(mock_user_dao, mock_project_user_dao):
     mock_user_dao.get.side_effect = mock_exception
     assert lambda_handler(_mock_event(), mock_context) == generate_html_response(
         "400",
-        "An error occurred (MissingParameter) when "
-        "calling the GetItem operation: Dummy error message.",
+        "An error occurred (MissingParameter) when " "calling the GetItem operation: Dummy error message.",
     )
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
     mock_project_user_dao.get_projects_for_user.assert_not_called()

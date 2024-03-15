@@ -18,7 +18,7 @@ import copy
 import json
 import os
 from unittest import mock
-from unittest.mock import call, Mock
+from unittest.mock import Mock, call
 
 from botocore.exceptions import ClientError
 
@@ -304,9 +304,7 @@ def test_create_training_job_custom_builtin_error(
     with mock.patch.dict(os.environ, {"MANAGE_IAM_ROLES": ""}):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
-    re_mocked_sagemacker_create_training_job.assert_has_calls(
-        [call(**args), call(**args_without_metric_definitions)]
-    )
+    re_mocked_sagemacker_create_training_job.assert_has_calls([call(**args), call(**args_without_metric_definitions)])
 
     mock_pull_config.assert_called_once()
     mock_project_user_dao.get.assert_not_called()
@@ -350,9 +348,7 @@ def test_create_training_job_mismatched_header(
 @mock.patch("ml_space_lambda.training_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.sagemaker")
-def test_create_training_job_missing_parameters(
-    mock_sagemaker, mock_project_user_dao, mock_pull_config
-):
+def test_create_training_job_missing_parameters(mock_sagemaker, mock_project_user_dao, mock_pull_config):
     expected_response = generate_html_response(400, "Missing event parameter: 'body'")
     assert lambda_handler({}, mock_context) == expected_response
     mock_sagemaker.create_training_job.assert_not_called()

@@ -15,7 +15,7 @@
 #
 
 import json
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -98,9 +98,7 @@ class TestIAMSupport(TestCase):
             """,
             Description="MLSpace Notebook Policy",
         )
-        self.iam_client.attach_role_policy(
-            RoleName=NOTEBOOK_ROLE_NAME, PolicyArn=notebook_policy_response["Policy"]["Arn"]
-        )
+        self.iam_client.attach_role_policy(RoleName=NOTEBOOK_ROLE_NAME, PolicyArn=notebook_policy_response["Policy"]["Arn"])
         self.iam_manager = IAMManager(self.iam_client, self.sts_client)
 
     def tearDown(self):
@@ -144,18 +142,13 @@ class TestIAMSupport(TestCase):
         all_roles = self.iam_client.list_roles()
 
         for role in all_roles["Roles"]:
-            if (
-                role["RoleName"].startswith(f"{IAM_RESOURCE_PREFIX}-{MOCK_PROJECT_NAME}-")
-                and test_user in role["Description"]
-            ):
+            if role["RoleName"].startswith(f"{IAM_RESOURCE_PREFIX}-{MOCK_PROJECT_NAME}-") and test_user in role["Description"]:
                 existing_arn = role["Arn"]
                 break
 
         # This should run gracefully without error and we should get back the expected
         # arn
-        assert existing_arn and (
-            existing_arn == self.iam_manager.add_iam_role(MOCK_PROJECT_NAME, test_user)
-        )
+        assert existing_arn and (existing_arn == self.iam_manager.add_iam_role(MOCK_PROJECT_NAME, test_user))
 
     def test_add_iam_role_too_long(self):
         long_name = "VeryLongProjectNameThatWillCauseThePolicyNameToGoOverTheLimit"
@@ -164,9 +157,7 @@ class TestIAMSupport(TestCase):
         # Error will also include a long hash of the project and user which we don't
         # need to mock
         assert f"IAM role name 'MLSpace-{long_name}-" in str(e_info.value)
-        assert "' (127 characters) is over the 64 character limit for IAM role names." in str(
-            e_info.value
-        )
+        assert "' (127 characters) is over the 64 character limit for IAM role names." in str(e_info.value)
 
     def test_add_iam_role_exists_outdated_policies(self):
         test_user = "old-user"
@@ -177,10 +168,7 @@ class TestIAMSupport(TestCase):
         all_roles = self.iam_client.list_roles()
         policy_version_map = {}
         for role in all_roles["Roles"]:
-            if (
-                role["RoleName"].startswith(f"{IAM_RESOURCE_PREFIX}-{MOCK_PROJECT_NAME}-")
-                and test_user in role["Description"]
-            ):
+            if role["RoleName"].startswith(f"{IAM_RESOURCE_PREFIX}-{MOCK_PROJECT_NAME}-") and test_user in role["Description"]:
                 response = self.iam_client.list_attached_role_policies(RoleName=role["RoleName"])
                 for policy in response["AttachedPolicies"]:
                     if policy["PolicyName"] in [
@@ -302,10 +290,7 @@ class TestIAMSupport(TestCase):
             policy_response = self.iam_client.get_policy(PolicyArn=policy_arn)
             if policy_response["Policy"]["PolicyName"] == DEFAULT_NOTEBOOK_POLICY_NAME:
                 notebook_policy_found = True
-            elif (
-                policy_response["Policy"]["PolicyName"]
-                == f"{IAM_RESOURCE_PREFIX}-project-{MOCK_PROJECT_NAME}"
-            ):
+            elif policy_response["Policy"]["PolicyName"] == f"{IAM_RESOURCE_PREFIX}-project-{MOCK_PROJECT_NAME}":
                 project_policy_found = True
 
         assert notebook_policy_found
@@ -325,15 +310,11 @@ class TestIAMSupport(TestCase):
 
         project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{test_project}"
         aws_account = self.sts_client.get_caller_identity()["Account"]
-        project_policy_arn = (
-            f"arn:{self.iam_manager.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
-        )
+        project_policy_arn = f"arn:{self.iam_manager.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
         self.iam_client.get_policy(PolicyArn=project_policy_arn)
 
         # Remove both roles and the project (project disable/delete).
-        self.iam_manager.remove_project_user_roles(
-            [test_user_role_arn, test_user2_role_arn], test_project
-        )
+        self.iam_manager.remove_project_user_roles([test_user_role_arn, test_user2_role_arn], test_project)
         with pytest.raises(self.iam_client.exceptions.NoSuchEntityException):
             self.iam_client.get_role(RoleName=test_user_role_arn.split("/")[-1])
         with pytest.raises(self.iam_client.exceptions.NoSuchEntityException):
@@ -371,9 +352,7 @@ class TestIAMSupport(TestCase):
         response = self.iam_client.list_policies(Scope="Local")
         assert initial_policy_count + 5 == len(response["Policies"])
 
-        self.iam_manager.remove_all_user_roles(
-            test_user, [test_project_1, test_project_2, test_project_3, test_project_4]
-        )
+        self.iam_manager.remove_all_user_roles(test_user, [test_project_1, test_project_2, test_project_3, test_project_4])
 
         # Ensure all roles were cleaned up as expected
         response = self.iam_client.list_roles()

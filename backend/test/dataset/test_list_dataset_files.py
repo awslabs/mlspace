@@ -154,8 +154,7 @@ def test_list_dataset_files_client_error(mock_s3, mock_dataset_dao, mock_global_
 
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling the"
-        " ListObjectsV2 operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling the" " ListObjectsV2 operation: Dummy error message.",
     )
 
     mock_dataset_dao.get.return_value = mock_global_dataset

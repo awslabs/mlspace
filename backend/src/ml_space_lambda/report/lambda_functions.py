@@ -24,22 +24,11 @@ import boto3
 from botocore.config import Config
 
 from ml_space_lambda.data_access_objects.project import ProjectDAO
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataDAO,
-)
-from ml_space_lambda.data_access_objects.resource_scheduler import (
-    ResourceSchedulerDAO,
-    ResourceSchedulerModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataDAO
+from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission, ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    get_tags_for_resource,
-    list_clusters_for_project,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, get_tags_for_resource, list_clusters_for_project, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 project_dao = ProjectDAO()
@@ -88,18 +77,14 @@ def _get_notebooks(
                 "Modified": result.metadata.get("LastModifiedTime", ""),
                 "Type": result.metadata.get("InstanceType", ""),
                 "Owner": result.user,
-                "Auto-termination": _get_terminiation_datetime(
-                    result.id, ResourceType.NOTEBOOK, termination_records
-                ),
+                "Auto-termination": _get_terminiation_datetime(result.id, ResourceType.NOTEBOOK, termination_records),
             }
         )
 
     return notebooks
 
 
-def _get_hpo_jobs(
-    resource_get_func: Callable[..., PagedMetadataResults], args: Dict[str, any]
-) -> List[Dict[str, Any]]:
+def _get_hpo_jobs(resource_get_func: Callable[..., PagedMetadataResults], args: Dict[str, any]) -> List[Dict[str, Any]]:
     args["type"] = ResourceType.HPO_JOB
     response = resource_get_func(**args)
     hpo_jobs = []
@@ -124,9 +109,7 @@ def _get_hpo_jobs(
     return hpo_jobs
 
 
-def _get_models(
-    resource_get_func: Callable[..., PagedMetadataResults], args: Dict[str, any]
-) -> List[Dict[str, Any]]:
+def _get_models(resource_get_func: Callable[..., PagedMetadataResults], args: Dict[str, any]) -> List[Dict[str, Any]]:
     args["type"] = ResourceType.MODEL
     response = resource_get_func(**args)
     models = []
@@ -179,17 +162,13 @@ def _get_endpoints(
                 "Created": result.metadata.get("CreationTime", ""),
                 "Modified": result.metadata.get("LastModifiedTime", ""),
                 "Owner": result.user,
-                "Auto-termination": _get_terminiation_datetime(
-                    result.id, ResourceType.ENDPOINT, termination_records
-                ),
+                "Auto-termination": _get_terminiation_datetime(result.id, ResourceType.ENDPOINT, termination_records),
             }
         )
     return endpoints
 
 
-def _get_transform_jobs(
-    resource_get_func: Callable[..., PagedMetadataResults], args: Dict[str, any]
-) -> List[Dict[str, Any]]:
+def _get_transform_jobs(resource_get_func: Callable[..., PagedMetadataResults], args: Dict[str, any]) -> List[Dict[str, Any]]:
     args["type"] = ResourceType.TRANSFORM_JOB
     response = resource_get_func(**args)
     transform_jobs = []
@@ -208,9 +187,7 @@ def _get_transform_jobs(
     return transform_jobs
 
 
-def _get_training_jobs(
-    resource_get_func: Callable[..., PagedMetadataResults], args: Dict[str, any]
-) -> List[Dict[str, Any]]:
+def _get_training_jobs(resource_get_func: Callable[..., PagedMetadataResults], args: Dict[str, any]) -> List[Dict[str, Any]]:
     args["type"] = ResourceType.TRAINING_JOB
     response = resource_get_func(**args)
 
@@ -318,11 +295,7 @@ def _get_project_resources(
         project["Notebooks"] = _get_notebooks(
             resource_get_func,
             base_args,
-            [
-                record
-                for record in termination_records
-                if record.resource_type == ResourceType.NOTEBOOK
-            ],
+            [record for record in termination_records if record.resource_type == ResourceType.NOTEBOOK],
         )
     if "HPO Jobs" in requested_resources:
         project["HPO Jobs"] = _get_hpo_jobs(resource_get_func, base_args)
@@ -334,11 +307,7 @@ def _get_project_resources(
         project["Endpoints"] = _get_endpoints(
             resource_get_func,
             base_args,
-            [
-                record
-                for record in termination_records
-                if record.resource_type == ResourceType.ENDPOINT
-            ],
+            [record for record in termination_records if record.resource_type == ResourceType.ENDPOINT],
         )
     if "Transform Jobs" in requested_resources:
         project["Transform Jobs"] = _get_transform_jobs(resource_get_func, base_args)
@@ -347,11 +316,7 @@ def _get_project_resources(
     if "EMR Clusters" in requested_resources:
         project["EMR Clusters"] = _get_emr_clusters(
             cluster_prefix=proj_name,
-            termination_records=[
-                record
-                for record in termination_records
-                if record.resource_type == ResourceType.EMR_CLUSTER
-            ],
+            termination_records=[record for record in termination_records if record.resource_type == ResourceType.EMR_CLUSTER],
         )
     if "Batch Translation Jobs" in requested_resources:
         project["Batch Translation Jobs"] = _get_batch_translate_jobs(resource_get_func, base_args)
@@ -407,17 +372,11 @@ def _get_terminiation_datetime(
     if records is not None:
         return _format_date(
             next(
-                (
-                    datetime.fromtimestamp(r.termination_time)
-                    for r in records
-                    if r.resource_id == resource_id
-                ),
+                (datetime.fromtimestamp(r.termination_time) for r in records if r.resource_id == resource_id),
                 None,
             )
         )
-    resource_record = resource_scheduler_dao.get(
-        resource_id=resource_id, resource_type=resource_type
-    )
+    resource_record = resource_scheduler_dao.get(resource_id=resource_id, resource_type=resource_type)
     if resource_record:
         return _format_date(datetime.fromtimestamp(resource_record.termination_time))
     else:
@@ -478,9 +437,7 @@ def _create_report(report_key: str, content):
             for record_id, resources in report_record.items():
                 for resource_type, resource_list in resources.items():
                     for details in resource_list:
-                        project_or_owner = (
-                            details["Project"] if report_key == "User" else details["Owner"]
-                        )
+                        project_or_owner = details["Project"] if report_key == "User" else details["Owner"]
                         if resource_type == "Notebooks":
                             file_writer.writerow(
                                 [
@@ -711,9 +668,7 @@ def create(event, context):
                 project_names=report_targets if report_scope == "project" else None,
             )
             for project in list_of_projects:
-                project_resource_termination_records = (
-                    resource_scheduler_dao.get_all_project_resources(project.name)
-                )
+                project_resource_termination_records = resource_scheduler_dao.get_all_project_resources(project.name)
                 report_content.append(
                     {
                         project.name: _get_project_resources(
@@ -725,9 +680,7 @@ def create(event, context):
             # Loop through and grab resources for each user
             report_key = "User"
             for username in report_targets:
-                report_content.append(
-                    {username: _get_user_resources(username, requested_resources)}
-                )
+                report_content.append({username: _get_user_resources(username, requested_resources)})
 
         report_location = _create_report(report_key, report_content)
         response["resourceReport"] = report_location
@@ -748,9 +701,7 @@ def list(event, context):
                 reports.append(
                     {
                         "Name": object["Key"][object["Key"].find("/") + 1 :],
-                        "LastModified": (
-                            object["LastModified"].strftime("%Y-%m-%d %H:%M:%S") + " GMT"
-                        ),
+                        "LastModified": (object["LastModified"].strftime("%Y-%m-%d %H:%M:%S") + " GMT"),
                     }
                 )
     return sorted(reports, key=lambda x: x["LastModified"], reverse=True)
