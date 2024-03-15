@@ -5,10 +5,6 @@
     "main": "dist/lib/index.js",
     "types": "dist/types/index.d.ts",
     "private": true,
-    "npm-pretty-much": {
-        "runRelease": "never",
-        "runTest": "release"
-    },
     "dependencies": {
         "@cloudscape-design/components-themeable": "^3.0.546",
         "@cloudscape-design/components": "^3.0.341",

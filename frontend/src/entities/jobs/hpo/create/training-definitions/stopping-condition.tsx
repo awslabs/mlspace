@@ -78,7 +78,3 @@ export function StoppingCondition (props: StoppingConditionProps) {
         </Container>
     );
 }
-
-export default {
-    StoppingCondition,
-};

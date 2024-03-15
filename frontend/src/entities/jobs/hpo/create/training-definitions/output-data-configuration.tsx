@@ -105,7 +105,7 @@ export function OutputDataConfiguration (props: OutputDataConfigurationProps) {
                 // If the Dataset.Name isn't valid, then clear the field
                 // Should only apply if the Dataset.Name is set programmatically (e.g. cloning a training job)
                 notificationService.generateNotification(
-                    'The output location for the job is not available' + ' and was unset',
+                    'The output location for the job is not available and was unset',
                     'warning'
                 );
                 setFields({ 'OutputDataConfig.Dataset.Name': undefined });
@@ -180,7 +180,3 @@ export function OutputDataConfiguration (props: OutputDataConfigurationProps) {
         </Container>
     );
 }
-
-export default {
-    OutputDataConfiguration,
-};

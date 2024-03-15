@@ -314,7 +314,3 @@ export function HPOJobDetail () {
         </ContentLayout>
     );
 }
-
-export default {
-    HpoJobDetail: HPOJobDetail,
-};
