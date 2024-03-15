@@ -151,9 +151,9 @@ def get(event, context):
     return {
         "project": project.to_dict(),
         "permissions": serialize_permissions(project_user.permissions) if project_user else [],
-        "resourceCounts": _get_resource_counts(project_name)
-        if event["queryStringParameters"]["includeResourceCounts"] == "true"
-        else {},
+        "resourceCounts": (
+            _get_resource_counts(project_name) if event["queryStringParameters"]["includeResourceCounts"] == "true" else {}
+        ),
     }
 
 

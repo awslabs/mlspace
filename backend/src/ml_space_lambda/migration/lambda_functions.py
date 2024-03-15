@@ -288,9 +288,9 @@ def _sync_hpo_jobs(env_variables):
                     job_metadata = {
                         "CreationTime": job["CreationTime"],
                         "FailureReason": job["FailureReason"] if "FailureReason" in job else None,
-                        "HyperParameterTuningEndTime": job["HyperParameterTuningEndTime"]
-                        if "HyperParameterTuningEndTime" in job
-                        else None,
+                        "HyperParameterTuningEndTime": (
+                            job["HyperParameterTuningEndTime"] if "HyperParameterTuningEndTime" in job else None
+                        ),
                         "HyperParameterTuningJobArn": job_details["HyperParameterTuningJobArn"],
                         "HyperParameterTuningJobStatus": job["HyperParameterTuningJobStatus"],
                         "LastModifiedTime": job["LastModifiedTime"],

@@ -1174,8 +1174,8 @@ def test_translate_event(mock_boto3, mock_resource_metadata_dao, mock_event, sta
             },
         ]
         mock_iam.get_paginator.return_value = mock_paginator
-        mock_boto3.client.side_effect = (
-            lambda client_type, **kwargs: mock_translate if client_type == "translate" else mock_iam
+        mock_boto3.client.side_effect = lambda client_type, **kwargs: (
+            mock_translate if client_type == "translate" else mock_iam
         )
 
     process_event(mock_event, mock_context)
