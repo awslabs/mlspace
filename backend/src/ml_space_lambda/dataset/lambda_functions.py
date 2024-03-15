@@ -197,7 +197,6 @@ def create_dataset(event, context):
         raise Exception("Dataset headers do not match expected type and scope.")
 
     if not dataset_dao.get(scope, dataset_name):
-        s3.put_object(Bucket=env_variables["DATA_BUCKET"], Key=directory_name)
         dataset_location = f's3://{env_variables["DATA_BUCKET"]}/{directory_name}'
         dataset = DatasetModel(
             scope=scope,
