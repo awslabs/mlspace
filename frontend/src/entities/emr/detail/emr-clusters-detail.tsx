@@ -71,6 +71,8 @@ function EMRDetail () {
     clusterSummary.set('Creation time', formatDate(cluster?.Status?.Timeline?.CreationDateTime));
     clusterSummary.set('Ready time', formatDate(cluster?.Status?.Timeline?.ReadyDateTime));
     clusterSummary.set('Release label', cluster?.ReleaseLabel);
+    clusterSummary.set('Subnet', cluster?.Ec2InstanceAttributes?.Ec2SubnetId);
+
     if (project.metadata?.terminationConfiguration?.defaultEMRClusterTTL) {
         clusterSummary.set(
             'Auto termination time',

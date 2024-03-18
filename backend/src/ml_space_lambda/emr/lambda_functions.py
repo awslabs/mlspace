@@ -70,14 +70,12 @@ def create(event, context):
     else:
         applications = cluster_config["applications"]
 
-    # use list of subnets if provided, otherwise choose a random subnet
+    # use subnet if provided, otherwise choose a random subnet
     # from s3 config file
-    subnets = []
-    if "subnetIds" in event_body:
-        subnets = event_body["subnetIds"].split(",")
-    else:
+    subnet = event_body.get("Instances", {}).get("Ec2SubnetId", None)
+    if not subnet:
         param_file = pull_config_from_s3()
-        subnets = random.sample(param_file["pSMSSubnetIds"].split(","), 1)
+        subnet = random.sample(param_file["pSMSSubnetIds"].split(","), 1)[0]
 
     # Get Custom EC2 Key Pair
     ec2_key_name = ""
@@ -161,17 +159,13 @@ def create(event, context):
         "Ec2KeyName": ec2_key_name,
         "KeepJobFlowAliveWhenNoSteps": True,
         "TerminationProtected": False,
+        "Ec2SubnetId": subnet,
     }
 
     # If the request specified a custom ami id, configure the instance groups to use that ami
     if custom_ami_id:
         for instance_group in args["Instances"]["InstanceGroups"]:
             instance_group["CustomAmiId"] = custom_ami_id
-
-    if len(subnets) == 1:
-        args["Instances"]["Ec2SubnetId"] = subnets[0]
-    else:
-        args["Instances"]["Ec2SubnetIds"] = subnets
 
     args["VisibleToAllUsers"] = True
     args["JobFlowRole"] = env_variables["EMR_EC2_ROLE_NAME"]

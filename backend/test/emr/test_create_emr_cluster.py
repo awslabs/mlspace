@@ -157,7 +157,7 @@ def _expected_args(custom_ami: Optional[str] = None):
             "Ec2KeyName": mock_cluster_config["ec2-key"],
             "KeepJobFlowAliveWhenNoSteps": True,
             "TerminationProtected": False,
-            "Ec2SubnetIds": ["example_subnet1", "example_subnet2", "example_subnet3"],
+            "Ec2SubnetId": "subnet1",
         },
         "VisibleToAllUsers": True,
         "JobFlowRole": TEST_ENV_CONFIG["EMR_EC2_ROLE_NAME"],
@@ -178,7 +178,7 @@ def _expected_args(custom_ami: Optional[str] = None):
     return expected_args
 
 
-def _mock_event_body(custom_ami: Optional[str] = None):
+def _mock_event_body(subnet: Optional[str] = "", custom_ami: Optional[str] = None):
     options = {
         "emrSize": "example_emr_size",
         "applications": ["Hive", "HBase"],
@@ -190,7 +190,7 @@ def _mock_event_body(custom_ami: Optional[str] = None):
     return {
         "clusterName": "example_cluster_name",
         "options": options,
-        "subnetIds": "example_subnet1,example_subnet2,example_subnet3",
+        "Instances": {"Ec2SubnetId": subnet},
     }
 
 
@@ -229,19 +229,16 @@ mock_list_response = {
 }
 
 
-def _mock_args(random_subnet: Optional[str] = None, custom_ami: Optional[str] = None):
+def _mock_args(specific_subnet: Optional[str] = None, custom_ami: Optional[str] = None):
     call_args = copy.deepcopy(_expected_args(custom_ami=custom_ami))
-    if random_subnet:
-        call_args["Instances"]["Ec2SubnetId"] = random_subnet
-        del call_args["Instances"]["Ec2SubnetIds"]
+    if specific_subnet:
+        call_args["Instances"]["Ec2SubnetId"] = specific_subnet
 
     return call_args
 
 
-def _mock_event(include_subnet: Optional[bool] = True, custom_ami: Optional[str] = None):
-    event_body = copy.deepcopy(_mock_event_body(custom_ami=custom_ami))
-    if not include_subnet:
-        del event_body["subnetIds"]
+def _mock_event(subnet: Optional[str] = "", custom_ami: Optional[str] = None):
+    event_body = copy.deepcopy(_mock_event_body(subnet=subnet, custom_ami=custom_ami))
 
     return {
         "body": json.dumps(event_body),
@@ -297,12 +294,63 @@ def test_create_emr_cluster_success(
 
     expected_response = generate_html_response(200, mock_response)
 
-    assert emr_handler.create(_mock_event(include_subnet=False, custom_ami=mock_ami_id), mock_context) == expected_response
+    assert emr_handler.create(_mock_event(subnet="", custom_ami=mock_ami_id), mock_context) == expected_response
 
-    mock_emr.run_job_flow.assert_called_with(**_mock_args(random_subnet=mocked_random_subnet, custom_ami=mock_ami_id))
+    mock_emr.run_job_flow.assert_called_with(**_mock_args(specific_subnet=mocked_random_subnet, custom_ami=mock_ami_id))
     mock_pull_config.assert_called_once()
     mock_s3.get_object.assert_called_with(Bucket="example_bucket", Key="cluster-config.json")
 
+    cluster_schedule = mock_resource_scheduler_dao.create.call_args.args[0]
+    assert cluster_schedule.resource_id == mock_cluster_id
+    assert cluster_schedule.resource_type == ResourceType.EMR_CLUSTER
+    # We're mocking a termination time of 3 days so ensure the termination time makes sense
+    assert cluster_schedule.termination_time > (time.time() + (71 * 60 * 60))
+    assert cluster_schedule.project == mock_project.name
+
+
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.emr.lambda_functions.resource_scheduler_dao")
+@mock.patch("ml_space_lambda.emr.lambda_functions.project_dao")
+@mock.patch("ml_space_lambda.emr.lambda_functions.s3")
+@mock.patch("ml_space_lambda.emr.lambda_functions.pull_config_from_s3")
+@mock.patch("ml_space_lambda.emr.lambda_functions.emr")
+def test_create_emr_cluster_success_with_subnet(
+    mock_emr,
+    mock_pull_config,
+    mock_s3,
+    mock_project_dao,
+    mock_resource_scheduler_dao,
+):
+    # This test checks to see that the response contains the expected subnet that the user specifies.
+
+    # clear out global config if set to make lambda tests independent of each other
+    mlspace_config.param_file = {}
+    mlspace_config.env_variables = {}
+    emr_handler.cluster_config = {}
+
+    specific_subnet = "ThisIsASpecificSubnet1"
+    mock_ami_id = "ami-123456789"
+
+    mock_s3.get_object.return_value = copy.deepcopy(mock_cluster_config_response)
+    mock_emr.run_job_flow.return_value = mock_response
+    mock_paginator = mock.MagicMock()
+    mock_emr.get_paginator.return_value = mock_paginator
+    mock_cluster_id = "Cluster1"
+    mock_paginator.paginate.return_value = [
+        {"Clusters": [{"Id": mock_cluster_id, "Name": f"{MOCK_PROJECT_NAME}-{MOCK_CLUSTER_NAME}"}]}
+    ]
+    mock_project_dao.get.return_value = mock_project
+
+    expected_response = generate_html_response(200, mock_response)
+
+    assert emr_handler.create(_mock_event(subnet=specific_subnet, custom_ami=mock_ami_id), mock_context) == expected_response
+
+    # Check it had correct parameters and subnet was passed in
+    mock_emr.run_job_flow.assert_called_with(**_mock_args(specific_subnet=specific_subnet, custom_ami=mock_ami_id))
+    mock_pull_config.assert_not_called()
+    mock_s3.get_object.assert_called_with(Bucket="example_bucket", Key="cluster-config.json")
+
+    # Check it was created successfully
     cluster_schedule = mock_resource_scheduler_dao.create.call_args.args[0]
     assert cluster_schedule.resource_id == mock_cluster_id
     assert cluster_schedule.resource_type == ResourceType.EMR_CLUSTER
@@ -330,14 +378,16 @@ def test_create_emr_cluster_client_error(mock_emr, mock_pull_config, mock_s3):
         "An error occurred (MissingParameter) when calling the RunJobFlow operation: Dummy error message.",
     )
 
+    specific_subnet = "ADifferentSubnet"
+
     mock_s3.get_object.return_value = copy.deepcopy(mock_cluster_config_response)
     mock_emr.run_job_flow.side_effect = ClientError(error_msg, "RunJobFlow")
 
-    assert emr_handler.create(_mock_event(), mock_context) == expected_response
+    assert emr_handler.create(_mock_event(subnet=specific_subnet), mock_context) == expected_response
 
     mock_pull_config.assert_not_called()
     mock_s3.get_object.assert_called_with(Bucket="example_bucket", Key="cluster-config.json")
-    error_args = _mock_args()
+    error_args = _mock_args(specific_subnet=specific_subnet)
     mock_emr.run_job_flow.assert_called_with(**error_args)
 
 
