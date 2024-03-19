@@ -26,6 +26,7 @@ from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
+from ml_space_lambda.utils.dict_utils import filter_dict, map_dict_keys
 
 s3 = boto3.client(
     "s3",
@@ -251,33 +252,55 @@ def list_locations(event, context):
 
 @api_wrapper
 def list_files(event, context):
-    prefix = get_dataset_prefix(event["pathParameters"]["scope"], event["pathParameters"]["datasetName"])
-
     env_variables = get_environment_variables()
-    keys = []
-
-    if event["queryStringParameters"]:
-        s3_response = s3.list_objects_v2(
-            Bucket=env_variables["DATA_BUCKET"],
-            Prefix=prefix,
-            ContinuationToken=event["queryStringParameters"].get("nextToken", ""),
-        )
-    else:
-        s3_response = s3.list_objects_v2(Bucket=env_variables["DATA_BUCKET"], Prefix=prefix)
-
-    for object in s3_response.get("Contents", []):
-        keys.append({"key": object["Key"], "size": object["Size"]})
-
-    # Note: For s3_response if there are no files, the path to the dataset is returned
-    # Remove the dataset path to correctly reflect there are no files in the dataset
-    if len(keys) == 1 and keys[0]["key"] == prefix:
-        keys = []
-
-    response = {
-        "Keys": keys,
+    query_string_parameters = event.get("queryStringParameters", {})
+    
+    # map query parameters keys to api parameter names
+    query_string_parameters = map_dict_keys(query_string_parameters, {
+        "nextToken": "ContinuationToken",
+        "pageSize": "MaxKeys",
+        "prefix": "Prefix"
+    })
+    
+    dataset_prefix = get_dataset_prefix(
+        event["pathParameters"]["scope"], event["pathParameters"]["datasetName"]
+    )
+    computed_prefix = "".join([dataset_prefix, query_string_parameters.get("Prefix", "")])
+    
+    query_parameters = {
+        "Bucket": env_variables["DATA_BUCKET"],
+        "Prefix": computed_prefix,
+        "Delimiter": "/"
     }
+    
+    # constrain which query parameters can be supplied
+    allowed_query_string_parameters = ["MaxKeys", "ContinuationToken"]
+    for key in filter_dict(query_string_parameters, allowed_query_string_parameters):
+        query_parameters[key] = query_string_parameters[key]
 
+    s3_response = s3.list_objects_v2(**query_parameters)
+    response = {}
+
+    # copy over values with updated keys to response
+    response["pageSize"] = s3_response["MaxKeys"]
+    response["prefix"] = s3_response["Prefix"]
+    
     if "NextContinuationToken" in s3_response:
         response["nextToken"] = s3_response["NextContinuationToken"]
 
+    response["contents"] = []
+    
+    # drop unwated fields from contents
+    if "Contents" in s3_response:
+        for content in s3_response["Contents"]:
+            response["contents"].append({
+                "key": content["Key"],
+                "size": content["Size"]
+            })
+    
+    # merge common prefixes with contents
+    if "CommonPrefixes" in s3_response:
+        for common_prefix in s3_response["CommonPrefixes"]:
+            response["contents"].append({"prefix": common_prefix["Prefix"]})
+    
     return response
