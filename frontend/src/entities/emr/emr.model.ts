@@ -52,6 +52,7 @@ type EMRClusterFull = {
         IamInstanceProfile: string;
         Ec2KeyName: string;
         Ec2AvailabilityZone: string;
+        Ec2SubnetId: string;
         EmrManagedSlaveSecurityGroup: string;
     };
     Name: string;
