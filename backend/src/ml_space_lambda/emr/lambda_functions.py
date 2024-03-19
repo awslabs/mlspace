@@ -210,6 +210,7 @@ def create(event, context):
 
 @api_wrapper
 def list_all(event, context):
+    # TODO: get the cluster from the resource table. query_resource_metadata()
     project_name = event["pathParameters"]["projectName"]
 
     return list_clusters_for_project(

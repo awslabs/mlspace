@@ -460,7 +460,7 @@ export class CoreStack extends Stack {
             ruleName: 'mlspace-resource-metadata-sync',
             eventPattern: {
                 account: [this.account],
-                source: ['aws.sagemaker', 'aws.translate'],
+                source: ['aws.sagemaker', 'aws.translate', 'aws.emr'],
                 detailType: [
                     'SageMaker Endpoint State Change',
                     'SageMaker Endpoint Config State Change',
@@ -471,6 +471,8 @@ export class CoreStack extends Stack {
                     'SageMaker Training Job State Change',
                     'SageMaker Transform Job State Change',
                     'Translate TextTranslationJob State Change',
+                    'EMR Cluster State Change', // TODO make sure this is the only one we need
+
                 ],
             },
             targets: [new LambdaFunction(resourceMetadataLambda)],
@@ -480,7 +482,7 @@ export class CoreStack extends Stack {
             ruleName: 'mlspace-cloudtrail-metadata-sync',
             eventPattern: {
                 account: [this.account],
-                source: ['aws.sagemaker', 'aws.translate'],
+                source: ['aws.sagemaker', 'aws.translate', 'aws.emr'],
                 detailType: ['AWS API Call via CloudTrail'],
                 detail: {
                     eventSource: ['sagemaker.amazonaws.com', 'translate.amazonaws.com'],
@@ -488,6 +490,7 @@ export class CoreStack extends Stack {
                         'CreateLabelingJob',
                         'StartTextTranslationJob',
                         'StopTextTranslationJob',
+                        'RunJobFlow', // TODO confirm this is correct
                     ],
                 },
             },
