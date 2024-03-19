@@ -1,12 +1,9 @@
 /**
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-
       http://www.apache.org/licenses/LICENSE-2.0
-
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +39,6 @@ import {
 import { enumToOptions, initCap } from '../../../shared/util/enum-utils';
 import './dataset-create.styles.css';
 import { ManageFiles } from '../manage/dataset.files';
-import { getDatasetByScopeAndName } from '../dataset.reducer';
 import { IDatasetFile } from '../../../shared/model/datasetfile.model';
 import { useAuth } from 'react-oidc-context';
 import { buildS3Keys, createDataset, determineScope, uploadFiles } from '../dataset.service';
@@ -118,38 +114,25 @@ export function DatasetCreate () {
         scrollToPageHeader('h1', 'dataset');
     }, [dispatch, basePath, projectName]);
 
-    async function datasetExists (newDataset: IDataset) {
-        const exists = await dispatch(
-            getDatasetByScopeAndName({ scope: newDataset.scope, name: newDataset.name })
-        );
-        return exists.payload !== undefined;
-    }
-
     async function handleSubmit () {
         if (state.formValid) {
             setState({type: 'updateState', payload: { formSubmitting: true } });
 
             // create new dataset from state.form
             const newDataset = createDatasetFromForm(state.form, datasetFileList);
-            newDataset.scope = determineScope(newDataset, projectName, username!);
-            const exists = await datasetExists(newDataset);
-            if (!exists) {
-                if (datasetFileList.length !== 0) {
-                    const s3Keys = buildS3Keys(datasetFileList, newDataset, projectName, username!);
-                    await uploadFiles(s3Keys, newDataset, notificationService, datasetFileList);
-                    // Need to clear state/reset the form
-                    navigate(`${basePath}/dataset`);
-                } else {
-                    // if no files are uploaded just create an empty dataset
-                    await createDataset(newDataset);
-                    navigate(`${basePath}/dataset`);
-                }
-            } else {
+            newDataset.scope = determineScope(newDataset.type, projectName, username!);
+            const response = await createDataset(newDataset).catch(() => {
                 // if dataset exists display message to user
                 notificationService.generateNotification(
                     `Failed to create dataset, dataset already exists with the name: ${newDataset.name}`,
                     'error'
                 );
+            });
+            if (response?.status === 200) {
+                const s3Keys = buildS3Keys(datasetFileList, newDataset, projectName, username!);
+                await uploadFiles(s3Keys, newDataset, notificationService, datasetFileList);
+                // Need to clear state/reset the form
+                navigate(`${basePath}/dataset`);
             }
             setState({type: 'updateState', payload: { formSubmitting: false } });
         } else {

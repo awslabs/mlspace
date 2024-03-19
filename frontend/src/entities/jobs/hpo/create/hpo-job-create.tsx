@@ -1,12 +1,9 @@
 /**
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-
       http://www.apache.org/licenses/LICENSE-2.0
-
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,6 +42,8 @@ import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { getDate, getPaddedNumberString } from '../../../../shared/util/date-utils';
 import { ML_ALGORITHMS } from '../../algorithms';
 import { getImageName } from './training-definitions/algorithm-options';
+import { createDatasetHandleAlreadyExists } from '../../../dataset/dataset.service';
+import { DatasetType, IDataset } from '../../../../shared/model';
 
 export type HPOJobCreateState = {
     editingJobDefinition: any;
@@ -57,7 +56,7 @@ export type HPOJobCreateState = {
 
 export function HPOJobCreate () {
     const navigate = useNavigate();
-    const currentLocation = useLocation();
+    const location = useLocation();
     const { projectName } = useParams();
     const auth = useAuth();
     const userName = auth.user!.profile.preferred_username;
@@ -71,8 +70,8 @@ export function HPOJobCreate () {
         return {
             editingJobDefinition: null,
             validateAll: false,
-            form: currentLocation.state?.hpoTrainingJob
-                ? cloneHpoJob(currentLocation.state.hpoTrainingJob)
+            form: location.state?.hpoTrainingJob
+                ? cloneHpoJob(location.state.hpoTrainingJob)
                 : createHPOJob(),
             touched: {},
             formSubmitting: false,
@@ -338,6 +337,7 @@ export function HPOJobCreate () {
             UserName: userName!,
             HPOJobDefinition: hpoJobDefinition,
         };
+        
 
         dispatch(createHPOJobThunk(payload)).then((result: any) => {
             setState({ type: 'updateState', payload: { formSubmitting: false } });
@@ -351,7 +351,29 @@ export function HPOJobCreate () {
                     `Successfully created hyperparameter tuning job with name ${state.form.HyperParameterTuningJobName}`,
                     'success'
                 );
-
+                payload.HPOJobDefinition.TrainingJobDefinitions.forEach((definition) => {
+                    const split = definition.OutputDataConfig.S3OutputPath.split('/');
+                    const scope = split[4];
+                    let datasetType = DatasetType.PROJECT;
+                    if (split[3] === 'private') {
+                        datasetType = DatasetType.PRIVATE;
+                    }
+                    const datasetName = split[6].replace('"', '');
+                    const newDataset = {
+                        name: datasetName,
+                        description: `Dataset created as part of the HPO job: ${state.form.HyperParameterTuningJobName}`,
+                        type: datasetType,
+                        scope: scope
+                    } as IDataset;
+                    const unexpectedError = createDatasetHandleAlreadyExists(newDataset);
+                    if (unexpectedError) {
+                        notificationService.generateNotification(
+                            `Failed to create output dataset ${newDataset.name} for HPO job: ${state.form.HyperParameterTuningJobName}`,
+                            'error'
+                        );
+                    }
+                });
+                
                 navigate(
                     `/project/${projectName}/jobs/hpo/detail/${state.form.HyperParameterTuningJobName}`
                 );
@@ -422,7 +444,7 @@ export function HPOJobCreate () {
                         }}
                         onCancel={() => {
                             navigate(`/project/${projectName}/jobs/hpo`, {
-                                state: { prevPath: window.location.hash },
+                                state: { prevPath: location.hash },
                             });
                         }}
                         onSubmit={() => {
@@ -531,3 +553,7 @@ export function HPOJobCreate () {
         </ErrorBoundaryRoutes>
     );
 }
+
+export default {
+    HPOJobCreate,
+};
