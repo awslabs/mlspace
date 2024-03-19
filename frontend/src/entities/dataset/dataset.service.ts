@@ -1,18 +1,13 @@
-/**
-  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
-  Licensed under the Apache License, Version 2.0 (the "License").
-  You may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
+/*
+ * Your use of this service is governed by the terms of the AWS Customer Agreement
+ * (https://aws.amazon.com/agreement/) or other agreement with AWS governing your use of
+ * AWS services. Each license to use the service, including any related source code component,
+ * is valid for use associated with the related specific task-order contract as defined by
+ * 10 U.S.C. 3401 and 41 U.S.C. 4101.
+ *
+ * Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved. This is AWS Content
+ * subject to the terms of the AWS Customer Agreement.
+ */
 
 import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 import { IDatasetFile } from '../../shared/model/datasetfile.model';
@@ -133,11 +128,11 @@ export const fetchPresignedURL = async (s3Key: string, dataset: IDataset) => {
 };
 
 export const determineScope = (
-    dataset: IDataset,
+    type: DatasetType | undefined,
     projectName: string | undefined,
     username: string
 ): string => {
-    switch (dataset.type) {
+    switch (type) {
         case DatasetType.GLOBAL:
             return DatasetType.GLOBAL;
         case DatasetType.PROJECT:
@@ -185,27 +180,36 @@ export async function uploadFiles (
 }
 
 export async function createDataset (dataset: IDataset) {
-    const requestUrl = '/dataset/create';
-    const payload = {
-        datasetName: dataset.name,
-        datasetType: dataset.type,
-        datasetScope: dataset.scope,
-        datasetDescription: dataset.description,
-        datasetFormat: dataset.format,
-    };
-    const datasetType = dataset.type;
-    const datasetScope = dataset.scope;
     // Scope and Type should always be set for this Dataset object as part of form validation
-    if (datasetType && datasetScope){
+    if (dataset.type && dataset.scope){
+        const requestUrl = '/dataset/create';
+        const payload = {
+            datasetName: dataset.name,
+            datasetType: dataset.type,
+            datasetScope: dataset.scope,
+            datasetDescription: dataset.description,
+            datasetFormat: dataset.format,
+        };
         const headerConfig = {
             headers: {
-                'x-mlspace-dataset-type': datasetType,
-                'x-mlspace-dataset-scope': datasetScope,
+                'x-mlspace-dataset-type': dataset.type,
+                'x-mlspace-dataset-scope': dataset.scope,
             },
         };
         return axios.post(requestUrl, payload, headerConfig);
     }
 }
+
+export const createDatasetHandleAlreadyExists = (dataset: IDataset) => {
+    let unexpectedError = false;
+    createDataset(dataset).catch((error) => {
+        const expectedError = `Bad Request: Dataset ${dataset.name} already exists.`;
+        // Any error that the dataset already existing is unexpected
+        unexpectedError = expectedError !== error.response.data;
+    });
+    
+    return unexpectedError;
+};
 
 export const listDatasetBucketAndLocations = async (scope: string, type: string) => {
     const response = await axios.get(`/dataset-locations/${type}/${scope}`);

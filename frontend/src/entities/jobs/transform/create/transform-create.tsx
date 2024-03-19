@@ -1,18 +1,13 @@
-/**
-  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
-  Licensed under the Apache License, Version 2.0 (the "License").
-  You may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
+/*
+ * Your use of this service is governed by the terms of the AWS Customer Agreement
+ * (https://aws.amazon.com/agreement/) or other agreement with AWS governing your use of
+ * AWS services. Each license to use the service, including any related source code component,
+ * is valid for use associated with the related specific task-order contract as defined by
+ * 10 U.S.C. 3401 and 41 U.S.C. 4101.
+ *
+ * Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved. This is AWS Content
+ * subject to the terms of the AWS Customer Agreement.
+ */
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -30,11 +25,13 @@ import {
     RadioGroup,
     SelectProps,
     ContentLayout,
+    Autosuggest,
+    Alert,
 } from '@cloudscape-design/components';
 import { useAuth } from 'react-oidc-context';
 import { fetchS3Options } from '../transform.service';
 import { ITransform, defaultValue } from '../../../../shared/model/transform.model';
-import { DatasetType } from '../../../../shared/model/dataset.model';
+import { DatasetType, IDataset } from '../../../../shared/model/dataset.model';
 import { useAppDispatch, useAppSelector } from '../../../../config/store';
 import { setBreadcrumbs } from '../../../../shared/layout/navigation/navigation.reducer';
 import NotificationService from '../../../../shared/layout/notification/notification.service';
@@ -65,6 +62,8 @@ import {
     AttributeEditorSchema,
     EnvironmentVariables,
 } from '../../../../modules/environment-variables/environment-variables';
+import { createDatasetHandleAlreadyExists, determineScope } from '../../../dataset/dataset.service';
+import Condition from '../../../../modules/condition';
 
 export function TransformCreate () {
     const [s3DataTypes, setS3DataTypes] = useState([] as SelectProps.Option[]);
@@ -74,6 +73,7 @@ export function TransformCreate () {
     const [inputS3Locations, setInputS3Locations] = useState([] as SelectProps.Option[]);
     const [selectedS3Location, setSelectedS3Location] = useState(null as SelectProps.Option | null);
     const [outputS3Locations, setOutputS3Locations] = useState([] as SelectProps.Option[]);
+    const [selectedOutputDataset, setSelectedOutputDataset] = useState('');
     const [inputDataAccess, setInputDataAccess] = useState(DatasetType.GLOBAL.valueOf());
     const [outputDataAccess, setOutputDataAccess] = useState(DatasetType.GLOBAL.valueOf());
     const [assembleWithTypes, setAssembleWithTypes] = useState([] as SelectProps.Option[]);
@@ -84,6 +84,8 @@ export function TransformCreate () {
         null as SelectProps.Option | null
     );
     const [showSelectModelModal, setShowSelectModelModal] = useState(false);
+    const [outputDatasetType, setOutputDatasetType] = useState(DatasetType.GLOBAL);
+    const [s3OutputUri, setS3OutputUri] = useState('');
 
     const modelList: ModelResourceMetadata[] = useAppSelector(modelsList);
     const loadingModels = useAppSelector(loadingModelsList);
@@ -146,7 +148,7 @@ export function TransformCreate () {
         TransformOutput: z.object({
             Accept: z.string().max(256).optional(),
             AssembleWith: z.string().optional(),
-            S3OutputPath: z.string({ required_error: 'S3 output path is required' }).max(1024),
+            S3OutputPath: z.string({ required_error: 'S3 output location is required' }).max(1024),
         }),
         TransformResources: z.object({
             InstanceCount: z.number().gte(1).lte(100),
@@ -163,18 +165,19 @@ export function TransformCreate () {
 
     const handleDataAccessTypeChange = useCallback(
         (dataAccessType: DatasetType, stateSetter: CallbackFunction) => {
-            const scope =
-                dataAccessType === DatasetType.GLOBAL
-                    ? DatasetType.GLOBAL
-                    : dataAccessType === DatasetType.PROJECT
-                        ? projectName!
-                        : username!;
+            const scope = determineScope(dataAccessType, projectName, username!);
+            // Define the full dataset URI, leaving a spot for the dataset name to be appended at the end
+            if (dataAccessType === DatasetType.GLOBAL) {
+                setS3OutputUri(`s3://${window.env.DATASET_BUCKET}/${dataAccessType}/datasets/`);
+            } else {
+                setS3OutputUri(`s3://${window.env.DATASET_BUCKET}/${dataAccessType}/${scope}/datasets/`);
+            }
             fetchS3Options(scope, dataAccessType)
                 .then((response) => {
                     stateSetter(
                         response.map((entry: any) => ({
-                            value: entry.location,
-                            label: entry.location,
+                            value: entry.name,
+                            label: entry.name,
                         }))
                     );
                 })
@@ -250,6 +253,20 @@ export function TransformCreate () {
             createBatchTransformJob({ ...updatedForm, ProjectName: projectName })
                 .then((response) => {
                     if (response.status === 200) {
+                        const newDataset = {
+                            name: selectedOutputDataset,
+                            description: `Dataset created as part of the Batch Transform job: ${state.form.JobName}`,
+                            type: outputDatasetType,
+                            scope: determineScope(outputDatasetType, projectName, username!)
+                        } as IDataset;
+                        const unexpectedError = createDatasetHandleAlreadyExists(newDataset);
+                        if (unexpectedError) {
+                            notificationService.generateNotification(
+                                `Failed to create output dataset ${newDataset.name} for transform job: ${state.form.JobName}`,
+                                'error'
+                            );
+                        }
+
                         notificationService.generateNotification(
                             'Successfully created batch transform job.',
                             'success'
@@ -708,6 +725,7 @@ export function TransformCreate () {
                                         setDatasetFiles([]);
                                         setSelectedDatasetFile(null);
                                         setSelectedS3Location(null);
+                                        setOutputDatasetType(detail.value as DatasetType);
                                         handleDataAccessTypeChange(
                                             detail.value as DatasetType,
                                             setInputS3Locations
@@ -785,23 +803,33 @@ export function TransformCreate () {
                                 />
                             </FormField>
                             <FormField
-                                label='S3 output path'
+                                label='S3 output location'
                                 errorText={errors.TransformOutput?.S3OutputPath}
                             >
-                                <Select
-                                    selectedOption={{
-                                        label: state.form.TransformOutput?.S3OutputPath,
-                                    }}
-                                    placeholder='Select an output location'
-                                    options={outputS3Locations}
-                                    onChange={({ detail }) => {
-                                        setFields({
-                                            'TransformOutput.S3OutputPath':
-                                                detail.selectedOption.label,
-                                        });
-                                    }}
-                                    onBlur={() => touchFields(['TransformOutput.S3OutputPath'])}
-                                />
+                                <SpaceBetween direction='vertical' size='m'>
+                                    <Autosuggest
+                                        onChange={({detail}) => {
+                                            setFields({
+                                                'TransformOutput.S3OutputPath': s3OutputUri + detail.value,
+                                            });
+                                            setSelectedOutputDataset(detail.value);
+                                        }}
+                                        value={
+                                            selectedOutputDataset || ''
+                                        }
+                                        options={outputS3Locations}
+                                        ariaLabel='Select an output location'
+                                        placeholder='Select an output location'
+                                        empty='No datasets found.'
+                                        enteredTextLabel={ (value) => `${outputS3Locations.find((d) => d.value === selectedOutputDataset) ? 'Use:' : 'Create:'} ${value}`}
+                                    />
+                                    <Condition condition={!outputS3Locations.find((d) => d.value === selectedOutputDataset) && selectedOutputDataset.length > 0}>
+                                        <Alert
+                                            statusIconAriaLabel='Info'
+                                            header='A new dataset will be created when this job starts successfully.'>
+                                        </Alert>
+                                    </Condition>
+                                </SpaceBetween>
                             </FormField>
                             <FormField
                                 label='Assemble with'

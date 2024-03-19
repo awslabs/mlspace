@@ -1,18 +1,13 @@
-/**
-  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
-  Licensed under the Apache License, Version 2.0 (the "License").
-  You may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
+/*
+ * Your use of this service is governed by the terms of the AWS Customer Agreement
+ * (https://aws.amazon.com/agreement/) or other agreement with AWS governing your use of
+ * AWS services. Each license to use the service, including any related source code component,
+ * is valid for use associated with the related specific task-order contract as defined by
+ * 10 U.S.C. 3401 and 41 U.S.C. 4101.
+ *
+ * Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved. This is AWS Content
+ * subject to the terms of the AWS Customer Agreement.
+ */
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -30,6 +25,8 @@ import {
     Toggle,
     RadioGroup,
     SelectProps,
+    Autosuggest,
+    Alert,
 } from '@cloudscape-design/components';
 import { useAppDispatch } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -47,18 +44,21 @@ import {
 } from '../../../shared/model/translate.model';
 import { enumToOptions } from '../../../shared/util/enum-utils';
 import { listDatasetsLocations } from '../../dataset/dataset.reducer';
-import { DatasetType } from '../../../shared/model/dataset.model';
+import { DatasetType, IDataset } from '../../../shared/model/dataset.model';
 import { useAuth } from 'react-oidc-context';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import {
     getCustomTerminologyList,
     getTranslateLanguagesList,
 } from '../../../shared/util/translate-utils';
+import { determineScope, createDatasetHandleAlreadyExists } from '../../dataset/dataset.service';
+import Condition from '../../../modules/condition';
 
 export function BatchTranslateCreate () {
     const [errorText] = useState('');
     const [customTerminologies, setCustomTerminologies] = useState([]);
     const [languages, setLanguages] = useState([]);
+    const [s3OutputUri, setS3OutputUri] = useState('');
     const autoOption: SelectProps.Option = { label: 'Auto (auto)', value: 'auto' };
     const { projectName } = useParams();
     const dispatch = useAppDispatch();
@@ -188,15 +188,7 @@ export function BatchTranslateCreate () {
 
     useEffect(() => {
         // set up the input dataset locations based on user-selected scope
-        let scope = 'global';
-        switch (state.form.InputDataset.Type) {
-            case DatasetType.PRIVATE:
-                scope = userName!;
-                break;
-            case DatasetType.PROJECT:
-                scope = projectName!;
-                break;
-        }
+        const scope = determineScope(state.form.InputDataset.Type, projectName, userName!);
 
         dispatch(listDatasetsLocations({ scope, type: state.form.InputDataset.Type }))
             .then((response) => response.payload)
@@ -220,15 +212,15 @@ export function BatchTranslateCreate () {
 
     useEffect(() => {
         // set up the output dataset locations based on user-selected scope
-        let scope = 'global';
-        switch (state.form.OutputDataset.Type) {
-            case DatasetType.PRIVATE:
-                scope = userName!;
-                break;
-            case DatasetType.PROJECT:
-                scope = projectName!;
-                break;
+        const scope = determineScope(state.form.OutputDataset.Type, projectName, userName!);
+        
+        // Define the full dataset URI, leaving a spot for the dataset name to be appended at the end
+        if (state.form.OutputDataset.Type === DatasetType.GLOBAL) {
+            setS3OutputUri(`s3://${window.env.DATASET_BUCKET}/${state.form.OutputDataset.Type}/datasets/`);
+        } else {
+            setS3OutputUri(`s3://${window.env.DATASET_BUCKET}/${state.form.OutputDataset.Type}/${scope}/datasets/`);
         }
+        
 
         dispatch(listDatasetsLocations({ scope, type: state.form.OutputDataset.Type }))
             .then((response) => response.payload)
@@ -271,6 +263,20 @@ export function BatchTranslateCreate () {
                     `Successfully created translation job ${state.form.JobName}.`,
                     'success'
                 );
+                const newDataset = {
+                    name: state.form.OutputDataset.Name,
+                    description: `Dataset created as part of the Batch Translate job: ${state.form.JobName}`,
+                    type: state.form.OutputDataset.Type,
+                    scope: determineScope(state.form.OutputDataset.Type, projectName, userName!)
+                } as IDataset;
+
+                const unexpectedError = createDatasetHandleAlreadyExists(newDataset);
+                if (unexpectedError) {
+                    notificationService.generateNotification(
+                        `Failed to create output dataset ${newDataset.name} for translation job: ${response.payload}`,
+                        'error'
+                    );
+                }
                 navigate(`/project/${projectName}/batch-translate/${response.payload.JobId}`);
             } else {
                 notificationService.generateNotification(
@@ -419,8 +425,8 @@ export function BatchTranslateCreate () {
                                             : null
                                     }
                                     options={state.form.inputDatasets.map(
-                                        (inputLocation: { name: string; location: string }) => {
-                                            return { value: inputLocation.name };
+                                        (location: { name: string; location: string }) => {
+                                            return { value: location.name };
                                         }
                                     )}
                                     onChange={(event) => {
@@ -477,34 +483,38 @@ export function BatchTranslateCreate () {
                                 />
                             </FormField>
                             <FormField label='S3 location' errorText={formErrors?.Dataset?.Name}>
-                                <Select
-                                    placeholder='Select an output location'
-                                    empty='No datasets found.'
-                                    selectedOption={
-                                        state.form.OutputDataset?.Name
-                                            ? { value: state.form.OutputDataset?.Name }
-                                            : null
-                                    }
-                                    options={state.form.outputDatasets.map(
-                                        (location: { name: string; location: string }) => {
-                                            return { value: location.name };
+                                <SpaceBetween direction='vertical' size='m'>
+                                    <Autosuggest
+                                        onChange={({detail}) => {
+                                            setFields({
+                                                OutputDataset: {
+                                                    Type: state.form.OutputDataset!.Type,
+                                                    Name: detail.value,
+                                                },
+                                                'OutputDataConfig.S3Uri': s3OutputUri + detail.value, 
+                                            });
+                                        }}
+                                        value={
+                                            state.form.OutputDataset?.Name || ''
                                         }
-                                    )}
-                                    onChange={(event) => {
-                                        const dataset = state.form.outputDatasets.find(
-                                            (dataset: { name: string; location: string }) =>
-                                                dataset.name === event.detail.selectedOption.value
-                                        );
-                                        setFields({
-                                            OutputDataset: {
-                                                Type: state.form.OutputDataset!.Type,
-                                                Name: event.detail.selectedOption.value,
-                                            },
-                                            'OutputDataConfig.S3Uri': dataset.location,
-                                        });
-                                    }}
-                                    data-cy='s3-output-location-select'
-                                />
+                                        options={state.form.outputDatasets.map(
+                                            (location: { name: string; location: string }) => {
+                                                return { value: location.name };
+                                            }
+                                        )}
+                                        ariaLabel='Select an output location'
+                                        placeholder='Select an output location'
+                                        empty='No datasets found.'
+                                        data-cy='s3-output-location-input'
+                                        enteredTextLabel={ (value) => `${state.form.outputDatasets.find((d) => d.name === value) ? 'Use:' : 'Create:'} "${value}"`}
+                                    />
+                                    <Condition condition={!state.form.outputDatasets.find((d) => d.name === state.form.OutputDataset.Name) && state.form.OutputDataset.Name?.length > 0}>
+                                        <Alert
+                                            statusIconAriaLabel='Info'
+                                            header='A new dataset will be created when this job starts successfully.'>
+                                        </Alert>
+                                    </Condition>
+                                </SpaceBetween>
                             </FormField>
                         </SpaceBetween>
                     </Container>
