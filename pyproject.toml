@@ -1,9 +1,0 @@
-[tool.black]
-line-length = 130
-
-[tool.flake8]
-max-line-length = 130
-
-[tool.isort]
-profile = "black"
-line_length = 130
