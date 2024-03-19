@@ -556,7 +556,3 @@ export function HPOJobCreate () {
         </ErrorBoundaryRoutes>
     );
 }
-
-export default {
-    HPOJobCreate,
-};

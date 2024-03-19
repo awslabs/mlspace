@@ -172,7 +172,3 @@ export function OutputDataConfiguration (props: OutputDataConfigurationProps) {
         </Container>
     );
 }
-
-export default {
-    OutputDataConfiguration,
-};

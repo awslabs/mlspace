@@ -444,7 +444,3 @@ export function AlgorithmOptions (props: AlgorithmOptionsProps) {
         </SpaceBetween>
     );
 }
-
-export default {
-    AlgorithmOptions,
-};
