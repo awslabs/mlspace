@@ -413,7 +413,7 @@ export default function TrainingJobCreate () {
                             variant='link'
                             onClick={() => {
                                 navigate(`/project/${projectName}/jobs/training`, {
-                                    state: { prevPath: location.hash },
+                                    state: { prevPath: window.location.hash },
                                 });
                             }}
                         >

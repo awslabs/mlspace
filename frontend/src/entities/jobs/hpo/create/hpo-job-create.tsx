@@ -447,7 +447,7 @@ export function HPOJobCreate () {
                         }}
                         onCancel={() => {
                             navigate(`/project/${projectName}/jobs/hpo`, {
-                                state: { prevPath: location.hash },
+                                state: { prevPath: window.location.hash },
                             });
                         }}
                         onSubmit={() => {
