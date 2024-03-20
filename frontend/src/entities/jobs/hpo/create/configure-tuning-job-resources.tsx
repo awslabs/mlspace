@@ -100,7 +100,3 @@ export function ConfigureTuningJobResources (props: ConfigureTuningJobResourcesP
         </Container>
     );
 }
-
-export default {
-    ConfigureTuningJobResources,
-};

@@ -18,7 +18,6 @@ import json
 from unittest import mock
 
 import pytest
-from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
 from ml_space_lambda.enums import DatasetType
@@ -97,15 +96,9 @@ def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, sc
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_s3.put_object.assert_called_with(
-        Bucket=TEST_ENV_CONFIG["DATA_BUCKET"],
-        Key=directory_name,
-    )
-
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
-@mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_create_dataset_already_exists(mock_s3, mock_dataset_dao):
+def test_create_dataset_already_exists(mock_dataset_dao):
     scope = "global"
     mock_event = generate_event(DatasetType.GLOBAL.value, scope)
     mock_dataset_dao.get.return_value = True
@@ -114,37 +107,9 @@ def test_create_dataset_already_exists(mock_s3, mock_dataset_dao):
     expected_response = generate_html_response(400, error_message)
 
     assert lambda_handler(mock_event, mock_context) == expected_response
-    mock_s3.put_object.assert_not_called()
 
 
-@mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
-@mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_create_dataset_client_error(mock_s3, mock_dataset_dao):
-    scope = "global"
-    directory_name = f"{scope}/datasets/{test_dataset_name}/"
-    mock_event = generate_event(DatasetType.GLOBAL.value, scope)
-
-    error_msg = {
-        "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
-        "ResponseMetadata": {"HTTPStatusCode": 400},
-    }
-    expected_response = generate_html_response(
-        400,
-        "An error occurred (ThrottlingException) when calling the GeneratePresignedUrl operation: " "Dummy error message.",
-    )
-    mock_dataset_dao.get.return_value = None
-    mock_s3.put_object.side_effect = ClientError(error_msg, "GeneratePresignedUrl")
-
-    assert lambda_handler(mock_event, mock_context) == expected_response
-
-    mock_s3.put_object.assert_called_with(
-        Bucket=TEST_ENV_CONFIG["DATA_BUCKET"],
-        Key=directory_name,
-    )
-
-
-@mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_create_dataset_manipulated_type(mock_s3):
+def test_create_dataset_manipulated_type():
     scope = "global"
     mock_event = generate_event(DatasetType.GLOBAL.value, scope)
     mock_event["headers"] = {"x-mlspace-dataset-type": "private", "x-mlspace-dataset-scope": scope}
@@ -153,11 +118,8 @@ def test_create_dataset_manipulated_type(mock_s3):
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_s3.put_object.assert_not_called()
 
-
-@mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_create_dataset_manipulated_scope(mock_s3):
+def test_create_dataset_manipulated_scope():
     scope = "global"
 
     mock_event = generate_event(DatasetType.GLOBAL.value, scope)
@@ -166,5 +128,3 @@ def test_create_dataset_manipulated_scope(mock_s3):
     expected_response = generate_html_response(400, "Bad Request: Dataset headers do not match expected type and scope.")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
-
-    mock_s3.put_object.assert_not_called()

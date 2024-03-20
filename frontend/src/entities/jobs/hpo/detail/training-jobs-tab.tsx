@@ -135,7 +135,3 @@ export function TrainingJobsTab (props: TrainingJobTabProps) {
         </SpaceBetween>
     );
 }
-
-export default {
-    TrainingJobsTab,
-};

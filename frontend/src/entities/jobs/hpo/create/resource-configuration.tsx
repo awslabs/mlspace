@@ -91,7 +91,3 @@ export function ResourceConfiguration (props: ResourceConfigurationProps) {
         </Container>
     );
 }
-
-export default {
-    ResourceConfiguration,
-};

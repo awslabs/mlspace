@@ -27,7 +27,7 @@ import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setActiveHref, setItemsForProjectName } from './navigation.reducer';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import { IProject } from '../../model/project.model';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { colorTextBodyDefault } from '@cloudscape-design/design-tokens';
 import Logo from '../logo/logo';
 
@@ -35,6 +35,7 @@ export default function SideNavigation () {
     const items: SideNavigationProps.Item[] = useAppSelector((state) => state.navigation.navItems);
     const admin: SideNavigationProps.Item = useAppSelector((state) => state.navigation.adminItems);
     const activeHref: string = useAppSelector((state) => state.navigation.activeHref);
+    const location = useLocation();
     const projectList: IProject[] = useAppSelector((state) => state.project.projects);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -63,8 +64,8 @@ export default function SideNavigation () {
 
     // Updates active href for the side-navigation with a location change hook
     useEffect(() => {
-        dispatch(setActiveHref(`#${window.location.pathname}`));
-    }, [dispatch, window.location]);
+        dispatch(setActiveHref(`#${location.pathname}`));
+    }, [dispatch, location]);
 
     const personalNavItems: SideNavigationProps.Item[] = [
         { type: 'link', text: 'Projects', href: '#/' },

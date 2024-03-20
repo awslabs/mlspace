@@ -1,7 +1,6 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Python-Test-and-Lint
+name: Build and Test
 
 on:
   push:
@@ -13,12 +12,11 @@ permissions:
   contents: read
 
 jobs:
-  build:
-
+  backend_build:
+    name: Backend Lint and Tests
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python 3.11
       uses: actions/setup-python@v3
       with:
@@ -30,7 +28,7 @@ jobs:
         pip install black isort flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f test/requirements.txt ]; then pip install -r test/requirements.txt; fi
-    - name: Format and Lint
+    - name: Lint with flake8
       working-directory: ./backend
       run: |
         # Run black and isort to check fomatting
@@ -50,4 +48,33 @@ jobs:
           --cov-report html:build/coverage \
           --cov-report xml:build/coverage/coverage.xml \
           --cov-fail-under 98
+  frontend_build:
+    name: FrontEnd Lint and Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+    - name: Install dependencies and lint
+      working-directory: ./frontend
+      run: |
+        npm install
+    - name: Run unit tests
+      working-directory: ./frontend
+      run: |
+        npm run test
+  deployment_build:
+    name: CDK Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+    - name: Install dependencies and lint
+      run: |
+        npm install
 

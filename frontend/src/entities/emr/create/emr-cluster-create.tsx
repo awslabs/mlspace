@@ -31,7 +31,7 @@ import {
 } from '@cloudscape-design/components';
 import { useNavigate, useParams } from 'react-router-dom';
 import z from 'zod';
-import { useAppDispatch } from '../../../config/store';
+import { useAppDispatch, useAppSelector } from '../../../config/store';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { issuesToErrors, scrollToInvalid, useValidationReducer } from '../../../shared/validation';
 import { createEMRCluster } from '../emr.reducer';
@@ -42,6 +42,9 @@ import { generateNameConstraintTextWithProject } from '../../../shared/util/form
 import { useState } from 'react';
 import { enumToOptions } from '../../../shared/util/enum-utils';
 import Condition from '../../../modules/condition';
+import { listSubnets, selectSubnets } from '../../../shared/metadata/metadata.reducer';
+import { Subnet } from '../../../shared/model/vpc.config';
+import { LoadingStatus } from '../../../shared/loading-status';
 
 enum ClusterAmi {
     BUILT_IN = 'built-in',
@@ -54,6 +57,7 @@ export default function EMRClusterCreate () {
     const basePath = `/project/${projectName}/emr`;
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
+    const subnets = useAppSelector(selectSubnets);
     const [clusterAmi, setClusterAmi] = useState(ClusterAmi.BUILT_IN);
 
     const formSchema = z.object({
@@ -92,6 +96,9 @@ export default function EMRClusterCreate () {
                 emrSize: 'Small',
                 emrRelease: 'emr-6.2.0',
             },
+            Instances: {
+                Ec2SubnetId: ''
+            }
         },
     });
 
@@ -112,10 +119,13 @@ export default function EMRClusterCreate () {
                 { text: 'Create EMR Cluster', href: `#${basePath}/create` },
             ])
         );
+        if (subnets.status === LoadingStatus.INITIAL) {
+            dispatch(listSubnets());
+        }
 
         scrollToPageHeader('h1', 'Create EMR Cluster');
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatch, basePath, projectName]);
+    }, [dispatch, basePath, projectName, subnets.status]);
 
     const handleSubmit = () => {
         setState({ formSubmitting: true });
@@ -203,6 +213,31 @@ export default function EMRClusterCreate () {
                                     onBlur={() => touchFields(['clusterName'])}
                                 />
                             </FormField>
+                            <ExpandableSection headerText='Advanced network settings' headingTagOverride='h3'>
+                                <FormField
+                                    label='Subnet(s)'
+                                    description='Choose a subnet in an availability zone supported by EMR.'
+                                >
+                                    <Select
+                                        selectedOption={{label: state.form.Instances?.Ec2SubnetId, value:state.form.Instances?.Ec2SubnetId}}
+                                        onChange={({ detail }) => {
+                                            setFields({
+                                                'Instances.Ec2SubnetId': detail.selectedOption.value
+                                            });
+                                        }}
+                                        options={(subnets?.values || []).map((subnet: Subnet) => {
+                                            return {
+                                                label: subnet.subnetId,
+                                                value: subnet.subnetId,
+                                                description: subnet.availabilityZone,
+                                            };
+                                        })}
+                                        placeholder='Choose option'
+                                        loadingText='Loading subnet(s)'
+                                    />
+                                </FormField>
+                            </ExpandableSection>
+                            
                         </Grid>
                     </Container>
 
