@@ -239,7 +239,6 @@ LEGACY_GLOBAL_DATASETS = [
         "a_type": "global",
         "dataset": "FCP-INDI Neuroimaging Data",
         "info": {
-            "format": "tar, gzip",
             "description": "Raw human and non-human primate neuroimaging data",
             "s3_key": "s3://sms-data/global/datasets/FCP-INDI_Neuroimaging_Data",
             "creator": ADMIN_USER,
@@ -253,7 +252,6 @@ LEGACY_PROJECT_DATASETS = [
         "a_type": TEST_PROJECT_NAME,
         "dataset": "gdelt-rico",
         "info": {
-            "format": "csv",
             "description": "monitors the world's broadcast, print, and web news identifies the people, locations, etc. driving our global society",
             "s3_key": "s3://sms-data/project/Roughnecks/datasets/gdelt-rico",
             "creator": PROJECT_OWNER_USER,
@@ -264,7 +262,6 @@ LEGACY_PROJECT_DATASETS = [
         "a_type": TEST_PROJECT_NAME,
         "dataset": "gdelt",
         "info": {
-            "format": "csv",
             "description": "monitors the world's broadcast, print, and web news identifies the people, locations, etc. driving our global society",
             "s3_key": "s3://sms-data/project/Roughnecks/datasets/gdelt",
             "creator": "CN=Dizzy Flores, OU=D002, OU=Division A, OU=Corp, O=Acme Corp, C=US",
@@ -278,7 +275,6 @@ LEGACY_PRIVATE_DATASETS = [
         "a_type": ADMIN_USER,
         "dataset": "BrainBug",
         "info": {
-            "format": "TIFF",
             "description": "Images from possible brain bug sightings.",
             "s3_key": "s3://sms-data/private/Carl_Jenkins/datasets/BrainBug",
             "creator": ADMIN_USER,
@@ -467,7 +463,6 @@ class TestProjectDAO(TestCase):
         assert global_dataset.name == "FCP-INDI Neuroimaging Data"
         assert global_dataset.description == "Raw human and non-human primate neuroimaging data"
         assert global_dataset.type == DatasetType.GLOBAL
-        assert global_dataset.format == "tar, gzip"
         assert global_dataset.location == "s3://sms-data/global/datasets/FCP-INDI_Neuroimaging_Data"
         assert global_dataset.created_by == ADMIN_USER
         assert global_dataset.created_at == 1594355408393

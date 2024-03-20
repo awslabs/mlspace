@@ -136,7 +136,7 @@ def presigned_url(event, context):
         fields = body["fields"]
         conditions = body["conditions"]
 
-        # Set derived values for conditions and fields
+        # Set derived values 6 conditions and fields
         username = event["requestContext"]["authorizer"]["principalId"]
         name_from_key = key.split("/")[2]
 
@@ -202,7 +202,6 @@ def create_dataset(event, context):
             scope=scope,
             name=dataset_name,
             description=body.get("datasetDescription", ""),
-            format=body.get("datasetFormat", "text/plain"),
             location=dataset_location,
             created_by=event["requestContext"]["authorizer"]["principalId"],
         )

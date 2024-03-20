@@ -1577,7 +1577,6 @@ def test_dataset_routes(
         scope=scope,
         name="UnitTestDataset",
         description="For unit tests",
-        format="text",
         location="s3://fake-location/",
         created_by=MOCK_OWNER_USER.username,
     )

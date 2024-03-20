@@ -33,7 +33,6 @@ class DatasetModel:
         scope: str,
         name: str,
         description: str,
-        format: str,
         location: str,
         created_by: str,
         created_at: Optional[float] = None,
@@ -44,7 +43,6 @@ class DatasetModel:
         self.name = name
         self.description = description
         self.location = location
-        self.format = format
         self.created_by = created_by
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
@@ -66,7 +64,6 @@ class DatasetModel:
             "type": self.type.value,
             "description": self.description,
             "location": self.location,
-            "format": self.format,
             "createdBy": self.created_by,
             "createdAt": self.created_at,
             "lastUpdatedAt": self.last_updated_at,
@@ -78,7 +75,6 @@ class DatasetModel:
             dict_object["scope"],
             dict_object["name"],
             dict_object["description"],
-            dict_object["format"],
             dict_object["location"],
             dict_object["createdBy"],
             dict_object.get("createdAt", None),
@@ -98,13 +94,12 @@ class DatasetDAO(DynamoDBObjectStore):
     def update(self, scope: str, name: str, dataset: DatasetModel) -> DatasetModel:
         json_key = {"scope": scope, "name": name}
         # Only a subset of fields can be modified
-        update_exp = "SET description = :description, #f = :format, lastUpdatedAt = :lastUpdatedAt"
-        exp_names = {"#f": "format", "#name": "name", "#scope": "scope"}
+        update_exp = "SET description = :description, lastUpdatedAt = :lastUpdatedAt"
+        exp_names = {"#name": "name", "#scope": "scope"}
         exp_values = json.loads(
             dynamodb_json.dumps(
                 {
                     ":description": dataset.description,
-                    ":format": dataset.format,
                     ":lastUpdatedAt": time.time(),
                     ":name": name,
                     ":scope": scope,

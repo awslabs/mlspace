@@ -39,7 +39,6 @@ event_body = {
     "scope": mock_ds_scope,
     "name": mock_ds_name,
     "description": "This is an updated description for the existing dataset.",
-    "format": "tar/gzip",
 }
 mock_event = {
     "body": json.dumps(event_body),
