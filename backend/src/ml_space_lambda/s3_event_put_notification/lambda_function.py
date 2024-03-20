@@ -46,9 +46,7 @@ def _create_dataset_record(metadata, key):
     elif dataset_type in [DatasetType.PRIVATE.value, DatasetType.PROJECT.value]:
         scope = split_key[1]
         dataset_name = split_key[3]
-        dataset_location = (
-            f's3://{env_variables["DATA_BUCKET"]}/{dataset_type}/{scope}/datasets/{dataset_name}/'
-        )
+        dataset_location = f's3://{env_variables["DATA_BUCKET"]}/{dataset_type}/{scope}/datasets/{dataset_name}/'
     else:
         logger.error(f"Failed to determine dataset from key '{key}'")
         raise KeyError("Failed to determine corresponding dataset")

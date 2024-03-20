@@ -20,5 +20,16 @@ Single tests can be run with a command similar to the following:
 pytest -s test/resource_metadata/test_process_events.py -k "test_process_event_upsert[notebook_event]"
 ```
 
+### Running linter and formatter commands
+You can lint and format your code using `black`, `flake8`, and `isort`:
+```
+black --line-length=127 src/
+black --line-length=127 test/
+isort --profile black src/
+isort --profile black test/
+flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+flake8 . --count --exit-zero --max-line-length=127 --statistics
+```
+
 ## Additional Notes
 The current deployment method is to deploy the entire codebase to each lambda as opposed to limiting what is deployed to just the code needed by that lambda. Switching to only deploy the necessary code (and moving common objects to a layer) would be a small change but given the existing small codebase and the ease in debugging afforded by including the entire code base the decision was made to not optimize for code size at this time.

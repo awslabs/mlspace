@@ -45,6 +45,9 @@ import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { getDate, getPaddedNumberString } from '../../../../shared/util/date-utils';
 import { ML_ALGORITHMS } from '../../algorithms';
 import { getImageName } from './training-definitions/algorithm-options';
+import { createDatasetHandleAlreadyExists } from '../../../dataset/dataset.service';
+import { IDataset } from '../../../../shared/model';
+import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 
 export type HPOJobCreateState = {
     editingJobDefinition: any;
@@ -57,7 +60,7 @@ export type HPOJobCreateState = {
 
 export function HPOJobCreate () {
     const navigate = useNavigate();
-    const currentLocation = useLocation();
+    const location = useLocation();
     const { projectName } = useParams();
     const auth = useAuth();
     const userName = auth.user!.profile.preferred_username;
@@ -71,8 +74,8 @@ export function HPOJobCreate () {
         return {
             editingJobDefinition: null,
             validateAll: false,
-            form: currentLocation.state?.hpoTrainingJob
-                ? cloneHpoJob(currentLocation.state.hpoTrainingJob)
+            form: location.state?.hpoTrainingJob
+                ? cloneHpoJob(location.state.hpoTrainingJob)
                 : createHPOJob(),
             touched: {},
             formSubmitting: false,
@@ -338,6 +341,7 @@ export function HPOJobCreate () {
             UserName: userName!,
             HPOJobDefinition: hpoJobDefinition,
         };
+        
 
         dispatch(createHPOJobThunk(payload)).then((result: any) => {
             setState({ type: 'updateState', payload: { formSubmitting: false } });
@@ -351,7 +355,17 @@ export function HPOJobCreate () {
                     `Successfully created hyperparameter tuning job with name ${state.form.HyperParameterTuningJobName}`,
                     'success'
                 );
-
+                payload.HPOJobDefinition.TrainingJobDefinitions.forEach((definition) => {
+                    const dataset = datasetFromS3Uri(definition.OutputDataConfig.S3OutputPath);
+                    const newDataset = {
+                        name: dataset?.Name,
+                        description: `Dataset created as part of the HPO job: ${state.form.HyperParameterTuningJobName}`,
+                        type: dataset?.Type,
+                        scope: dataset?.Location
+                    } as IDataset;
+                    createDatasetHandleAlreadyExists(newDataset);
+                });
+                
                 navigate(
                     `/project/${projectName}/jobs/hpo/detail/${state.form.HyperParameterTuningJobName}`
                 );
@@ -531,7 +545,3 @@ export function HPOJobCreate () {
         </ErrorBoundaryRoutes>
     );
 }
-
-export default {
-    HPOJobCreate,
-};

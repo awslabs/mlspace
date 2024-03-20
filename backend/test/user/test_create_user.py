@@ -71,16 +71,10 @@ def test_create_new_user_success(mock_user_dao, mock_user, mock_event):
     assert create_args["username"] == response_body["username"] == mock_user.username
     assert create_args["email"] == response_body["email"] == mock_user.email
     assert create_args["displayName"] == response_body["displayName"] == mock_user.display_name
-    assert (
-        create_args["permissions"]
-        == response_body["permissions"]
-        == serialize_permissions(mock_user.permissions)
-    )
+    assert create_args["permissions"] == response_body["permissions"] == serialize_permissions(mock_user.permissions)
     assert create_args["suspended"] == response_body["suspended"] == mock_user.suspended
     assert (
-        create_args["preferences"]
-        == response_body["preferences"]
-        == {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL.value}
+        create_args["preferences"] == response_body["preferences"] == {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL.value}
     )
     # Ocassionally the tests and mocks may wind up off by 1 second so handle that instead of looking
     # for exact equality
@@ -111,8 +105,7 @@ def test_create_new_user_client_error(mock_user_dao, mock_user, mock_event):
     )
     expected_response = generate_html_response(
         400,
-        "An error occurred (MissingParameter) when calling the "
-        "GetItem operation: Dummy error message.",
+        "An error occurred (MissingParameter) when calling the " "GetItem operation: Dummy error message.",
     )
     mock_user_dao.get.side_effect = mock_exception
     assert create(mock_event, mock_context) == expected_response

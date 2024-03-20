@@ -154,11 +154,7 @@ def list_images(event, context):
     ]
     img_uris = {}
     image_scope = None
-    if (
-        "queryStringParameters" in event
-        and event["queryStringParameters"]
-        and "imageScope" in event["queryStringParameters"]
-    ):
+    if "queryStringParameters" in event and event["queryStringParameters"] and "imageScope" in event["queryStringParameters"]:
         image_scope = event["queryStringParameters"]["imageScope"]
     for framework in frameworks:
         img_uri = retrieve(framework, region, version="latest", image_scope=image_scope)

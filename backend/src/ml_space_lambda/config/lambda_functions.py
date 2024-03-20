@@ -17,11 +17,7 @@
 import boto3
 
 from ml_space_lambda.utils.common_functions import api_wrapper
-from ml_space_lambda.utils.mlspace_config import (
-    get_environment_variables,
-    pull_config_from_s3,
-    retry_config,
-)
+from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3, retry_config
 
 sagemaker = boto3.client("sagemaker", config=retry_config)
 

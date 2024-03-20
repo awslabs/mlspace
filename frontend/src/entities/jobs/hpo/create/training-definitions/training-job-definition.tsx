@@ -100,7 +100,7 @@ const formSchema = z.object({
                 Dataset: z.object({
                     Name: z.string({
                         required_error:
-                            'S3 location is required - please select a dataset from the list',
+                            'S3 location is required',
                     }),
                 }),
             })
@@ -110,7 +110,7 @@ const formSchema = z.object({
         S3OutputPath: z.string().startsWith('s3://'),
         Dataset: z.object({
             Name: z.string({
-                required_error: 'S3 location is required - please select a dataset from the list',
+                required_error: 'S3 location is required',
             }),
         }),
     }),
@@ -465,7 +465,3 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
         />
     );
 }
-
-export default {
-    TrainingJobDefinition,
-};

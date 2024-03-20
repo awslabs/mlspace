@@ -66,11 +66,14 @@ export type AlgorithmOptionsProps = {
  *
  * @param trainingImage Expects a training image ARN (e.g. 811284229777.dkr.ecr.us-east-1.amazonaws.com/blazingtext:1)
  */
-export function getImageName (trainingImage: string): string | null {
-    const match = trainingImage.match(algorithmNameRegex);
-    if (match.length > 1) {
-        return match[1];
+export function getImageName (trainingImage: string | null): string | null {
+    if (trainingImage) {
+        const match = trainingImage.match(algorithmNameRegex);
+        if (match && match.length > 1) {
+            return match[1];
+        }
     }
+    
     return null;
 }
 
@@ -266,7 +269,9 @@ export function AlgorithmOptions (props: AlgorithmOptionsProps) {
                                 (algorithm) =>
                                     algorithm.displayName === event.detail.selectedOption.value
                             );
-                            applyAlgorithm(algorithm);
+                            if (algorithm) {
+                                applyAlgorithm(algorithm);
+                            }
                         }}
                         onBlur={() => touchFields(['AlgorithmSpecification.AlgorithmName'])}
                     />
@@ -439,7 +444,3 @@ export function AlgorithmOptions (props: AlgorithmOptionsProps) {
         </SpaceBetween>
     );
 }
-
-export default {
-    AlgorithmOptions,
-};

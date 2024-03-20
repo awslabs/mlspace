@@ -51,9 +51,7 @@ mock_context = mock.Mock()
 @mock.patch("ml_space_lambda.project.lambda_functions.user_dao")
 def test_add_users_to_project_with_iam(mock_user_dao, mock_project_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
-    expected_response = generate_html_response(
-        200, f"Successfully added 1 user(s) to {MOCK_PROJECT_NAME}"
-    )
+    expected_response = generate_html_response(200, f"Successfully added 1 user(s) to {MOCK_PROJECT_NAME}")
     mock_user_dao.get.return_value = MOCK_USER
     mock_project_user_dao.create.return_value = None
     mock_iam_manager.add_iam_role.return_value = MOCK_IAM_ROLE
@@ -81,9 +79,7 @@ def test_add_users_to_project_with_iam(mock_user_dao, mock_project_user_dao, moc
 @mock.patch("ml_space_lambda.project.lambda_functions.user_dao")
 def test_add_users_to_project(mock_user_dao, mock_project_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
-    expected_response = generate_html_response(
-        200, f"Successfully added 1 user(s) to {MOCK_PROJECT_NAME}"
-    )
+    expected_response = generate_html_response(200, f"Successfully added 1 user(s) to {MOCK_PROJECT_NAME}")
     mock_user_dao.get.return_value = MOCK_USER
     mock_project_user_dao.create.return_value = None
     assert lambda_handler(mock_event, mock_context) == expected_response
@@ -108,9 +104,7 @@ def test_add_users_to_project(mock_user_dao, mock_project_user_dao, mock_iam_man
 @mock.patch("ml_space_lambda.project.lambda_functions.user_dao")
 def test_add_users_to_project_multiple(mock_user_dao, mock_project_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
-    expected_response = generate_html_response(
-        200, f"Successfully added 3 user(s) to {MOCK_PROJECT_NAME}"
-    )
+    expected_response = generate_html_response(200, f"Successfully added 3 user(s) to {MOCK_PROJECT_NAME}")
     mock_user_dao.get.return_value = [
         UserModel("user1", "user1@amazon.com", "User One", False, []),
         UserModel("user2", "user2@amazon.com", "User Two", False, []),
@@ -197,9 +191,7 @@ def test_add_users_to_project_client_error(mock_user_dao, mock_project_user_dao,
 @mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.user_dao")
-def test_add_nonexistent_user_to_project_error(
-    mock_user_dao, mock_project_user_dao, mock_iam_manager
-):
+def test_add_nonexistent_user_to_project_error(mock_user_dao, mock_project_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(
         400,
@@ -217,9 +209,7 @@ def test_add_nonexistent_user_to_project_error(
 @mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.user_dao")
-def test_add_users_to_project_client_error_with_iam(
-    mock_user_dao, mock_project_user_dao, mock_iam_manager
-):
+def test_add_users_to_project_client_error_with_iam(mock_user_dao, mock_project_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},

@@ -6,6 +6,8 @@ dist/
 .mypy_cache
 *.iml
 
+.venv
+
 # misc
 .DS_Store
 npm-debug.log*

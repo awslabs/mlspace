@@ -101,9 +101,7 @@ def test_create_hpo_job_single_job_success(
                 "subnetIds": "example_subnet1",
             },
             "WarmStartConfig": {
-                "ParentHyperParameterTuningJobs": [
-                    {"HyperParameterTuningJobName": tuning_job_name}
-                ],
+                "ParentHyperParameterTuningJobs": [{"HyperParameterTuningJobName": tuning_job_name}],
                 "WarmStartType": "TRANSFER_LEARNING",
             },
         },
@@ -132,13 +130,9 @@ def test_create_hpo_job_single_job_success(
         "Tags": mock_tags,
     }
 
-    expected_response = generate_html_response(
-        200, {"HyperParameterTuningJobArn": "example_hpo_job_arn"}
-    )
+    expected_response = generate_html_response(200, {"HyperParameterTuningJobArn": "example_hpo_job_arn"})
 
-    mock_sagemaker.create_hyper_parameter_tuning_job.return_value = {
-        "HyperParameterTuningJobArn": "example_hpo_job_arn"
-    }
+    mock_sagemaker.create_hyper_parameter_tuning_job.return_value = {"HyperParameterTuningJobArn": "example_hpo_job_arn"}
 
     mock_pull_config.return_value = mock_s3_param_json
     mock_project_user_dao.get.return_value = ProjectUserModel(
@@ -233,9 +227,7 @@ def test_create_hpo_job_multiple_jobs_success(
                 },
             ],
             "WarmStartConfig": {
-                "ParentHyperParameterTuningJobs": [
-                    {"HyperParameterTuningJobName": tuning_job_name}
-                ],
+                "ParentHyperParameterTuningJobs": [{"HyperParameterTuningJobName": tuning_job_name}],
                 "WarmStartType": "TRANSFER_LEARNING",
             },
         },
@@ -268,15 +260,11 @@ def test_create_hpo_job_multiple_jobs_success(
         "Tags": mock_tags,
     }
 
-    expected_response = generate_html_response(
-        200, {"HyperParameterTuningJobArn": "example_hpo_job_arn"}
-    )
+    expected_response = generate_html_response(200, {"HyperParameterTuningJobArn": "example_hpo_job_arn"})
 
     mlspace_config.env_variables = {}
 
-    mock_sagemaker.create_hyper_parameter_tuning_job.return_value = {
-        "HyperParameterTuningJobArn": "example_hpo_job_arn"
-    }
+    mock_sagemaker.create_hyper_parameter_tuning_job.return_value = {"HyperParameterTuningJobArn": "example_hpo_job_arn"}
 
     mock_pull_config.return_value = mock_s3_param_json
 
@@ -344,13 +332,9 @@ def test_create_hpo_job_no_jobs_success(
         "Tags": mock_tags,
     }
 
-    expected_response = generate_html_response(
-        200, {"HyperParameterTuningJobArn": "example_hpo_job_arn"}
-    )
+    expected_response = generate_html_response(200, {"HyperParameterTuningJobArn": "example_hpo_job_arn"})
 
-    mock_sagemaker.create_hyper_parameter_tuning_job.return_value = {
-        "HyperParameterTuningJobArn": "example_hpo_job_arn"
-    }
+    mock_sagemaker.create_hyper_parameter_tuning_job.return_value = {"HyperParameterTuningJobArn": "example_hpo_job_arn"}
 
     mock_pull_config.return_value = mock_s3_param_json
 
@@ -430,9 +414,7 @@ def test_create_hpo_job_client_error(
                 },
             ],
             "WarmStartConfig": {
-                "ParentHyperParameterTuningJobs": [
-                    {"HyperParameterTuningJobName": tuning_job_name}
-                ],
+                "ParentHyperParameterTuningJobs": [{"HyperParameterTuningJobName": tuning_job_name}],
                 "WarmStartType": "TRANSFER_LEARNING",
             },
         },
@@ -465,9 +447,7 @@ def test_create_hpo_job_client_error(
         "Tags": mock_tags,
     }
 
-    mock_sagemaker.create_hyper_parameter_tuning_job.side_effect = ClientError(
-        error_msg, "CreateHyperParameterTuningJob"
-    )
+    mock_sagemaker.create_hyper_parameter_tuning_job.side_effect = ClientError(error_msg, "CreateHyperParameterTuningJob")
     mock_pull_config.return_value = mock_s3_param_json
 
     with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": ""}):
@@ -484,9 +464,7 @@ def test_create_hpo_job_client_error(
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.project_user_dao")
-def test_create_hpo_mismatched_header(
-    mock_project_user_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_create_hpo_mismatched_header(mock_project_user_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json):
     event_body = {
         "HPOJobDefinition": {
             "HyperParameterTuningJobName": tuning_job_name,
@@ -505,9 +483,7 @@ def test_create_hpo_mismatched_header(
                 }
             ],
             "WarmStartConfig": {
-                "ParentHyperParameterTuningJobs": [
-                    {"HyperParameterTuningJobName": tuning_job_name}
-                ],
+                "ParentHyperParameterTuningJobs": [{"HyperParameterTuningJobName": tuning_job_name}],
                 "WarmStartType": "TRANSFER_LEARNING",
             },
         },

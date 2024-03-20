@@ -56,9 +56,7 @@ def test_terminate_resources_emr(mock_resource_scheduler_dao, mock_emr):
     mock_resource_scheduler_dao.get_resources_past_termination_time.return_value = [emr_model]
     terminate_resources(mock_event, mock_context)
 
-    mock_emr.set_termination_protection.assert_called_with(
-        JobFlowIds=[cluster_id], TerminationProtected=False
-    )
+    mock_emr.set_termination_protection.assert_called_with(JobFlowIds=[cluster_id], TerminationProtected=False)
     mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=[cluster_id])
     mock_resource_scheduler_dao.delete.assert_called_with(
         resource_id=emr_model.resource_id, resource_type=emr_model.resource_type
@@ -117,9 +115,7 @@ def test_terminate_resources_notebook(mock_resource_scheduler_dao, mock_sagemake
 @mock.patch("ml_space_lambda.utils.common_functions.time")
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.resource_scheduler_dao")
-def test_terminate_resources_stopped_notebook(
-    mock_resource_scheduler_dao, mock_sagemaker, mock_time
-):
+def test_terminate_resources_stopped_notebook(mock_resource_scheduler_dao, mock_sagemaker, mock_time):
     notebook_name = "my-notebook-instance"
     notebook_model = ResourceSchedulerModel(
         resource_id=notebook_name,
@@ -135,9 +131,7 @@ def test_terminate_resources_stopped_notebook(
         },
         "ResponseMetadata": {"HTTPStatusCode": 400},
     }
-    mock_sagemaker.stop_notebook_instance.side_effect = ClientError(
-        error_msg, "StopNotebookInstance"
-    )
+    mock_sagemaker.stop_notebook_instance.side_effect = ClientError(error_msg, "StopNotebookInstance")
 
     mock_stop_time = time.mktime((2023, 1, 2, 17, 0, 0, 0, 1, 0))
     mock_time.mktime.return_value = mock_stop_time
@@ -160,9 +154,7 @@ def test_terminate_resources_stopped_notebook(
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.get_notebook_stop_time")
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.resource_scheduler_dao")
-def test_terminate_resources_deleted_notebook(
-    mock_resource_scheduler_dao, mock_sagemaker, mock_get_notebook_stop_time
-):
+def test_terminate_resources_deleted_notebook(mock_resource_scheduler_dao, mock_sagemaker, mock_get_notebook_stop_time):
     notebook_name = "my-notebook-instance"
     notebook_model = ResourceSchedulerModel(
         resource_id=notebook_name,
@@ -178,9 +170,7 @@ def test_terminate_resources_deleted_notebook(
         },
         "ResponseMetadata": {"HTTPStatusCode": 400},
     }
-    mock_sagemaker.stop_notebook_instance.side_effect = ClientError(
-        error_msg, "StopNotebookInstance"
-    )
+    mock_sagemaker.stop_notebook_instance.side_effect = ClientError(error_msg, "StopNotebookInstance")
     # return a list with a ResourceSchedulerModel containing a sagemaker notebook name
     mock_resource_scheduler_dao.get_resources_past_termination_time.return_value = [notebook_model]
 
@@ -189,9 +179,7 @@ def test_terminate_resources_deleted_notebook(
     mock_sagemaker.stop_notebook_instance.assert_called_with(NotebookInstanceName=notebook_name)
     mock_get_notebook_stop_time.assert_not_called()
     mock_resource_scheduler_dao.update_termination_time.assert_not_called()
-    mock_resource_scheduler_dao.delete.assert_called_with(
-        resource_id=notebook_name, resource_type=ResourceType.NOTEBOOK
-    )
+    mock_resource_scheduler_dao.delete.assert_called_with(resource_id=notebook_name, resource_type=ResourceType.NOTEBOOK)
 
 
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.resource_scheduler_dao")
@@ -217,9 +205,7 @@ def test_terminate_resources_unknown(mock_resource_scheduler_dao):
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.emr")
 @mock.patch("ml_space_lambda.resource_scheduler.lambda_functions.resource_scheduler_dao")
-def test_terminate_resources_mostly_errors(
-    mock_resource_scheduler_dao, mock_emr, mock_sagemaker, mock_time
-):
+def test_terminate_resources_mostly_errors(mock_resource_scheduler_dao, mock_emr, mock_sagemaker, mock_time):
     cluster_id = "j-37DVLOLOIVI8H"
     emr_model = ResourceSchedulerModel(
         resource_id=cluster_id,
@@ -296,9 +282,7 @@ def test_terminate_resources_mostly_errors(
     terminate_resources(mock_event, mock_context)
 
     # Ensure service calls were made as expected to stop/terminate resources
-    mock_emr.set_termination_protection.assert_called_with(
-        JobFlowIds=[cluster_id], TerminationProtected=False
-    )
+    mock_emr.set_termination_protection.assert_called_with(JobFlowIds=[cluster_id], TerminationProtected=False)
     mock_emr.terminate_job_flows.assert_not_called()
     mock_sagemaker.delete_endpoint.assert_called_with(EndpointName=endpoint_name)
     mock_sagemaker.stop_notebook_instance.assert_has_calls(
@@ -311,9 +295,7 @@ def test_terminate_resources_mostly_errors(
     mock_resource_scheduler_dao.delete.assert_has_calls(
         [
             mock.call(resource_id=emr_model.resource_id, resource_type=emr_model.resource_type),
-            mock.call(
-                resource_id=endpoint_model.resource_id, resource_type=endpoint_model.resource_type
-            ),
+            mock.call(resource_id=endpoint_model.resource_id, resource_type=endpoint_model.resource_type),
         ]
     )
 

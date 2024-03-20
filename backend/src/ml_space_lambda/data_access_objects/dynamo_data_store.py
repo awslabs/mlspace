@@ -21,10 +21,7 @@ from typing import Dict, List, Optional
 import boto3
 from dynamodb_json import json_util as dynamodb_json
 
-from ml_space_lambda.data_access_objects.pagination_helper import (
-    decode_pagination_token,
-    encode_pagination_token,
-)
+from ml_space_lambda.data_access_objects.pagination_helper import decode_pagination_token, encode_pagination_token
 from ml_space_lambda.utils.common_functions import retry_config
 
 

@@ -22,12 +22,7 @@ import boto3
 
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    generate_tags,
-    query_resource_metadata,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -59,13 +54,9 @@ def create(event, context):
 
     content_type_headers = {}
     if isinstance(data_capture_config["CaptureContentTypeHeader"]["CsvContentTypes"], list):
-        content_type_headers["CsvContentTypes"] = data_capture_config["CaptureContentTypeHeader"][
-            "CsvContentTypes"
-        ]
+        content_type_headers["CsvContentTypes"] = data_capture_config["CaptureContentTypeHeader"]["CsvContentTypes"]
     if isinstance(data_capture_config["CaptureContentTypeHeader"]["JsonContentTypes"], list):
-        content_type_headers["JsonContentTypes"] = data_capture_config["CaptureContentTypeHeader"][
-            "JsonContentTypes"
-        ]
+        content_type_headers["JsonContentTypes"] = data_capture_config["CaptureContentTypeHeader"]["JsonContentTypes"]
 
     if data_capture_config["EnableCapture"]:
         response = sagemaker.create_endpoint_config(

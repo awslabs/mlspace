@@ -42,9 +42,7 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 @mock.patch("ml_space_lambda.user.lambda_functions.user_dao")
 def test_current_user(mock_user_dao):
     mock_user_dao.get.return_value = mock_user
-    assert lambda_handler(mock_event, mock_context) == generate_html_response(
-        200, mock_user.to_dict()
-    )
+    assert lambda_handler(mock_event, mock_context) == generate_html_response(200, mock_user.to_dict())
 
     mock_user_dao.get.assert_called_with(mock_user.username)
 
@@ -72,8 +70,7 @@ def test_current_user_client_error(mock_user_dao):
 
     assert lambda_handler(mock_event, mock_context) == generate_html_response(
         400,
-        "An error occurred (MissingParameter) when calling the "
-        "GetItem operation: Dummy error message.",
+        "An error occurred (MissingParameter) when calling the " "GetItem operation: Dummy error message.",
     )
 
     mock_user_dao.get.assert_called_with(mock_user.username)

@@ -203,8 +203,7 @@ def test_delete_user_client_error(mock_project_user_dao, mock_user_dao):
     )
     expected_response = generate_html_response(
         "400",
-        "An error occurred (MissingParameter) when calling the "
-        "GetItem operation: Dummy error message.",
+        "An error occurred (MissingParameter) when calling the " "GetItem operation: Dummy error message.",
     )
     assert delete_user(mock_event, mock_context) == expected_response
     mock_user_dao.get.assert_called_with(mock_user.username)

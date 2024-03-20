@@ -23,17 +23,9 @@ import time
 import boto3
 
 from ml_space_lambda.data_access_objects.project import ProjectDAO
-from ml_space_lambda.data_access_objects.resource_scheduler import (
-    ResourceSchedulerDAO,
-    ResourceSchedulerModel,
-)
+from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    generate_tags,
-    list_clusters_for_project,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, list_clusters_for_project, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -60,16 +52,12 @@ def create(event, context):
 
     env_variables = get_environment_variables()
 
-    custom_ami_id = (
-        event_body["options"]["customAmiId"] if "customAmiId" in event_body["options"] else None
-    )
+    custom_ami_id = event_body["options"]["customAmiId"] if "customAmiId" in event_body["options"] else None
     applications = []
 
     global cluster_config
     if not cluster_config:
-        resp = s3.get_object(
-            Bucket=env_variables["BUCKET"], Key=env_variables["CLUSTER_CONFIG_KEY"]
-        )
+        resp = s3.get_object(Bucket=env_variables["BUCKET"], Key=env_variables["CLUSTER_CONFIG_KEY"])
         cluster_config = json.loads(resp["Body"].read().decode())
 
     # get list of applications if provided, otherwise use default from
@@ -82,14 +70,12 @@ def create(event, context):
     else:
         applications = cluster_config["applications"]
 
-    # use list of subnets if provided, otherwise choose a random subnet
+    # use subnet if provided, otherwise choose a random subnet
     # from s3 config file
-    subnets = []
-    if "subnetIds" in event_body:
-        subnets = event_body["subnetIds"].split(",")
-    else:
+    subnet = event_body.get("Instances", {}).get("Ec2SubnetId", None)
+    if not subnet:
         param_file = pull_config_from_s3()
-        subnets = random.sample(param_file["pSMSSubnetIds"].split(","), 1)
+        subnet = random.sample(param_file["pSMSSubnetIds"].split(","), 1)[0]
 
     # Get Custom EC2 Key Pair
     ec2_key_name = ""
@@ -131,25 +117,17 @@ def create(event, context):
                             "Description": "Scaling policy configured in the cluster-config.json",
                             "Action": {
                                 "SimpleScalingPolicyConfiguration": {
-                                    "ScalingAdjustment": cluster_config["auto-scaling"][
-                                        "scale-out"
-                                    ]["increment"],
-                                    "CoolDown": cluster_config["auto-scaling"]["scale-out"][
-                                        "cooldown"
-                                    ],
+                                    "ScalingAdjustment": cluster_config["auto-scaling"]["scale-out"]["increment"],
+                                    "CoolDown": cluster_config["auto-scaling"]["scale-out"]["cooldown"],
                                 }
                             },
                             "Trigger": {
                                 "CloudWatchAlarmDefinition": {
                                     "ComparisonOperator": "LESS_THAN",
-                                    "EvaluationPeriods": cluster_config["auto-scaling"][
-                                        "scale-out"
-                                    ]["eval-periods"],
+                                    "EvaluationPeriods": cluster_config["auto-scaling"]["scale-out"]["eval-periods"],
                                     "MetricName": "YARNMemoryAvailablePercentage",
                                     "Period": 300,
-                                    "Threshold": cluster_config["auto-scaling"]["scale-out"][
-                                        "percentage-mem-available"
-                                    ],
+                                    "Threshold": cluster_config["auto-scaling"]["scale-out"]["percentage-mem-available"],
                                     "Unit": "PERCENT",
                                 }
                             },
@@ -159,25 +137,17 @@ def create(event, context):
                             "Description": "Scaling policy configured in the cluster-config.json",
                             "Action": {
                                 "SimpleScalingPolicyConfiguration": {
-                                    "ScalingAdjustment": cluster_config["auto-scaling"]["scale-in"][
-                                        "increment"
-                                    ],
-                                    "CoolDown": cluster_config["auto-scaling"]["scale-in"][
-                                        "cooldown"
-                                    ],
+                                    "ScalingAdjustment": cluster_config["auto-scaling"]["scale-in"]["increment"],
+                                    "CoolDown": cluster_config["auto-scaling"]["scale-in"]["cooldown"],
                                 }
                             },
                             "Trigger": {
                                 "CloudWatchAlarmDefinition": {
                                     "ComparisonOperator": "GREATER_THAN",
-                                    "EvaluationPeriods": cluster_config["auto-scaling"]["scale-in"][
-                                        "eval-periods"
-                                    ],
+                                    "EvaluationPeriods": cluster_config["auto-scaling"]["scale-in"]["eval-periods"],
                                     "MetricName": "YARNMemoryAvailablePercentage",
                                     "Period": 300,
-                                    "Threshold": cluster_config["auto-scaling"]["scale-in"][
-                                        "percentage-mem-available"
-                                    ],
+                                    "Threshold": cluster_config["auto-scaling"]["scale-in"]["percentage-mem-available"],
                                     "Unit": "PERCENT",
                                 }
                             },
@@ -189,17 +159,13 @@ def create(event, context):
         "Ec2KeyName": ec2_key_name,
         "KeepJobFlowAliveWhenNoSteps": True,
         "TerminationProtected": False,
+        "Ec2SubnetId": subnet,
     }
 
     # If the request specified a custom ami id, configure the instance groups to use that ami
     if custom_ami_id:
         for instance_group in args["Instances"]["InstanceGroups"]:
             instance_group["CustomAmiId"] = custom_ami_id
-
-    if len(subnets) == 1:
-        args["Instances"]["Ec2SubnetId"] = subnets[0]
-    else:
-        args["Instances"]["Ec2SubnetIds"] = subnets
 
     args["VisibleToAllUsers"] = True
     args["JobFlowRole"] = env_variables["EMR_EC2_ROLE_NAME"]
@@ -218,9 +184,7 @@ def create(event, context):
         and "defaultEMRClusterTTL" in project.metadata["terminationConfiguration"]
     ):
         # Endpoint TTL is in hours so we need to convert that to seconds and add to the current time
-        termination_time = time.time() + (
-            int(project.metadata["terminationConfiguration"]["defaultEMRClusterTTL"]) * 60 * 60
-        )
+        termination_time = time.time() + (int(project.metadata["terminationConfiguration"]["defaultEMRClusterTTL"]) * 60 * 60)
 
         clusters = list_clusters_for_project(
             emr=emr,
@@ -261,9 +225,7 @@ def get(event, context):
     response = emr.describe_cluster(ClusterId=cluster_id)
 
     # Add termination time metadata to response
-    scheduler_model = resource_scheduler_dao.get(
-        resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER
-    )
+    scheduler_model = resource_scheduler_dao.get(resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER)
     if scheduler_model and scheduler_model.termination_time:
         response["TerminationTime"] = scheduler_model.termination_time
 

@@ -191,9 +191,7 @@ def test_create_endpoint_config_client_error(mock_sagemaker, mock_pull_config, m
         "DataCaptureConfig": data_capture,
     }
 
-    mock_sagemaker.create_endpoint_config.side_effect = ClientError(
-        error_msg, "CreateEndpointConfiguration"
-    )
+    mock_sagemaker.create_endpoint_config.side_effect = ClientError(error_msg, "CreateEndpointConfiguration")
     expected_response = generate_html_response(
         "400",
         "An error occurred (MissingParameter) when calling the CreateEndpointConfiguration operation: Dummy error message.",
@@ -208,9 +206,7 @@ def test_create_endpoint_config_client_error(mock_sagemaker, mock_pull_config, m
 
 @mock.patch("ml_space_lambda.endpoint_config.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.endpoint_config.lambda_functions.sagemaker")
-def test_create_endpoint_config_mismatched_header(
-    mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_create_endpoint_config_mismatched_header(mock_sagemaker, mock_pull_config, mock_s3_param_json):
     event_body = {
         "EndpointConfigName": "example_config",
         "ProjectName": project_name,

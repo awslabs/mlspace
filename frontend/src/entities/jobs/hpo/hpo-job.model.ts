@@ -99,7 +99,7 @@ export type InputDataConfig = {
     ContentType: string;
     CompressionType: CompressionType;
     RecordWrapperType: RecordWrapperType;
-    InputMode: InputDataConfigurationInputMode | InputDataConfigurationInputModeExpanded;
+    InputMode?: InputDataConfigurationInputMode | InputDataConfigurationInputModeExpanded;
     ShuffleConfig?: {
         Seed: number;
     };
@@ -135,7 +135,7 @@ export type AlgorithmSpecification = {
     TrainingImage: string | null;
     TrainingInputMode: TrainingInputMode;
     AlgorithmName?: string | null;
-    MetricDefinitions: MetricDefinition[];
+    MetricDefinitions?: MetricDefinition[];
 };
 
 export type OutputDataConfig = {

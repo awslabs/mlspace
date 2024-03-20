@@ -62,9 +62,7 @@ def test_stop_batch_translate_job_client_error(mock_translate):
         "An error occurred (ResourceNotFoundException) when calling the stopTextTranslationJob operation: Dummy error message.",
     )
 
-    mock_translate.stop_text_translation_job.side_effect = ClientError(
-        error_msg, "stopTextTranslationJob"
-    )
+    mock_translate.stop_text_translation_job.side_effect = ClientError(error_msg, "stopTextTranslationJob")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 

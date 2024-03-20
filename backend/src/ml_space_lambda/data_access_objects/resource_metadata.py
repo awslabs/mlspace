@@ -28,9 +28,7 @@ from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
 class PagedMetadataResults:
-    def __init__(
-        self, records: Optional[List[ResourceMetadataModel]] = [], next_token: Optional[str] = None
-    ):
+    def __init__(self, records: Optional[List[ResourceMetadataModel]] = [], next_token: Optional[str] = None):
         self.records = records
         self.next_token = next_token
 
@@ -83,9 +81,7 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
         json_key = {"resourceId": id, "resourceType": type}
         # Only a subset of fields can be modified
         update_exp = "SET metadata = :metadata"
-        exp_values = json.loads(
-            dynamodb_json.dumps({":metadata": metadata, ":id": id, ":type": type})
-        )
+        exp_values = json.loads(dynamodb_json.dumps({":metadata": metadata, ":id": id, ":type": type}))
         self._update(
             json_key=json_key,
             update_expression=update_exp,
@@ -168,9 +164,7 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
             ddb_response.next_token,
         )
 
-    def upsert_record(
-        self, resource_id: str, resource_type: ResourceType, user: str, project: str, metadata: dict
-    ):
+    def upsert_record(self, resource_id: str, resource_type: ResourceType, user: str, project: str, metadata: dict):
         try:
             self.update(resource_id, resource_type, metadata)
         except ClientError as e:

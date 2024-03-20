@@ -218,57 +218,49 @@ hyperparameter, set the type to Static. ${
         hyperparameter.type = toType;
         switch (toType) {
             case HyperparameterType.STATIC:
-                {
-                    hyperparameter.value = hyperparameter.value.slice(0, 1);
-                    toAdd[`StaticHyperParameters.${hyperparameter.key}`] =
-                        hyperparameter.value?.[0];
-                }
+                hyperparameter.value = hyperparameter.value.slice(0, 1);
+                toAdd[`StaticHyperParameters.${hyperparameter.key}`] =
+                    hyperparameter.value?.[0];
                 break;
             case HyperparameterType.INTEGER:
-                {
-                    hyperparameter.value = hyperparameter.value.slice(0, 1);
-                    toAdd['HyperParameterRanges.IntegerParameterRanges'] = [
-                        ...item.HyperParameterRanges!.IntegerParameterRanges.filter(
-                            (element) => element !== undefined
-                        ),
-                        {
-                            Name: hyperparameter.key,
-                            MinValue: '',
-                            MaxValue: '',
-                            ScalingType: hyperparameter.scalingType,
-                        },
-                    ];
-                }
+                hyperparameter.value = hyperparameter.value.slice(0, 1);
+                toAdd['HyperParameterRanges.IntegerParameterRanges'] = [
+                    ...item.HyperParameterRanges!.IntegerParameterRanges.filter(
+                        (element) => element !== undefined
+                    ),
+                    {
+                        Name: hyperparameter.key,
+                        MinValue: '',
+                        MaxValue: '',
+                        ScalingType: hyperparameter.scalingType,
+                    },
+                ];
                 break;
             case HyperparameterType.CONTINUOUS:
-                {
-                    hyperparameter.value = hyperparameter.value.slice(0, 1);
-                    toAdd['HyperParameterRanges.ContinuousParameterRanges'] = [
-                        ...item.HyperParameterRanges!.ContinuousParameterRanges.filter(
-                            (element) => element !== undefined
-                        ),
-                        {
-                            Name: hyperparameter.key,
-                            MinValue: '',
-                            MaxValue: '',
-                            ScalingType: hyperparameter.scalingType,
-                        },
-                    ];
-                }
+                hyperparameter.value = hyperparameter.value.slice(0, 1);
+                toAdd['HyperParameterRanges.ContinuousParameterRanges'] = [
+                    ...item.HyperParameterRanges!.ContinuousParameterRanges.filter(
+                        (element) => element !== undefined
+                    ),
+                    {
+                        Name: hyperparameter.key,
+                        MinValue: '',
+                        MaxValue: '',
+                        ScalingType: hyperparameter.scalingType,
+                    },
+                ];
                 break;
             case HyperparameterType.CATEGORICAL:
-                {
-                    hyperparameter.value = hyperparameter.value.slice(0, 1);
-                    toAdd['HyperParameterRanges.CategoricalParameterRanges'] = [
-                        ...item.HyperParameterRanges!.CategoricalParameterRanges.filter(
-                            (element) => element !== undefined
-                        ),
-                        {
-                            Name: hyperparameter.key,
-                            Values: [],
-                        },
-                    ];
-                }
+                hyperparameter.value = hyperparameter.value.slice(0, 1);
+                toAdd['HyperParameterRanges.CategoricalParameterRanges'] = [
+                    ...item.HyperParameterRanges!.CategoricalParameterRanges.filter(
+                        (element) => element !== undefined
+                    ),
+                    {
+                        Name: hyperparameter.key,
+                        Values: [],
+                    },
+                ];
                 break;
         }
 
@@ -441,10 +433,6 @@ hyperparameter, set the type to Static. ${
         </Container>
     );
 }
-
-export default {
-    Hyperparameters: HyperParameters,
-};
 
 export type HyperParameterFieldProps = Omit<FormProps<Hyperparameter>, 'setFields'> & {
     changeType(hyperparameter: Hyperparameter, toType: HyperparameterType): void;

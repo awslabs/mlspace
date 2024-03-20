@@ -46,9 +46,7 @@ mock_list_batch_translate_response = {
 }
 
 
-@pytest.mark.parametrize(
-    "status_code,body", [("200", {"status": "success"}), ("400", "generic error string")]
-)
+@pytest.mark.parametrize("status_code,body", [("200", {"status": "success"}), ("400", "generic error string")])
 def test_generate_html_response(status_code, body):
     expected_output = {
         "statusCode": status_code,
@@ -148,9 +146,7 @@ def test_api_wrapper_redact_token(mock_logger):
             "sec-fetch-dest": ["empty"],
             "sec-fetch-mode": ["cors"],
             "sec-fetch-site": ["same-origin"],
-            "User-Agent": [
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/112.0"
-            ],
+            "User-Agent": ["Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/112.0"],
             "X-Amzn-Trace-Id": ["Root=1-6448b828-7166ca100cf3a9fd2d2210e1"],
             "X-Forwarded-For": ["152.58.16.229"],
             "X-Forwarded-Port": ["443"],
@@ -238,9 +234,7 @@ def test_list_custom_terminologies_for_project():
     test_paging_options = {"pageSize": max_results}
     test_kwargs: Dict[str, Any] = {"MaxResults": max_results}
 
-    result = list_custom_terminologies_for_project(
-        client=mock_translate, fetch_all=True, paging_options=test_paging_options
-    )
+    result = list_custom_terminologies_for_project(client=mock_translate, fetch_all=True, paging_options=test_paging_options)
 
     mock_paginator.paginate.assert_called_with(**test_kwargs)
 

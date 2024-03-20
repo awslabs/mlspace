@@ -25,12 +25,7 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    event_wrapper,
-    get_notebook_stop_time,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, event_wrapper, get_notebook_stop_time, retry_config
 
 resource_scheduler_dao = ResourceSchedulerDAO()
 
@@ -41,9 +36,7 @@ sagemaker = boto3.client("sagemaker", config=retry_config)
 @event_wrapper
 def terminate_resources(event, context):
     # Get all resources with a termination time < current time
-    resources_past_termination_time = resource_scheduler_dao.get_resources_past_termination_time(
-        int(time.time())
-    )
+    resources_past_termination_time = resource_scheduler_dao.get_resources_past_termination_time(int(time.time()))
 
     for resource in resources_past_termination_time:
         resource_id = resource.resource_id
@@ -70,9 +63,7 @@ def terminate_resources(event, context):
                 # termination time if the notebook still exists
                 if e.response["Error"]["Code"] == "ValidationException":
                     if e.response["Error"]["Message"].endswith("does not exist"):
-                        resource_scheduler_dao.delete(
-                            resource_id=resource_id, resource_type=resource_type
-                        )
+                        resource_scheduler_dao.delete(resource_id=resource_id, resource_type=resource_type)
                         continue
                 else:
                     logging.exception(e)
@@ -103,9 +94,7 @@ def set_resource_termination(event, context):
         if termination_time:
             # Strip out just the time and then use our helper so we don't end up trying to set a
             # stop time that's in the past
-            termination_time = get_notebook_stop_time(
-                time.strftime("%H:%M", time.gmtime(event_body["terminationTime"]))
-            )
+            termination_time = get_notebook_stop_time(time.strftime("%H:%M", time.gmtime(event_body["terminationTime"])))
     elif event["pathParameters"] and "endpointName" in event["pathParameters"]:
         resource_id = urllib.parse.unquote(event["pathParameters"]["endpointName"])
         resource_type = ResourceType.ENDPOINT

@@ -68,8 +68,7 @@ def test_get_dataset_details_client_error(mock_dataset_dao, mock_global_dataset)
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling"
-        " the GetItem operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling" " the GetItem operation: Dummy error message.",
     )
     mock_dataset_dao.get.side_effect = ClientError(error_msg, "GetItem")
     assert lambda_handler(build_mock_event(mock_global_dataset), mock_context) == expected_response

@@ -209,9 +209,7 @@ class IAMManager:
         user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
 
         aws_account = self.sts_client.get_caller_identity()["Account"]
-        project_policy_arn = (
-            f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
-        )
+        project_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
         user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
 
         # Confirm policy name lengths are compliant
@@ -281,9 +279,7 @@ class IAMManager:
 
         # Attach all policies from the MLSpace notebook role
         if not self.default_notebook_role_policy_arns:
-            notebook_role_policies = self.iam_client.list_attached_role_policies(
-                RoleName=self.notebook_role_name
-            )
+            notebook_role_policies = self.iam_client.list_attached_role_policies(RoleName=self.notebook_role_name)
             self.default_notebook_role_policy_arns = [
                 policy["PolicyArn"] for policy in notebook_role_policies["AttachedPolicies"]
             ]
@@ -430,15 +426,11 @@ class IAMManager:
     def _detach_iam_policies(self, iam_role_name: str) -> List[str]:
         detached_iam_policies = []
         # List the policies attached to the role
-        iam_role_policies_response = self.iam_client.list_attached_role_policies(
-            RoleName=iam_role_name
-        )
+        iam_role_policies_response = self.iam_client.list_attached_role_policies(RoleName=iam_role_name)
         # Retrieve the attached IAM policy ARNs and then detach from the role
         for policy in iam_role_policies_response["AttachedPolicies"]:
             # Detach the policy
-            self.iam_client.detach_role_policy(
-                RoleName=iam_role_name, PolicyArn=policy["PolicyArn"]
-            )
+            self.iam_client.detach_role_policy(RoleName=iam_role_name, PolicyArn=policy["PolicyArn"])
             detached_iam_policies.append(policy["PolicyArn"])
 
         return detached_iam_policies
@@ -488,6 +480,4 @@ class IAMManager:
         policy_versions = self.iam_client.list_policy_versions(PolicyArn=policy_arn)
         for version in policy_versions["Versions"]:
             if not version["IsDefaultVersion"]:
-                self.iam_client.delete_policy_version(
-                    PolicyArn=policy_arn, VersionId=version["VersionId"]
-                )
+                self.iam_client.delete_policy_version(PolicyArn=policy_arn, VersionId=version["VersionId"])

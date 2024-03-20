@@ -20,10 +20,7 @@ from unittest import mock
 
 from botocore.exceptions import ClientError
 
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -56,9 +53,7 @@ def _mock_job_metadata(
             "CreationTime": "2023-10-04 13:46:22.554000+00:00",
             "LastModifiedTime": "2023-10-04 13:46:57.478000+00:00",
             "TransformStartTime": "2023-10-04 13:46:26.229000+00:00",
-            "TransformEndTime": "2023-10-04 13:46:53.326000+00:00"
-            if status == "Completed"
-            else None,
+            "TransformEndTime": "2023-10-04 13:46:53.326000+00:00" if status == "Completed" else None,
         },
     )
 

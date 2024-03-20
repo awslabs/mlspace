@@ -24,10 +24,7 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project import ProjectModel
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerModel
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import ResourceType
@@ -506,54 +503,40 @@ def _mock_primary_owner_writes(is_user_report: bool, owner: str, project: str):
             f"{created_date_str},{modified_date_str},N/A,ml.g5.48xlarge,,,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},HPO Job,{other_val},hpo_job1,InProgress,"
-            f"{created_date_str},{modified_date_str},,1,,,,\r\n"
+            f"{id_val},HPO Job,{other_val},hpo_job1,InProgress," f"{created_date_str},{modified_date_str},,1,,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},HPO Job,{other_val},hpo_job2,Stopped,"
-            f"{created_date_str},{modified_date_str},,1,,,,\r\n"
+            f"{id_val},HPO Job,{other_val},hpo_job2,Stopped," f"{created_date_str},{modified_date_str},,1,,,,\r\n"
         ),
         mock.call().write(f"{id_val},Model,{other_val},model1,,{created_date_str},,,,,,,\r\n"),
         mock.call().write(f"{id_val},Model,{other_val},model2,,{created_date_str},,,,,,,\r\n"),
-        mock.call().write(
-            f"{id_val},Endpoint Config,{other_val},endpoint_config1,,"
-            f"{created_date_str},,,,,,,\r\n"
-        ),
-        mock.call().write(
-            f"{id_val},Endpoint Config,{other_val},endpoint_config2,,"
-            f"{created_date_str},,,,,,,\r\n"
-        ),
+        mock.call().write(f"{id_val},Endpoint Config,{other_val},endpoint_config1,," f"{created_date_str},,,,,,,\r\n"),
+        mock.call().write(f"{id_val},Endpoint Config,{other_val},endpoint_config2,," f"{created_date_str},,,,,,,\r\n"),
         mock.call().write(
             f"{id_val},Endpoint,{other_val},endpoint1,InProgress,"
             f"{created_date_str},{modified_date_str},2023-01-01 17:00:00.000000+00:00,,,,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},Endpoint,{other_val},endpoint2,Stopped,"
-            f"{created_date_str},{modified_date_str},N/A,,,,,,\r\n"
+            f"{id_val},Endpoint,{other_val},endpoint2,Stopped," f"{created_date_str},{modified_date_str},N/A,,,,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},Transform Job,{other_val},transformjob1,InProgress,"
-            f"{created_date_str},{modified_date_str},,,,,,\r\n"
+            f"{id_val},Transform Job,{other_val},transformjob1,InProgress," f"{created_date_str},{modified_date_str},,,,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},Transform Job,{other_val},transformjob2,Stopped,"
-            f"{created_date_str},{modified_date_str},,,,,,\r\n"
+            f"{id_val},Transform Job,{other_val},transformjob2,Stopped," f"{created_date_str},{modified_date_str},,,,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},Training Job,{other_val},trainingjob1,InProgress,"
-            f"{created_date_str},{modified_date_str},,,,,,\r\n"
+            f"{id_val},Training Job,{other_val},trainingjob1,InProgress," f"{created_date_str},{modified_date_str},,,,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},Training Job,{other_val},trainingjob2,Stopped,"
-            f"{created_date_str},{modified_date_str},,,,,,\r\n"
+            f"{id_val},Training Job,{other_val},trainingjob2,Stopped," f"{created_date_str},{modified_date_str},,,,,,\r\n"
         ),
         mock.call().write(
             f"{id_val},EMR Cluster,{other_val},example_project-"
             f"cluster1,WAITING,{created_date_str},,2023-01-01 17:00:00.000000+00:00,,,6.6,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},EMR Cluster,{other_val},example_project-"
-            f"cluster3,RUNNING,{created_date_str},,N/A,,,6.2,,,\r\n"
+            f"{id_val},EMR Cluster,{other_val},example_project-" f"cluster3,RUNNING,{created_date_str},,N/A,,,6.2,,,\r\n"
         ),
         mock.call().write(
             f"{id_val},Batch Translation Job,{other_val},{project_name}-translate-job1,SUBMITTED,"
@@ -595,9 +578,7 @@ def test_create_system_report_success(
     mock_datetime.now.return_value = datetime.fromisoformat("2022-10-11T23:05:50")
     mock_datetime.fromtimestamp.side_effect = datetime.fromtimestamp
     mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = mock_get_project_resources
-    mock_resource_scheduler_dao.get_all_project_resources.side_effect = (
-        mock_get_all_project_resource_schedules
-    )
+    mock_resource_scheduler_dao.get_all_project_resources.side_effect = mock_get_all_project_resource_schedules
     mock_project_dao.get_all.return_value = MOCK_PROJECTS
 
     mock_event = {
@@ -613,8 +594,7 @@ def test_create_system_report_success(
     expected_response = generate_html_response(
         200,
         {
-            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/"
-            "mlspace-report-20221011-230550.csv",
+            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/" "mlspace-report-20221011-230550.csv",
         },
     )
 
@@ -692,9 +672,7 @@ def test_create_project_report_success(
     mock_datetime.now.return_value = datetime.fromisoformat("2022-10-11T23:05:50")
     mock_datetime.fromtimestamp.side_effect = datetime.fromtimestamp
     mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = mock_get_project_resources
-    mock_resource_scheduler_dao.get_all_project_resources.side_effect = (
-        mock_get_all_project_resource_schedules
-    )
+    mock_resource_scheduler_dao.get_all_project_resources.side_effect = mock_get_all_project_resource_schedules
     mock_project_dao.get_all.return_value = [MOCK_PROJECTS[1]]
     mock_sagemaker.list_tags.side_effect = LIST_TAGS_RESPONSE
     mock_list_clusters.return_value = list_emr_cluster_response
@@ -722,16 +700,13 @@ def test_create_project_report_success(
     expected_response = generate_html_response(
         200,
         {
-            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/"
-            "mlspace-report-20221011-230550.csv",
+            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/" "mlspace-report-20221011-230550.csv",
         },
     )
 
     assert create(mock_event, mock_context) == expected_response
 
-    mock_project_dao.get_all.assert_called_with(
-        include_suspended=True, project_names=[project_name]
-    )
+    mock_project_dao.get_all.assert_called_with(include_suspended=True, project_names=[project_name])
 
     mock_resource_metadata_dao.get_all_for_project_by_type.assert_has_calls(
         [
@@ -823,8 +798,7 @@ def test_create_user_report_success(
     expected_response = generate_html_response(
         200,
         {
-            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/"
-            "mlspace-report-20221011-230550.csv",
+            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/" "mlspace-report-20221011-230550.csv",
         },
     )
 
@@ -838,9 +812,7 @@ def test_create_user_report_success(
             mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.NOTEBOOK),
             mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.TRAINING_JOB),
             mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.TRANSFORM_JOB),
-            mock.call(
-                user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.BATCH_TRANSLATE_JOB
-            ),
+            mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.BATCH_TRANSLATE_JOB),
             mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.LABELING_JOB),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.ENDPOINT),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.HPO_JOB),
@@ -848,9 +820,7 @@ def test_create_user_report_success(
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.NOTEBOOK),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.TRAINING_JOB),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.TRANSFORM_JOB),
-            mock.call(
-                user=mock_second_username, fetch_all=True, type=ResourceType.BATCH_TRANSLATE_JOB
-            ),
+            mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.BATCH_TRANSLATE_JOB),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.LABELING_JOB),
         ],
         True,
@@ -954,8 +924,7 @@ def test_create_user_report_empty(
     expected_response = generate_html_response(
         200,
         {
-            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/"
-            "mlspace-report-20221011-230550.csv",
+            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/" "mlspace-report-20221011-230550.csv",
         },
     )
 
@@ -1018,10 +987,8 @@ def test_create_personnel_report_success(
     expected_response = generate_html_response(
         200,
         {
-            "personnelReport": "s3://mlspace-data-bucket/mlspace-report/"
-            "mlspace-report-personnel-20221011-230550.csv",
-            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/"
-            "mlspace-report-20221011-230550.csv",
+            "personnelReport": "s3://mlspace-data-bucket/mlspace-report/" "mlspace-report-personnel-20221011-230550.csv",
+            "resourceReport": "s3://mlspace-data-bucket/mlspace-report/" "mlspace-report-20221011-230550.csv",
         },
     )
 
@@ -1092,8 +1059,7 @@ def test_create_report_s3_error(mock_s3, mock_datetime, mock_user_dao, mock_proj
 
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling the UploadFile operation: "
-        "Dummy error message.",
+        "An error occurred (ThrottlingException) when calling the UploadFile operation: " "Dummy error message.",
     )
     mock_event = {"body": json.dumps({"requestedResources": ["Personnel"]})}
 

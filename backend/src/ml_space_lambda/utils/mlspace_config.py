@@ -51,12 +51,8 @@ def get_environment_variables() -> dict:
             "PROJECTS_TABLE": os.getenv("PROJECTS_TABLE", "mlspace-projects"),
             "PROJECT_USERS_TABLE": os.getenv("PROJECT_USERS_TABLE", "mlspace-project-users"),
             "USERS_TABLE": os.getenv("USERS_TABLE", "mlspace-users"),
-            "RESOURCE_SCHEDULE_TABLE": os.getenv(
-                "RESOURCE_SCHEDULE_TABLE", "mlspace-resource-schedule"
-            ),
-            "RESOURCE_METADATA_TABLE": os.getenv(
-                "RESOURCE_METADATA_TABLE", "mlspace-resource-metadata"
-            ),
+            "RESOURCE_SCHEDULE_TABLE": os.getenv("RESOURCE_SCHEDULE_TABLE", "mlspace-resource-schedule"),
+            "RESOURCE_METADATA_TABLE": os.getenv("RESOURCE_METADATA_TABLE", "mlspace-resource-metadata"),
             "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION", "us-iso-east-1"),
             "DATA_BUCKET": os.getenv("DATA_BUCKET", "mlspace-data-bucket"),
             "EMR_CONFIG_BUCKET": os.getenv("EMR_CONFIG_BUCKET", "mlspace-emr-config-bucket"),
@@ -65,9 +61,7 @@ def get_environment_variables() -> dict:
             "DYNAMO_TABLE": os.getenv("DYNAMO_TABLE", "mlspace-project"),
             "EMR_EC2_ROLE_NAME": os.getenv("EMR_EC2_ROLE_NAME", "EMR_EC2_DefaultRole"),
             "EMR_SERVICE_ROLE_NAME": os.getenv("EMR_SERVICE_ROLE_NAME", "EMR_DefaultRole"),
-            "EMR_SECURITY_CONFIGURATION": os.getenv(
-                "EMR_SECURITY_CONFIGURATION", "MLSpace-EMR-SecurityConfig"
-            ),
+            "EMR_SECURITY_CONFIGURATION": os.getenv("EMR_SECURITY_CONFIGURATION", "MLSpace-EMR-SecurityConfig"),
             "NEW_USER_SUSPENSION_DEFAULT": os.getenv("NEW_USER_SUSPENSION_DEFAULT", "True"),
             "TRANSLATE_DATE_ROLE_ARN": os.getenv("TRANSLATE_DATE_ROLE_ARN", ""),
         }

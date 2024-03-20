@@ -93,9 +93,6 @@ export function ManageFiles ({
                 isCreate ? (
                     <Box textAlign='center' color='inherit'>
                         <b>No files uploaded</b>
-                        <Box padding={{ bottom: 's' }} variant='p' color='text-status-error'>
-                            Upload a file to create a dataset.
-                        </Box>
                     </Box>
                 ) : undefined
             }

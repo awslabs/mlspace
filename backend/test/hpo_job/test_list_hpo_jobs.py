@@ -20,10 +20,7 @@ from unittest import mock
 
 from botocore.exceptions import ClientError
 
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -63,9 +60,7 @@ def _mock_job_metadata(
                 "Stopped": 1,
             },
             "Strategy": "Bayesian",
-            "HyperParameterTuningEndTime": "2023-10-04 13:46:53.326000+00:00"
-            if status == "Completed"
-            else None,
+            "HyperParameterTuningEndTime": "2023-10-04 13:46:53.326000+00:00" if status == "Completed" else None,
         },
     )
 

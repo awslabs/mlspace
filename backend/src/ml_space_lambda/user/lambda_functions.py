@@ -22,11 +22,7 @@ from typing import List, Optional
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserDAO, UserModel
 from ml_space_lambda.enums import Permission, TimezonePreference
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    serialize_permissions,
-    total_project_owners,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permissions, total_project_owners
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
@@ -159,9 +155,6 @@ def _sole_project_owner(user_name: str) -> List[str]:
     projects = []
     for project in project_list:
         project_name = project.to_dict()["project"]
-        if (
-            Permission.PROJECT_OWNER in project.permissions
-            and total_project_owners(project_user_dao, project_name) <= 1
-        ):
+        if Permission.PROJECT_OWNER in project.permissions and total_project_owners(project_user_dao, project_name) <= 1:
             projects.append(project_name)
     return projects

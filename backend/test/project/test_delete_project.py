@@ -22,10 +22,7 @@ from botocore.exceptions import ClientError
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
 from ml_space_lambda.data_access_objects.project import ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
@@ -97,9 +94,7 @@ def test_delete_project(
 ):
     mlspace_config.env_variables = {}
     env_vars = get_environment_variables()
-    expected_response = generate_html_response(
-        200, f"Successfully deleted {MOCK_PROJECT_NAME} and its associated resources."
-    )
+    expected_response = generate_html_response(200, f"Successfully deleted {MOCK_PROJECT_NAME} and its associated resources.")
     mock_project_dao.get.return_value = mock_project()
     mock_paginator = mock.Mock()
     mock_paginator.paginate.return_value = paginated_cluster_response
@@ -194,17 +189,13 @@ def test_delete_project(
     mock_dataset_dao.delete.assert_called_with(MOCK_PROJECT_NAME, "TestDataset")
     mock_sagemaker.delete_model.assert_called_with(ModelName="TestModel")
     mock_sagemaker.delete_endpoint.assert_called_with(EndpointName="TestEndpoint")
-    mock_sagemaker.delete_endpoint_config.assert_called_with(
-        EndpointConfigName="TestEndpointConfig"
-    )
+    mock_sagemaker.delete_endpoint_config.assert_called_with(EndpointConfigName="TestEndpointConfig")
     mock_sagemaker.delete_notebook_instance.assert_called_with(NotebookInstanceName="TestNotebook")
 
     mock_emr.set_termination_protection.assert_called_with(
         JobFlowIds=["Cluster1", "Cluster2", "Cluster4", "Cluster6"], TerminationProtected=False
     )
-    mock_emr.terminate_job_flows.assert_called_with(
-        JobFlowIds=["Cluster1", "Cluster2", "Cluster4", "Cluster6"]
-    )
+    mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=["Cluster1", "Cluster2", "Cluster4", "Cluster6"])
 
 
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
@@ -246,9 +237,7 @@ def test_delete_project_external_iam(
 ):
     mlspace_config.env_variables = {}
     env_vars = get_environment_variables()
-    expected_response = generate_html_response(
-        200, f"Successfully deleted {MOCK_PROJECT_NAME} and its associated resources."
-    )
+    expected_response = generate_html_response(200, f"Successfully deleted {MOCK_PROJECT_NAME} and its associated resources.")
     mock_project_dao.get.return_value = mock_project()
     mock_dataset_dao.get_all_for_scope.return_value = []
     mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = [
@@ -329,14 +318,10 @@ def test_delete_project_external_iam(
     )
     mock_project_dao.delete.assert_called_with(MOCK_PROJECT_NAME)
     # Expected EMR termination
-    mock_emr.set_termination_protection.assert_called_with(
-        JobFlowIds=["Cluster1", "Cluster2"], TerminationProtected=False
-    )
+    mock_emr.set_termination_protection.assert_called_with(JobFlowIds=["Cluster1", "Cluster2"], TerminationProtected=False)
     mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=["Cluster1", "Cluster2"])
     # Expected external iam cleanup
-    mock_iam_manager.remove_project_user_roles.assert_called_with(
-        ["jdoe-role", "matt-role"], project=MOCK_PROJECT_NAME
-    )
+    mock_iam_manager.remove_project_user_roles.assert_called_with(["jdoe-role", "matt-role"], project=MOCK_PROJECT_NAME)
 
 
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
@@ -435,8 +420,7 @@ def test_delete_project_client_error(mock_project_dao):
     }
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling"
-        " the GetItem operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling" " the GetItem operation: Dummy error message.",
     )
 
     mock_project_dao.get.side_effect = ClientError(error_msg, "GetItem")

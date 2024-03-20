@@ -35,7 +35,3 @@ export function HPOJobSettings (props: HPOJobSettingsProps) {
         </SpaceBetween>
     );
 }
-
-export default {
-    HPOJobSettings,
-};

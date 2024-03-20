@@ -18,11 +18,7 @@ import logging
 
 import boto3
 
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    list_custom_terminologies_for_project,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, list_custom_terminologies_for_project, retry_config
 
 translate = boto3.client("translate", config=retry_config)
 log = logging.getLogger(__name__)

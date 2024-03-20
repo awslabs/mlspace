@@ -16,7 +16,7 @@
 
 import json
 import os
-from enum import auto, Enum
+from enum import Enum, auto
 
 import boto3
 from botocore.config import Config
@@ -118,9 +118,7 @@ def get_auto_labeling_arn(task_type: TaskTypes):
     return f"arn:{arn_partition}:sagemaker:{region}:{account}:labeling-job-algorithm-specification/{_auto_labeling_task_arn_map[task_type]}"
 
 
-def generate_labels_configuration_file(
-    labels: list, job_name: str, data_bucket_name: str, output_dir_key: str
-) -> str:
+def generate_labels_configuration_file(labels: list, job_name: str, data_bucket_name: str, output_dir_key: str) -> str:
     labels_config = {"document-version": "2018-11-28", "labels": labels}
     s3_key = f"{output_dir_key}/{job_name}/annotation-tool/data.json"
     s3.put_object(Bucket=data_bucket_name, Key=s3_key, Body=json.dumps(labels_config))

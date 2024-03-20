@@ -20,10 +20,7 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.enums import Permission, ResourceType
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
@@ -113,53 +110,49 @@ def test_remove_user_from_project_success_not_owner(
     user_notebook_name = "demo"
     mock_translate_job_id = "translate1"
     mlspace_config.env_variables = {}
-    expected_response = generate_html_response(
-        200, f"Successfully removed {MOCK_CO_USER.user} from {MOCK_PROJECT_NAME}"
-    )
-    mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = (
-        _get_all_by_project_side_effect(
-            notebook_results=[
-                ResourceMetadataModel(
-                    "paper-analytics",
-                    ResourceType.NOTEBOOK,
-                    MOCK_USERNAME,
-                    MOCK_PROJECT_NAME,
-                    {"NotebookInstanceStatus": "InService"},
-                ),
-                ResourceMetadataModel(
-                    user_notebook_name,
-                    ResourceType.NOTEBOOK,
-                    MOCK_CO_USER.user,
-                    MOCK_PROJECT_NAME,
-                    {"NotebookInstanceStatus": "InService"},
-                ),
-                ResourceMetadataModel(
-                    "mxboost-nist",
-                    ResourceType.NOTEBOOK,
-                    MOCK_CO_USER.user,
-                    MOCK_PROJECT_NAME,
-                    {"NotebookInstanceStatus": "Stopped"},
-                ),
-                ResourceMetadataModel(
-                    "parts",
-                    ResourceType.NOTEBOOK,
-                    MOCK_USERNAME,
-                    MOCK_PROJECT_NAME,
-                    {"NotebookInstanceStatus": "Stopped"},
-                ),
-            ],
-            translate_results=[
-                ResourceMetadataModel(
-                    mock_translate_job_id,
-                    ResourceType.BATCH_TRANSLATE_JOB,
-                    MOCK_CO_USER.user,
-                    MOCK_PROJECT_NAME,
-                    {
-                        "JobName": "batch-translate-job",
-                    },
-                )
-            ],
-        )
+    expected_response = generate_html_response(200, f"Successfully removed {MOCK_CO_USER.user} from {MOCK_PROJECT_NAME}")
+    mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = _get_all_by_project_side_effect(
+        notebook_results=[
+            ResourceMetadataModel(
+                "paper-analytics",
+                ResourceType.NOTEBOOK,
+                MOCK_USERNAME,
+                MOCK_PROJECT_NAME,
+                {"NotebookInstanceStatus": "InService"},
+            ),
+            ResourceMetadataModel(
+                user_notebook_name,
+                ResourceType.NOTEBOOK,
+                MOCK_CO_USER.user,
+                MOCK_PROJECT_NAME,
+                {"NotebookInstanceStatus": "InService"},
+            ),
+            ResourceMetadataModel(
+                "mxboost-nist",
+                ResourceType.NOTEBOOK,
+                MOCK_CO_USER.user,
+                MOCK_PROJECT_NAME,
+                {"NotebookInstanceStatus": "Stopped"},
+            ),
+            ResourceMetadataModel(
+                "parts",
+                ResourceType.NOTEBOOK,
+                MOCK_USERNAME,
+                MOCK_PROJECT_NAME,
+                {"NotebookInstanceStatus": "Stopped"},
+            ),
+        ],
+        translate_results=[
+            ResourceMetadataModel(
+                mock_translate_job_id,
+                ResourceType.BATCH_TRANSLATE_JOB,
+                MOCK_CO_USER.user,
+                MOCK_PROJECT_NAME,
+                {
+                    "JobName": "batch-translate-job",
+                },
+            )
+        ],
     )
 
     mock_project_clusters.return_value = {
@@ -191,13 +184,9 @@ def test_remove_user_from_project_success_not_owner(
     mock_iam_manager.remove_project_user_roles.assert_called_with([MOCK_CO_USER.role])
     mock_project_user_dao.delete.assert_called_with(MOCK_PROJECT_NAME, MOCK_CO_USER.user)
     mock_project_clusters.assert_called_with(mock_emr, MOCK_PROJECT_NAME, fetch_all=True)
-    mock_emr.set_termination_protection.assert_called_with(
-        JobFlowIds=["Cluster1"], TerminationProtected=False
-    )
+    mock_emr.set_termination_protection.assert_called_with(JobFlowIds=["Cluster1"], TerminationProtected=False)
     mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=["Cluster1"])
-    mock_sagemaker.stop_notebook_instance.assert_called_with(
-        NotebookInstanceName=user_notebook_name
-    )
+    mock_sagemaker.stop_notebook_instance.assert_called_with(NotebookInstanceName=user_notebook_name)
     mock_translate.stop_text_translation_job.assert_called_with(JobId=mock_translate_job_id)
     mock_resource_metadata_dao.get_all_for_project_by_type.asset_has_calls(
         [
@@ -224,9 +213,7 @@ def test_remove_user_from_project_success_multiple_owners(
     mock_resource_metadata_dao,
 ):
     mlspace_config.env_variables = {}
-    expected_response = generate_html_response(
-        200, f"Successfully removed {MOCK_USERNAME} from {MOCK_PROJECT_NAME}"
-    )
+    expected_response = generate_html_response(200, f"Successfully removed {MOCK_USERNAME} from {MOCK_PROJECT_NAME}")
 
     mock_project_clusters.return_value = {"records": []}
     mock_resource_metadata_dao.get_all_for_project_by_type.return_value = PagedMetadataResults()
@@ -262,9 +249,7 @@ def test_remove_user_from_project_success_multiple_owners(
 
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 def test_remove_user_from_project_failure_only_owner(mock_project_user_dao):
-    expected_response = generate_html_response(
-        400, "Bad Request: You cannot delete the last owner of a project"
-    )
+    expected_response = generate_html_response(400, "Bad Request: You cannot delete the last owner of a project")
 
     mock_project_user_dao.get.return_value = MOCK_MO_USER
     mock_project_user_dao.get_users_for_project.return_value.scan.return_value = [
@@ -281,9 +266,7 @@ def test_remove_user_from_project_failure_only_owner(mock_project_user_dao):
 
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 def test_remove_user_from_project_failure_not_in_project(mock_project_user_dao):
-    expected_response = generate_html_response(
-        400, f"Bad Request: {MOCK_USERNAME} is not a member of {MOCK_PROJECT_NAME}"
-    )
+    expected_response = generate_html_response(400, f"Bad Request: {MOCK_USERNAME} is not a member of {MOCK_PROJECT_NAME}")
     mock_project_user_dao.get.return_value = None
 
     assert lambda_handler(mock_event, mock_context) == expected_response

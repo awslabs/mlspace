@@ -111,9 +111,7 @@ args = {
 @mock.patch("ml_space_lambda.transform_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.transform_job.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.transform_job.lambda_functions.resource_metadata_dao")
-def test_create_transform_job_success(
-    mock_resource_metadata_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_create_transform_job_success(mock_resource_metadata_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.param_file = {}
     mock_pull_config.return_value = mock_s3_param_json
@@ -146,9 +144,7 @@ def test_create_transform_job_success(
 @mock.patch("ml_space_lambda.transform_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.transform_job.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.transform_job.lambda_functions.resource_metadata_dao")
-def test_create_transform_job_client_error(
-    mock_resource_metadata_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_create_transform_job_client_error(mock_resource_metadata_dao, mock_sagemaker, mock_pull_config, mock_s3_param_json):
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
         "ResponseMetadata": {"HTTPStatusCode": "400"},
@@ -171,9 +167,7 @@ def test_create_transform_job_client_error(
 
 @mock.patch("ml_space_lambda.transform_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.transform_job.lambda_functions.sagemaker")
-def test_create_transform_job_mismatched_header(
-    mock_sagemaker, mock_pull_config, mock_s3_param_json
-):
+def test_create_transform_job_mismatched_header(mock_sagemaker, mock_pull_config, mock_s3_param_json):
     fake_project = "FakeProject"
     bad_event = copy.deepcopy(mock_event)
     bad_event["headers"]["x-mlspace-project"] = fake_project

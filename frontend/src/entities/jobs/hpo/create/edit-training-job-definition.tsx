@@ -160,5 +160,3 @@ export function EditTrainingJobDefinition (props: EditTrainingJobDefinitionProps
         />
     );
 }
-
-export default {};

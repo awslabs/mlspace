@@ -254,7 +254,7 @@ export function Channel (props: ChannelProps) {
                         onBlur={() => touchFields(['ChannelName'])}
                     />
                 </FormField>
-                <FormField label='Input mode'>
+                <FormField label={<>Input mode - <em>optional</em></>}>
                     <Select
                         selectedOption={{ value: item.InputMode }}
                         options={enumToOptions(InputDataConfigurationInputMode)}
@@ -328,7 +328,7 @@ export function Channel (props: ChannelProps) {
                 </FormField>
                 <FormField label='Data access type'>
                     <RadioGroup
-                        value={item.Dataset?.Type}
+                        value={item.Dataset?.Type || DatasetType.GLOBAL}
                         items={enumToOptions(DatasetType, true)}
                         onChange={(event) => {
                             setFields(
@@ -441,7 +441,3 @@ export function Channel (props: ChannelProps) {
         </SpaceBetween>
     );
 }
-
-export default {
-    InputDataConfiguration,
-};

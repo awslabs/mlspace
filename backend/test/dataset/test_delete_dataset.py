@@ -45,9 +45,7 @@ def test_delete_dataset_success(mock_dataset_dao, mock_s3, mock_private_dataset)
     mock_s3.Bucket.return_value = mock_bucket
     mock_dataset_dao.get.return_value = mock_private_dataset
     mock_dataset_dao.delete.return_value = None
-    expected_response = generate_html_response(
-        200, f"Successfully deleted {mock_private_dataset.name}"
-    )
+    expected_response = generate_html_response(200, f"Successfully deleted {mock_private_dataset.name}")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
@@ -55,9 +53,7 @@ def test_delete_dataset_success(mock_dataset_dao, mock_s3, mock_private_dataset)
         Prefix=f"private/{mock_private_dataset.scope}/datasets/{mock_private_dataset.name}/"
     )
     mock_dataset_dao.get.assert_called_with(mock_private_dataset.scope, mock_private_dataset.name)
-    mock_dataset_dao.delete.assert_called_with(
-        mock_private_dataset.scope, mock_private_dataset.name
-    )
+    mock_dataset_dao.delete.assert_called_with(mock_private_dataset.scope, mock_private_dataset.name)
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3_resource")
@@ -75,9 +71,7 @@ def test_delete_non_existent_dataset(mock_dataset_dao, mock_s3):
     mock_dataset_dao.get.return_value = None
     mock_dataset_dao.delete.return_value = None
 
-    expected_response = generate_html_response(
-        400, f"Bad Request: Requested dataset, '{dataset_name}' does not exist."
-    )
+    expected_response = generate_html_response(400, f"Bad Request: Requested dataset, '{dataset_name}' does not exist.")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
@@ -108,15 +102,13 @@ def test_delete_dataset_client_error(mock_dataset_dao, mock_s3, mock_global_data
     mock_bucket = mock.MagicMock()
     mock_s3.Bucket.return_value = mock_bucket
     mock_dataset_dao.get.return_value = mock_global_dataset
-    mock_bucket.objects.filter(
-        Prefix=f"global/datasets/{mock_global_dataset.name}/"
-    ).delete.side_effect = ClientError(error_msg, "Delete")
+    mock_bucket.objects.filter(Prefix=f"global/datasets/{mock_global_dataset.name}/").delete.side_effect = ClientError(
+        error_msg, "Delete"
+    )
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_bucket.objects.filter.assert_called_with(
-        Prefix=f"global/datasets/{mock_global_dataset.name}/"
-    )
+    mock_bucket.objects.filter.assert_called_with(Prefix=f"global/datasets/{mock_global_dataset.name}/")
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3_resource")

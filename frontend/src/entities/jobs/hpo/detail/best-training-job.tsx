@@ -153,7 +153,3 @@ export function BestTrainingJob (props: BestTrainingJobProps) {
         </SpaceBetween>
     );
 }
-
-export default {
-    BestTrainingJob,
-};

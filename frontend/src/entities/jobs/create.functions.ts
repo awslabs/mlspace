@@ -22,7 +22,6 @@ import {
     HyperParameterTuningJobConfigStrategy,
     IHPOJob,
     InputDataConfig,
-    InputDataConfigurationInputMode,
     IntegerParameterRange,
     ITrainingJobDefinition,
     OutputDataConfig,
@@ -49,7 +48,6 @@ export const createInputDataConfig = (): InputDataConfig & DatasetExtension => {
         ContentType: 'text/csv',
         CompressionType: CompressionType.None,
         RecordWrapperType: RecordWrapperType.None,
-        InputMode: InputDataConfigurationInputMode.File,
         Dataset: {
             Type: DatasetType.GLOBAL,
         },
@@ -184,6 +182,5 @@ export const createDefaultLabelingJob = (): ILabelingJobCreate => {
                 AnnotationConsolidationLambdaArn: '',
             },
         },
-        Tags: [],
     };
 };

@@ -22,10 +22,7 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
-from ml_space_lambda.data_access_objects.resource_metadata import (
-    PagedMetadataResults,
-    ResourceMetadataModel,
-)
+from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import Permission, ResourceType
 from ml_space_lambda.utils.common_functions import generate_html_response
@@ -104,9 +101,7 @@ def _mock_notebook_metadata(
 
 @mock.patch("ml_space_lambda.notebook.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.project_user_dao")
-def test_list_notebook_instances_success_user_single_project(
-    mock_project_user_dao, mock_resource_metadata_dao
-):
+def test_list_notebook_instances_success_user_single_project(mock_project_user_dao, mock_resource_metadata_dao):
     mock_return = {
         "records": [
             _mock_notebook_metadata(1).to_dict(),
@@ -187,9 +182,7 @@ def test_list_notebook_instances_success_admin(mock_project_user_dao, mock_resou
 
 @mock.patch("ml_space_lambda.notebook.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.project_user_dao")
-def test_list_notebook_instances_success_project_owner(
-    mock_project_user_dao, mock_resource_metadata_dao
-):
+def test_list_notebook_instances_success_project_owner(mock_project_user_dao, mock_resource_metadata_dao):
     mock_return = {
         "records": [
             _mock_notebook_metadata(1).to_dict(),
@@ -223,9 +216,7 @@ def test_list_notebook_instances_success_project_owner(
 
 @mock.patch("ml_space_lambda.notebook.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.notebook.lambda_functions.project_user_dao")
-def test_list_notebook_instances_success_user_multiple_projects(
-    mock_project_user_dao, mock_resource_metadata_dao
-):
+def test_list_notebook_instances_success_user_multiple_projects(mock_project_user_dao, mock_resource_metadata_dao):
     mock_project_user_dao.get_projects_for_user.return_value = [
         ProjectUserModel(
             username=MOCK_USERNAME,

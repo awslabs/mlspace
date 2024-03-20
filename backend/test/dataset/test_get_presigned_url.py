@@ -175,8 +175,7 @@ def test_get_presigned_url_client_error(mock_s3):
 
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling the GeneratePresignedUrl operation: "
-        "Dummy error message.",
+        "An error occurred (ThrottlingException) when calling the GeneratePresignedUrl operation: " "Dummy error message.",
     )
 
     mock_s3.generate_presigned_url.side_effect = ClientError(error_msg, "GeneratePresignedUrl")
@@ -208,9 +207,7 @@ def test_get_presigned_url_manipulated_type(mock_s3):
         "body": json.dumps({"key": "global/datasets/example_dataset/file1.txt"}),
     }
 
-    expected_response = generate_html_response(
-        400, "Bad Request: Dataset headers do not match expected type and scope."
-    )
+    expected_response = generate_html_response(400, "Bad Request: Dataset headers do not match expected type and scope.")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
@@ -224,9 +221,7 @@ def test_get_presigned_url_manipulated_scope(mock_s3):
         "body": json.dumps({"key": "private/admin/example_dataset/file1.txt"}),
     }
 
-    expected_response = generate_html_response(
-        400, "Bad Request: Dataset headers do not match expected type and scope."
-    )
+    expected_response = generate_html_response(400, "Bad Request: Dataset headers do not match expected type and scope.")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 

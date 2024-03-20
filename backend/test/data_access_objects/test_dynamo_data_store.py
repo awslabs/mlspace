@@ -15,7 +15,7 @@
 #
 
 import json
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 import boto3
 import moto
@@ -153,9 +153,7 @@ class TestDynamoDataStore(TestCase):
             update_expression="SET #value = :val, #otherValue = :other",
             condition_expression="attribute_not_exists(modified)",
             expression_names={"#value": "msg", "#otherValue": "modified"},
-            expression_values=json.loads(
-                dynamodb_json.dumps({":val": "Updated Message!", ":other": True})
-            ),
+            expression_values=json.loads(dynamodb_json.dumps({":val": "Updated Message!", ":other": True})),
         )
 
         post_update = dynamodb_json.loads(
@@ -177,9 +175,7 @@ class TestDynamoDataStore(TestCase):
             json_key={"id": "22", "type": "even"},
             update_expression="SET #value = :val, #otherValue = :other",
             expression_names={"#value": "msg", "#otherValue": "modified"},
-            expression_values=json.loads(
-                dynamodb_json.dumps({":val": "Updated Message!", ":other": False})
-            ),
+            expression_values=json.loads(dynamodb_json.dumps({":val": "Updated Message!", ":other": False})),
         )
 
         post_update = dynamodb_json.loads(

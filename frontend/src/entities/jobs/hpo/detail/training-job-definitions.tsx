@@ -87,8 +87,8 @@ export function TrainingJobDefinitions (props: TrainingJobDefinitionsProps) {
                             return formatDisplayText(
                                 // Checks for TrainingJobDefinition vs TrainingJobDefinitions configuration
                                 item.TuningObjective?.Type ||
-                                    hpoTrainingJob?.HyperParameterTuningJobConfig?.
-                                        HyperParameterTuningJobObjective?.Type
+                                    hpoTrainingJob?.HyperParameterTuningJobConfig
+                                        ?.HyperParameterTuningJobObjective?.Type
                             );
                         },
                     },
@@ -143,8 +143,8 @@ export function TrainingJobDefinitions (props: TrainingJobDefinitionsProps) {
                             {formatDisplayText(
                                 // Checks for TrainingJobDefinition vs TrainingJobDefinitions configuration
                                 state.selectedTrainingJobDefinition?.TuningObjective?.Type ||
-                                    hpoTrainingJob?.HyperParameterTuningJobConfig?.
-                                        HyperParameterTuningJobObjective?.Type
+                                    hpoTrainingJob?.HyperParameterTuningJobConfig
+                                        ?.HyperParameterTuningJobObjective?.Type
                             )}
                         </div>
                     </SpaceBetween>

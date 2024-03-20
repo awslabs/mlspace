@@ -48,9 +48,7 @@ def test_describe_hpo_job_success(mock_sagemaker):
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(
-        HyperParameterTuningJobName=hpo_job_name
-    )
+    mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(HyperParameterTuningJobName=hpo_job_name)
 
 
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.sagemaker")
@@ -65,15 +63,11 @@ def test_describe_hpo_job_client_error(mock_sagemaker):
         "An error occurred (ThrottlingException) when calling the DescribeHyperParameterTuningJob operation: Dummy error message.",
     )
 
-    mock_sagemaker.describe_hyper_parameter_tuning_job.side_effect = ClientError(
-        error_msg, "DescribeHyperParameterTuningJob"
-    )
+    mock_sagemaker.describe_hyper_parameter_tuning_job.side_effect = ClientError(error_msg, "DescribeHyperParameterTuningJob")
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(
-        HyperParameterTuningJobName=hpo_job_name
-    )
+    mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(HyperParameterTuningJobName=hpo_job_name)
 
 
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.sagemaker")
