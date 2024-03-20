@@ -136,7 +136,7 @@ def presigned_url(event, context):
         fields = body["fields"]
         conditions = body["conditions"]
 
-        # Set derived values 6 conditions and fields
+        # Set derived values for conditions and fields
         username = event["requestContext"]["authorizer"]["principalId"]
         name_from_key = key.split("/")[2]
 
