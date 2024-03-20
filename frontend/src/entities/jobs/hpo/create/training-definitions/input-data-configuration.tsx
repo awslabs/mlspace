@@ -328,7 +328,7 @@ export function Channel (props: ChannelProps) {
                 </FormField>
                 <FormField label='Data access type'>
                     <RadioGroup
-                        value={item.Dataset?.Type}
+                        value={item.Dataset?.Type || DatasetType.GLOBAL}
                         items={enumToOptions(DatasetType, true)}
                         onChange={(event) => {
                             setFields(
