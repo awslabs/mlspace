@@ -14,17 +14,18 @@
   limitations under the License.
 */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormProps } from '../../../form-props';
 import { ModifyMethod } from '../../../../../shared/validation/modify-method';
 import { DatasetExtension, OutputDataConfig } from '../../hpo-job.model';
 import {
+    Alert,
+    Autosuggest,
     Box,
     Container,
     FormField,
     Header,
     RadioGroup,
-    Select,
     SpaceBetween,
 } from '@cloudscape-design/components';
 import { DatasetType } from '../../../../../shared/model/dataset.model';
@@ -33,8 +34,9 @@ import { listDatasetsLocations } from '../../../../../entities/dataset/dataset.r
 import { useParams } from 'react-router-dom';
 import { formatDisplayText } from '../../../../../shared/util/form-utils';
 import { useAuth } from 'react-oidc-context';
-import NotificationService from '../../../../../shared/layout/notification/notification.service';
 import { datasetFromS3Uri } from '../../../../../shared/util/dataset-utils';
+import { determineScope } from '../../../../dataset/dataset.service';
+import Condition from '../../../../../modules/condition';
 
 export type OutputDataConfigurationProps = FormProps<OutputDataConfig & DatasetExtension>;
 
@@ -44,13 +46,13 @@ export function OutputDataConfiguration (props: OutputDataConfigurationProps) {
     const { projectName } = useParams();
     const auth = useAuth();
     const userName = auth.user!.profile.preferred_username;
-    const notificationService = NotificationService(dispatch);
 
-    const [state, setState] = React.useState({
+    const [state, setState] = useState({
         bucket: '',
         datasets: [] as any[],
         datasetsLoaded: false,
     });
+    const [s3OutputUri, setS3OutputUri] = useState('');
 
     useEffect(() => {
         // Sets output dataset information
@@ -62,59 +64,36 @@ export function OutputDataConfiguration (props: OutputDataConfigurationProps) {
     }, [item]);
 
     useEffect(() => {
-        let scope = 'global';
-        switch (item.Dataset?.Type) {
-            case DatasetType.PRIVATE:
-                scope = userName!;
-                break;
-            case DatasetType.PROJECT:
-                scope = projectName!;
-                break;
-        }
+        if (item.Dataset?.Type) {
+            const scope = determineScope(item.Dataset?.Type, projectName, userName!);
 
-        dispatch(listDatasetsLocations({ scope, type: item.Dataset?.Type }))
-            .then((response) => response.payload)
-            .then((datasets) => {
-                if (datasets) {
-                    setState((s) => ({
-                        ...s,
-                        bucket: datasets.bucket,
-                        datasets: datasets.locations,
-                        datasetsLoaded: true,
-                    }));
-                } else {
-                    setState((s) => ({
-                        ...s,
-                        bucket: '',
-                        datasets: [],
-                    }));
-                }
-            });
-    }, [dispatch, item.Dataset?.Type, projectName, userName]);
-
-    useEffect(() => {
-        // Don't execute before datasets have returned, but can't check if empty, because could have no datasets
-        if (item.Dataset?.Name && state.datasetsLoaded) {
-            const dataset = state.datasets.find(
-                (dataset: any) => dataset.name === item.Dataset.Name
-            );
-            // If the Dataset.Name is validated to be a valid dataset, set the location
-            if (dataset) {
-                setFields({ 'OutputDataConfig.S3OutputPath': dataset.location });
+            // Define the full dataset URI, leaving a spot for the dataset name to be appended at the end
+            if (item.Dataset?.Type === DatasetType.GLOBAL) {
+                setS3OutputUri(`s3://${window.env.DATASET_BUCKET}/${item.Dataset?.Type}/datasets/`);
             } else {
-                // If the Dataset.Name isn't valid, then clear the field
-                // Should only apply if the Dataset.Name is set programmatically (e.g. cloning a training job)
-                notificationService.generateNotification(
-                    'The output location for the job is not available and was unset',
-                    'warning'
-                );
-                setFields({ 'OutputDataConfig.Dataset.Name': undefined });
-                setFields({ 'OutputDataConfig.S3OutputPath': '' }, ModifyMethod.Unset);
+                setS3OutputUri(`s3://${window.env.DATASET_BUCKET}/${item.Dataset?.Type}/${scope}/datasets/`);
             }
-        }
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [item.Dataset?.Name, state.datasetsLoaded]);
+            dispatch(listDatasetsLocations({ scope, type: item.Dataset?.Type }))
+                .then((response) => response.payload)
+                .then((datasets) => {
+                    if (datasets) {
+                        setState((s) => ({
+                            ...s,
+                            bucket: datasets.bucket,
+                            datasets: datasets.locations,
+                            datasetsLoaded: true,
+                        }));
+                    } else {
+                        setState((s) => ({
+                            ...s,
+                            bucket: '',
+                            datasets: [],
+                        }));
+                    }
+                });
+        }
+    }, [dispatch, item.Dataset?.Type, projectName, userName]);
 
     return (
         <Container header={<Header>Output data configuration</Header>}>
@@ -125,7 +104,7 @@ export function OutputDataConfiguration (props: OutputDataConfigurationProps) {
                 />
                 <FormField label='Data access type:'>
                     <RadioGroup
-                        value={item.Dataset?.Type}
+                        value={item.Dataset?.Type || DatasetType.PROJECT}
                         items={[
                             { value: DatasetType.PROJECT, label: 'Project' },
                             { value: DatasetType.PRIVATE, label: 'Private' },
@@ -150,30 +129,43 @@ export function OutputDataConfiguration (props: OutputDataConfigurationProps) {
                     label='S3 location'
                     errorText={formErrors?.OutputDataConfig?.Dataset?.Name}
                 >
-                    <Select
-                        placeholder='Select an output location'
-                        empty='No datasets found.'
-                        selectedOption={item.Dataset?.Name ? { value: item.Dataset?.Name } : null}
-                        options={state.datasets.map(
-                            (location: { name: string; location: string }) => {
-                                return { value: location.name };
-                            }
-                        )}
-                        onChange={(event) => {
-                            // Setting the Dataset.Name triggers a useEffect for additional processing
-                            setFields(
-                                {
-                                    'OutputDataConfig.Dataset': {
-                                        Type: item.Dataset?.Type,
-                                        Name: event.detail.selectedOption.value,
+                    <SpaceBetween direction='vertical' size='m'>
+                        <Autosuggest
+                            onChange={({detail}) => {
+                                setFields(
+                                    {
+                                        'OutputDataConfig.Dataset': {
+                                            Type: item.Dataset?.Type,
+                                            Name: detail.value,
+                                        },
+                                        'OutputDataConfig.S3OutputPath': s3OutputUri + detail.value
                                     },
-                                },
-                                ModifyMethod.Set
-                            );
-                        }}
-                    />
+                                    ModifyMethod.Set
+                                );
+                            }}
+                            value={
+                                item.Dataset?.Name || ''
+                            }
+                            options={state.datasets.map(
+                                (location: { name: string; location: string }) => {
+                                    return { value: location.name };
+                                }
+                            )}
+                            ariaLabel='Select an output location'
+                            placeholder='Select an output location'
+                            empty='No datasets found.'
+                            enteredTextLabel={ (value) => `${state.datasets.find((d) => d.name === item.Dataset?.Name) ? 'Use:' : 'Create:'} ${value}`}
+                        />
+                        <Condition condition={!state.datasets.find((d) => d.name === item.Dataset?.Name) && item.Dataset?.Name !== undefined && item.Dataset?.Name.length > 0}>
+                            <Alert
+                                statusIconAriaLabel='Info'
+                                header='A new dataset will be created when this job starts successfully.'>
+                            </Alert>
+                        </Condition>
+                    </SpaceBetween>
+
                 </FormField>
-                <FormField label='S3 output locations'>
+                <FormField label='S3 output location'>
                     <Box>{formatDisplayText(item.S3OutputPath)}</Box>
                 </FormField>
             </SpaceBetween>

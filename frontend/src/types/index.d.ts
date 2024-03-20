@@ -26,6 +26,7 @@ declare global {
             OIDC_REDIRECT_URI: string;
             OIDC_CLIENT_NAME: string;
             LAMBDA_ENDPOINT: string;
+            DATASET_BUCKET: string;
             SYSTEM_BANNER?: {
                 text: string,
                 backgroundColor: string;
