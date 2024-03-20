@@ -23,7 +23,6 @@ import {
     Header,
     FormField,
     Container,
-    Autosuggest,
     ContentLayout,
     StatusIndicator,
     Textarea,
@@ -44,7 +43,6 @@ import NotificationService from '../../../shared/layout/notification/notificatio
 import { z } from 'zod';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
-import { formatTypes } from '../dataset.utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { selectCurrentUser } from '../../user/user.reducer';
 
@@ -52,7 +50,6 @@ const formSchema = z.object({
     description: z.string().regex(/^[\w\-\s']+$/, {
         message: 'Dataset description can contain only alphanumeric characters.',
     }),
-    format: z.string(),
 });
 
 export function DatasetUpdate () {
@@ -189,29 +186,6 @@ export function DatasetUpdate () {
                                             updateForm({ description: event.detail.value });
                                         }}
                                         onBlur={touchFieldHandler('description')}
-                                    />
-                                </FormField>
-                                <FormField
-                                    label='Dataset format'
-                                    errorText={state.formErrors.format}
-                                    description='Specify the format of the files in the Dataset.'
-                                >
-                                    <Autosuggest
-                                        data-cy='dataset-format'
-                                        value={state.form.format}
-                                        onSelect={({ detail }) => {
-                                            updateForm({
-                                                format: detail.value,
-                                            });
-                                        }}
-                                        onChange={({ detail }) => {
-                                            updateForm({
-                                                format: detail.value,
-                                            });
-                                        }}
-                                        enteredTextLabel={(value) => `Use: "${value}"`}
-                                        options={formatTypes}
-                                        onBlur={touchFieldHandler('format')}
                                     />
                                 </FormField>
                             </SpaceBetween>

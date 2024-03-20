@@ -97,7 +97,6 @@ def _migrate_access_table(source_table: str, ddb_client=None, mlspace_datasets_t
             record["a_type"],
             record["dataset"],
             record["info"]["description"],
-            record["info"]["format"],
             record["info"]["s3_key"],
             record["info"]["creator"],
             # This is supposed to be created at but we don't have

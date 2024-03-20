@@ -29,7 +29,6 @@ def mock_global_dataset():
         scope=DatasetType.GLOBAL.value,
         name="example_dataset",
         description="example_dataset for unit tests",
-        format="csv",
         location="s3://mlspace-data-bucket/global/datasets/example_dataset",
         created_by="gshelby",
     )
@@ -41,7 +40,6 @@ def mock_private_dataset():
         scope="tshelby",
         name="example_private_dataset",
         description="example_private_dataset for unit tests",
-        format="txt",
         location="s3://mlspace-data-bucket/private/tshelby/datasets/example_private_dataset",
         created_by="tshelby",
     )
