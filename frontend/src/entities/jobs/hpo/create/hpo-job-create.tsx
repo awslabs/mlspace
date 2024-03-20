@@ -46,7 +46,8 @@ import { getDate, getPaddedNumberString } from '../../../../shared/util/date-uti
 import { ML_ALGORITHMS } from '../../algorithms';
 import { getImageName } from './training-definitions/algorithm-options';
 import { createDatasetHandleAlreadyExists } from '../../../dataset/dataset.service';
-import { DatasetType, IDataset } from '../../../../shared/model';
+import { IDataset } from '../../../../shared/model';
+import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 
 export type HPOJobCreateState = {
     editingJobDefinition: any;
@@ -355,26 +356,14 @@ export function HPOJobCreate () {
                     'success'
                 );
                 payload.HPOJobDefinition.TrainingJobDefinitions.forEach((definition) => {
-                    const split = definition.OutputDataConfig.S3OutputPath.split('/');
-                    const scope = split[4];
-                    let datasetType = DatasetType.PROJECT;
-                    if (split[3] === 'private') {
-                        datasetType = DatasetType.PRIVATE;
-                    }
-                    const datasetName = split[6].replace('"', '');
+                    const dataset = datasetFromS3Uri(definition.OutputDataConfig.S3OutputPath);
                     const newDataset = {
-                        name: datasetName,
+                        name: dataset?.Name,
                         description: `Dataset created as part of the HPO job: ${state.form.HyperParameterTuningJobName}`,
-                        type: datasetType,
-                        scope: scope
+                        type: dataset?.Type,
+                        scope: dataset?.Location
                     } as IDataset;
-                    const unexpectedError = createDatasetHandleAlreadyExists(newDataset);
-                    if (unexpectedError) {
-                        notificationService.generateNotification(
-                            `Failed to create output dataset ${newDataset.name} for HPO job: ${state.form.HyperParameterTuningJobName}`,
-                            'error'
-                        );
-                    }
+                    createDatasetHandleAlreadyExists(newDataset);
                 });
                 
                 navigate(

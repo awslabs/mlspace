@@ -373,14 +373,8 @@ export default function TrainingJobCreate () {
                         type: state.form.OutputDataConfig.Dataset.Type,
                         scope: determineScope(state.form.OutputDataConfig.Dataset.Name, projectName, userName!)
                     } as IDataset;
-                    const unexpectedError = createDatasetHandleAlreadyExists(newDataset);
-                    if (unexpectedError) {
-                        notificationService.generateNotification(
-                            `Failed to create output dataset ${newDataset.name} for training job: ${state.form.TrainingJobName}`,
-                            'error'
-                        );
-                    }
-
+                    createDatasetHandleAlreadyExists(newDataset);
+                    
                     navigate(
                         `/project/${projectName}/jobs/training/detail/${state.form.TrainingJobName}`
                     );

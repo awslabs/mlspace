@@ -264,13 +264,7 @@ export function TransformCreate () {
                             type: outputDatasetType,
                             scope: determineScope(outputDatasetType, projectName, username!)
                         } as IDataset;
-                        const unexpectedError = createDatasetHandleAlreadyExists(newDataset);
-                        if (unexpectedError) {
-                            notificationService.generateNotification(
-                                `Failed to create output dataset ${newDataset.name} for transform job: ${state.form.JobName}`,
-                                'error'
-                            );
-                        }
+                        createDatasetHandleAlreadyExists(newDataset);
 
                         notificationService.generateNotification(
                             'Successfully created batch transform job.',

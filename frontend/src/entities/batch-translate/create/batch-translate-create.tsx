@@ -275,13 +275,7 @@ export function BatchTranslateCreate () {
                     scope: determineScope(state.form.OutputDataset.Type, projectName, userName!)
                 } as IDataset;
 
-                const unexpectedError = createDatasetHandleAlreadyExists(newDataset);
-                if (unexpectedError) {
-                    notificationService.generateNotification(
-                        `Failed to create output dataset ${newDataset.name} for translation job: ${response.payload}`,
-                        'error'
-                    );
-                }
+                createDatasetHandleAlreadyExists(newDataset);
                 navigate(`/project/${projectName}/batch-translate/${response.payload.JobId}`);
             } else {
                 notificationService.generateNotification(

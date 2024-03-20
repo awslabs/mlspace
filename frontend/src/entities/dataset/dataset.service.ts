@@ -206,14 +206,13 @@ export async function createDataset (dataset: IDataset) {
 }
 
 export const createDatasetHandleAlreadyExists = (dataset: IDataset) => {
-    let unexpectedError = false;
     createDataset(dataset).catch((error) => {
         const expectedError = `Bad Request: Dataset ${dataset.name} already exists.`;
         // Any error that the dataset already existing is unexpected
-        unexpectedError = expectedError !== error.response.data;
+        if (expectedError !== error.response.data) {
+            throw error
+        }
     });
-    
-    return unexpectedError;
 };
 
 export const listDatasetBucketAndLocations = async (scope: string, type: string) => {
