@@ -37,6 +37,7 @@ resource_scheduler_dao = ResourceSchedulerDAO()
 project_dao = ProjectDAO()
 
 sagemaker = boto3.client("sagemaker", config=retry_config)
+emr = boto3.client("emr", config=retry_config)
 # Translate isn't available in all regions so we're going to lazy load this
 translate = {}
 # Iam is only needed if we're trying to attribute batch translate jobs to users
@@ -59,6 +60,8 @@ def process_event(event, context):
         _process_transform_job_event(event["detail"])
     elif event["detail-type"] == "SageMaker Endpoint Config State Change":
         _process_endpoint_config_event(event["detail"])
+    elif event["detail-type"] == "EMR Cluster State Change":
+        _process_emr_event(event["detail"])
     elif event["detail-type"] == "Translate TextTranslationJob State Change" or (
         event["detail-type"] == "AWS API Call via CloudTrail" and event["source"] == "aws.translate"
     ):
@@ -304,6 +307,39 @@ def _process_endpoint_config_event(details):
             raise ValueError(
                 f'Error processing endpoint config event - missing required project and user tags. Found tags: {details["Tags"]}'
             )
+
+def _process_emr_event(details):
+    cluster_id = details['clusterId']
+    cluster_state = details['state']
+
+    if cluster_state == 'TERMINATED':
+        # cluster no longer exists, delete it from the resource table
+        resource_metadata_dao.delete(cluster_id, ResourceType.EMR_CLUSTER)
+    else:
+        cluster_details = emr.describe_cluster(ClusterId=cluster_id)
+        tags = _parse_tags(cluster_details['Cluster']['Tags'])
+        if "system" in tags and tags["system"] == env_variables["SYSTEM_TAG"]:
+            if "user" in tags and "project" in tags:
+                user = tags['user']
+                project = tags['project']
+                metadata = {
+                    "CreationTime": cluster_details["Cluster"]["Status"]["Timeline"]["CreationDateTime"],
+                    "Cluster Status": cluster_state,
+                    "Release Version": cluster_details["Cluster"]["ReleaseLabel"]
+                }
+                resource_metadata_dao.upsert_record(
+                    cluster_id,
+                    ResourceType.EMR_CLUSTER,
+                    user,
+                    project,
+                    metadata,
+                )
+            else:
+                raise ValueError(
+                    f"Error processing EMR State Change event - missing required project and user tags. Found tags: {tags}"
+                )
+            
+
 
 
 def _process_batch_translate_event(details):
