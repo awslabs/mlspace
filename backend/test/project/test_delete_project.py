@@ -150,7 +150,6 @@ def test_delete_project(
             name="TestDataset",
             scope=MOCK_PROJECT_NAME,
             description="Dataset for unit test",
-            format="application/json",
             created_by="jdoe@example.com",
             location=f"s3://{env_vars['DATA_BUCKET']}/project/{MOCK_PROJECT_NAME}/datasets/TestDataset",
         )
@@ -261,7 +260,6 @@ def test_delete_project_external_iam(
             name="TestDataset",
             scope=MOCK_PROJECT_NAME,
             description="Dataset for unit test",
-            format="application/json",
             created_by="jdoe@example.com",
             location=f"s3://{env_vars['DATA_BUCKET']}/project/{MOCK_PROJECT_NAME}/datasets/TestDataset",
         )

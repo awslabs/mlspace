@@ -45,7 +45,6 @@ const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
         sortingField: 'scope',
         cell: (item) => showAccessLevel(item),
     },
-    { id: 'format', header: 'Format', sortingField: 'format', cell: (item) => item.format },
 ];
 
 const defaultFileColumns: TableProps.ColumnDefinition<IDatasetFile>[] = [
@@ -95,7 +94,7 @@ const defaultFileColumns: TableProps.ColumnDefinition<IDatasetFile>[] = [
     },
 ];
 
-const visibleColumns: string[] = ['datasetName', 'description', 'accessLevel', 'format'];
+const visibleColumns: string[] = ['datasetName', 'description', 'accessLevel'];
 
 const visibleFileColumns: string[] = ['fileName', 'fileSize', 'copyS3Url'];
 const createDatasetVisibleColumns: string[] = ['fileName', 'fileSize'];
@@ -109,7 +108,6 @@ const visibleContentPreference = {
                 { id: 'datasetName', label: 'Dataset name' },
                 { id: 'description', label: 'Description' },
                 { id: 'accessLevel', label: 'Access level' },
-                { id: 'format', label: 'Format' },
             ],
         },
     ],

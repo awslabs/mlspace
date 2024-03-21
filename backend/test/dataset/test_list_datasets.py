@@ -45,12 +45,11 @@ mock_context = mock.Mock()
 PRIVATE_PREFIX = "s3://mlspace-data-bucket/private"
 
 
-def _build_dataset(scope: str, name: str, user_name: str, data_fomat: str) -> DatasetModel:
+def _build_dataset(scope: str, name: str, user_name: str) -> DatasetModel:
     return DatasetModel(
         scope=scope,
         name=name,
         description=f"{name} description",
-        format=data_fomat,
         location=f"{PRIVATE_PREFIX}/{scope}/datasets/{name}",
         created_by=user_name,
     )
@@ -62,7 +61,6 @@ def mock_get_all_for_scope(dataset_type: DatasetType, scope: str):
             _build_dataset(
                 scope=DatasetType.GLOBAL.value,
                 name="example_global_dataset1",
-                data_fomat="zip",
                 user_name="jdoe",
             )
         ]
@@ -71,13 +69,11 @@ def mock_get_all_for_scope(dataset_type: DatasetType, scope: str):
             _build_dataset(
                 scope=user_name,
                 name="example_private_dataset1",
-                data_fomat="text/plain",
                 user_name=user_name,
             ),
             _build_dataset(
                 scope=user_name,
                 name="example_private_dataset2",
-                data_fomat="image/jpeg",
                 user_name=user_name,
             ),
         ]
@@ -86,7 +82,6 @@ def mock_get_all_for_scope(dataset_type: DatasetType, scope: str):
             _build_dataset(
                 scope=project_name,
                 name="example_project_dataset1",
-                data_fomat="image/jpeg",
                 user_name="otherUser",
             )
         ]

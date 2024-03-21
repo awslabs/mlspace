@@ -25,7 +25,6 @@ import {
     Input,
     Container,
     Select,
-    Autosuggest,
     ContentLayout,
     Popover,
     StatusIndicator,
@@ -50,7 +49,6 @@ import { z } from 'zod';
 import { createDatasetFromForm } from './dataset-create-functions';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
-import { formatTypes } from '../dataset.utils';
 import { DocTitle, scrollToPageHeader } from '../../../shared/doc';
 
 const formSchema = z.object({
@@ -69,7 +67,6 @@ const formSchema = z.object({
         })
         .max(254),
     type: z.string({ invalid_type_error: 'A type must be selected.' }),
-    format: z.string().min(1).max(255),
 });
 
 export function DatasetCreate () {
@@ -95,7 +92,6 @@ export function DatasetCreate () {
             name: '',
             description: '',
             type: null,
-            format: '',
         },
         touched: {
             inputDataConfig: [],
@@ -271,33 +267,6 @@ export function DatasetCreate () {
                                         ]
                                 }
                                 onBlur={touchFieldHandler('type')}
-                            />
-                        </FormField>
-                        <FormField
-                            description='Specify the format of the files in the dataset.'
-                            errorText={state.formErrors.format}
-                            label='Dataset Format'
-                        >
-                            <Autosuggest
-                                data-cy='dataset-format-input'
-                                value={state.form.format}
-                                onSelect={({ detail }) => {
-                                    updateForm({
-                                        format: detail.value,
-                                    });
-                                }}
-                                onChange={({ detail }) => {
-                                    updateForm({
-                                        format: detail.value,
-                                    });
-                                }}
-                                placeholder='Enter value'
-                                enteredTextLabel={(value) => `Use: "${value}"`}
-                                options={formatTypes}
-                                onBlur={() => {
-                                    touchFieldHandler('format');
-                                }}
-                                controlId='autosuggest'
                             />
                         </FormField>
                     </SpaceBetween>

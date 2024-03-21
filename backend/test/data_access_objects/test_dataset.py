@@ -84,7 +84,6 @@ class TestDatasetDAO(TestCase):
             SAMPLE_DATASET_PROJECT,
             "sample-dataset",
             "Dataset for testing update.",
-            "json",
             "s3://mlspace-datasets-123456789/project/fake-project/sample-dataset",
             "testUser2@amazon.com",
         )
@@ -97,7 +96,6 @@ class TestDatasetDAO(TestCase):
             "testUser3@amazon.com",
             "bad-dataset",
             "Dataset for testing delete.",
-            "png",
             "s3://mlspace-datasets-123456789/private/testUser3/bad-dataset",
             "testUser3@amazon.com",
         )
@@ -120,7 +118,6 @@ class TestDatasetDAO(TestCase):
             DatasetType.GLOBAL.value,
             "test-dataset",
             "Dataset for unit test.",
-            "text",
             "s3://mlspace-datasets-123456789/global/test-dataset",
             "testUser@amazon.com",
         )
@@ -135,7 +132,6 @@ class TestDatasetDAO(TestCase):
         assert dataset_json["name"] == new_ds.name
         assert dataset_json["scope"] == new_ds.scope
         assert dataset_json["description"] == new_ds.description
-        assert dataset_json["format"] == new_ds.format
         assert dataset_json["location"] == new_ds.location
         assert dataset_json["createdBy"] == new_ds.created_by
         assert dataset_json["createdAt"] == dataset_json["lastUpdatedAt"]
@@ -146,7 +142,6 @@ class TestDatasetDAO(TestCase):
         assert from_ddb.name == self.UPDATE_DS.name
         assert from_ddb.scope == self.UPDATE_DS.scope
         assert from_ddb.description == self.UPDATE_DS.description
-        assert from_ddb.format == self.UPDATE_DS.format
         assert from_ddb.location == self.UPDATE_DS.location
         assert from_ddb.type == DatasetType.PROJECT
         assert from_ddb.created_by == self.UPDATE_DS.created_by
@@ -163,7 +158,6 @@ class TestDatasetDAO(TestCase):
         updated.name = "ThisShouldGetDropped"
         updated.description = "This should be changed from the update."
         updated.created_at = 12345
-        updated.format = "zip"
         updated.location = "s3://should-be-ignored"
         updated.created_by = "dontchangeme@amazon.com"
         updated.last_updated_at = 54321
@@ -181,9 +175,6 @@ class TestDatasetDAO(TestCase):
 
         assert pre_update["description"] != post_update["description"]
         assert post_update["description"] == updated.description
-
-        assert pre_update["format"] != post_update["format"]
-        assert post_update["format"] == updated.format
 
     def test_update_nonexistent_dataset(self):
         updated = DatasetModel.from_dict(self.UPDATE_DS.to_dict())
