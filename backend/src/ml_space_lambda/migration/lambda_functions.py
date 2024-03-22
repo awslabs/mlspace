@@ -321,15 +321,15 @@ def _sync_emr_jobs(env_variables):
     for page in pages:
         if "Clusters" in page:
             for cluster in page["Clusters"]:
-                # Describe the cluster so we can get the ReleaseLabel value and Tags
-                cluster_details = emr.describe_cluster(ClusterId=cluster["Id"])
-                # Check if this is an MLSpace resource based on tags
-                (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                    cluster["ClusterArn"], env_variables["SYSTEM_TAG"], cluster_details["Cluster"]["Tags"]
-                )
-                if project and owner and is_mlspace_resource:
-                    status = cluster["Status"]["State"]
-                    if status != "TERMINATED":
+                status = cluster["Status"]["State"]
+                if status != "TERMINATED":
+                    # Describe the cluster so we can get the ReleaseLabel value and Tags
+                    cluster_details = emr.describe_cluster(ClusterId=cluster["Id"])
+                    # Check if this is an MLSpace resource based on tags
+                    (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
+                        cluster["ClusterArn"], env_variables["SYSTEM_TAG"], cluster_details["Cluster"]["Tags"]
+                    )
+                    if project and owner and is_mlspace_resource:
                         metadata = {
                             "CreationTime": cluster["Status"]["Timeline"]["CreationDateTime"],
                             "Status": status,

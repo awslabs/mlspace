@@ -149,7 +149,6 @@ def get_tags_for_resource(sagemaker, arn: str):
 
 def list_clusters_for_project(
     emr,
-    prefix: Optional[str] = None,
     paging_options: Optional[Dict[str, str]] = None,
     fetch_all: bool = False,
     created_after: datetime.datetime = None,
@@ -179,8 +178,7 @@ def list_clusters_for_project(
         for page in pages:
             if "Clusters" in page:
                 for cluster in page["Clusters"]:
-                    if not prefix or cluster["Name"].split("-")[0] == prefix:
-                        list_of_clusters.append(cluster)
+                    list_of_clusters.append(cluster)
     else:
         if paging_options:
             if "nextToken" in paging_options:
@@ -189,15 +187,8 @@ def list_clusters_for_project(
         # EMR list clusters doesn't support any kind of filtering so it's possible that
         # we could get several pages of results that don't pertain to our target project. Given
         # that we only list active clusters this isn't a huge concern and for now we'll just rely
-        # on users requesting addiitonal pages as needed.
+        # on users requesting additonal pages as needed.
         response = emr.list_clusters(**kwargs)
-        filter_by_project_prefix(
-            response=response,
-            prefix=prefix,
-            output_list=list_of_clusters,
-            key="Clusters",
-            resource_name="Name",
-        )
         if "Marker" in response:
             result["nextToken"] = response["Marker"]
 

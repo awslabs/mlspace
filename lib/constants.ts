@@ -33,12 +33,12 @@ export const NOTEBOOK_PARAMETERS_FILE_NAME = 'notebook-params.json';
 export const PERMISSIONS_BOUNDARY_POLICY_NAME = '';
 
 // This could be something like Admin or a dedicated role for KMS Key Management
-export const KEY_MANAGER_ROLE_NAME = 'Admin';
+export const KEY_MANAGER_ROLE_NAME = '';
 
 // Account ID is appended to s3 buckets to ensure uniqueness within region
-export const AWS_ACCOUNT = '992382812452';
+export const AWS_ACCOUNT = '';
 // Region is required when importing existing resources (used when upgrading)
-export const AWS_REGION = 'us-east-1';
+export const AWS_REGION = '';
 
 export const SYSTEM_TAG = 'MLSpace';
 export const IAM_RESOURCE_PREFIX = 'MLSpace';
@@ -81,13 +81,13 @@ export const EMR_EC2_INSTANCE_ROLE_ARN = '';
 export const EMR_SECURITY_CONFIG_NAME = 'MLSpace-EMR-SecurityConfig';
 
 // Set this to false to disable access logging on all MLSpace S3 buckets and the APIGW
-export const ENABLE_ACCESS_LOGGING = false;
+export const ENABLE_ACCESS_LOGGING = true;
 // If access logs are enabled API Gateway will use the Cloudwatch role for your account
 // if you have an existing role set that ARN here otherwise MLSpace will attempt to create
 // the role for you
 export const APIGATEWAY_CLOUDWATCH_ROLE_ARN = '';
 // Set this to false if you do not want to create an MLSpace specific trail
-export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = false;
+export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = true;
 
 // SSM property names
 export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
@@ -103,14 +103,14 @@ export const APPLICATION_NAME = 'MLSpace';
 
 /* Web app properties */
 export const IDP_ENDPOINT_SSM_PARAM = '';
-export const OIDC_URL = 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_fdf7YABoW';
+export const OIDC_URL = '';
 // OIDC URL that can be hit by authorizer lambda for token validation. If the OIDC endpoint is
 // exposed publicly and can be hit by from the MLSpace VPC this value does not need to be set.
 // If the OIDC endpoint is not accessible directly from VPC and requires peering or some other
 // proxy, this can be set to something which the lambda can traverse in order to reach the OIDC
 // instance.
 export const INTERNAL_OIDC_URL = '';
-export const OIDC_CLIENT_NAME = '56ldq0sikrgus3d6nbsgpjhg2n';
+export const OIDC_CLIENT_NAME = '';
 // If your OIDC server is using a self signed cert set this to false
 export const OIDC_VERIFY_SSL = true;
 export const OIDC_VERIFY_SIGNATURE = true;

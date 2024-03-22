@@ -212,15 +212,10 @@ def _get_emr_clusters(
     args: Dict[str, any],
     termination_records: Optional[List[ResourceSchedulerModel]] = None,
 ) -> List[Dict[str, Any]]:
-    logger.info("-----Inside the EMR function-----")
     args["type"] = ResourceType.EMR_CLUSTER
     response = resource_get_func(**args)
-    logger.info(f"-----response: {len(response.records)}-----")
     clusters = []
     for result in response.records:
-        logger.info(
-            f'Name: {result.metadata.get("Name", "")}\nProject: {result.project}\nStatus: {result.metadata.get("Status", "")}\nCreated: {result.metadata.get("CreationTime", "")}\nRelease: {result.metadata.get("ReleaseVersion", "")}\nOwner: {result.user}\nAuto: {_get_terminiation_datetime(result.id, ResourceType.EMR_CLUSTER, termination_records)}'
-        )
         clusters.append(
             {
                 "Name": result.metadata.get("Name", ""),

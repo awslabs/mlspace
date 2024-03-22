@@ -195,14 +195,11 @@ def create(event, context):
 
         clusters = list_clusters_for_project(
             emr=emr,
-            prefix=None,
             fetch_all=True,
             created_after=datetime.datetime.fromtimestamp(time.time() - 20),
         )
-        logger.info(f"Creating scheduler for each cluster, len is {len(clusters['records'])}")
         for cluster in clusters["records"]:
             if cluster["Name"] == cluster_name:
-                logger.info(f"Scheduling cluster {cluster_name}")
                 resource_scheduler_dao.create(
                     ResourceSchedulerModel(
                         resource_id=cluster["Id"],
