@@ -23,15 +23,24 @@ import time
 import boto3
 
 from ml_space_lambda.data_access_objects.project import ProjectDAO
+from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, list_clusters_for_project, retry_config
+from ml_space_lambda.utils.common_functions import (
+    api_wrapper,
+    generate_tags,
+    list_clusters_for_project,
+    query_resource_metadata,
+    retry_config,
+)
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
 
 s3 = boto3.client("s3", config=retry_config)
 emr = boto3.client("emr", config=retry_config)
+
+resource_metadata_dao = ResourceMetadataDAO()
 
 cluster_config = {}
 
@@ -45,8 +54,6 @@ def create(event, context):
     user_name = event["requestContext"]["authorizer"]["principalId"]
     event_body = json.loads(event["body"])
     cluster_name = event_body["clusterName"]
-    # Don't change without also changing navigation path in MLSpaceFrontEnd emr-cluster-create.tsx
-    full_cluster_name = f"{project_name}-{cluster_name}"
     emr_size = event_body["options"]["emrSize"]
     release_version = event_body["options"]["emrRelease"]
 
@@ -87,7 +94,7 @@ def create(event, context):
     instance_count = cluster_config[emr_size]["size"]
 
     args = {}
-    args["Name"] = full_cluster_name
+    args["Name"] = cluster_name
     args["LogUri"] = f"s3://{env_variables['LOG_BUCKET']}"
     args["ReleaseLabel"] = release_version
     args["Applications"] = applications
@@ -188,13 +195,14 @@ def create(event, context):
 
         clusters = list_clusters_for_project(
             emr=emr,
-            prefix=project_name,
+            prefix=None,
             fetch_all=True,
             created_after=datetime.datetime.fromtimestamp(time.time() - 20),
         )
-
+        logger.info(f"Creating scheduler for each cluster, len is {len(clusters['records'])}")
         for cluster in clusters["records"]:
-            if cluster["Name"] == full_cluster_name:
+            if cluster["Name"] == cluster_name:
+                logger.info(f"Scheduling cluster {cluster_name}")
                 resource_scheduler_dao.create(
                     ResourceSchedulerModel(
                         resource_id=cluster["Id"],
@@ -210,14 +218,7 @@ def create(event, context):
 
 @api_wrapper
 def list_all(event, context):
-    # TODO: get the cluster from the resource table. query_resource_metadata()
-    project_name = event["pathParameters"]["projectName"]
-
-    return list_clusters_for_project(
-        emr,
-        project_name,
-        paging_options=event["queryStringParameters"] if "queryStringParameters" in event else None,
-    )
+    return query_resource_metadata(resource_metadata_dao, event, ResourceType.EMR_CLUSTER)
 
 
 @api_wrapper

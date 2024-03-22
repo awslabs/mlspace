@@ -308,24 +308,27 @@ def _process_endpoint_config_event(details):
                 f'Error processing endpoint config event - missing required project and user tags. Found tags: {details["Tags"]}'
             )
 
-def _process_emr_event(details):
-    cluster_id = details['clusterId']
-    cluster_state = details['state']
 
-    if cluster_state == 'TERMINATED':
+def _process_emr_event(details):
+    cluster_id = details["clusterId"]
+    cluster_state = details["state"]
+
+    if cluster_state == "TERMINATED":
         # cluster no longer exists, delete it from the resource table
         resource_metadata_dao.delete(cluster_id, ResourceType.EMR_CLUSTER)
     else:
         cluster_details = emr.describe_cluster(ClusterId=cluster_id)
-        tags = _parse_tags(cluster_details['Cluster']['Tags'])
+        tags = _parse_tags(cluster_details["Cluster"]["Tags"])
         if "system" in tags and tags["system"] == env_variables["SYSTEM_TAG"]:
             if "user" in tags and "project" in tags:
-                user = tags['user']
-                project = tags['project']
+                user = tags["user"]
+                project = tags["project"]
                 metadata = {
                     "CreationTime": cluster_details["Cluster"]["Status"]["Timeline"]["CreationDateTime"],
-                    "Cluster Status": cluster_state,
-                    "Release Version": cluster_details["Cluster"]["ReleaseLabel"]
+                    "Status": cluster_state,
+                    "ReleaseVersion": cluster_details["Cluster"]["ReleaseLabel"],
+                    "Name": details["name"],
+                    "NormalizedInstanceHours": cluster_details["Cluster"]["NormalizedInstanceHours"],
                 }
                 resource_metadata_dao.upsert_record(
                     cluster_id,
@@ -338,8 +341,6 @@ def _process_emr_event(details):
                 raise ValueError(
                     f"Error processing EMR State Change event - missing required project and user tags. Found tags: {tags}"
                 )
-            
-
 
 
 def _process_batch_translate_event(details):

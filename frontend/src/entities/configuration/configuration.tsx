@@ -46,43 +46,50 @@ export function Configuration () {
     const [syncingMetadata, setSyncingMetadata] = useState(false);
     const notificationService = NotificationService(dispatch);
 
+    const generateDescription = (service: string) => {
+        return `Sync metadata for all ${service} associated with ${window.env.APPLICATION_NAME}`
+    };
+
     const resourceOptions: MultiselectProps.Option[] = [
         {
             label: 'Endpoints',
             value: 'Endpoints',
-            description: `Sync metadata for all SageMaker endpoints associated with ${window.env.APPLICATION_NAME}`,
+            description: generateDescription('SageMaker endpoints'),
         },
         {
             label: 'Endpoint Configurations',
             value: 'EndpointConfigs',
-            description:
-                `Sync metadata for all SageMaker endpoint configurations associated with ${window.env.APPLICATION_NAME}`,
+            description: generateDescription('SageMaker endpoint configurations'),
+        },
+        {
+            label: 'EMR Clusters',
+            value: 'EMRClusters',
+            description: generateDescription('Elastic Map Reduce clusters'),
         },
         {
             label: 'HPO Jobs',
             value: 'HPOJobs',
-            description:
-                `Sync metadata for all SageMaker hyper parameter tuning jobs associated with ${window.env.APPLICATION_NAME}`,
+            description: generateDescription('SageMaker hyper parameter tuning jobs'),
         },
         {
             label: 'Models',
             value: 'Models',
-            description: `Sync metadata for all SageMaker models associated with ${window.env.APPLICATION_NAME}`,
+            description: generateDescription('SageMaker models'),
         },
         {
             label: 'Notebooks',
             value: 'Notebooks',
-            description: `Sync metadata for all SageMaker notebooks associated with ${window.env.APPLICATION_NAME}`,
+            description: generateDescription('SageMaker notebooks'),
         },
         {
             label: 'Training Jobs',
             value: 'TrainingJobs',
-            description: `Sync metadata for all SageMaker training jobs associated with ${window.env.APPLICATION_NAME}`,
+            description: generateDescription('SageMaker training jobs'),
         },
         {
             label: 'Transform Jobs',
             value: 'TransformJobs',
-            description: `Sync metadata for all SageMaker transform jobs associated with ${window.env.APPLICATION_NAME}`,
+            description: generateDescription('SageMaker transform jobs'),
         },
     ];
 

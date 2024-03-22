@@ -279,30 +279,36 @@ list_of_training_jobs = PagedMetadataResults(
     ]
 )
 
-list_emr_cluster_response = {
-    "records": [
-        {
-            "Id": "cluster1",
-            "Name": f"{project_name}-cluster1",
-            "Status": {
-                "State": "WAITING",
-                "Timeline": {"CreationTime": datetime(2023, 10, 4, 13, 46, 22, 554000)},
+list_emr_cluster_response = PagedMetadataResults(
+    [
+        ResourceMetadataModel(
+            "cluster1",
+            ResourceType.EMR_CLUSTER,
+            MOCK_OWNER.username,
+            project_name,
+            {
+                "CreationTime": created_date_str,
+                "Name": "cluster1",
+                "NormalizedInstanceHours": 30,
+                "ReleaseVersion": "emr-6.2.0",
+                "Status": "WAITING"
             },
-            "ReleaseLabel": "6.6",
-            "ClusterArn": "mockArn",
-        },
-        {
-            "Id": "Cluster3",
-            "Name": f"{project_name}-cluster3",
-            "Status": {
-                "State": "RUNNING",
-                "Timeline": {"CreationTime": datetime(2023, 10, 4, 13, 46, 22, 554000)},
+        ),
+        ResourceMetadataModel(
+            "cluster3",
+            ResourceType.EMR_CLUSTER,
+            MOCK_OWNER.username,
+            project_name,
+            {
+                "CreationTime": created_date_str,
+                "Name": "cluster3",
+                "NormalizedInstanceHours": 10,
+                "ReleaseVersion": "emr-6.3.0",
+                "Status": "RUNNING"
             },
-            "ReleaseLabel": "6.2",
-            "ClusterArn": "mockArn3",
-        },
+        ),
     ]
-}
+)
 
 list_of_batch_translate_jobs = PagedMetadataResults(
     [
@@ -398,6 +404,8 @@ def mock_get_project_resources(*args, **kwargs) -> PagedMetadataResults:
             return list_of_batch_translate_jobs
         if kwargs["type"] == ResourceType.LABELING_JOB:
             return list_of_labeling_jobs
+        if kwargs["type"] == ResourceType.EMR_CLUSTER:
+            return list_emr_cluster_response
     elif kwargs["project"] == empty_project_name:
         if kwargs["type"] == ResourceType.NOTEBOOK:
             return PagedMetadataResults(
@@ -425,6 +433,8 @@ def mock_get_user_resources(*args, **kwargs) -> PagedMetadataResults:
             return list_of_notebooks
         if kwargs["type"] == ResourceType.ENDPOINT:
             return list_of_endpoints
+        if kwargs["type"] == ResourceType.EMR_CLUSTER:
+            return list_emr_cluster_response
     elif kwargs["user"] == mock_second_username:
         if kwargs["type"] == ResourceType.NOTEBOOK:
             return PagedMetadataResults(
@@ -532,11 +542,10 @@ def _mock_primary_owner_writes(is_user_report: bool, owner: str, project: str):
             f"{id_val},Training Job,{other_val},trainingjob2,Stopped," f"{created_date_str},{modified_date_str},,,,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},EMR Cluster,{other_val},example_project-"
-            f"cluster1,WAITING,{created_date_str},,2023-01-01 17:00:00.000000+00:00,,,6.6,,,\r\n"
+            f"{id_val},EMR Cluster,{other_val},cluster1,WAITING,{created_date_str},,2023-01-01 17:00:00.000000+00:00,,,emr-6.2.0,,,\r\n"
         ),
         mock.call().write(
-            f"{id_val},EMR Cluster,{other_val},example_project-" f"cluster3,RUNNING,{created_date_str},,N/A,,,6.2,,,\r\n"
+            f"{id_val},EMR Cluster,{other_val},cluster3,RUNNING,{created_date_str},,N/A,,,emr-6.3.0,,,\r\n"
         ),
         mock.call().write(
             f"{id_val},Batch Translation Job,{other_val},{project_name}-translate-job1,SUBMITTED,"
@@ -650,8 +659,6 @@ def test_create_system_report_success(
 
 
 @mock.patch("builtins.open", new_callable=mock.mock_open)
-@mock.patch("ml_space_lambda.report.lambda_functions.list_clusters_for_project")
-@mock.patch("ml_space_lambda.report.lambda_functions.emr")
 @mock.patch("ml_space_lambda.report.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.report.lambda_functions.resource_scheduler_dao")
 @mock.patch("ml_space_lambda.report.lambda_functions.resource_metadata_dao")
@@ -665,8 +672,6 @@ def test_create_project_report_success(
     mock_resource_metadata_dao,
     mock_resource_scheduler_dao,
     mock_sagemaker,
-    mock_emr,
-    mock_list_clusters,
     mock_file,
 ):
     mock_datetime.now.return_value = datetime.fromisoformat("2022-10-11T23:05:50")
@@ -675,7 +680,6 @@ def test_create_project_report_success(
     mock_resource_scheduler_dao.get_all_project_resources.side_effect = mock_get_all_project_resource_schedules
     mock_project_dao.get_all.return_value = [MOCK_PROJECTS[1]]
     mock_sagemaker.list_tags.side_effect = LIST_TAGS_RESPONSE
-    mock_list_clusters.return_value = list_emr_cluster_response
 
     mock_event = {
         "body": json.dumps(
@@ -719,13 +723,12 @@ def test_create_project_report_success(
             mock.call(project=project_name, fetch_all=True, type=ResourceType.TRANSFORM_JOB),
             mock.call(project=project_name, fetch_all=True, type=ResourceType.BATCH_TRANSLATE_JOB),
             mock.call(project=project_name, fetch_all=True, type=ResourceType.LABELING_JOB),
+            mock.call(project=project_name, fetch_all=True, type=ResourceType.EMR_CLUSTER),
         ],
         True,
     )
 
     mock_resource_scheduler_dao.get_all_project_resources.assert_called_with(project_name)
-
-    mock_list_clusters.assert_called_with(mock_emr, prefix=project_name, fetch_all=True)
 
     mock_s3.upload_file.assert_called_with(
         Filename="/tmp/mlspace-report-20221011-230550.csv",
@@ -748,8 +751,6 @@ def test_create_project_report_success(
 
 
 @mock.patch("builtins.open", new_callable=mock.mock_open)
-@mock.patch("ml_space_lambda.report.lambda_functions.list_clusters_for_project")
-@mock.patch("ml_space_lambda.report.lambda_functions.emr")
 @mock.patch("ml_space_lambda.report.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.report.lambda_functions.resource_scheduler_dao")
 @mock.patch("ml_space_lambda.report.lambda_functions.resource_metadata_dao")
@@ -763,15 +764,12 @@ def test_create_user_report_success(
     mock_resource_metadata_dao,
     mock_resource_scheduler_dao,
     mock_sagemaker,
-    mock_emr,
-    mock_list_clusters,
     mock_file,
 ):
     mock_datetime.now.return_value = datetime.fromisoformat("2022-10-11T23:05:50")
     mock_datetime.fromtimestamp.side_effect = datetime.fromtimestamp
     mock_resource_metadata_dao.get_all_for_user_by_type.side_effect = mock_get_user_resources
     mock_resource_scheduler_dao.get.side_effect = mock_resource_scheduler_get
-    mock_list_clusters.return_value = list_emr_cluster_response
     # User report needs to filter clusters by tags so we're going to end up pull all clusters 2x
     # and then need to validate ownership of those clusters 2x
     mock_sagemaker.list_tags.side_effect = [*LIST_TAGS_RESPONSE, *LIST_TAGS_RESPONSE]
@@ -814,6 +812,7 @@ def test_create_user_report_success(
             mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.TRANSFORM_JOB),
             mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.BATCH_TRANSLATE_JOB),
             mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.LABELING_JOB),
+            mock.call(user=MOCK_OWNER.username, fetch_all=True, type=ResourceType.EMR_CLUSTER),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.ENDPOINT),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.HPO_JOB),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.MODEL),
@@ -822,17 +821,12 @@ def test_create_user_report_success(
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.TRANSFORM_JOB),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.BATCH_TRANSLATE_JOB),
             mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.LABELING_JOB),
+            mock.call(user=mock_second_username, fetch_all=True, type=ResourceType.EMR_CLUSTER),
         ],
         True,
     )
 
     mock_project_dao.get_all.assert_not_called()
-    mock_list_clusters.assert_has_calls(
-        [
-            mock.call(mock_emr, prefix=None, fetch_all=True),
-            mock.call(mock_emr, prefix=None, fetch_all=True),
-        ]
-    )
 
     mock_resource_scheduler_dao.get_all_project_resources.assert_not_called()
     mock_resource_scheduler_dao.get.assert_has_calls(
@@ -872,10 +866,10 @@ def test_create_user_report_success(
                 f"{MOCK_OWNER.username},Endpoint,{project_name},endpoint2,Stopped,{created_date_str},{modified_date_str},N/A,,,,,,\r\n"
             ),
             mock.call().write(
-                f"{MOCK_OWNER.username},EMR Cluster,{project_name},example_project-cluster1,WAITING,{created_date_str},,N/A,,,6.6,,,\r\n"
+                f"{MOCK_OWNER.username},EMR Cluster,{project_name},cluster1,WAITING,{created_date_str},,N/A,,,emr-6.2.0,,,\r\n"
             ),
             mock.call().write(
-                f"{MOCK_OWNER.username},EMR Cluster,{project_name},example_project-cluster3,RUNNING,{created_date_str},,N/A,,,6.2,,,\r\n"
+                f"{MOCK_OWNER.username},EMR Cluster,{project_name},cluster3,RUNNING,{created_date_str},,N/A,,,emr-6.3.0,,,\r\n"
             ),
             mock.call().write(
                 f"{mock_second_username},Notebook,{empty_project_name},ExampleNotebook,Running,"
@@ -887,8 +881,6 @@ def test_create_user_report_success(
 
 
 @mock.patch("builtins.open", new_callable=mock.mock_open)
-@mock.patch("ml_space_lambda.report.lambda_functions.list_clusters_for_project")
-@mock.patch("ml_space_lambda.report.lambda_functions.emr")
 @mock.patch("ml_space_lambda.report.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.report.lambda_functions.resource_scheduler_dao")
 @mock.patch("ml_space_lambda.report.lambda_functions.resource_metadata_dao")
@@ -902,8 +894,6 @@ def test_create_user_report_empty(
     mock_resource_metadata_dao,
     mock_resource_scheduler_dao,
     mock_sagemaker,
-    mock_emr,
-    mock_list_clusters,
     mock_file,
 ):
     mock_datetime.now.return_value = datetime.fromisoformat("2022-10-11T23:05:50")
@@ -936,9 +926,7 @@ def test_create_user_report_empty(
     )
 
     mock_project_dao.get_all.assert_not_called()
-    mock_list_clusters.assert_not_called()
     mock_sagemaker.list_tags.assert_not_called()
-    mock_emr.get_paginator.assert_not_called()
 
     mock_resource_scheduler_dao.get_all_project_resources.assert_not_called()
     mock_resource_scheduler_dao.get.assert_not_called()

@@ -72,6 +72,7 @@ import { AttributeEditorSchema } from '../../../../modules/environment-variables
 import { NetworkSettings } from '../../hpo/create/training-definitions/network-settings';
 import { InputDataConfiguration } from '../../hpo/create/training-definitions/input-data-configuration';
 import { OutputDataConfiguration } from '../../hpo/create/training-definitions/output-data-configuration';
+import { generateNameConstraintText } from '../../../../shared/util/form-utils';
 
 const ALGORITHMS: { [key: string]: Algorithm } = {};
 ML_ALGORITHMS.filter((algorithm) => algorithm.defaultHyperParameters.length > 0).map(
@@ -420,7 +421,7 @@ export default function TrainingJobCreate () {
                         <SpaceBetween direction='vertical' size='l'>
                             <FormField
                                 label='Job Name'
-                                constraintText='Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.'
+                                constraintText={generateNameConstraintText()}
                                 errorText={formErrors.TrainingJobName}
                             >
                                 <Input

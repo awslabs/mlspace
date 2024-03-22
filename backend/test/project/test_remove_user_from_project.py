@@ -56,6 +56,7 @@ def _get_all_by_project_side_effect(
     notebook_results: Optional[List[ResourceMetadataModel]] = None,
     endpoint_results: Optional[List[ResourceMetadataModel]] = None,
     translate_results: Optional[List[ResourceMetadataModel]] = None,
+    emr_results: Optional[List[ResourceMetadataModel]] = None,
 ):
     def _side_effect(*args, **kwargs):
         if args[0] == MOCK_PROJECT_NAME and args[1] == ResourceType.NOTEBOOK:
@@ -64,6 +65,8 @@ def _get_all_by_project_side_effect(
             return PagedMetadataResults(endpoint_results)
         if args[0] == MOCK_PROJECT_NAME and args[1] == ResourceType.BATCH_TRANSLATE_JOB:
             return PagedMetadataResults(translate_results)
+        if args[0] == MOCK_PROJECT_NAME and args[1] == ResourceType.EMR_CLUSTER:
+            return PagedMetadataResults(emr_results)
         return PagedMetadataResults()
 
     return _side_effect
@@ -94,7 +97,6 @@ def mock_describe_cluster(ClusterId: Optional[str]):  # noqa: N803
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
-@mock.patch("ml_space_lambda.project.lambda_functions.list_clusters_for_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.translate")
 @mock.patch("ml_space_lambda.project.lambda_functions.emr")
 @mock.patch("ml_space_lambda.project.lambda_functions.sagemaker")
@@ -102,7 +104,6 @@ def test_remove_user_from_project_success_not_owner(
     mock_sagemaker,
     mock_emr,
     mock_translate,
-    mock_project_clusters,
     mock_project_user_dao,
     mock_iam_manager,
     mock_resource_metadata_dao,
@@ -153,14 +154,28 @@ def test_remove_user_from_project_success_not_owner(
                 },
             )
         ],
+        emr_results=[
+            ResourceMetadataModel(
+                "Cluster1",
+                ResourceType.EMR_CLUSTER,
+                MOCK_CO_USER.user,
+                MOCK_PROJECT_NAME,
+                {
+                    "Name": "cluster-1",
+                },
+            ),
+            ResourceMetadataModel(
+                "Cluster2",
+                ResourceType.EMR_CLUSTER,
+                MOCK_USERNAME,
+                MOCK_PROJECT_NAME,
+                {
+                    "Name": "cluster-2",
+                },
+            ),
+        ]
     )
 
-    mock_project_clusters.return_value = {
-        "records": [
-            {"Id": "Cluster1", "Name": f"{MOCK_PROJECT_NAME}-cluster-1"},
-            {"Id": "Cluster2", "Name": f"{MOCK_PROJECT_NAME}-cluster-2"},
-        ]
-    }
     mock_emr.describe_cluster.side_effect = mock_describe_cluster
     mock_project_user_dao.get.return_value = MOCK_CO_USER
     mock_iam_manager.remove_project_user_roles.return_value = None
@@ -183,7 +198,6 @@ def test_remove_user_from_project_success_not_owner(
     mock_project_user_dao.get_users_for_project.assert_not_called()
     mock_iam_manager.remove_project_user_roles.assert_called_with([MOCK_CO_USER.role])
     mock_project_user_dao.delete.assert_called_with(MOCK_PROJECT_NAME, MOCK_CO_USER.user)
-    mock_project_clusters.assert_called_with(mock_emr, MOCK_PROJECT_NAME, fetch_all=True)
     mock_emr.set_termination_protection.assert_called_with(JobFlowIds=["Cluster1"], TerminationProtected=False)
     mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=["Cluster1"])
     mock_sagemaker.stop_notebook_instance.assert_called_with(NotebookInstanceName=user_notebook_name)
@@ -199,7 +213,6 @@ def test_remove_user_from_project_success_not_owner(
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
-@mock.patch("ml_space_lambda.project.lambda_functions.list_clusters_for_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.translate")
 @mock.patch("ml_space_lambda.project.lambda_functions.emr")
 @mock.patch("ml_space_lambda.project.lambda_functions.sagemaker")
@@ -207,7 +220,6 @@ def test_remove_user_from_project_success_multiple_owners(
     mock_sagemaker,
     mock_emr,
     mock_translate,
-    mock_project_clusters,
     mock_project_user_dao,
     mock_iam_manager,
     mock_resource_metadata_dao,
@@ -215,7 +227,6 @@ def test_remove_user_from_project_success_multiple_owners(
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully removed {MOCK_USERNAME} from {MOCK_PROJECT_NAME}")
 
-    mock_project_clusters.return_value = {"records": []}
     mock_resource_metadata_dao.get_all_for_project_by_type.return_value = PagedMetadataResults()
     mock_project_user_dao.get.return_value = MOCK_MO_USER
     mock_project_user_dao.get_users_for_project.return_value = [
@@ -235,7 +246,6 @@ def test_remove_user_from_project_success_multiple_owners(
     mock_project_user_dao.get_users_for_project.assert_called_with(MOCK_PROJECT_NAME)
     mock_iam_manager.remove_project_user_roles.assert_not_called()
     mock_project_user_dao.delete.assert_called_with(MOCK_PROJECT_NAME, MOCK_USERNAME)
-    mock_project_clusters.assert_called_with(mock_emr, MOCK_PROJECT_NAME, fetch_all=True)
     mock_resource_metadata_dao.get_all_for_project_by_type.assert_has_calls(
         [
             mock.call(MOCK_PROJECT_NAME, ResourceType.NOTEBOOK, fetch_all=True),

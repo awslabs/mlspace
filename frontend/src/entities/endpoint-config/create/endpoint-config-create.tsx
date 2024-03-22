@@ -48,6 +48,7 @@ import { scrollToInvalid, useValidationState } from '../../../shared/validation'
 import { z } from 'zod';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { setTableAnnouncement } from '../../../shared/util/table-utils';
+import { generateNameConstraintText } from '../../../shared/util/form-utils';
 
 type EndpointConfigCreateOptions = {
     createConfigCallback?: (endpointConfig: IEndpointConfig, createdNew: boolean) => void;
@@ -75,8 +76,7 @@ export function EndpointConfigCreate ({ createConfigCallback }: EndpointConfigCr
                 message: 'Name cannot be more than 63 characters.',
             })
             .regex(/^[a-zA-Z0-9-]*$/, {
-                message:
-                    'Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.',
+                message: generateNameConstraintText(),
             }),
     });
 
@@ -242,7 +242,7 @@ export function EndpointConfigCreate ({ createConfigCallback }: EndpointConfigCr
                         <SpaceBetween direction='vertical' size='xxl'>
                             <FormField
                                 label='Endpoint configuration name'
-                                constraintText='Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.'
+                                constraintText={generateNameConstraintText()}
                                 errorText={state.formErrors.EndpointConfigName}
                             >
                                 <Input

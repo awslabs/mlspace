@@ -159,17 +159,8 @@ def test_list_all_projects_client_error(mock_project_dao, mock_project_user_dao)
     mock_project_user_dao.get.assert_not_called()
 
 
-@mock.patch("ml_space_lambda.project.lambda_functions.emr")
-@mock.patch("ml_space_lambda.project.lambda_functions.list_clusters_for_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
-def test_get_resource_counts(mock_resource_metadata_dao, mock_list_clusters_for_project, mock_emr):
-    mock_list_clusters_for_project.return_value = {
-        "records": [
-            {"Id": "Cluster1", "Name": "-cluster-1", "Status": {"State": "Running"}},
-            {"Id": "Cluster2", "Name": "-cluster-2", "Status": {"State": "Failed"}},
-        ]
-    }
-
+def test_get_resource_counts(mock_resource_metadata_dao):
     mock_resource_metadata_dao.get_all_for_project_by_type.return_value = PagedMetadataResults(
         [
             ResourceMetadataModel(
@@ -188,7 +179,24 @@ def test_get_resource_counts(mock_resource_metadata_dao, mock_list_clusters_for_
     for resource_type in ResourceType:
         expected_dict[resource_type] = {"Total": 1, "Inservice": 1}
 
-    expected_dict[ResourceType.EMR_CLUSTER] = {"Total": 2, "Running": 1, "Failed": 1}
+    _get_resource_counts.cache_clear()
+
+    assert _get_resource_counts(MOCK_PROJECT.name) == expected_dict
+    mock_resource_metadata_dao.get_all_for_project_by_type.assert_has_calls(
+        [
+            mock.call(MOCK_PROJECT.name, resource, fetch_all=True)
+            for resource in ResourceType
+        ]
+    )
+
+
+@mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
+def test_get_resource_counts_zero_counts(mock_resource_metadata_dao):
+    mock_resource_metadata_dao.get_all_for_project_by_type.return_value = PagedMetadataResults([])
+
+    expected_dict = {}
+    for resource_type in ResourceType:
+        expected_dict[resource_type] = {"Total": 0}
 
     _get_resource_counts.cache_clear()
 
@@ -197,18 +205,12 @@ def test_get_resource_counts(mock_resource_metadata_dao, mock_list_clusters_for_
         [
             mock.call(MOCK_PROJECT.name, resource, fetch_all=True)
             for resource in ResourceType
-            if resource != ResourceType.EMR_CLUSTER
         ]
     )
 
-    mock_list_clusters_for_project.assert_called_with(emr=mock_emr, prefix=MOCK_PROJECT.name, fetch_all=True)
 
-
-@mock.patch("ml_space_lambda.project.lambda_functions.emr")
-@mock.patch("ml_space_lambda.project.lambda_functions.list_clusters_for_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
-def test_get_resource_counts_zero_counts(mock_resource_metadata_dao, mock_list_clusters_for_project, mock_emr):
-    mock_list_clusters_for_project.return_value = {"records": []}
+def test_get_resource_counts_verify_caching(mock_resource_metadata_dao):
 
     mock_resource_metadata_dao.get_all_for_project_by_type.return_value = PagedMetadataResults([])
 
@@ -223,41 +225,12 @@ def test_get_resource_counts_zero_counts(mock_resource_metadata_dao, mock_list_c
         [
             mock.call(MOCK_PROJECT.name, resource, fetch_all=True)
             for resource in ResourceType
-            if resource != ResourceType.EMR_CLUSTER
         ]
     )
-
-    mock_list_clusters_for_project.assert_called_with(emr=mock_emr, prefix=MOCK_PROJECT.name, fetch_all=True)
-
-
-@mock.patch("ml_space_lambda.project.lambda_functions.emr")
-@mock.patch("ml_space_lambda.project.lambda_functions.list_clusters_for_project")
-@mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
-def test_get_resource_counts_verify_caching(mock_resource_metadata_dao, mock_list_clusters_for_project, mock_emr):
-    mock_list_clusters_for_project.return_value = {"records": []}
-
-    mock_resource_metadata_dao.get_all_for_project_by_type.return_value = PagedMetadataResults([])
-
-    expected_dict = {}
-    for resource_type in ResourceType:
-        expected_dict[resource_type] = {"Total": 0}
-
-    _get_resource_counts.cache_clear()
-
-    assert _get_resource_counts(MOCK_PROJECT.name) == expected_dict
-    mock_resource_metadata_dao.get_all_for_project_by_type.assert_has_calls(
-        [
-            mock.call(MOCK_PROJECT.name, resource, fetch_all=True)
-            for resource in ResourceType
-            if resource != ResourceType.EMR_CLUSTER
-        ]
-    )
-
-    mock_list_clusters_for_project.assert_called_with(emr=mock_emr, prefix=MOCK_PROJECT.name, fetch_all=True)
 
     # Gather first time call count
     first_pass_call_count = mock_resource_metadata_dao.get_all_for_project_by_type.call_count
-    assert first_pass_call_count == len(ResourceType) - 1
+    assert first_pass_call_count == len(ResourceType)
 
     # Check that we dont call the function again since it is cached
     assert _get_resource_counts(MOCK_PROJECT.name) == expected_dict

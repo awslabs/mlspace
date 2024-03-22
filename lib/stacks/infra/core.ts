@@ -471,7 +471,7 @@ export class CoreStack extends Stack {
                     'SageMaker Training Job State Change',
                     'SageMaker Transform Job State Change',
                     'Translate TextTranslationJob State Change',
-                    'EMR Cluster State Change', // TODO make sure this is the only one we need
+                    'EMR Cluster State Change',
 
                 ],
             },
@@ -490,7 +490,7 @@ export class CoreStack extends Stack {
                         'CreateLabelingJob',
                         'StartTextTranslationJob',
                         'StopTextTranslationJob',
-                        'RunJobFlow', // TODO confirm this is correct
+                        'RunJobFlow',
                     ],
                 },
             },
