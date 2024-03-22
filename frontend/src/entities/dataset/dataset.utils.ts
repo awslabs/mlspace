@@ -17,15 +17,6 @@
 import { IDatasetFile } from '../../shared/model/datasetfile.model';
 import { IDataset } from '../../shared/model/dataset.model';
 import { convertBytesToHumanReadable } from './create/dataset-upload.utils';
-import { SelectProps } from '@cloudscape-design/components';
-
-export const formatTypes: SelectProps.Option[] = [
-    { label: 'text/plain', value: 'text/plain' },
-    { label: 'image/jpeg', value: 'image/jpeg' },
-    { label: 'video/mpeg', value: 'video/mpeg' },
-    { label: 'application/zip', value: 'application/zip' },
-    { label: 'other', value: 'other' },
-];
 
 export const validateName = function (datasetName: string) {
     // Validate that the instance name follows the naming guidelines

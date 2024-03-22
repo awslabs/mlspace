@@ -135,7 +135,7 @@ export type AlgorithmSpecification = {
     TrainingImage: string | null;
     TrainingInputMode: TrainingInputMode;
     AlgorithmName?: string | null;
-    MetricDefinitions: MetricDefinition[];
+    MetricDefinitions?: MetricDefinition[];
 };
 
 export type OutputDataConfig = {

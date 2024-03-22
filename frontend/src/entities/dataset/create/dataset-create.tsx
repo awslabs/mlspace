@@ -25,7 +25,6 @@ import {
     Input,
     Container,
     Select,
-    Autosuggest,
     ContentLayout,
     Popover,
     StatusIndicator,
@@ -42,7 +41,6 @@ import {
 import { enumToOptions, initCap } from '../../../shared/util/enum-utils';
 import './dataset-create.styles.css';
 import { ManageFiles } from '../manage/dataset.files';
-import { getDatasetByScopeAndName } from '../dataset.reducer';
 import { IDatasetFile } from '../../../shared/model/datasetfile.model';
 import { useAuth } from 'react-oidc-context';
 import { buildS3Keys, createDataset, determineScope, uploadFiles } from '../dataset.service';
@@ -51,7 +49,6 @@ import { z } from 'zod';
 import { createDatasetFromForm } from './dataset-create-functions';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
-import { formatTypes } from '../dataset.utils';
 import { DocTitle, scrollToPageHeader } from '../../../shared/doc';
 
 const formSchema = z.object({
@@ -70,7 +67,6 @@ const formSchema = z.object({
         })
         .max(254),
     type: z.string({ invalid_type_error: 'A type must be selected.' }),
-    format: z.string().min(1).max(255),
 });
 
 export function DatasetCreate () {
@@ -96,7 +92,6 @@ export function DatasetCreate () {
             name: '',
             description: '',
             type: null,
-            format: '',
         },
         touched: {
             inputDataConfig: [],
@@ -118,38 +113,25 @@ export function DatasetCreate () {
         scrollToPageHeader('h1', 'dataset');
     }, [dispatch, basePath, projectName]);
 
-    async function datasetExists (newDataset: IDataset) {
-        const exists = await dispatch(
-            getDatasetByScopeAndName({ scope: newDataset.scope, name: newDataset.name })
-        );
-        return exists.payload !== undefined;
-    }
-
     async function handleSubmit () {
         if (state.formValid) {
             setState({type: 'updateState', payload: { formSubmitting: true } });
 
             // create new dataset from state.form
             const newDataset = createDatasetFromForm(state.form, datasetFileList);
-            newDataset.scope = determineScope(newDataset, projectName, username!);
-            const exists = await datasetExists(newDataset);
-            if (!exists) {
-                if (datasetFileList.length !== 0) {
-                    const s3Keys = buildS3Keys(datasetFileList, newDataset, projectName, username!);
-                    await uploadFiles(s3Keys, newDataset, notificationService, datasetFileList);
-                    // Need to clear state/reset the form
-                    navigate(`${basePath}/dataset`);
-                } else {
-                    // if no files are uploaded just create an empty dataset
-                    await createDataset(newDataset);
-                    navigate(`${basePath}/dataset`);
-                }
-            } else {
+            newDataset.scope = determineScope(newDataset.type, projectName, username!);
+            const response = await createDataset(newDataset).catch(() => {
                 // if dataset exists display message to user
                 notificationService.generateNotification(
                     `Failed to create dataset, dataset already exists with the name: ${newDataset.name}`,
                     'error'
                 );
+            });
+            if (response?.status === 200) {
+                const s3Keys = buildS3Keys(datasetFileList, newDataset, projectName, username!);
+                await uploadFiles(s3Keys, newDataset, notificationService, datasetFileList);
+                // Need to clear state/reset the form
+                navigate(`${basePath}/dataset`);
             }
             setState({type: 'updateState', payload: { formSubmitting: false } });
         } else {
@@ -285,33 +267,6 @@ export function DatasetCreate () {
                                         ]
                                 }
                                 onBlur={touchFieldHandler('type')}
-                            />
-                        </FormField>
-                        <FormField
-                            description='Specify the format of the files in the dataset.'
-                            errorText={state.formErrors.format}
-                            label='Dataset Format'
-                        >
-                            <Autosuggest
-                                data-cy='dataset-format-input'
-                                value={state.form.format}
-                                onSelect={({ detail }) => {
-                                    updateForm({
-                                        format: detail.value,
-                                    });
-                                }}
-                                onChange={({ detail }) => {
-                                    updateForm({
-                                        format: detail.value,
-                                    });
-                                }}
-                                placeholder='Enter value'
-                                enteredTextLabel={(value) => `Use: "${value}"`}
-                                options={formatTypes}
-                                onBlur={() => {
-                                    touchFieldHandler('format');
-                                }}
-                                controlId='autosuggest'
                             />
                         </FormField>
                     </SpaceBetween>

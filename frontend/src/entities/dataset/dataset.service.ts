@@ -133,11 +133,11 @@ export const fetchPresignedURL = async (s3Key: string, dataset: IDataset) => {
 };
 
 export const determineScope = (
-    dataset: IDataset,
+    type: DatasetType | undefined,
     projectName: string | undefined,
     username: string
 ): string => {
-    switch (dataset.type) {
+    switch (type) {
         case DatasetType.GLOBAL:
             return DatasetType.GLOBAL;
         case DatasetType.PROJECT:
@@ -185,27 +185,35 @@ export async function uploadFiles (
 }
 
 export async function createDataset (dataset: IDataset) {
-    const requestUrl = '/dataset/create';
-    const payload = {
-        datasetName: dataset.name,
-        datasetType: dataset.type,
-        datasetScope: dataset.scope,
-        datasetDescription: dataset.description,
-        datasetFormat: dataset.format,
-    };
-    const datasetType = dataset.type;
-    const datasetScope = dataset.scope;
     // Scope and Type should always be set for this Dataset object as part of form validation
-    if (datasetType && datasetScope){
+    if (dataset.type && dataset.scope){
+        const requestUrl = '/dataset/create';
+        const payload = {
+            datasetName: dataset.name,
+            datasetType: dataset.type,
+            datasetScope: dataset.scope,
+            datasetDescription: dataset.description,
+            datasetFormat: dataset.format,
+        };
         const headerConfig = {
             headers: {
-                'x-mlspace-dataset-type': datasetType,
-                'x-mlspace-dataset-scope': datasetScope,
+                'x-mlspace-dataset-type': dataset.type,
+                'x-mlspace-dataset-scope': dataset.scope,
             },
         };
         return axios.post(requestUrl, payload, headerConfig);
     }
 }
+
+export const createDatasetHandleAlreadyExists = (dataset: IDataset) => {
+    createDataset(dataset).catch((error) => {
+        const expectedError = `Bad Request: Dataset ${dataset.name} already exists.`;
+        // Any error that the dataset already existing is unexpected
+        if (expectedError !== error.response.data) {
+            throw error
+        }
+    });
+};
 
 export const listDatasetBucketAndLocations = async (scope: string, type: string) => {
     const response = await axios.get(`/dataset-locations/${type}/${scope}`);
