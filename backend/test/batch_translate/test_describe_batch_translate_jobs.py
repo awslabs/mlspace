@@ -51,7 +51,7 @@ mock_error_metadata = {
 }
 
 
-def generate_mock_response(include_error: bool = False, job_status = "FAILED"):
+def generate_mock_response(include_error: bool = False, job_status="FAILED"):
     response = {
         "TextTranslationJobProperties": {
             "JobId": job_id,
@@ -128,7 +128,9 @@ mock_s3_get_object_response = {"Body": BytesIO(bytes(json.dumps(mock_s3_translat
 )
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.translate")
-def test_describe_batch_translate_job_success_error_in_metadata(mock_translate, mock_resource_metadata_dao, job_status, include_error):
+def test_describe_batch_translate_job_success_error_in_metadata(
+    mock_translate, mock_resource_metadata_dao, job_status, include_error
+):
     mock_translate.describe_text_translation_job.return_value = generate_mock_response(job_status=job_status)
     mock_resource_metadata_dao.get.return_value = generate_mock_metadata_model(True)
 
