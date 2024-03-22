@@ -183,10 +183,7 @@ def test_get_resource_counts(mock_resource_metadata_dao):
 
     assert _get_resource_counts(MOCK_PROJECT.name) == expected_dict
     mock_resource_metadata_dao.get_all_for_project_by_type.assert_has_calls(
-        [
-            mock.call(MOCK_PROJECT.name, resource, fetch_all=True)
-            for resource in ResourceType
-        ]
+        [mock.call(MOCK_PROJECT.name, resource, fetch_all=True) for resource in ResourceType]
     )
 
 
@@ -202,10 +199,7 @@ def test_get_resource_counts_zero_counts(mock_resource_metadata_dao):
 
     assert _get_resource_counts(MOCK_PROJECT.name) == expected_dict
     mock_resource_metadata_dao.get_all_for_project_by_type.assert_has_calls(
-        [
-            mock.call(MOCK_PROJECT.name, resource, fetch_all=True)
-            for resource in ResourceType
-        ]
+        [mock.call(MOCK_PROJECT.name, resource, fetch_all=True) for resource in ResourceType]
     )
 
 
@@ -222,10 +216,7 @@ def test_get_resource_counts_verify_caching(mock_resource_metadata_dao):
 
     assert _get_resource_counts(MOCK_PROJECT.name) == expected_dict
     mock_resource_metadata_dao.get_all_for_project_by_type.assert_has_calls(
-        [
-            mock.call(MOCK_PROJECT.name, resource, fetch_all=True)
-            for resource in ResourceType
-        ]
+        [mock.call(MOCK_PROJECT.name, resource, fetch_all=True) for resource in ResourceType]
     )
 
     # Gather first time call count

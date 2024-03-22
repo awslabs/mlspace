@@ -291,7 +291,7 @@ list_emr_cluster_response = PagedMetadataResults(
                 "Name": "cluster1",
                 "NormalizedInstanceHours": 30,
                 "ReleaseVersion": "emr-6.2.0",
-                "Status": "WAITING"
+                "Status": "WAITING",
             },
         ),
         ResourceMetadataModel(
@@ -304,7 +304,7 @@ list_emr_cluster_response = PagedMetadataResults(
                 "Name": "cluster3",
                 "NormalizedInstanceHours": 10,
                 "ReleaseVersion": "emr-6.3.0",
-                "Status": "RUNNING"
+                "Status": "RUNNING",
             },
         ),
     ]
@@ -544,9 +544,7 @@ def _mock_primary_owner_writes(is_user_report: bool, owner: str, project: str):
         mock.call().write(
             f"{id_val},EMR Cluster,{other_val},cluster1,WAITING,{created_date_str},,2023-01-01 17:00:00.000000+00:00,,,emr-6.2.0,,,\r\n"
         ),
-        mock.call().write(
-            f"{id_val},EMR Cluster,{other_val},cluster3,RUNNING,{created_date_str},,N/A,,,emr-6.3.0,,,\r\n"
-        ),
+        mock.call().write(f"{id_val},EMR Cluster,{other_val},cluster3,RUNNING,{created_date_str},,N/A,,,emr-6.3.0,,,\r\n"),
         mock.call().write(
             f"{id_val},Batch Translation Job,{other_val},{project_name}-translate-job1,SUBMITTED,"
             f'{created_date_str},,,,,,en,"fr,es",\r\n'

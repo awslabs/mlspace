@@ -14,9 +14,10 @@
 #   limitations under the License.
 #
 
+from typing import Optional
+
 # Testing for the list_emr_clusters Lambda function.
 from unittest import mock
-from typing import Optional
 
 from botocore.exceptions import ClientError
 
@@ -34,6 +35,7 @@ MOCK_PROJECT_NAME = "mock_project1"
 MOCK_USERNAME = "jdoe@amazon.com"
 FAKE_NEXT_TOKEN = "Fake-Next-Page-Marker"
 
+
 def _mock_emr_metadata(identifier: str, username: Optional[str] = MOCK_USERNAME) -> ResourceMetadataModel:
     return ResourceMetadataModel(
         identifier,
@@ -44,14 +46,13 @@ def _mock_emr_metadata(identifier: str, username: Optional[str] = MOCK_USERNAME)
             "CreationTime": "today",
             "Status": "WAITING",
             "ReleaseVersion": "emr-6.2.0",
-            "Name": f"cluster{identifier}", 
-            "NormalizedInstanceHours": 5
+            "Name": f"cluster{identifier}",
+            "NormalizedInstanceHours": 5,
         },
     )
 
 
 mock_event = {"pathParameters": {"projectName": MOCK_PROJECT_NAME}}
-
 
 
 @mock.patch("ml_space_lambda.emr.lambda_functions.resource_metadata_dao")
@@ -94,7 +95,7 @@ def test_list_emr_clusters_client_error(mock_resource_metadata_dao):
     operation = "ListClusters"
     expected_response = generate_html_response(
         "400",
-       f"An error occurred (MissingParameter) when calling the {operation} operation: Dummy error message.",
+        f"An error occurred (MissingParameter) when calling the {operation} operation: Dummy error message.",
     )
     exception_response = ClientError(error_msg, operation)
     mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = exception_response

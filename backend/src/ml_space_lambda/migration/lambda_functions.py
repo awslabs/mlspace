@@ -59,7 +59,7 @@ def sync_metadata(event, context):
     return {"success": True, "message": message}
 
 
-def _get_system_owner_and_project(arn, system_tag, tags = []):
+def _get_system_owner_and_project(arn, system_tag, tags=[]):
     project = None
     owner = None
     is_mlspace_resource = False
@@ -334,8 +334,8 @@ def _sync_emr_jobs(env_variables):
                             "CreationTime": cluster["Status"]["Timeline"]["CreationDateTime"],
                             "Status": status,
                             "ReleaseVersion": cluster_details["Cluster"]["ReleaseLabel"],
-                            "Name": cluster["Name"], 
-                            "NormalizedInstanceHours": cluster["NormalizedInstanceHours"]
+                            "Name": cluster["Name"],
+                            "NormalizedInstanceHours": cluster["NormalizedInstanceHours"],
                         }
                         # Create resource metadata record
                         try:

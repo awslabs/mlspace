@@ -218,7 +218,9 @@ def _get_emr_clusters(
     logger.info(f"-----response: {len(response.records)}-----")
     clusters = []
     for result in response.records:
-        logger.info(f'Name: {result.metadata.get("Name", "")}\nProject: {result.project}\nStatus: {result.metadata.get("Status", "")}\nCreated: {result.metadata.get("CreationTime", "")}\nRelease: {result.metadata.get("ReleaseVersion", "")}\nOwner: {result.user}\nAuto: {_get_terminiation_datetime(result.id, ResourceType.EMR_CLUSTER, termination_records)}')
+        logger.info(
+            f'Name: {result.metadata.get("Name", "")}\nProject: {result.project}\nStatus: {result.metadata.get("Status", "")}\nCreated: {result.metadata.get("CreationTime", "")}\nRelease: {result.metadata.get("ReleaseVersion", "")}\nOwner: {result.user}\nAuto: {_get_terminiation_datetime(result.id, ResourceType.EMR_CLUSTER, termination_records)}'
+        )
         clusters.append(
             {
                 "Name": result.metadata.get("Name", ""),

@@ -173,7 +173,7 @@ def test_remove_user_from_project_success_not_owner(
                     "Name": "cluster-2",
                 },
             ),
-        ]
+        ],
     )
 
     mock_emr.describe_cluster.side_effect = mock_describe_cluster

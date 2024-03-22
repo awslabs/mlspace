@@ -287,9 +287,7 @@ def test_create_emr_cluster_success(
     mock_paginator = mock.MagicMock()
     mock_emr.get_paginator.return_value = mock_paginator
     mock_cluster_id = "Cluster1"
-    mock_paginator.paginate.return_value = [
-        {"Clusters": [{"Id": mock_cluster_id, "Name": MOCK_CLUSTER_NAME}]}
-    ]
+    mock_paginator.paginate.return_value = [{"Clusters": [{"Id": mock_cluster_id, "Name": MOCK_CLUSTER_NAME}]}]
     mock_project_dao.get.return_value = mock_project
 
     expected_response = generate_html_response(200, mock_response)
@@ -336,9 +334,7 @@ def test_create_emr_cluster_success_with_subnet(
     mock_paginator = mock.MagicMock()
     mock_emr.get_paginator.return_value = mock_paginator
     mock_cluster_id = "Cluster1"
-    mock_paginator.paginate.return_value = [
-        {"Clusters": [{"Id": mock_cluster_id, "Name": MOCK_CLUSTER_NAME}]}
-    ]
+    mock_paginator.paginate.return_value = [{"Clusters": [{"Id": mock_cluster_id, "Name": MOCK_CLUSTER_NAME}]}]
     mock_project_dao.get.return_value = mock_project
 
     expected_response = generate_html_response(200, mock_response)
