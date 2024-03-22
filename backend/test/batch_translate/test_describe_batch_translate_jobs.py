@@ -18,9 +18,9 @@
 import datetime
 import json
 from io import BytesIO
-import pytest
 from unittest import mock
 
+import pytest
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataModel
