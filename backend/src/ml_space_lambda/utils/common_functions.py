@@ -232,12 +232,6 @@ def list_custom_terminologies_for_project(
     return result
 
 
-def filter_by_project_prefix(response: Dict, prefix: str, output_list: list, key: str, resource_name: str):
-    for item in response[key]:
-        if item[resource_name].split("-")[0] == prefix:
-            output_list.append(item)
-
-
 def generate_html_response(status_code, response_body):
     return {
         "statusCode": status_code,
