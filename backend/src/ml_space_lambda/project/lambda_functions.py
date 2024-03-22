@@ -29,12 +29,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, Pro
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    retry_config,
-    serialize_permissions,
-    total_project_owners,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, retry_config, serialize_permissions, total_project_owners
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
