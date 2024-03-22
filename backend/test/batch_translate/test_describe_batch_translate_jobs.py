@@ -18,6 +18,7 @@
 import datetime
 import json
 from io import BytesIO
+import pytest
 from unittest import mock
 
 from botocore.exceptions import ClientError
@@ -50,12 +51,12 @@ mock_error_metadata = {
 }
 
 
-def generate_mock_response(include_error: bool = False):
+def generate_mock_response(include_error: bool = False, job_status = "FAILED"):
     response = {
         "TextTranslationJobProperties": {
             "JobId": job_id,
             "JobName": "test_job_name",
-            "JobStatus": "FAILED",
+            "JobStatus": job_status,
             "JobDetails": {
                 "TranslatedDocumentsCount": 123,
                 "DocumentsWithErrorsCount": 123,
@@ -114,18 +115,30 @@ mock_s3_translate_detail_file = {
 mock_s3_get_object_response = {"Body": BytesIO(bytes(json.dumps(mock_s3_translate_detail_file), "utf-8"))}
 
 
+@pytest.mark.parametrize(
+    "job_status, include_error",
+    [
+        ("FAILED", True),
+        ("SUCCEEDED", False),
+    ],
+    ids=[
+        "failed_job",
+        "succeeded_job",
+    ],
+)
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.batch_translate.lambda_functions.translate")
-def test_describe_batch_translate_job_success_error_in_metadata(mock_translate, mock_resource_metadata_dao):
-    mock_translate.describe_text_translation_job.return_value = generate_mock_response()
+def test_describe_batch_translate_job_success_error_in_metadata(mock_translate, mock_resource_metadata_dao, job_status, include_error):
+    mock_translate.describe_text_translation_job.return_value = generate_mock_response(job_status=job_status)
     mock_resource_metadata_dao.get.return_value = generate_mock_metadata_model(True)
 
-    expected_response = generate_html_response(200, generate_mock_response(True))
+    expected_response = generate_html_response(200, generate_mock_response(include_error, job_status))
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_translate.describe_text_translation_job.assert_called_with(JobId=job_id)
-    mock_resource_metadata_dao.get.assert_called_with(id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB)
+    if job_status == "FAILED":
+        mock_resource_metadata_dao.get.assert_called_with(id=job_id, type=ResourceType.BATCH_TRANSLATE_JOB)
     mock_resource_metadata_dao.update.assert_not_called()
 
 
