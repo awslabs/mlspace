@@ -195,7 +195,6 @@ def create(event, context):
 
         clusters = list_clusters_for_project(
             emr=emr,
-            fetch_all=True,
             created_after=datetime.datetime.fromtimestamp(time.time() - 20),
         )
         for cluster in clusters["records"]:
