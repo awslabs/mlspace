@@ -1,0 +1,34 @@
+{
+    "metricDefinitions": [
+        {
+            "metricName": "train:loss",
+            "metricRegex": "train loss: (\\S+)"
+        },
+        {
+            "metricName": "train:throughput",
+            "metricRegex": "train throughput: (\\S+)"
+        },
+        {
+            "metricName": "validation:mIOU",
+            "metricRegex": "validation mIOU: (\\S+)"
+        },
+        {
+          "metricName": "validation:pixel_accuracy",
+          "metricRegex": "pixel_accuracy: (\\S+)"
+        },
+        {
+          "metricName": "validation:throughput",
+          "metricRegex": "validation throughput: (\\S+)"
+        }
+    ],
+    "objectiveMetrics": [
+        {
+            "metricName": "validation:mIOU",
+            "metricType": "Maximize"
+        },
+        {
+          "metricName": "validation:pixel_accuracy",
+          "metricType": "Maximize"
+        }
+    ]
+}
