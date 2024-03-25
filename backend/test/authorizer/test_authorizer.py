@@ -2247,13 +2247,6 @@ def test_manage_project_sagemaker_resource_boto_error(
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_emr_cluster_missing_metadata_entry(mock_user_dao, mock_resource_metadata_dao):
     mock_cluster_id = "clusterId"
-    # mock_resource_metadata_dao.get.return_value = ResourceMetadataModel(
-    #         mock_cluster_id,
-    #         ResourceType.EMR_CLUSTER,
-    #         MOCK_OWNER_USER.username,
-    #         MOCK_PROJECT_NAME,
-    #         {},
-    # )
     mock_resource_metadata_dao.get.return_value = None
 
     mock_user_dao.get.return_value = MOCK_OWNER_USER

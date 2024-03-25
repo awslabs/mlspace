@@ -29,7 +29,7 @@ from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import (
     api_wrapper,
     generate_tags,
-    list_clusters_for_project,
+    list_all_clusters_for_project,
     query_resource_metadata,
     retry_config,
 )
@@ -193,7 +193,7 @@ def create(event, context):
         # Endpoint TTL is in hours so we need to convert that to seconds and add to the current time
         termination_time = time.time() + (int(project.metadata["terminationConfiguration"]["defaultEMRClusterTTL"]) * 60 * 60)
 
-        clusters = list_clusters_for_project(
+        clusters = list_all_clusters_for_project(
             emr=emr,
             created_after=datetime.datetime.fromtimestamp(time.time() - 20),
         )

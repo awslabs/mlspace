@@ -147,7 +147,7 @@ def get_tags_for_resource(sagemaker, arn: str):
     return tags
 
 
-def list_clusters_for_project(
+def list_all_clusters_for_project(
     emr,
     paging_options: Optional[Dict[str, str]] = None,
     created_after: datetime.datetime = None,
