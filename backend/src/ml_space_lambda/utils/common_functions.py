@@ -178,7 +178,6 @@ def list_clusters_for_project(
             for cluster in page["Clusters"]:
                 list_of_clusters.append(cluster)
 
-
     result["records"] = list_of_clusters
     return result
 
