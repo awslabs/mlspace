@@ -34,8 +34,6 @@ from ml_space_lambda.utils.common_functions import authorization_wrapper, retry_
 
 logger = logging.getLogger(__name__)
 
-sagemaker = boto3.client("sagemaker", config=retry_config)
-emr = boto3.client("emr", config=retry_config)
 project_user_dao = ProjectUserDAO()
 project_dao = ProjectDAO()
 user_dao = UserDAO()
@@ -422,9 +420,11 @@ def _handle_emr_request(
 
     owner = None
     project_name = None
-    cluster = emr.describe_cluster(ClusterId=cluster_id)
+    cluster = resource_metadata_dao.get(cluster_id, ResourceType.EMR_CLUSTER)
 
-    [project_name, owner] = _get_project_and_owner(cluster["Cluster"]["Tags"])
+    if cluster:
+        project_name = cluster.project
+        owner = cluster.user
 
     if project_name:
         response_context["projectName"] = project_name
@@ -611,16 +611,3 @@ def _get_oidc_props(key_id: str) -> Tuple[Optional[str], Optional[str]]:
         raise ValueError("Missing OIDC configuration parameters.")
 
     return (oidc_keys[key_id], oidc_client_name)
-
-
-def _get_project_and_owner(tags: List[Dict[str, str]]) -> Tuple[Optional[str], Optional[str]]:
-    project = None
-    owner = None
-
-    for tag in tags:
-        if tag["Key"] == "project":
-            project = tag["Value"]
-        elif tag["Key"] == "user":
-            owner = tag["Value"]
-
-    return (project, owner)

@@ -36,10 +36,8 @@ resource_scheduler_dao = ResourceSchedulerDAO()
 resource_metadata_dao = ResourceMetadataDAO()
 user_dao = UserDAO()
 
-sagemaker = boto3.client("sagemaker", config=retry_config)
 logger = logging.getLogger(__name__)
 
-emr = boto3.client("emr", config=retry_config)
 s3 = boto3.client(
     "s3",
     config=Config(

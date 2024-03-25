@@ -347,4 +347,4 @@ def _sync_emr_jobs(env_variables):
                                 metadata,
                             )
                         except Exception:
-                            logger.warn(f'Error generating resource metadata for Model: {cluster["Name"]}')
+                            logger.warn(f'Error generating resource metadata for EMR Cluster: {cluster["Name"]}')
