@@ -19,6 +19,7 @@ import json
 import logging
 import random
 import time
+from typing import Any, Dict, Optional
 
 import boto3
 
@@ -26,13 +27,7 @@ from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    generate_tags,
-    list_all_clusters_for_project,
-    query_resource_metadata,
-    retry_config,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -193,8 +188,7 @@ def create(event, context):
         # Endpoint TTL is in hours so we need to convert that to seconds and add to the current time
         termination_time = time.time() + (int(project.metadata["terminationConfiguration"]["defaultEMRClusterTTL"]) * 60 * 60)
 
-        clusters = list_all_clusters_for_project(
-            emr=emr,
+        clusters = _list_all_clusters_created_after_date(
             created_after=datetime.datetime.fromtimestamp(time.time() - 20),
         )
         for cluster in clusters["records"]:
@@ -210,6 +204,40 @@ def create(event, context):
                 break
 
     return response
+
+
+def _list_all_clusters_created_after_date(
+    created_after: datetime.datetime,
+    paging_options: Optional[Dict[str, str]] = None,
+):
+    list_of_clusters = []
+    kwargs: Dict[str, Any] = {}
+    result: Dict[str, Any] = {
+        "records": [],
+    }
+    if paging_options and "resourceStatus" in paging_options:
+        kwargs["ClusterStates"] = [paging_options["resourceStatus"]]
+    else:
+        kwargs["ClusterStates"] = [
+            "STARTING",
+            "BOOTSTRAPPING",
+            "RUNNING",
+            "WAITING",
+        ]
+
+    if created_after:
+        kwargs["CreatedAfter"] = created_after
+
+    paginator = emr.get_paginator("list_clusters")
+    pages = paginator.paginate(**kwargs)
+
+    for page in pages:
+        if "Clusters" in page:
+            for cluster in page["Clusters"]:
+                list_of_clusters.append(cluster)
+
+    result["records"] = list_of_clusters
+    return result
 
 
 @api_wrapper

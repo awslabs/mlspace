@@ -147,41 +147,6 @@ def get_tags_for_resource(sagemaker, arn: str):
     return tags
 
 
-def list_all_clusters_for_project(
-    emr,
-    paging_options: Optional[Dict[str, str]] = None,
-    created_after: datetime.datetime = None,
-):
-    list_of_clusters = []
-    kwargs: Dict[str, Any] = {}
-    result: Dict[str, Any] = {
-        "records": [],
-    }
-    if paging_options and "resourceStatus" in paging_options:
-        kwargs["ClusterStates"] = [paging_options["resourceStatus"]]
-    else:
-        kwargs["ClusterStates"] = [
-            "STARTING",
-            "BOOTSTRAPPING",
-            "RUNNING",
-            "WAITING",
-        ]
-
-    if created_after:
-        kwargs["CreatedAfter"] = created_after
-
-    paginator = emr.get_paginator("list_clusters")
-    pages = paginator.paginate(**kwargs)
-
-    for page in pages:
-        if "Clusters" in page:
-            for cluster in page["Clusters"]:
-                list_of_clusters.append(cluster)
-
-    result["records"] = list_of_clusters
-    return result
-
-
 def list_custom_terminologies_for_project(
     client,
     fetch_all: bool = False,
