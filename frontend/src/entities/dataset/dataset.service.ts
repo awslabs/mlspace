@@ -210,7 +210,7 @@ export const createDatasetHandleAlreadyExists = (dataset: IDataset) => {
         const expectedError = `Bad Request: Dataset ${dataset.name} already exists.`;
         // Any error that the dataset already existing is unexpected
         if (expectedError !== error.response.data) {
-            throw error
+            throw error;
         }
     });
 };

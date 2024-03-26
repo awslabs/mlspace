@@ -245,7 +245,7 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                             if (hyperParameter !== undefined) {
                                 [parameterRange.MinValue, parameterRange.MaxValue].forEach(
                                     (value, index) => {
-                                        // Only evalue the validator if:
+                                        // Only evaluate the validator if:
                                         // - The field is required
                                         // - OR the field has a value
                                         // - OR this is the max field and the min field has a value
