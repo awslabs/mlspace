@@ -15,7 +15,6 @@
 #
 
 import copy
-import datetime
 import functools
 import json
 import logging
@@ -147,64 +146,6 @@ def get_tags_for_resource(sagemaker, arn: str):
     return tags
 
 
-def list_clusters_for_project(
-    emr,
-    prefix: Optional[str] = None,
-    paging_options: Optional[Dict[str, str]] = None,
-    fetch_all: bool = False,
-    created_after: datetime.datetime = None,
-):
-    list_of_clusters = []
-    kwargs: Dict[str, Any] = {}
-    result: Dict[str, Any] = {
-        "records": [],
-    }
-    if paging_options and "resourceStatus" in paging_options:
-        kwargs["ClusterStates"] = [paging_options["resourceStatus"]]
-    else:
-        kwargs["ClusterStates"] = [
-            "STARTING",
-            "BOOTSTRAPPING",
-            "RUNNING",
-            "WAITING",
-        ]
-
-    if created_after:
-        kwargs["CreatedAfter"] = created_after
-
-    if fetch_all:
-        paginator = emr.get_paginator("list_clusters")
-        pages = paginator.paginate(**kwargs)
-
-        for page in pages:
-            if "Clusters" in page:
-                for cluster in page["Clusters"]:
-                    if not prefix or cluster["Name"].split("-")[0] == prefix:
-                        list_of_clusters.append(cluster)
-    else:
-        if paging_options:
-            if "nextToken" in paging_options:
-                kwargs["Marker"] = paging_options["nextToken"]
-
-        # EMR list clusters doesn't support any kind of filtering so it's possible that
-        # we could get several pages of results that don't pertain to our target project. Given
-        # that we only list active clusters this isn't a huge concern and for now we'll just rely
-        # on users requesting addiitonal pages as needed.
-        response = emr.list_clusters(**kwargs)
-        filter_by_project_prefix(
-            response=response,
-            prefix=prefix,
-            output_list=list_of_clusters,
-            key="Clusters",
-            resource_name="Name",
-        )
-        if "Marker" in response:
-            result["nextToken"] = response["Marker"]
-
-    result["records"] = list_of_clusters
-    return result
-
-
 def list_custom_terminologies_for_project(
     client,
     fetch_all: bool = False,
@@ -239,12 +180,6 @@ def list_custom_terminologies_for_project(
 
     result["records"] = list_of_terminologies
     return result
-
-
-def filter_by_project_prefix(response: Dict, prefix: str, output_list: list, key: str, resource_name: str):
-    for item in response[key]:
-        if item[resource_name].split("-")[0] == prefix:
-            output_list.append(item)
 
 
 def generate_html_response(status_code, response_body):

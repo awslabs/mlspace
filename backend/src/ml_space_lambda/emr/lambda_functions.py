@@ -19,19 +19,23 @@ import json
 import logging
 import random
 import time
+from typing import Any, Dict, Optional
 
 import boto3
 
 from ml_space_lambda.data_access_objects.project import ProjectDAO
+from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, list_clusters_for_project, retry_config
+from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
 
 s3 = boto3.client("s3", config=retry_config)
 emr = boto3.client("emr", config=retry_config)
+
+resource_metadata_dao = ResourceMetadataDAO()
 
 cluster_config = {}
 
@@ -45,8 +49,6 @@ def create(event, context):
     user_name = event["requestContext"]["authorizer"]["principalId"]
     event_body = json.loads(event["body"])
     cluster_name = event_body["clusterName"]
-    # Don't change without also changing navigation path in MLSpaceFrontEnd emr-cluster-create.tsx
-    full_cluster_name = f"{project_name}-{cluster_name}"
     emr_size = event_body["options"]["emrSize"]
     release_version = event_body["options"]["emrRelease"]
 
@@ -87,7 +89,7 @@ def create(event, context):
     instance_count = cluster_config[emr_size]["size"]
 
     args = {}
-    args["Name"] = full_cluster_name
+    args["Name"] = cluster_name
     args["LogUri"] = f"s3://{env_variables['LOG_BUCKET']}"
     args["ReleaseLabel"] = release_version
     args["Applications"] = applications
@@ -186,15 +188,11 @@ def create(event, context):
         # Endpoint TTL is in hours so we need to convert that to seconds and add to the current time
         termination_time = time.time() + (int(project.metadata["terminationConfiguration"]["defaultEMRClusterTTL"]) * 60 * 60)
 
-        clusters = list_clusters_for_project(
-            emr=emr,
-            prefix=project_name,
-            fetch_all=True,
+        clusters = _list_all_clusters_created_after_date(
             created_after=datetime.datetime.fromtimestamp(time.time() - 20),
         )
-
         for cluster in clusters["records"]:
-            if cluster["Name"] == full_cluster_name:
+            if cluster["Name"] == cluster_name:
                 resource_scheduler_dao.create(
                     ResourceSchedulerModel(
                         resource_id=cluster["Id"],
@@ -208,15 +206,43 @@ def create(event, context):
     return response
 
 
+def _list_all_clusters_created_after_date(
+    created_after: datetime.datetime,
+    paging_options: Optional[Dict[str, str]] = None,
+):
+    list_of_clusters = []
+    kwargs: Dict[str, Any] = {}
+    result: Dict[str, Any] = {
+        "records": [],
+    }
+    if paging_options and "resourceStatus" in paging_options:
+        kwargs["ClusterStates"] = [paging_options["resourceStatus"]]
+    else:
+        kwargs["ClusterStates"] = [
+            "STARTING",
+            "BOOTSTRAPPING",
+            "RUNNING",
+            "WAITING",
+        ]
+
+    if created_after:
+        kwargs["CreatedAfter"] = created_after
+
+    paginator = emr.get_paginator("list_clusters")
+    pages = paginator.paginate(**kwargs)
+
+    for page in pages:
+        if "Clusters" in page:
+            for cluster in page["Clusters"]:
+                list_of_clusters.append(cluster)
+
+    result["records"] = list_of_clusters
+    return result
+
+
 @api_wrapper
 def list_all(event, context):
-    project_name = event["pathParameters"]["projectName"]
-
-    return list_clusters_for_project(
-        emr,
-        project_name,
-        paging_options=event["queryStringParameters"] if "queryStringParameters" in event else None,
-    )
+    return query_resource_metadata(resource_metadata_dao, event, ResourceType.EMR_CLUSTER)
 
 
 @api_wrapper

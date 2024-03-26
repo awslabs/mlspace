@@ -434,6 +434,47 @@ expected_labeling_metadata = {
     "TaskType": "Image classification",
 }
 
+
+# EMR test data
+MOCK_EMR_ID = "j-32USWBFQZ5TKR"
+mock_emr_job_flow_event = {
+    "version": "0",
+    "id": "ee0356f3-1f2e-942b-b767-77fc633df633",
+    "detail-type": "EMR Cluster State Change",
+    "source": "aws.emr",
+    "account": "123456789000",
+    "time": "2024-03-20T20:56:18Z",
+    "region": "us-east-1",
+    "resources": [],
+    "detail": {
+        "severity": "INFO",
+        "stateChangeReason": '{"code":"","message":"Cluster ready to run steps."}',
+        "name": "Bob",
+        "clusterId": MOCK_EMR_ID,
+        "state": "WAITING",
+        "message": f"Amazon EMR cluster {MOCK_EMR_ID} was created at 2024-03-20 20:55 UTC and is ready for use.",
+    },
+}
+mock_emr_describe = {
+    "Cluster": {
+        "Tags": [
+            {"Key": "system", "Value": "MLSpace"},
+            {"Key": "user", "Value": MOCK_USERNAME},
+            {"Key": "project", "Value": MOCK_PROJECT_NAME},
+        ],
+        "Status": {"State": "WAITING", "Timeline": {"CreationDateTime": "2024-03-20T20:56:18Z"}},
+        "ReleaseLabel": "emr-6.2.0",
+        "NormalizedInstanceHours": 1,
+    }
+}
+mock_emr_expected_metadata = {
+    "CreationTime": mock_emr_describe["Cluster"]["Status"]["Timeline"]["CreationDateTime"],
+    "Status": mock_emr_job_flow_event["detail"]["state"],
+    "ReleaseVersion": mock_emr_describe["Cluster"]["ReleaseLabel"],
+    "Name": mock_emr_job_flow_event["detail"]["name"],
+    "NormalizedInstanceHours": mock_emr_describe["Cluster"]["NormalizedInstanceHours"],
+}
+
 # Project test data
 mock_project_metadata_with_termination_configs = {
     "terminationConfiguration": {
@@ -714,6 +755,12 @@ def test_process_event_create_missing_tags_labeling_jobs(
             mock_labeling_create_event,
             expected_labeling_metadata,
         ),
+        (
+            MOCK_EMR_ID,
+            ResourceType.EMR_CLUSTER,
+            mock_emr_job_flow_event,
+            mock_emr_expected_metadata,
+        ),
     ],
     ids=[
         "notebook_event",
@@ -724,13 +771,16 @@ def test_process_event_create_missing_tags_labeling_jobs(
         "endpoint_config_event",
         "hpo_event",
         "labeling_job_event",
+        "emr_job_flow_event",
     ],
 )
+@mock.patch("ml_space_lambda.resource_metadata.lambda_functions.emr")
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.resource_metadata_dao")
 def test_process_event_create_client_error(
     mock_resource_metadata_dao,
     mock_sagemaker,
+    mock_emr,
     resource_id,
     resource_type,
     mock_eventbridge_event,
@@ -747,6 +797,8 @@ def test_process_event_create_client_error(
         mock_sagemaker.describe_hyper_parameter_tuning_job.return_value = mock_hpo_describe
     if resource_type == ResourceType.LABELING_JOB:
         mock_sagemaker.describe_labeling_job.return_value = mock_labeling_describe
+    if resource_type == ResourceType.EMR_CLUSTER:
+        mock_emr.describe_cluster.return_value = mock_emr_describe
 
     mock_resource_metadata_dao.upsert_record.side_effect = ClientError(
         error_msg,
@@ -759,6 +811,8 @@ def test_process_event_create_client_error(
         mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(HyperParameterTuningJobName=MOCK_HPO_JOB_NAME)
     if resource_type == ResourceType.LABELING_JOB:
         mock_sagemaker.describe_labeling_job.assert_called_with(LabelingJobName=MOCK_LABELING_JOB_NAME)
+    if resource_type == ResourceType.EMR_CLUSTER:
+        mock_emr.describe_cluster.assert_called_with(ClusterId=MOCK_EMR_ID)
     mock_resource_metadata_dao.upsert_record.assert_called_with(
         resource_id, resource_type, MOCK_USERNAME, MOCK_PROJECT_NAME, expected_metadata
     )
@@ -815,6 +869,12 @@ def test_process_event_create_client_error(
             mock_labeling_create_event,
             expected_labeling_metadata,
         ),
+        (
+            MOCK_EMR_ID,
+            ResourceType.EMR_CLUSTER,
+            mock_emr_job_flow_event,
+            mock_emr_expected_metadata,
+        ),
     ],
     ids=[
         "notebook_event",
@@ -825,13 +885,16 @@ def test_process_event_create_client_error(
         "endpoint_config_event",
         "hpo_event",
         "labeling_job_event",
+        "emr_job_flow_event",
     ],
 )
+@mock.patch("ml_space_lambda.resource_metadata.lambda_functions.emr")
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.resource_metadata.lambda_functions.resource_metadata_dao")
 def test_process_event_upsert(
     mock_resource_metadata_dao,
     mock_sagemaker,
+    mock_emr,
     resource_id,
     resource_type,
     mock_eventbridge_event,
@@ -841,6 +904,8 @@ def test_process_event_upsert(
         mock_sagemaker.describe_hyper_parameter_tuning_job.return_value = mock_hpo_describe
     if resource_type == ResourceType.LABELING_JOB:
         mock_sagemaker.describe_labeling_job.return_value = mock_labeling_describe
+    if resource_type == ResourceType.EMR_CLUSTER:
+        mock_emr.describe_cluster.return_value = mock_emr_describe
 
     process_event(mock_eventbridge_event, mock_context)
 
@@ -848,6 +913,8 @@ def test_process_event_upsert(
         mock_sagemaker.describe_hyper_parameter_tuning_job.assert_called_with(HyperParameterTuningJobName=MOCK_HPO_JOB_NAME)
     if resource_type == ResourceType.LABELING_JOB:
         mock_sagemaker.describe_labeling_job.assert_called_with(LabelingJobName=MOCK_LABELING_JOB_NAME)
+    if resource_type == ResourceType.EMR_CLUSTER:
+        mock_emr.describe_cluster.assert_called_with(ClusterId=MOCK_EMR_ID)
     mock_resource_metadata_dao.upsert_record.assert_called_with(
         resource_id, resource_type, MOCK_USERNAME, MOCK_PROJECT_NAME, expected_metadata
     )

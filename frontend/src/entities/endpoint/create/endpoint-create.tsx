@@ -41,6 +41,7 @@ import NotificationService from '../../../shared/layout/notification/notificatio
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
 import { z } from 'zod';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
+import { generateNameConstraintText } from '../../../shared/util/form-utils';
 
 export function EndpointCreate () {
     const [endpoint, setEndpoint] = useState(defaultEndpoint as IEndpoint);
@@ -208,9 +209,7 @@ export function EndpointCreate () {
                     <Container header={<Header variant='h2'>Endpoint</Header>}>
                         <FormField
                             label='Endpoint name'
-                            constraintText={
-                                'Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.'
-                            }
+                            constraintText={generateNameConstraintText()}
                             errorText={state.formErrors.EndpointName}
                         >
                             <Input

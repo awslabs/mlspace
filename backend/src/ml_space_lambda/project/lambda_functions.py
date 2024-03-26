@@ -29,13 +29,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, Pro
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
-from ml_space_lambda.utils.common_functions import (
-    api_wrapper,
-    list_clusters_for_project,
-    retry_config,
-    serialize_permissions,
-    total_project_owners,
-)
+from ml_space_lambda.utils.common_functions import api_wrapper, retry_config, serialize_permissions, total_project_owners
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
@@ -99,16 +93,6 @@ def _add_project_user(project_name: str, username: str, permissions: Optional[Li
 def _get_resource_counts(project_name):
     resource_counts = {}
     for resource_type in ResourceType:
-        if resource_type == ResourceType.EMR_CLUSTER:
-            clusters = list_clusters_for_project(emr=emr, prefix=project_name, fetch_all=True)
-            cluster_status = [cluster["Status"]["State"] for cluster in clusters["records"]]
-
-            status_counts = Counter(cluster_status)
-
-            total_counts = {"Total": len(cluster_status)}
-            total_counts = total_counts | dict(status_counts)  # Merges the dicts and preserves order
-            resource_counts[resource_type] = total_counts
-            continue
 
         resource_list = resource_metadata_dao.get_all_for_project_by_type(project_name, resource_type, fetch_all=True).records
 
@@ -230,14 +214,8 @@ def remove_user(event, context):
 
     if Permission.PROJECT_OWNER not in project_member.permissions or total_project_owners(project_user_dao, project_name) > 1:
         # Terminate any running EMR Clusters the user owns that are associated with the project
-        cluster_ids = []
-        clusters = list_clusters_for_project(emr, project_name, fetch_all=True)
-        for cluster in clusters["records"]:
-            cluster_details = emr.describe_cluster(ClusterId=cluster["Id"])
-            for tag in cluster_details["Cluster"]["Tags"]:
-                if tag["Key"] == "user" and tag["Value"] == username:
-                    cluster_ids.append(cluster["Id"])
-                    break
+        clusters = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.EMR_CLUSTER, fetch_all=True)
+        cluster_ids = [cluster.id for cluster in clusters.records if cluster.user == username]
 
         if cluster_ids:
             emr.set_termination_protection(JobFlowIds=cluster_ids, TerminationProtected=False)
@@ -432,9 +410,9 @@ def delete(event, context):
         )
 
     # Delete all EMR Clusters
-    clusters = list_clusters_for_project(emr, project_name, fetch_all=True)
-    if clusters["records"]:
-        cluster_ids = [cluster["Id"] for cluster in clusters["records"]]
+    clusters = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.EMR_CLUSTER, fetch_all=True)
+    if clusters.records:
+        cluster_ids = [cluster.id for cluster in clusters.records]
         emr.set_termination_protection(JobFlowIds=cluster_ids, TerminationProtected=False)
         emr.terminate_job_flows(JobFlowIds=cluster_ids)
 
