@@ -2215,8 +2215,6 @@ def test_manage_project_sagemaker_resource_boto_error(
     mock_project_dao.get.return_value = MOCK_PROJECT
     if path_param_key in ["notebookName", "endpointName", "modelName", "endpointConfigName", "clusterId"]:
         mock_resource_metadata_dao.get.side_effect = ClientError(error_msg, "GetItem")
-    # if path_param_key == "clusterId":
-    #     mock_emr.describe_cluster.side_effect = ClientError(error_msg, "DescribeCluster")
     if path_param_key == "datasetName":
         mock_dataset_dao.get.side_effect = ClientError(error_msg, "GetItem")
         path_params["scope"] = "global"
