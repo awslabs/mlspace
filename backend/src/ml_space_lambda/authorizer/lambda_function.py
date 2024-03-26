@@ -396,11 +396,11 @@ def _handle_dataset_request(request_method, path_params, user):
             # they can't update or delete the dataset or any files
             if request_method in ["PUT", "DELETE"]:
                 logger.info(f"Access Denied. User: '{user.username}' does not own the specified dataset.")
-            elif dataset_scope == DatasetType.GLOBAL.value:
+            elif dataset.type == DatasetType.GLOBAL:
                 # If it's not a delete or update but it's a global dataset
                 # then all users should have access
                 return True
-            else:
+            elif dataset.type == DatasetType.PROJECT:
                 # It's a project dataset so the user needs access to the project
                 project_user = project_user_dao.get(dataset_scope, user.username)
                 if project_user:

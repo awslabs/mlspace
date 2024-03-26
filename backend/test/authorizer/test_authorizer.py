@@ -1571,11 +1571,52 @@ def test_dataset_routes(
 
     mock_user_dao.get.assert_called_with(user.username)
     mock_dataset_dao.get.assert_called_with(scope, mock_dataset.name)
-    # We'll only grab the project user if it's a GET, not global, and the user wasn't the owner
-    if scope != DatasetType.GLOBAL.value and method == "GET" and user.username != MOCK_OWNER_USER.username:
+    # We'll only grab the project user if it's a GET, Project Dataset, and the user wasn't the owner
+    if mock_dataset.type == DatasetType.PROJECT and method == "GET" and user.username != MOCK_OWNER_USER.username:
         mock_project_user_dao.get.assert_called_with(scope, user.username)
     else:
         mock_project_user_dao.get.assert_not_called()
+
+
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.dataset_dao")
+def test_dataset_adversarial(mock_dataset_dao, mock_user_dao, mock_project_user_dao):
+    method = "GET"
+    allow = False
+
+    # Adversarial example where project name equals private dataset owner
+    # MOCK_USER is member of said project name
+    project_name = MOCK_OWNER_USER.username
+
+    mock_private_dataset = DatasetModel(
+        scope=MOCK_OWNER_USER.username,
+        name="UnitTestDataset",
+        description="For unit tests",
+        location="s3://fake-location/",
+        created_by=MOCK_OWNER_USER.username,
+    )
+    assert mock_private_dataset.type == DatasetType.PRIVATE
+
+    mock_dataset_dao.get.return_value = mock_private_dataset
+    mock_user_dao.get.return_value = MOCK_USER
+    mock_project_user_dao.get.return_value = MOCK_USER
+
+    assert lambda_handler(
+        mock_event(
+            user=MOCK_USER,
+            resource=f"/dataset/{project_name}/{mock_private_dataset.name}",
+            method=method,
+            path_params={"scope": project_name, "datasetName": mock_private_dataset.name},
+        ),
+        {},
+    ) == policy_response(allow=allow, user=MOCK_USER)
+
+    mock_user_dao.get.assert_called_with(MOCK_USER.username)
+    mock_dataset_dao.get.assert_called_with(project_name, mock_private_dataset.name)
+
+    mock_project_user_dao.get.assert_not_called()
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
