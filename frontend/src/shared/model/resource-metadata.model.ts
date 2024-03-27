@@ -13,6 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+import { EMRStatusState } from '../../entities/emr/emr.model';
 import { TrainingJobStatusCounters } from '../../entities/jobs/hpo/hpo-job.model';
 import { JobStatus } from '../../entities/jobs/job.model';
 import { NotebookStatus } from './notebook.model';
@@ -38,6 +39,14 @@ type EndpointConfigMetadata = {
     EndpointConfigArn: string;
     CreationTime: string;
 };
+
+type EMRMetadata = {
+    State: EMRStatusState;
+    ReleaseLabel: string;
+    CreationTime: string;
+    Name: string;
+    NormalizedInstanceHours: number;
+}
 
 type HPOJobMetadata = {
     CreationTime: string;
@@ -103,6 +112,7 @@ type TextTranslationMetadata = {
 
 export type BatchTranslateResourceMetadata = IResourceMetadata<TextTranslationMetadata>;
 export type EndpointConfigResourceMetadata = IResourceMetadata<EndpointConfigMetadata>;
+export type EMRResourceMetadata = IResourceMetadata<EMRMetadata>;
 export type EndpointResourceMetadata = IResourceMetadata<EndpointMetadata>;
 export type HPOJobResourceMetadata = IResourceMetadata<HPOJobMetadata>;
 export type LabelingJobResourceMetadata = IResourceMetadata<LabelingJobMetadata>;

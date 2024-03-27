@@ -27,6 +27,7 @@ from ml_space_lambda.utils.mlspace_config import get_environment_variables, retr
 logger = logging.getLogger(__name__)
 
 sagemaker = boto3.client("sagemaker", config=retry_config)
+emr = boto3.client("emr", config=retry_config)
 resource_metadata_dao = ResourceMetadataDAO()
 
 
@@ -51,17 +52,20 @@ def sync_metadata(event, context):
             _sync_endpoint_configs(env_variables)
         if "HPOJobs" in event_body["resourceTypes"]:
             _sync_hpo_jobs(env_variables)
+        if "EMRClusters" in event_body["resourceTypes"]:
+            _sync_emr_jobs(env_variables)
     else:
         message = "No resource types were specified."
     return {"success": True, "message": message}
 
 
-def _get_system_owner_and_project(arn, system_tag):
+def _get_system_owner_and_project(arn, system_tag, tags=[]):
     project = None
     owner = None
     is_mlspace_resource = False
 
-    tags = get_tags_for_resource(sagemaker, arn)
+    if not tags:
+        tags = get_tags_for_resource(sagemaker, arn)
     for tag in tags:
         if tag["Key"] == "project":
             project = tag["Value"]
@@ -308,3 +312,39 @@ def _sync_hpo_jobs(env_variables):
                         )
                     except Exception:
                         logger.warn(f'Error generating resource metadata for HPO Job: {job["HyperParameterTuningJobName"]}')
+
+
+def _sync_emr_jobs(env_variables):
+    paginator = emr.get_paginator("list_clusters")
+    pages = paginator.paginate()
+
+    for page in pages:
+        if "Clusters" in page:
+            for cluster in page["Clusters"]:
+                status = cluster["Status"]["State"]
+                if status != "TERMINATED":
+                    # Describe the cluster so we can get the ReleaseLabel value and Tags
+                    cluster_details = emr.describe_cluster(ClusterId=cluster["Id"])
+                    # Check if this is an MLSpace resource based on tags
+                    (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
+                        cluster["ClusterArn"], env_variables["SYSTEM_TAG"], cluster_details["Cluster"]["Tags"]
+                    )
+                    if project and owner and is_mlspace_resource:
+                        metadata = {
+                            "CreationTime": cluster["Status"]["Timeline"]["CreationDateTime"],
+                            "Status": status,
+                            "ReleaseVersion": cluster_details["Cluster"]["ReleaseLabel"],
+                            "Name": cluster["Name"],
+                            "NormalizedInstanceHours": cluster["NormalizedInstanceHours"],
+                        }
+                        # Create resource metadata record
+                        try:
+                            resource_metadata_dao.upsert_record(
+                                cluster["Id"],
+                                ResourceType.EMR_CLUSTER,
+                                owner,
+                                project,
+                                metadata,
+                            )
+                        except Exception:
+                            logger.warn(f'Error generating resource metadata for EMR Cluster: {cluster["Name"]}')

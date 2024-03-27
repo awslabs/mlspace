@@ -74,6 +74,7 @@ import { InputDataConfiguration } from '../../hpo/create/training-definitions/in
 import { OutputDataConfiguration } from '../../hpo/create/training-definitions/output-data-configuration';
 import { createDatasetHandleAlreadyExists, determineScope } from '../../../dataset/dataset.service';
 import { IDataset } from '../../../../shared/model';
+import { generateNameConstraintText } from '../../../../shared/util/form-utils';
 
 const ALGORITHMS: { [key: string]: Algorithm } = {};
 ML_ALGORITHMS.filter((algorithm) => algorithm.defaultHyperParameters.length > 0).map(
@@ -430,7 +431,7 @@ export default function TrainingJobCreate () {
                         <SpaceBetween direction='vertical' size='l'>
                             <FormField
                                 label='Job Name'
-                                constraintText='Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.'
+                                constraintText={generateNameConstraintText()}
                                 errorText={formErrors.TrainingJobName}
                             >
                                 <Input

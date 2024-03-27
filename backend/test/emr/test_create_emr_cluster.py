@@ -81,7 +81,7 @@ mock_cluster_config_response = {"Body": BytesIO(bytes(json.dumps(mock_cluster_co
 
 def _expected_args(custom_ami: Optional[str] = None):
     expected_args = {
-        "Name": f"{MOCK_PROJECT_NAME}-example_cluster_name",
+        "Name": "example_cluster_name",
         "LogUri": "s3://mlspace-log-bucket",
         "ReleaseLabel": mock_cluster_config["release"],
         "Applications": [{"Name": "Hive"}, {"Name": "HBase"}],
@@ -219,7 +219,7 @@ mock_list_response = {
     "Clusters": [
         {
             "Id": "mock-cluster-id",
-            "Name": f"{MOCK_PROJECT_NAME}-{MOCK_CLUSTER_NAME}",
+            "Name": MOCK_CLUSTER_NAME,
             "Status": {
                 "State": "RUNNING",
             },
@@ -287,9 +287,7 @@ def test_create_emr_cluster_success(
     mock_paginator = mock.MagicMock()
     mock_emr.get_paginator.return_value = mock_paginator
     mock_cluster_id = "Cluster1"
-    mock_paginator.paginate.return_value = [
-        {"Clusters": [{"Id": mock_cluster_id, "Name": f"{MOCK_PROJECT_NAME}-{MOCK_CLUSTER_NAME}"}]}
-    ]
+    mock_paginator.paginate.return_value = [{"Clusters": [{"Id": mock_cluster_id, "Name": MOCK_CLUSTER_NAME}]}]
     mock_project_dao.get.return_value = mock_project
 
     expected_response = generate_html_response(200, mock_response)
@@ -336,9 +334,7 @@ def test_create_emr_cluster_success_with_subnet(
     mock_paginator = mock.MagicMock()
     mock_emr.get_paginator.return_value = mock_paginator
     mock_cluster_id = "Cluster1"
-    mock_paginator.paginate.return_value = [
-        {"Clusters": [{"Id": mock_cluster_id, "Name": f"{MOCK_PROJECT_NAME}-{MOCK_CLUSTER_NAME}"}]}
-    ]
+    mock_paginator.paginate.return_value = [{"Clusters": [{"Id": mock_cluster_id, "Name": MOCK_CLUSTER_NAME}]}]
     mock_project_dao.get.return_value = mock_project
 
     expected_response = generate_html_response(200, mock_response)

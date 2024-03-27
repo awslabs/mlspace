@@ -60,7 +60,7 @@ export const EMRClusters = () => {
             tableName='EMR Cluster'
             tableType='single'
             focusProps={{ createEmrRef: createEmrRef }}
-            trackBy='Id'
+            trackBy='resourceId'
             itemNameProperty='Name'
             allItems={emrClusters}
             actions={EMRClusterActions}

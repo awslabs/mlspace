@@ -908,3 +908,105 @@ def test_sync_hpo_jobs(mock_sagemaker, mock_resource_metadata_dao, mock_get_tags
             mock.call(HyperParameterTuningJobName="test-job-3"),
         ]
     )
+
+
+@mock.patch("ml_space_lambda.migration.lambda_functions.resource_metadata_dao")
+@mock.patch("ml_space_lambda.migration.lambda_functions.emr")
+def test_sync_emr(mock_emr, mock_resource_metadata_dao):
+    expected_response = generate_html_response(
+        200,
+        {
+            "success": True,
+            "message": "Successfully created resource metadata records for the selected resource types.",
+        },
+    )
+    job1_details = {
+        "Id": "cluster1Id",
+        "ClusterArn": "arn::cluster1",
+        "Status": {
+            "State": "WAITING",
+            "Timeline": {
+                "CreationDateTime": "2023-08-11 09:33:05.109000+00:00",
+            },
+        },
+        "Name": "cluster1",
+        "NormalizedInstanceHours": 1,
+    }
+    job2_details = {
+        "Id": "cluster2Id",
+        "ClusterArn": "arn::cluster2",
+        "Status": {
+            "State": "STARTING",
+            "Timeline": {
+                "CreationDateTime": "2023-08-11 09:33:05.109000+00:00",
+            },
+        },
+        "Name": "cluster2",
+        "NormalizedInstanceHours": 2,
+    }
+    job3_details = {
+        "Id": "cluster3Id",
+        "ClusterArn": "arn::cluster3",
+        "Status": {
+            "State": "TERMINATED",
+            "Timeline": {
+                "CreationDateTime": "2023-08-11 09:33:05.109000+00:00",
+            },
+        },
+        "Name": "cluster3",
+        "NormalizedInstanceHours": 3,
+    }
+    mock_paginator = mock.Mock()
+    mock_paginator.paginate.return_value = [
+        {"Clusters": [job1_details, job2_details, job3_details]},
+    ]
+    mock_emr.get_paginator.return_value = mock_paginator
+    mock_cluster_details = {"Cluster": {"Tags": mock_tags_respones[0], "ReleaseLabel": "emr-6.6.0"}}
+    mock_emr.describe_cluster.return_value = mock_cluster_details
+
+    mock_resource_metadata_dao.upsert_record.side_effect = [
+        None,
+        None,
+        ValueError("Totally fake error"),
+    ]
+    response = lambda_handler({"body": json.dumps({"resourceTypes": ["EMRClusters"]})}, mock_context)
+    assert response == expected_response
+    mock_emr.get_paginator.assert_called_with("list_clusters")
+
+    mock_resource_metadata_dao.upsert_record.assert_has_calls(
+        [
+            mock.call(
+                job1_details["Id"],
+                ResourceType.EMR_CLUSTER,
+                mock_user_name,
+                mock_project_name,
+                {
+                    "CreationTime": job1_details["Status"]["Timeline"]["CreationDateTime"],
+                    "Status": job1_details["Status"]["State"],
+                    "ReleaseVersion": mock_cluster_details["Cluster"]["ReleaseLabel"],
+                    "Name": job1_details["Name"],
+                    "NormalizedInstanceHours": job1_details["NormalizedInstanceHours"],
+                },
+            ),
+            mock.call(
+                job2_details["Id"],
+                ResourceType.EMR_CLUSTER,
+                mock_user_name,
+                mock_project_name,
+                {
+                    "CreationTime": job2_details["Status"]["Timeline"]["CreationDateTime"],
+                    "Status": job2_details["Status"]["State"],
+                    "ReleaseVersion": mock_cluster_details["Cluster"]["ReleaseLabel"],
+                    "Name": job2_details["Name"],
+                    "NormalizedInstanceHours": job2_details["NormalizedInstanceHours"],
+                },
+            ),
+            # cluster3 should be skipped due to being in a TERMINATED state
+        ]
+    )
+    mock_emr.describe_cluster.assert_has_calls(
+        [
+            mock.call(ClusterId=job1_details["Id"]),
+            mock.call(ClusterId=job2_details["Id"]),
+        ]
+    )

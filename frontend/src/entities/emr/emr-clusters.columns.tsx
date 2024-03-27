@@ -17,35 +17,35 @@
 import { TableProps } from '@cloudscape-design/components';
 import { formatDate } from '../../shared/util/date-utils';
 import { prettyStatus } from '../../shared/util/table-utils';
-import { EMRClusterSummary } from './emr.model';
 import { linkify } from '../../shared/util/table-utils';
+import { EMRResourceMetadata } from '../../shared/model/resource-metadata.model';
 
-const defaultColumns: TableProps.ColumnDefinition<EMRClusterSummary>[] = [
+const defaultColumns: TableProps.ColumnDefinition<EMRResourceMetadata>[] = [
     {
         id: 'name',
         header: 'Name',
-        cell: (item) => linkify('emr', item.Name, item.Id),
+        cell: (item) => linkify('emr', item.metadata.Name, item.resourceId),
     },
     {
         id: 'id',
         header: 'Id',
-        cell: (item) => item.Id,
+        cell: (item) => item.resourceId,
     },
     {
         id: 'status',
         header: 'Status',
-        cell: (item) => prettyStatus(item.Status?.State),
+        cell: (item) => prettyStatus(item.metadata.State),
     },
     {
         id: 'created',
         header: 'Creation time',
-        cell: (item) => formatDate(item.Status.Timeline.CreationDateTime),
+        cell: (item) => formatDate(item.metadata.CreationTime),
     },
     { id: 'elapsed', header: 'Elapsed time', cell: () => '-' },
     {
         id: 'hours',
         header: 'Normalized instance hours',
-        cell: (item) => item.NormalizedInstanceHours,
+        cell: (item) => item.metadata.NormalizedInstanceHours,
     },
 ];
 
