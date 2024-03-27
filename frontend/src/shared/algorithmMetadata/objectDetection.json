@@ -1,0 +1,53 @@
+{
+    "metricDefinitions": [
+      {
+        "metricName": "train:cross_entropy",
+        "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, batch=\\S+ train cross_entropy <loss>=\\((\\S+)\\)"
+      },
+      {
+        "metricName": "train:progress",
+        "metricRegex": "#progress_metric: host=\\S+, completed (\\S+) %"
+      },
+      {
+        "metricName": "train:smooth_l1",
+        "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, batch=\\S+ train smooth_l1 <loss>=\\((\\S+)\\)"
+      },
+      {
+        "metricName": "train:throughput",
+        "metricRegex": "#throughput_metric: host=\\S+, train throughput=(\\S+) records/second"
+      },
+      {
+        "metricName": "validation:mAP",
+        "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, validation mAP <score>=\\((\\S+)\\)"
+      }
+    ],
+    "objectiveMetrics": [
+      {
+        "metricName": "validation:mAP",
+        "metricType": "Maximize"
+      }
+    ],
+    "tunable": true,
+    "tunableHyperParameters": [
+      {
+        "defaultParameterScale": "Linear",
+        "parameterName": "mini_batch_size"
+      },
+      {
+        "defaultParameterScale": "Logarithmic",
+        "parameterName": "learning_rate"
+      },
+      {
+        "parameterName": "optimizer"
+      },
+      {
+        "defaultParameterScale": "ReverseLogarithmic",
+        "parameterName": "momentum"
+      },
+      {
+        "defaultParameterScale": "Logarithmic",
+        "parameterName": "weight_decay"
+      }
+    ]
+  }
+  
