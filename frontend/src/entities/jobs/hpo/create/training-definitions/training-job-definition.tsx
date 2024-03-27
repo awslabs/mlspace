@@ -245,21 +245,28 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                             if (hyperParameter !== undefined) {
                                 [parameterRange.MinValue, parameterRange.MaxValue].forEach(
                                     (value, index) => {
-                                        const parseResult =
+                                        // Only evaluate the validator if:
+                                        // - The field is required
+                                        // - OR the field has a value
+                                        // - OR this is the max field and the min field has a value
+                                        // This evaluation avoids the issue where a blank value is evaluated as a 0 on a forced safeParse even for optional fields
+                                        if (!hyperParameter.zValidator?.isOptional || value || (index === 1 && parameterRange.MinValue) ) {
+                                            const parseResult =
                                             hyperParameter.zValidator?.safeParse(value);
-                                        if (parseResult?.success === false) {
-                                            ctx.addIssue({
-                                                code: 'custom',
-                                                path: ['hyperparameters', parameterRange.Name],
-                                                message:
-                                                    parseResult?.error.issues
-                                                        .map((issue) => issue.message)
-                                                        .reduce(
-                                                            (previous, current) =>
-                                                                `${previous}; ${current}`
-                                                        ) +
-                                                    ` (${index === 0 ? 'min value' : 'max value'})`,
-                                            });
+                                            if (parseResult?.success === false) {
+                                                ctx.addIssue({
+                                                    code: 'custom',
+                                                    path: ['hyperparameters', parameterRange.Name],
+                                                    message:
+                                                        parseResult?.error.issues
+                                                            .map((issue) => issue.message)
+                                                            .reduce(
+                                                                (previous, current) =>
+                                                                    `${previous}; ${current}`
+                                                            ) +
+                                                        ` (${index === 0 ? 'min value' : 'max value'})`,
+                                                });
+                                            }
                                         }
                                     }
                                 );
