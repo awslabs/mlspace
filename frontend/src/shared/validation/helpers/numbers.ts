@@ -16,67 +16,96 @@
 
 import { z } from 'zod';
 
-/**
- * Represents the properties of a numeric interval
- */
-export enum IntervalStrategy {
-    OPEN,
-    CLOSED,
-    LEFT_OPEN,
-    RIGHT_OPEN,
-}
+type rangeValidatorProps = {
+    min?: number;
+    max?: number;
+    isFloat?: boolean;
+    required?: boolean;
+    includeMin?: boolean;
+    includeMax?: boolean;
+    alternateValues?: string[];
+};
 
 /**
- * Creates a validator for a numeric interval
- *
- * @param bounds an array containing the lower and upper bounds of an interval
- * @param strategy the strategy used for the upper and lower bounds
- * @param isInteger if the interval is constrained to integers
- * @returns a validator for a numeric interval
+ * Creates a validator for ensuring a number meets the required conditions
+ * 
+ * @param fieldName Name of the field being validated
+ * @param inputProps Properties that ensure the validity of the field
+ * @returns A validator for the field that ensures the desired requirements
  */
-export const numberIntervalValidator = (bounds: [number, number], strategy: IntervalStrategy = IntervalStrategy.RIGHT_OPEN, isInteger: boolean) => {
-    let validator = z.coerce.number({
-        invalid_type_error: `Must be ${isInteger ? 'an integer' : 'a float'}`
+export const numberValidator = (
+    fieldName: string,
+    inputProps?: rangeValidatorProps
+) => {
+    // Create properties by merging the defaults with the provided input properties
+    const props = {
+        min: Number.NEGATIVE_INFINITY, // Specifies the smallest number allowed (default is infinitely negative to allow for any number)
+        max: Number.POSITIVE_INFINITY, // Specifies the largest number allowed (default is infinitely positive to allow for any number)
+        isFloat: false, // The number is assumed to be an Integer unless specified (default is that it is an Integer)
+        required: false, // Specify whether this field is required for submission and must not be empty (default is that the field is not required)
+        includeMin: true, // Whether the specified minimum is a valid number option (default is that it is valid)
+        includeMax: true, // Whether the specified maximum is a valid number option (default is that it is valid)
+        ...inputProps
+    };
+
+    // Create range message
+    let rangeMessage = '';
+    if (props.min !== Number.NEGATIVE_INFINITY && props.max !== Number.POSITIVE_INFINITY){
+        // Create range message
+        rangeMessage = ` value in the range ${props.includeMin ? '[' : '('}${props.min},${props.max}${props.includeMax ? ']' : ')'}`;
+    } else if (props.max === Number.POSITIVE_INFINITY) {
+        // If there is a min, but not a max, create greater than message
+        rangeMessage = ` value greater than ${props.includeMin ? 'or equal to ' : ''}${props.min}`;
+    } else if (props.min === Number.NEGATIVE_INFINITY) {
+        // If there is a max, but not a min, create less than message
+        rangeMessage = ` value less than ${props.includeMax ? 'or equal to ' : ''}${props.max}`;
+    }
+
+    // Create validation message for errors
+    const validationMessage = `${fieldName}${props.required ? ' is required and' : '' } must be ${
+        props.isFloat ? 'a float' : 'an integer'}${rangeMessage}${
+        props.alternateValues ? ' or be one of the following values: ' + props.alternateValues.map((value) => `'${value}'`).join(', ') : ''}`;
+
+
+    // Create base number validator
+    let numberContext = z.coerce.number({
+        invalid_type_error: validationMessage,
     });
 
-    if (isInteger) {
-        validator = validator.int();
+    // Add min/max check based on min and max inclusions
+    numberContext = props.includeMin ? numberContext.gte(props.min, { message: validationMessage }) : numberContext.gt(props.min, { message: validationMessage });
+    numberContext = props.includeMax ? numberContext.lte(props.max, { message: validationMessage }) : numberContext.lt(props.max, { message: validationMessage });
+
+    // Create a wrapper validator that allows for possible text values
+    let wrapperContext: any = numberContext;
+
+    // Appends alternative non-number allowed values
+    if (props.alternateValues) {
+        props.alternateValues.forEach((value) => {
+            wrapperContext = z.union([wrapperContext, z.literal(value)], {errorMap: () => ({ message: validationMessage})});
+        });
     }
 
-    if ([IntervalStrategy.CLOSED, IntervalStrategy.RIGHT_OPEN].indexOf(strategy) !== -1) {
-        validator = validator.gte(bounds[0]);
-    } else {
-        validator = validator.gt(bounds[0]);
+    if (!props.required) {
+        wrapperContext = wrapperContext.optional();
     }
 
-    if ([IntervalStrategy.CLOSED, IntervalStrategy.LEFT_OPEN].indexOf(strategy) !== -1) {
-        validator = validator.lte(bounds[1]);
-    } else {
-        validator = validator.lt(bounds[1]);
-    }
-
-    return validator;
+    return wrapperContext;
 };
 
-/**
- * Creates a validator for floats within a numeric interval
- *
- * @param bounds an array containing the lower and upper bounds of an interval
- * @param strategy the strategy used for the upper and lower bounds
- * @returns a validator for integers within a numeric interval
- */
-export const floatIntervalValidator = (bounds: [number, number], strategy: IntervalStrategy = IntervalStrategy.RIGHT_OPEN) => {
-    return numberIntervalValidator(bounds, strategy, false);
+export const floatValidator = (fieldName: string, required = false, positive = false) => {
+    return numberValidator(fieldName, {
+        isFloat: true,
+        required,
+        min: positive ? 0 : Number.NEGATIVE_INFINITY,
+        includeMin: false // If positive, can't be zero, will never reach Number.NEGATIVE_INFINITY regardless
+    });
 };
 
-/**
- * Creates a validator for integers within a numeric interval
- *
- * @param bounds an array containing the lower and upper bounds of an interval
- * @param strategy the strategy used for the upper and lower bounds
- * @returns a validator for floats within a numeric interval
- */
-export const integerIntervalValidator = (bounds: [number, number], strategy: IntervalStrategy = IntervalStrategy.RIGHT_OPEN) => {
-    return numberIntervalValidator(bounds, strategy, true);
+export const positiveIntValidator = (fieldName: string, inputProps : rangeValidatorProps = { }) => {
+    return numberValidator(fieldName, 
+        {
+            min: 1,
+            ...inputProps
+        });
 };
-
