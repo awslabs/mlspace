@@ -70,6 +70,8 @@ Update the values in `lib/constants.ts` based on your specific deployment needs.
 ### Creating a production optimized web app build
 In addition to updating the necessary parameters in the CDK constants file you will also need to create a production build of the web application. You can do this by changing to the web application directory (`frontend/`) and running:
 ```
+# From project root directory
+cd frontend
 npm run clean && npm install
 ```
 This will generate a production optimized build of the web application and documentation, the resulting artifacts will be written to the `frontend/build/` directory.
@@ -83,9 +85,11 @@ You will also need to set `OIDC_URL` and `OIDC_CLIENT_NAME` with the correct val
 
 The MLSpace application is a standard CDK application and can be deployed just as any CDK application is deployed:
 ```
+# From project root directory
 npm install && cdk bootstrap <REPLACE WITH YOUR ACCOUNT NUMBER>/<REPLACE WITH TARGET REGION>
 ```
 Once the account has been bootstrap you can deploy the application. You can optionally include `--require-approval never` in the below command if you don't want to confirm changes:
 ```
+# From project root directory
 cdk deploy --all
 ```
