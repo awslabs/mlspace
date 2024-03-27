@@ -507,8 +507,7 @@ export const ML_ALGORITHMS: Algorithm[] = [
             description: 'The image size for input during training. We randomly rescale the input image based on base_size, and then take a random square crop with side length equal to crop_size. The crop_size will be automatically rounded up to multiples of 8.',
             zValidator: numberValidator('crop_size',
                 {   
-                    min: 16,
-                    includeMin: false
+                    min: 16
                 })
         },
         {
