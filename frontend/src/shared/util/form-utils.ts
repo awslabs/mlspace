@@ -26,10 +26,8 @@ export const formatDisplayNumber = (number: any) => {
     return isNaN(Number(number)) ? '-' : Number(number);
 };
 
-export const generateNameConstraintTextWithProject = (projectName: string) => {
-    return `Maximum of ${
-        63 - projectName.length - 1
-    } alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.`;
+export const generateNameConstraintText = () => {
+    return 'Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.';
 };
 
 export const deletionDescription = (entity: string) => {

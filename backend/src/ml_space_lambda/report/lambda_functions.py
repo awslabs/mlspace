@@ -28,7 +28,7 @@ from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataR
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission, ResourceType
-from ml_space_lambda.utils.common_functions import api_wrapper, get_tags_for_resource, list_clusters_for_project, retry_config
+from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 project_dao = ProjectDAO()
@@ -36,10 +36,8 @@ resource_scheduler_dao = ResourceSchedulerDAO()
 resource_metadata_dao = ResourceMetadataDAO()
 user_dao = UserDAO()
 
-sagemaker = boto3.client("sagemaker", config=retry_config)
 logger = logging.getLogger(__name__)
 
-emr = boto3.client("emr", config=retry_config)
 s3 = boto3.client(
     "s3",
     config=Config(
@@ -208,31 +206,25 @@ def _get_training_jobs(resource_get_func: Callable[..., PagedMetadataResults], a
 
 
 def _get_emr_clusters(
-    cluster_prefix: Optional[str] = None,
-    cluster_owner: Optional[str] = None,
+    resource_get_func: Callable[..., PagedMetadataResults],
+    args: Dict[str, any],
     termination_records: Optional[List[ResourceSchedulerModel]] = None,
 ) -> List[Dict[str, Any]]:
-    response = list_clusters_for_project(emr, prefix=cluster_prefix, fetch_all=True)
-
+    args["type"] = ResourceType.EMR_CLUSTER
+    response = resource_get_func(**args)
     clusters = []
-    for result in response["records"]:
-        cluster_status = result["Status"]
-        owner = _get_resource_owner(result["ClusterArn"])
-        if not cluster_owner or owner == cluster_owner:
-            clusters.append(
-                {
-                    "Name": result["Name"],
-                    "Project": result["Name"].split("-")[0],
-                    "Status": cluster_status["State"],
-                    "Created": _format_date(cluster_status["Timeline"]["CreationTime"]),
-                    "Release": result["ReleaseLabel"],
-                    "Owner": owner,
-                    "Auto-termination": _get_terminiation_datetime(
-                        result["Id"], ResourceType.EMR_CLUSTER, termination_records
-                    ),
-                }
-            )
-
+    for result in response.records:
+        clusters.append(
+            {
+                "Name": result.metadata.get("Name", ""),
+                "Project": result.project,
+                "Status": result.metadata.get("Status", ""),
+                "Created": result.metadata.get("CreationTime", ""),
+                "Release": result.metadata.get("ReleaseVersion", ""),
+                "Owner": result.user,
+                "Auto-termination": _get_terminiation_datetime(result.id, ResourceType.EMR_CLUSTER, termination_records),
+            }
+        )
     return clusters
 
 
@@ -315,8 +307,9 @@ def _get_project_resources(
         project["Training Jobs"] = _get_training_jobs(resource_get_func, base_args)
     if "EMR Clusters" in requested_resources:
         project["EMR Clusters"] = _get_emr_clusters(
-            cluster_prefix=proj_name,
-            termination_records=[record for record in termination_records if record.resource_type == ResourceType.EMR_CLUSTER],
+            resource_get_func,
+            base_args,
+            [record for record in termination_records if record.resource_type == ResourceType.EMR_CLUSTER],
         )
     if "Batch Translation Jobs" in requested_resources:
         project["Batch Translation Jobs"] = _get_batch_translate_jobs(resource_get_func, base_args)
@@ -353,7 +346,7 @@ def _get_user_resources(
     if "Training Jobs" in requested_resources:
         result["Training Jobs"] = _get_training_jobs(resource_get_func, base_args)
     if "EMR Clusters" in requested_resources:
-        result["EMR Clusters"] = _get_emr_clusters(cluster_owner=username)
+        result["EMR Clusters"] = _get_emr_clusters(resource_get_func, base_args)
     if "Batch Translation Jobs" in requested_resources:
         result["Batch Translation Jobs"] = _get_batch_translate_jobs(resource_get_func, base_args)
     if "GroundTruth Labeling Jobs" in requested_resources:
@@ -628,18 +621,6 @@ def _create_report(report_key: str, content):
     s3.upload_file(Filename=f"/tmp/{file_name}.csv", Bucket=env_variables["DATA_BUCKET"], Key=key)
 
     return "s3://" + env_variables["DATA_BUCKET"] + "/" + key
-
-
-def _get_resource_owner(arn: str) -> str:
-    owner = ""
-
-    tags = get_tags_for_resource(sagemaker, arn)
-
-    for tag in tags:
-        if tag["Key"] == "user":
-            owner = tag["Value"]
-
-    return owner
 
 
 # create-report

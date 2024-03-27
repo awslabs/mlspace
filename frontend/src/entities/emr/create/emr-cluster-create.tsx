@@ -22,7 +22,6 @@ import {
     ExpandableSection,
     Form,
     FormField,
-    Grid,
     Header,
     Input,
     RadioGroup,
@@ -38,7 +37,7 @@ import { createEMRCluster } from '../emr.reducer';
 import { setBreadcrumbs } from '../../../../src/shared/layout/navigation/navigation.reducer';
 import { getBase } from '../../../../src/shared/util/breadcrumb-utils';
 import { scrollToPageHeader } from '../../../../src/shared/doc';
-import { generateNameConstraintTextWithProject } from '../../../shared/util/form-utils';
+import { generateNameConstraintText } from '../../../shared/util/form-utils';
 import { useState } from 'react';
 import { enumToOptions } from '../../../shared/util/enum-utils';
 import Condition from '../../../modules/condition';
@@ -64,7 +63,7 @@ export default function EMRClusterCreate () {
         clusterName: z
             .string()
             .min(3)
-            .max(63 - projectName!.length)
+            .max(63)
             .regex(/^[a-zA-Z0-9-]*$/, {
                 message: 'Name can only contain alphanumeric characters and hyphens (-)',
             }),
@@ -147,7 +146,7 @@ export default function EMRClusterCreate () {
                     );
                     // Path is dependent on the lambda response of emr/lambda_function for the EMR name
                     navigate(
-                        `${basePath}/${response.payload.JobFlowId}/${projectName}-${state.form.clusterName}`
+                        `${basePath}/${response.payload.JobFlowId}/${state.form.clusterName}`
                     );
                 } else {
                     notificationService.generateNotification(
@@ -195,13 +194,10 @@ export default function EMRClusterCreate () {
             >
                 <SpaceBetween direction='vertical' size='xxl'>
                     <Container header={<h2>Cluster settings</h2>}>
-                        <Grid disableGutters gridDefinition={[{ colspan: 3 }, { colspan: 9 }]}>
-                            <FormField label='Project name'>
-                                <Input value={`${projectName}-`} disabled />
-                            </FormField>
+                        <SpaceBetween direction='vertical' size='s'>
                             <FormField
                                 label='Cluster name'
-                                constraintText={generateNameConstraintTextWithProject(projectName!)}
+                                constraintText={generateNameConstraintText()}
                                 errorText={formErrors.clusterName}
                             >
                                 <Input
@@ -237,8 +233,7 @@ export default function EMRClusterCreate () {
                                     />
                                 </FormField>
                             </ExpandableSection>
-                            
-                        </Grid>
+                        </SpaceBetween>
                     </Container>
 
                     <Container header={<h2>Resources</h2>}>

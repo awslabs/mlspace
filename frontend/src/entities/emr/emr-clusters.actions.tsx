@@ -21,8 +21,8 @@ import { Button, SpaceBetween, ButtonDropdown } from '@cloudscape-design/compone
 import { terminateEMRCluster } from './emr.reducer';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
-import { EMRCluster } from './emr.model';
 import { deletionDescription } from '../../shared/util/form-utils';
+import { EMRResourceMetadata } from '../../shared/model/resource-metadata.model';
 
 export default function EMRClusterActions (props?: any) {
     const createEmrRef = props?.focusProps?.createEmrRef;
@@ -39,7 +39,7 @@ function EMRActionButton (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { projectName } = useParams();
-    const selectedCluster: EMRCluster = props?.selectedItems[0];
+    const selectedCluster: EMRResourceMetadata = props?.selectedItems[0];
     return (
         <ButtonDropdown
             items={[{ text: 'Terminate', id: 'terminate' }]}
@@ -56,7 +56,7 @@ function EMRActionButton (props?: any) {
 
 const EMRClusterActionHandler = (
     e: any,
-    cluster: EMRCluster,
+    cluster: EMRResourceMetadata,
     nav: any,
     dispatch: ThunkDispatch<any, any, Action>,
     projectName: string
@@ -65,9 +65,9 @@ const EMRClusterActionHandler = (
         case 'terminate':
             dispatch(
                 setDeleteModal({
-                    resourceName: cluster.Name!,
+                    resourceName: cluster.metadata.Name,
                     resourceType: 'EMR Cluster',
-                    onConfirm: () => dispatch(terminateEMRCluster(cluster.Id)),
+                    onConfirm: () => dispatch(terminateEMRCluster(cluster.resourceId)),
                     postConfirm: () => nav(`/project/${projectName}/emr`),
                     description: deletionDescription('EMR Cluster'),
                 })
