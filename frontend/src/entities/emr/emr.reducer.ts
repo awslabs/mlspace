@@ -20,9 +20,10 @@ import { EMRCluster } from './emr.model';
 import { PagedResponsePayload, ServerRequestProps } from '../../shared/util/table-utils';
 import { addPagingParams } from '../../shared/util/url-utils';
 import { cloneDeep } from 'lodash';
+import { EMRResourceMetadata } from '../../shared/model/resource-metadata.model';
 
 const initialState = {
-    clusters: [] as EMRCluster[],
+    clusters: [] as EMRResourceMetadata[],
     cluster: {} as EMRCluster,
     loadingCluster: true,
     loadingClusters: false,
@@ -49,7 +50,7 @@ export const createEMRCluster = createAsyncThunk(
 );
 
 export const listEMRClusters = createAsyncThunk('emr/list', async (params: ServerRequestProps) => {
-    return axios.get<PagedResponsePayload<EMRCluster>>(
+    return axios.get<PagedResponsePayload<EMRResourceMetadata>>(
         addPagingParams(`/project/${params.projectName}/emr`, params)
     );
 });
@@ -81,8 +82,8 @@ export const EMRClusterSlice = createSlice({
                 const { data } = action.payload;
                 if (state.clusters) {
                     const allClusters = cloneDeep(state.clusters);
-                    data.records.forEach((cluster: EMRCluster) => {
-                        const existingIndex = allClusters.findIndex((c) => c.Id === cluster.Id);
+                    data.records.forEach((cluster: EMRResourceMetadata) => {
+                        const existingIndex = allClusters.findIndex((c) => c.resourceId === cluster.resourceId);
                         if (existingIndex > -1) {
                             allClusters[existingIndex] = cluster;
                         } else {

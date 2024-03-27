@@ -96,9 +96,6 @@ def test_delete_project(
     env_vars = get_environment_variables()
     expected_response = generate_html_response(200, f"Successfully deleted {MOCK_PROJECT_NAME} and its associated resources.")
     mock_project_dao.get.return_value = mock_project()
-    mock_paginator = mock.Mock()
-    mock_paginator.paginate.return_value = paginated_cluster_response
-    mock_emr.get_paginator.return_value = mock_paginator
     mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = [
         PagedMetadataResults(
             [
@@ -144,13 +141,23 @@ def test_delete_project(
                 )
             ]
         ),
+        PagedMetadataResults(
+            [
+                ResourceMetadataModel(
+                    "Cluster1",
+                    ResourceType.EMR_CLUSTER,
+                    "jdoe@example.com",
+                    MOCK_PROJECT_NAME,
+                    {"Status": "WAITING"},
+                )
+            ]
+        ),
     ]
     mock_dataset_dao.get_all_for_scope.return_value = [
         DatasetModel(
             name="TestDataset",
             scope=MOCK_PROJECT_NAME,
             description="Dataset for unit test",
-            format="application/json",
             created_by="jdoe@example.com",
             location=f"s3://{env_vars['DATA_BUCKET']}/project/{MOCK_PROJECT_NAME}/datasets/TestDataset",
         )
@@ -177,6 +184,7 @@ def test_delete_project(
             mock.call(MOCK_PROJECT_NAME, ResourceType.ENDPOINT, fetch_all=True),
             mock.call(MOCK_PROJECT_NAME, ResourceType.ENDPOINT_CONFIG, fetch_all=True),
             mock.call(MOCK_PROJECT_NAME, ResourceType.NOTEBOOK, fetch_all=True),
+            mock.call(MOCK_PROJECT_NAME, ResourceType.EMR_CLUSTER, fetch_all=True),
         ]
     )
     mock_dataset_dao.get_all_for_scope.assert_called_with(DatasetType.PROJECT, MOCK_PROJECT_NAME)
@@ -191,11 +199,8 @@ def test_delete_project(
     mock_sagemaker.delete_endpoint.assert_called_with(EndpointName="TestEndpoint")
     mock_sagemaker.delete_endpoint_config.assert_called_with(EndpointConfigName="TestEndpointConfig")
     mock_sagemaker.delete_notebook_instance.assert_called_with(NotebookInstanceName="TestNotebook")
-
-    mock_emr.set_termination_protection.assert_called_with(
-        JobFlowIds=["Cluster1", "Cluster2", "Cluster4", "Cluster6"], TerminationProtected=False
-    )
-    mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=["Cluster1", "Cluster2", "Cluster4", "Cluster6"])
+    mock_emr.set_termination_protection.assert_called_with(JobFlowIds=["Cluster1"], TerminationProtected=False)
+    mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=["Cluster1"])
 
 
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
@@ -217,7 +222,6 @@ def test_delete_project_not_suspended(mock_project_dao, mock_resource_metadata_d
 @mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True"})
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
-@mock.patch("ml_space_lambda.project.lambda_functions.list_clusters_for_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.emr")
 @mock.patch("ml_space_lambda.project.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.project.lambda_functions.s3")
@@ -231,7 +235,6 @@ def test_delete_project_external_iam(
     mock_s3,
     mock_sagemaker,
     mock_emr,
-    mock_project_clusters,
     mock_iam_manager,
     mock_resource_metadata_dao,
 ):
@@ -249,19 +252,14 @@ def test_delete_project_external_iam(
         PagedMetadataResults([]),
         # Notebooks
         PagedMetadataResults([]),
+        # EMR Clusters
+        PagedMetadataResults([]),
     ]
-    mock_project_clusters.return_value = {
-        "records": [
-            {"Id": "Cluster1", "Name": f"{MOCK_PROJECT_NAME}-cluster-1"},
-            {"Id": "Cluster2", "Name": f"{MOCK_PROJECT_NAME}-cluster-2"},
-        ]
-    }
     mock_dataset_dao.get_all_for_scope.return_value = [
         DatasetModel(
             name="TestDataset",
             scope=MOCK_PROJECT_NAME,
             description="Dataset for unit test",
-            format="application/json",
             created_by="jdoe@example.com",
             location=f"s3://{env_vars['DATA_BUCKET']}/project/{MOCK_PROJECT_NAME}/datasets/TestDataset",
         )
@@ -293,6 +291,7 @@ def test_delete_project_external_iam(
             mock.call(MOCK_PROJECT_NAME, ResourceType.ENDPOINT, fetch_all=True),
             mock.call(MOCK_PROJECT_NAME, ResourceType.ENDPOINT_CONFIG, fetch_all=True),
             mock.call(MOCK_PROJECT_NAME, ResourceType.NOTEBOOK, fetch_all=True),
+            mock.call(MOCK_PROJECT_NAME, ResourceType.EMR_CLUSTER, fetch_all=True),
         ]
     )
     mock_dataset_dao.get_all_for_scope.assert_called_with(DatasetType.PROJECT, MOCK_PROJECT_NAME)
@@ -308,6 +307,8 @@ def test_delete_project_external_iam(
     mock_sagemaker.delete_endpoint.assert_not_called()
     mock_sagemaker.delete_endpoint_config.assert_not_called()
     mock_sagemaker.delete_notebook_instance.assert_not_called()
+    mock_emr.set_termination_protection.assert_not_called()
+    mock_emr.terminate_job_flows.assert_not_called()
     # Expected cleanup
     mock_project_user_dao.get_users_for_project.assert_called_with(MOCK_PROJECT_NAME)
     mock_project_user_dao.delete.assert_has_calls(
@@ -317,9 +318,7 @@ def test_delete_project_external_iam(
         ]
     )
     mock_project_dao.delete.assert_called_with(MOCK_PROJECT_NAME)
-    # Expected EMR termination
-    mock_emr.set_termination_protection.assert_called_with(JobFlowIds=["Cluster1", "Cluster2"], TerminationProtected=False)
-    mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=["Cluster1", "Cluster2"])
+
     # Expected external iam cleanup
     mock_iam_manager.remove_project_user_roles.assert_called_with(["jdoe-role", "matt-role"], project=MOCK_PROJECT_NAME)
 

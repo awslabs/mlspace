@@ -72,6 +72,9 @@ import { AttributeEditorSchema } from '../../../../modules/environment-variables
 import { NetworkSettings } from '../../hpo/create/training-definitions/network-settings';
 import { InputDataConfiguration } from '../../hpo/create/training-definitions/input-data-configuration';
 import { OutputDataConfiguration } from '../../hpo/create/training-definitions/output-data-configuration';
+import { createDatasetHandleAlreadyExists, determineScope } from '../../../dataset/dataset.service';
+import { IDataset } from '../../../../shared/model';
+import { generateNameConstraintText } from '../../../../shared/util/form-utils';
 
 const ALGORITHMS: { [key: string]: Algorithm } = {};
 ML_ALGORITHMS.filter((algorithm) => algorithm.defaultHyperParameters.length > 0).map(
@@ -85,7 +88,7 @@ export default function TrainingJobCreate () {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const navigate = useNavigate();
-    const currentLocation = useLocation();
+    const location = useLocation();
     const [algorithmSource, setAlgorithmSource] = useState(AlgorithmSource.BUILT_IN);
 
     DocTitle('Create Training Job');
@@ -94,8 +97,8 @@ export default function TrainingJobCreate () {
     const initializer = () => {
         return {
             validateAll: false,
-            form: currentLocation.state?.trainingJob
-                ? cloneTrainingJob(currentLocation.state.trainingJob)
+            form: location.state?.trainingJob
+                ? cloneTrainingJob(location.state.trainingJob)
                 : createTrainingJob(),
             touched: {},
             formSubmitting: false,
@@ -265,7 +268,7 @@ export default function TrainingJobCreate () {
             Dataset: z.object({
                 Name: z.string({
                     required_error:
-                        'S3 location is required - please select a dataset from the list',
+                        'S3 output location is required',
                 }),
             }),
         }),
@@ -365,6 +368,14 @@ export default function TrainingJobCreate () {
                             'info'
                         );
                     }
+                    const newDataset = {
+                        name: state.form.OutputDataConfig.Dataset.Name,
+                        description: `Dataset created as part of the Training job: ${state.form.TrainingJobName}`,
+                        type: state.form.OutputDataConfig.Dataset.Type,
+                        scope: determineScope(state.form.OutputDataConfig.Dataset.Name, projectName, userName!)
+                    } as IDataset;
+                    createDatasetHandleAlreadyExists(newDataset);
+                    
                     navigate(
                         `/project/${projectName}/jobs/training/detail/${state.form.TrainingJobName}`
                     );
@@ -420,7 +431,7 @@ export default function TrainingJobCreate () {
                         <SpaceBetween direction='vertical' size='l'>
                             <FormField
                                 label='Job Name'
-                                constraintText='Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.'
+                                constraintText={generateNameConstraintText()}
                                 errorText={formErrors.TrainingJobName}
                             >
                                 <Input

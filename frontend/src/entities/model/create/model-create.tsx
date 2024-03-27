@@ -44,6 +44,7 @@ import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { IModelContainerMode } from '../../../shared/model/container.model';
 import { AttributeEditorSchema } from '../../../modules/environment-variables/environment-variables';
 import { NetworkSettings } from '../../jobs/hpo/create/training-definitions/network-settings';
+import { generateNameConstraintText } from '../../../shared/util/form-utils';
 
 export function ModelCreate () {
     const dispatch = useAppDispatch();
@@ -222,7 +223,7 @@ export function ModelCreate () {
                     <Container header={<Header variant='h2'>{'Model settings'} </Header>}>
                         <FormField
                             label='Model name'
-                            constraintText='Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.'
+                            constraintText={generateNameConstraintText()}
                             errorText={errors?.ModelName}
                         >
                             <Input

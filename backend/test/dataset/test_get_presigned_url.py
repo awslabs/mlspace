@@ -60,14 +60,12 @@ def test_get_presigned_url_get_success(mock_s3):
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
 def test_get_presigned_url_post_success(mock_s3):
-    expected_s3_tags = "<Tagging><TagSet><Tag><Key>dataset-description</Key><Value>example description</Value></Tag><Tag><Key>dataset-format</Key><Value>plain/text</Value></Tag><Tag><Key>user</Key><Value>jdoe@amazon.com</Value></Tag><Tag><Key>dataset-name</Key><Value>example_dataset</Value></Tag><Tag><Key>dataset-scope</Key><Value>global</Value></Tag></TagSet></Tagging>"
+    expected_s3_tags = "<Tagging><TagSet><Tag><Key>dataset-description</Key><Value>example description</Value></Tag><Tag><Key>user</Key><Value>jdoe@amazon.com</Value></Tag><Tag><Key>dataset-name</Key><Value>example_dataset</Value></Tag><Tag><Key>dataset-scope</Key><Value>global</Value></Tag></TagSet></Tagging>"
     mock_fields = {
         "x-amz-meta-dataset-description": "example description",
-        "x-amz-meta-dataset-format": "plain/text",
     }
     mock_final_fields = {
         "x-amz-meta-dataset-description": "example description",
-        "x-amz-meta-dataset-format": "plain/text",
         "x-amz-meta-user": "jdoe@amazon.com",
         "x-amz-meta-dataset-name": "example_dataset",
         "x-amz-meta-dataset-scope": DatasetType.GLOBAL.value,
@@ -77,17 +75,13 @@ def test_get_presigned_url_post_success(mock_s3):
         {
             "x-amz-meta-dataset-description": "example description",
         },
-        {
-            "x-amz-meta-dataset-format": "plain/text",
-        },
+        {},
     ]
     mock_final_conditions = [
         {
             "x-amz-meta-dataset-description": "example description",
         },
-        {
-            "x-amz-meta-dataset-format": "plain/text",
-        },
+        {},
         {
             "x-amz-meta-user": "jdoe@amazon.com",
         },
@@ -123,7 +117,6 @@ def test_get_presigned_url_post_success(mock_s3):
             "x-amz-meta-dataset-name":"example_dataset",
             "x-amz-meta-dataset-scope":"global",
             "x-amz-meta-dataset-description":"example description",
-            "x-amz-meta-dataset-format":"plain/text",
             "tagging":[
                 {
                     "Key":"user",

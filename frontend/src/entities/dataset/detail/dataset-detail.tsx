@@ -53,7 +53,6 @@ function DatasetDetail () {
     datasetDetails.set('Name', dataset.name);
     datasetDetails.set('Description', dataset.description);
     datasetDetails.set('Access level', showAccessLevel(dataset));
-    datasetDetails.set('Format', dataset.format);
     datasetDetails.set('Location', dataset.location);
 
     scrollToPageHeader();

@@ -40,7 +40,6 @@ def generate_event(dataset_type: str, dataset_scope: str):
                 "datasetName": test_dataset_name,
                 "datasetType": dataset_type,
                 "datasetDescription": "example description",
-                "datasetFormat": "text/plain",
                 "datasetScope": dataset_scope,
             }
         ),
@@ -58,7 +57,6 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str):
         scope=scope,
         name=test_dataset_name,
         description=body.get("datasetDescription", ""),
-        format=body.get("datasetFormat", "text/plain"),
         location=dataset_location,
         created_by=event["requestContext"]["authorizer"]["principalId"],
     )

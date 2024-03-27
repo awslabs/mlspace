@@ -22,12 +22,12 @@ export const datasetFromS3Uri = (s3Uri: string): {
     Type: DatasetType;
     Name?: string;
     Location?: string;
-} | null => {
+} | undefined => {
     // Example: s3://mlspace-data-<acc-id>/<type(/subtype - optional)>/datasets/<ds-name>/train/
     if (s3Uri) {
         // matches[0] will be the entire string matched by the regex and the rest are the captures
         const matches = s3Uri.match(datasetRegex);
-        if (matches.length === 5) {
+        if (matches?.length === 5) {
             let type = '';
             // Match 2 will either be "global", "private/<username>", or "project/<projectname>"
             const slashIndex = matches[2].indexOf('/');
@@ -45,5 +45,5 @@ export const datasetFromS3Uri = (s3Uri: string): {
             return dataset;
         }
     }
-    return null;
+    return undefined;
 };

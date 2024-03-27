@@ -56,7 +56,6 @@ def _create_dataset_record(metadata, key):
             scope=scope,
             name=dataset_name,
             description=metadata.get("dataset-description", ""),
-            format=metadata.get("dataset-format", "text/plain"),
             location=dataset_location,
             created_by=metadata.get("user", "default-user"),
         )

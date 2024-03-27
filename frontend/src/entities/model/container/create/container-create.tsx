@@ -39,6 +39,7 @@ import { TrainingJobResourceMetadata } from '../../../../shared/model/resource-m
 import { TrainingJobsTable } from '../../../jobs/training/training-jobs.table';
 import { JobStatus } from '../../../jobs/job.model';
 import { EnvironmentVariables } from '../../../../modules/environment-variables/environment-variables';
+import { generateNameConstraintText } from '../../../../shared/util/form-utils';
 
 export type CreateModelContainerProps = {
     state: IModelContainer;
@@ -171,7 +172,7 @@ function CreateModelContainer (props: CreateModelContainerProps) {
                             </span>
                         }
                         description='Type the DNS host name for the container.'
-                        constraintText='Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.'
+                        constraintText={generateNameConstraintText()}
                         errorText={errors?.ContainerHostName}
                     >
                         <Input

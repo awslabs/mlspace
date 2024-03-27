@@ -41,7 +41,6 @@ MOCK_DATASET = DatasetModel(
     scope="lchangretta@example.com",
     name="black-hand",
     description="Profiles on associates making the journey to Birmingham",
-    format="text/pdf",
     location=f"s3://{DATA_BUCKET}/private/lchangretta@example.com/datasets/black-hand/",
     created_by="lchangretta@example.com",
 )
@@ -54,7 +53,6 @@ def _validate_dataset_create_call(call_args: List[Any], dataset: DatasetModel):
     assert dataset_arg.name == dataset.name
     assert dataset_arg.scope == dataset.scope
     assert dataset_arg.description == dataset.description
-    assert dataset_arg.format == dataset.format
     assert dataset_arg.location == dataset.location
 
 
@@ -87,7 +85,6 @@ def test_handle_front_end_upload(mock_dataset_dao, mock_s3):
         "dataset-name": MOCK_DATASET.name,
         "dataset-scope": MOCK_DATASET.scope,
         "dataset-description": MOCK_DATASET.description,
-        "dataset-format": MOCK_DATASET.format,
         "user": MOCK_DATASET.created_by,
     }
     mock_s3.head_object.return_value = {"Metadata": mock_metadata}
@@ -108,7 +105,6 @@ def test_handle_front_end_upload_new_dataset(mock_dataset_dao, mock_s3):
         "dataset-name": MOCK_DATASET.name,
         "dataset-scope": MOCK_DATASET.scope,
         "dataset-description": MOCK_DATASET.description,
-        "dataset-format": MOCK_DATASET.format,
         "user": MOCK_DATASET.created_by,
     }
     mock_s3.head_object.return_value = {"Metadata": mock_metadata}
@@ -218,7 +214,6 @@ def test_handle_notebook_upload(mock_dataset_dao, mock_s3):
         scope="global",
         name="more-testing",
         description="",
-        format="text/plain",
         location=f"s3://{DATA_BUCKET}/{MOCK_DATASET_BASE_KEY}",
         created_by="default-user",
     )
@@ -335,7 +330,6 @@ def test_key_training_job_output(mock_dataset_dao, mock_s3):
         scope=project_name,
         name=dataset_name,
         description="",
-        format="text/plain",
         location=f"s3://{DATA_BUCKET}/{dataset_type}/{project_name}/datasets/{dataset_name}/",
         created_by="default-user",
     )

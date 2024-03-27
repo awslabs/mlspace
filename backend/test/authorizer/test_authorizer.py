@@ -809,11 +809,7 @@ def test_create_project_resource(
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.sagemaker")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.emr")
 def test_get_project_sagemaker_resource(
-    mock_emr,
-    mock_sagemaker,
     mock_project_dao,
     mock_user_dao,
     mock_project_user_dao,
@@ -825,7 +821,7 @@ def test_get_project_sagemaker_resource(
     allow: bool,
 ):
     path_params = {}
-    path_params[path_param_key] = f"{MOCK_PROJECT_NAME}-fakeResourceName"
+    path_params[path_param_key] = "fakeResourceName"
 
     metadata_resource_type = None
     if path_param_key == "endpointName":
@@ -839,6 +835,8 @@ def test_get_project_sagemaker_resource(
         metadata_resource_type = ResourceType.NOTEBOOK
     elif path_param_key == "jobId":
         metadata_resource_type = ResourceType.BATCH_TRANSLATE_JOB
+    elif path_param_key == "clusterId":
+        metadata_resource_type = ResourceType.EMR_CLUSTER
     elif path_param_key == "jobName":
         if resource.startswith("/job/training/"):
             metadata_resource_type = ResourceType.TRAINING_JOB
@@ -858,32 +856,13 @@ def test_get_project_sagemaker_resource(
             {},
         )
 
-    if path_param_key == "clusterId":
-        mock_emr.describe_cluster.return_value = {
-            "Cluster": {
-                "Tags": [
-                    {"Key": "system", "Value": "MLSpace"},
-                    {"Key": "project", "Value": MOCK_PROJECT_NAME},
-                    {"Key": "user", "Value": MOCK_OWNER_USER.username},
-                ]
-            }
-        }
-
     mock_user_dao.get.return_value = user
-    if "schedule" in resource:
-        mock_sagemaker.list_tags.return_value = {
-            "Tags": [
-                {"Key": "system", "Value": "MLSpace"},
-                {"Key": "project", "Value": MOCK_PROJECT_NAME},
-                {"Key": "user", "Value": MOCK_OWNER_USER.username},
-            ]
-        }
 
     if user.username not in [MOCK_ADMIN_USER.username]:
         mock_project_user_dao.get.return_value = project_user
 
     project_in_context = False
-    if (metadata_resource_type or "clusterId" == path_param_key or resource.endswith("/schedule")) and (
+    if (metadata_resource_type or resource.endswith("/schedule")) and (
         metadata_resource_type
         not in [
             ResourceType.HPO_JOB,
@@ -918,7 +897,6 @@ def test_get_project_sagemaker_resource(
         mock_project_user_dao.get.assert_not_called()
 
     if metadata_resource_type:
-        mock_sagemaker.list_tags.assert_not_called()
         if not (
             metadata_resource_type
             in [
@@ -927,14 +905,11 @@ def test_get_project_sagemaker_resource(
                 ResourceType.TRANSFORM_JOB,
                 ResourceType.BATCH_TRANSLATE_JOB,
                 ResourceType.LABELING_JOB,
+                ResourceType.EMR_CLUSTER,
             ]
             and user.username == MOCK_ADMIN_USER.username
         ):
             mock_resource_metadata_dao.get.assert_called_with(path_params[path_param_key], metadata_resource_type)
-    elif mock_method == "PUT" and user.username == MOCK_OWNER_USER.username and path_param_key != "clusterId":
-        mock_sagemaker.list_tags.assert_called_once()
-    else:
-        mock_sagemaker.list_tags.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -1577,7 +1552,6 @@ def test_dataset_routes(
         scope=scope,
         name="UnitTestDataset",
         description="For unit tests",
-        format="text",
         location="s3://fake-location/",
         created_by=MOCK_OWNER_USER.username,
     )
@@ -1597,11 +1571,52 @@ def test_dataset_routes(
 
     mock_user_dao.get.assert_called_with(user.username)
     mock_dataset_dao.get.assert_called_with(scope, mock_dataset.name)
-    # We'll only grab the project user if it's a GET, not global, and the user wasn't the owner
-    if scope != DatasetType.GLOBAL.value and method == "GET" and user.username != MOCK_OWNER_USER.username:
+    # We'll only grab the project user if it's a GET, Project Dataset, and the user wasn't the owner
+    if mock_dataset.type == DatasetType.PROJECT and method == "GET" and user.username != MOCK_OWNER_USER.username:
         mock_project_user_dao.get.assert_called_with(scope, user.username)
     else:
         mock_project_user_dao.get.assert_not_called()
+
+
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.dataset_dao")
+def test_dataset_adversarial(mock_dataset_dao, mock_user_dao, mock_project_user_dao):
+    method = "GET"
+    allow = False
+
+    # Adversarial example where project name equals private dataset owner
+    # MOCK_USER is member of said project name
+    project_name = MOCK_OWNER_USER.username
+
+    mock_private_dataset = DatasetModel(
+        scope=MOCK_OWNER_USER.username,
+        name="UnitTestDataset",
+        description="For unit tests",
+        location="s3://fake-location/",
+        created_by=MOCK_OWNER_USER.username,
+    )
+    assert mock_private_dataset.type == DatasetType.PRIVATE
+
+    mock_dataset_dao.get.return_value = mock_private_dataset
+    mock_user_dao.get.return_value = MOCK_USER
+    mock_project_user_dao.get.return_value = MOCK_USER
+
+    assert lambda_handler(
+        mock_event(
+            user=MOCK_USER,
+            resource=f"/dataset/{project_name}/{mock_private_dataset.name}",
+            method=method,
+            path_params={"scope": project_name, "datasetName": mock_private_dataset.name},
+        ),
+        {},
+    ) == policy_response(allow=allow, user=MOCK_USER)
+
+    mock_user_dao.get.assert_called_with(MOCK_USER.username)
+    mock_dataset_dao.get.assert_called_with(project_name, mock_private_dataset.name)
+
+    mock_project_user_dao.get.assert_not_called()
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
@@ -2222,9 +2237,7 @@ def test_mange_project_users(
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.dataset_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.emr")
 def test_manage_project_sagemaker_resource_boto_error(
-    mock_emr,
     mock_dataset_dao,
     mock_project_dao,
     mock_user_dao,
@@ -2241,10 +2254,8 @@ def test_manage_project_sagemaker_resource_boto_error(
         "ResponseMetadata": {"HTTPStatusCode": 400},
     }
     mock_project_dao.get.return_value = MOCK_PROJECT
-    if path_param_key in ["notebookName", "endpointName", "modelName", "endpointConfigName"]:
+    if path_param_key in ["notebookName", "endpointName", "modelName", "endpointConfigName", "clusterId"]:
         mock_resource_metadata_dao.get.side_effect = ClientError(error_msg, "GetItem")
-    if path_param_key == "clusterId":
-        mock_emr.describe_cluster.side_effect = ClientError(error_msg, "DescribeCluster")
     if path_param_key == "datasetName":
         mock_dataset_dao.get.side_effect = ClientError(error_msg, "GetItem")
         path_params["scope"] = "global"
@@ -2257,34 +2268,27 @@ def test_manage_project_sagemaker_resource_boto_error(
     ) == policy_response(allow=False, user=MOCK_OWNER_USER)
 
     if path_param_key == "notebookName":
-        mock_resource_metadata_dao.get.assert_called_with("fakeResourceName", ResourceType.NOTEBOOK)
+        mock_resource_metadata_dao.get.assert_called_with(path_params[path_param_key], ResourceType.NOTEBOOK)
     if path_param_key == "endpointName":
-        mock_resource_metadata_dao.get.assert_called_with("fakeResourceName", ResourceType.ENDPOINT)
+        mock_resource_metadata_dao.get.assert_called_with(path_params[path_param_key], ResourceType.ENDPOINT)
     if path_param_key == "modelName":
-        mock_resource_metadata_dao.get.assert_called_with("fakeResourceName", ResourceType.MODEL)
+        mock_resource_metadata_dao.get.assert_called_with(path_params[path_param_key], ResourceType.MODEL)
     if path_param_key == "endpointConfigName":
-        mock_resource_metadata_dao.get.assert_called_with("fakeResourceName", ResourceType.ENDPOINT_CONFIG)
+        mock_resource_metadata_dao.get.assert_called_with(path_params[path_param_key], ResourceType.ENDPOINT_CONFIG)
     if path_param_key == "clusterId":
-        mock_emr.describe_cluster.assert_called_with(ClusterId="fakeResourceName")
+        mock_resource_metadata_dao.get.assert_called_with(path_params[path_param_key], ResourceType.EMR_CLUSTER)
     if path_param_key == "datasetName":
-        mock_dataset_dao.get.assert_called_with("global", "fakeResourceName")
+        mock_dataset_dao.get.assert_called_with("global", path_params[path_param_key])
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.resource_metadata_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.emr")
-def test_emr_cluster_missing_tags(mock_emr, mock_user_dao):
-    mock_emr.describe_cluster.return_value = {
-        "Cluster": {
-            "Tags": [
-                {"Key": "system", "Value": "MLSpace"},
-                {"Key": "user", "Value": MOCK_OWNER_USER.username},
-            ]
-        }
-    }
+def test_emr_cluster_missing_metadata_entry(mock_user_dao, mock_resource_metadata_dao):
+    mock_cluster_id = "clusterId"
+    mock_resource_metadata_dao.get.return_value = None
 
     mock_user_dao.get.return_value = MOCK_OWNER_USER
-    mock_cluster_id = f"{MOCK_PROJECT_NAME}-fakeResourceName"
     path_params = {"clusterId": mock_cluster_id}
 
     assert lambda_handler(
@@ -2298,4 +2302,4 @@ def test_emr_cluster_missing_tags(mock_emr, mock_user_dao):
     ) == policy_response(allow=False, user=MOCK_OWNER_USER)
 
     mock_user_dao.get.assert_called_with(MOCK_OWNER_USER.username)
-    mock_emr.describe_cluster.assert_called_with(ClusterId=mock_cluster_id)
+    mock_resource_metadata_dao.get.assert_called_with(mock_cluster_id, ResourceType.EMR_CLUSTER)

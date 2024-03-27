@@ -202,7 +202,6 @@ def create_dataset(event, context):
             scope=scope,
             name=dataset_name,
             description=body.get("datasetDescription", ""),
-            format=body.get("datasetFormat", "text/plain"),
             location=dataset_location,
             created_by=event["requestContext"]["authorizer"]["principalId"],
         )
