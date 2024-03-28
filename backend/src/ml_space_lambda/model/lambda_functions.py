@@ -146,6 +146,7 @@ def list_images(event, context):
         "factorization-machines",
         "forecasting-deepar",
         "image-classification",
+        "linear-learner",
         "kmeans",
         "knn",
         "object2vec",
