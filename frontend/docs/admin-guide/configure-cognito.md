@@ -10,12 +10,38 @@ for your existing user pool.
 ## Creating a new Cognito User Pool to use with MLSpace
 You can use the AWS console to create a new Cognito user pool. You can configure the pool however you want but a minimal solution for internal testing and demo purposes can be achieved with the following configuration:
 
-* Step 1 - Allow users to sign-in with a preferred username
-* Step 2 - Use the default password policy and optionally enable MFA, do not allow self-service user account recovery
-* Step 3 - Do not allow self-registration, disable cognito assisted verification, for required attributes select email, name, and preferred_username
-* Step 4 - Send email with Cognito (we’re not allowing self-service so we won’t be sending any emails besides the initial account creation notification)
-* Step 5 - Enter a user pool name ie `mlspace-test`, check the box to use the "Cognito Hosted UI", enter a value for a Cognito domain. Select "Public Client", for the initial app client. Enter whatever name you choose ie `mlspace-web-app`, do not generate a client secret, enter a temporary callback URL (the value does not matter and this will be changed once we deploy MLSpace). Scroll down to OpenID Connect scopes and add the Profile scope.
-* Step 6 - Review and create
+1. In the AWS console navigate to the Cognito service
+2. Open the side menu and select "User pools"
+3. Click "Create user pool"
+4. Configure sign-in experience
+   1. Select the "User name" checkbox
+   2. When it pops up, select "Allow users to sign in with a preferred user name"
+5. Configure security requirements
+   1. Use the default password policy (Cognito defaults)
+   2. Enable "Optional MFA" 
+      1. Select preferred MFA method option
+   3. Uncheck "Enable self-service account recovery - Recommended"
+6. Configure sign-up experience
+   1. Uncheck "Enable self-registration"
+   2. Uncheck Cognito assisted verification, "Allow Cognito to automatically send messages to verify and confirm - Recommended"
+   3. For required attributes select: "email", "name", and "preferred_username"
+7. Configure message delivery
+   1. Select "Send email with Cognito"
+      1. (we’re not allowing self-service, so we won’t be sending any emails besides the initial account creation notification)
+   2. Provide a name for the new IAM role for SMS messaging
+8. Integrate your app
+   1. Enter a user pool name i.e. `mlspace-test`
+   2. Check "Use the Cognito Hosted UI"
+   3. Enter a value for a "Cognito domain"
+   4. Select "Public Client", for the initial app client
+   5. Enter whatever name you choose for the App client name i.e. `mlspace-web-app`
+   6. Do not generate a client secret
+   7. Enter a temporary callback URL 
+      1. (the value does not matter and this will be changed once we deploy MLSpace)
+   8. Advanced app client settings
+      1. Scroll down to "OpenID Connect scopes" and add the Profile scope.
+9. Review and create
+   1. As desired check for discrepancies in the review, then click "Create user pool"
 
 At this point you can follow the instructions in the “Connecting to an existing Cognito User Pool” section to connect your newly created User Pool to MLSpace.
 
