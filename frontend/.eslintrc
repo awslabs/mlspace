@@ -4,17 +4,6 @@
         "ecmaVersion": 12,
         "sourceType": "module"
     },
-    "plugins": [
-        "@stylistic",
-        "@typescript-eslint",
-        "spellcheck"
-    ],
-    "extends": [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
-        "plugin:react-hooks/recommended",
-        "plugin:react/recommended"
-    ],
     "rules": {
         "eqeqeq": [
             "error",

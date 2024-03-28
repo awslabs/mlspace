@@ -23,3 +23,10 @@ repos:
   hooks:
     - id: flake8
       args: ["--count", "--select=E9,F63,F7,F82", "--show-source", "--statistics", "--max-line-length=127"]
+
+- repo: https://github.com/pre-commit/mirrors-eslint
+  rev: v8.56.0
+  hooks:
+    - id: eslint
+      files: \.[jt]sx?$  # *.js, *.jsx, *.ts and *.tsx
+      types: [file]
