@@ -46,7 +46,7 @@ type EMRMetadata = {
     CreationTime: string;
     Name: string;
     NormalizedInstanceHours: number;
-}
+};
 
 type HPOJobMetadata = {
     CreationTime: string;

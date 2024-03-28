@@ -2,7 +2,7 @@
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 12,
-        "sourceType": "module",
+        "sourceType": "module"
     },
     "plugins": [
         "@stylistic",
@@ -135,6 +135,7 @@
                     "debounce",
                     "debounced",
                     "decrypt",
+                    "deeplab",
                     "depthwise",
                     "deterministically",
                     "dhcp",
@@ -164,6 +165,7 @@
                     "eps",
                     "evenodd",
                     "faiss",
+                    "fcn",
                     "fjlt",
                     "flashbar",
                     "func",
@@ -248,6 +250,7 @@
                     "preflight",
                     "presigned",
                     "pretrained",
+                    "psp",
                     "quantile",
                     "quantiles",
                     "randomcutforest",
@@ -259,6 +262,7 @@
                     "rescale",
                     "rescaling",
                     "resize",
+                    "resnet",
                     "retryable",
                     "revalidate",
                     "rmse",

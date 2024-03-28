@@ -47,7 +47,7 @@ export function Configuration () {
     const notificationService = NotificationService(dispatch);
 
     const generateDescription = (service: string) => {
-        return `Sync metadata for all ${service} associated with ${window.env.APPLICATION_NAME}`
+        return `Sync metadata for all ${service} associated with ${window.env.APPLICATION_NAME}`;
     };
 
     const resourceOptions: MultiselectProps.Option[] = [
