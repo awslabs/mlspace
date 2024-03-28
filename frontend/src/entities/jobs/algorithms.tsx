@@ -460,7 +460,7 @@ export const ML_ALGORITHMS: Algorithm[] = [
         defaultHyperParameters: []
     },
     {
-        // Docs: https://docs.aws.amazon.com/sagemaker/latest/dg/linear-learner.html
+        // Docs: https://docs.aws.amazon.com/sagemaker/latest/dg/object-detection.html
         active: true,
         tunable: true,
         displayName: 'Vision - Object Detection (MxNet)',
@@ -468,7 +468,7 @@ export const ML_ALGORITHMS: Algorithm[] = [
         metadata: objectDetectionMetadata as AlgorithmMetadata,
         defaultHyperParameters: [{
             ...staticParameterProperties,
-            key: 'crop_size',
+            key: 'base_network',
             value: ['vgg-16'],
             options: ['vgg-16','resnet-50'],
             description: 'The base network architecture to use.',
