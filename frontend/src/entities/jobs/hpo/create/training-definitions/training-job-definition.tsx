@@ -207,6 +207,7 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
             }),
             HyperParameterRanges: z.object({
                 IntegerParameterRanges: z.any(),
+                ContinuousParameterRanges: z.any(),
                 CategoricalParameterRanges: z.any(),
             }),
             StaticHyperParameters: z.any(),
@@ -236,8 +237,9 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                             }
                         }
                     });
+                    const parameterRanges = Object.values(item.HyperParameterRanges.ContinuousParameterRanges).concat(Object.values(item.HyperParameterRanges.IntegerParameterRanges));
 
-                    Object.values(item.HyperParameterRanges.IntegerParameterRanges).forEach(
+                    parameterRanges.forEach(
                         (parameterRange: any) => {
                             const hyperParameter = algorithm.defaultHyperParameters.find(
                                 (hyperParameter) => hyperParameter.key === parameterRange.Name
