@@ -24,9 +24,9 @@ from botocore.config import Config
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
 from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
+from ml_space_lambda.utils.dict_utils import filter_dict, map_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
-from ml_space_lambda.utils.dict_utils import filter_dict, map_dict_keys
 
 s3 = boto3.client(
     "s3",
@@ -89,7 +89,9 @@ def edit(event, context):
     # Merge updates into the original item. Only a subset of the fields
     if "description" in body:
         if len(body["description"]) > 254:
-            raise Exception("Dataset description is over the max length of 254 characters.")
+            raise Exception(
+                "Dataset description is over the max length of 254 characters."
+            )
         if dataset_description_regex.search(body["description"]):
             raise Exception("Dataset description contains invalid character.")
 
@@ -157,7 +159,9 @@ def presigned_url(event, context):
         tagging_value = "<Tagging><TagSet>"
         for field_key in fields:
             tag_key = field_key.replace("x-amz-meta-", "")
-            tagging_value += f"<Tag><Key>{tag_key}</Key><Value>{fields[field_key]}</Value></Tag>"
+            tagging_value += (
+                f"<Tag><Key>{tag_key}</Key><Value>{fields[field_key]}</Value></Tag>"
+            )
         tagging_value += "</TagSet></Tagging>"
 
         fields["tagging"] = tagging_value
@@ -191,10 +195,15 @@ def create_dataset(event, context):
         scope = "global"
         directory_name = f"global/datasets/{dataset_name}/"
     else:
-        scope = body.get("datasetScope")  # username or project name for private/project scope respectively
+        scope = body.get(
+            "datasetScope"
+        )  # username or project name for private/project scope respectively
         directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
 
-    if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
+    if (
+        dataset_type != event["headers"]["x-mlspace-dataset-type"]
+        or scope != event["headers"]["x-mlspace-dataset-scope"]
+    ):
         raise Exception("Dataset headers do not match expected type and scope.")
 
     if not dataset_dao.get(scope, dataset_name):
@@ -217,14 +226,18 @@ def list_resources(event, context):
     username = event["requestContext"]["authorizer"]["principalId"]
     datasets = []
     # Get global datasets
-    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
+    datasets = dataset_dao.get_all_for_scope(
+        DatasetType.GLOBAL, DatasetType.GLOBAL.value
+    )
     # Get the users private datasets
     datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
 
     if event["pathParameters"] and "projectName" in event["pathParameters"]:
         project_name = event["pathParameters"]["projectName"].replace('"', "")
         # Get project datasets
-        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PROJECT, project_name))
+        datasets.extend(
+            dataset_dao.get_all_for_scope(DatasetType.PROJECT, project_name)
+        )
 
     return [dataset.to_dict() for dataset in datasets]
 
@@ -247,60 +260,67 @@ def list_locations(event, context):
 
     env_variables = get_environment_variables()
 
-    return {"bucket": f's3://{env_variables["DATA_BUCKET"]}', "locations": datasets_locations}
+    return {
+        "bucket": f's3://{env_variables["DATA_BUCKET"]}',
+        "locations": datasets_locations,
+    }
 
 
 @api_wrapper
 def list_files(event, context):
     env_variables = get_environment_variables()
     query_string_parameters = event.get("queryStringParameters", {})
-    
+
     # map query parameters keys to api parameter names
-    query_string_parameters = map_dict_keys(query_string_parameters, {
-        "nextToken": "ContinuationToken",
-        "pageSize": "MaxKeys",
-        "prefix": "Prefix"
-    })
-    
+    query_string_parameters = map_dict_keys(
+        query_string_parameters,
+        {"nextToken": "ContinuationToken", "pageSize": "MaxKeys", "prefix": "Prefix"},
+    )
+
     dataset_prefix = get_dataset_prefix(
         event["pathParameters"]["scope"], event["pathParameters"]["datasetName"]
     )
-    computed_prefix = "".join([dataset_prefix, query_string_parameters.get("Prefix", "")])
-    
+    computed_prefix = "".join(
+        [dataset_prefix, query_string_parameters.get("Prefix", "")]
+    )
+
     query_parameters = {
         "Bucket": env_variables["DATA_BUCKET"],
         "Prefix": computed_prefix,
-        "Delimiter": "/"
+        "Delimiter": "/",
     }
-    
+
     # constrain which query parameters can be supplied
     allowed_query_string_parameters = ["MaxKeys", "ContinuationToken"]
     for key in filter_dict(query_string_parameters, allowed_query_string_parameters):
         query_parameters[key] = query_string_parameters[key]
 
+    if "MaxKeys" in query_parameters:
+        # make sure MaxKeys is an int
+        query_parameters["MaxKeys"] = int(query_parameters["MaxKeys"])
     s3_response = s3.list_objects_v2(**query_parameters)
     response = {}
 
     # copy over values with updated keys to response
     response["pageSize"] = s3_response["MaxKeys"]
     response["prefix"] = s3_response["Prefix"]
-    
+    response["bucket"] = env_variables["DATA_BUCKET"]
+
     if "NextContinuationToken" in s3_response:
         response["nextToken"] = s3_response["NextContinuationToken"]
 
     response["contents"] = []
-    
+
     # drop unwated fields from contents
     if "Contents" in s3_response:
         for content in s3_response["Contents"]:
-            response["contents"].append({
-                "key": content["Key"],
-                "size": content["Size"]
-            })
-    
+            response["contents"].append(
+                {"key": content["Key"], "size": content["Size"]}
+            )
+
     # merge common prefixes with contents
     if "CommonPrefixes" in s3_response:
         for common_prefix in s3_response["CommonPrefixes"]:
             response["contents"].append({"prefix": common_prefix["Prefix"]})
-    
+
     return response
