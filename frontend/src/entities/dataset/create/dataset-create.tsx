@@ -131,7 +131,7 @@ export function DatasetCreate () {
                 const s3Keys = buildS3Keys(datasetFileList, newDataset, projectName, username!);
                 await uploadFiles(s3Keys, newDataset, notificationService, datasetFileList);
                 // Need to clear state/reset the form
-                navigate(`${basePath}/dataset`);
+                navigate(`${basePath}/dataset/${newDataset.scope}/${newDataset.name}`);
             }
             setState({type: 'updateState', payload: { formSubmitting: false } });
         } else {
