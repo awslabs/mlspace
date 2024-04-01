@@ -151,6 +151,8 @@ def list_images(event, context):
         "object2vec",
         "pca",
         "xgboost",
+        "semantic-segmentation",
+        "object-detection",
     ]
     img_uris = {}
     image_scope = None
