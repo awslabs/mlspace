@@ -256,7 +256,6 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                                         // This evaluation avoids the issue where a blank value is evaluated as a 0 on a forced safeParse even for optional fields
                                         if ((!hyperParameter.zValidator?.isOptional || value || (index === 1 && parameterRange.MinValue)) && !nanError ) {
                                             // Any word alternatives should not apply to ranges
-                                            //const prunedValidator = hyperParameter.zValidator.
                                             let parseResult = hyperParameter.zValidator?.safeParse(value);
                                             if (parseResult?.success === false) {
                                                 ctx.addIssue({
