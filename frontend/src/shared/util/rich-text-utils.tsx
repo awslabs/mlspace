@@ -10,7 +10,7 @@ import Document from '@tiptap/extension-document';
 import TextStyle from '@tiptap/extension-text-style';
 import Link from '@tiptap/extension-link';
 import { Color } from '@tiptap/extension-color';
-import { ColumnLayout, Container, Icon } from '@cloudscape-design/components';
+import { ColumnLayout, Container, Icon, SpaceBetween } from '@cloudscape-design/components';
 
 export type RichTextEditorProps = {
     value: string;
@@ -80,13 +80,13 @@ export function RichTextEditor (props: RichTextEditorProps) {
     return (
         <Container>
             <ColumnLayout columns={1} borders='horizontal'>
-                <div>
+                <SpaceBetween direction="horizontal" size={'s'}>
                     <Button
                         onClick={() =>
                             editor.chain().focus().toggleHeading({ level: 1 }).run()
                         }
                         ariaLabel={'Toggle heading level 1'}
-                        variant='link'
+                        variant='inline-link'
                     >
                         <Icon
                             variant={
@@ -107,7 +107,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
                             editor.chain().focus().toggleHeading({ level: 2 }).run()
                         }
                         ariaLabel={'Toggle heading level 2'}
-                        variant='link'
+                        variant='inline-link'
                     >
                         <Icon
                             variant={
@@ -127,7 +127,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
                     <Button
                         onClick={() => editor.chain().focus().toggleBold().run()}
                         ariaLabel={'Toggle bold'}
-                        variant='link'
+                        variant='inline-link'
                     >
                         <Icon
                             variant={editor.isActive('bold') ? 'normal' : 'subtle'}
@@ -143,7 +143,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
                     <Button
                         onClick={() => editor.chain().focus().toggleItalic().run()}
                         ariaLabel={'Toggle italic'}
-                        variant='link'
+                        variant='inline-link'
                     >
                         <Icon
                             variant={editor.isActive('italic') ? 'normal' : 'subtle'}
@@ -159,7 +159,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
                     </Button>
                     <Button
                         ariaLabel={'Set color'}
-                        variant='link'
+                        variant='inline-link'
                         onClick={() => document.getElementById('color-picker')?.click()}
                     >
                         <label htmlFor='color-picker'></label>
@@ -185,7 +185,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
                             }
                         />
                     </Button>
-                    <Button onClick={setLink} ariaLabel={'Toggle Link'} variant='link'>
+                    <Button onClick={setLink} ariaLabel={'Toggle Link'} variant='inline-link'>
                         <Icon
                             variant='normal'
                             svg={
@@ -198,7 +198,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
                             }
                         />
                     </Button>
-                    <Button onClick={addImage} ariaLabel={'Add Image'} variant='link'>
+                    <Button onClick={addImage} ariaLabel={'Add Image'} variant='inline-link'>
                         <Icon
                             variant='normal'
                             svg={
@@ -211,7 +211,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
                             }
                         />
                     </Button>
-                </div>
+                </SpaceBetween>
                 <EditorContent editor={editor} />
             </ColumnLayout>
         </Container>
