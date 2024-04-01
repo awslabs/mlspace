@@ -23,6 +23,7 @@ import kmeansMetadata from '../../shared/algorithmMetadata/kmeans.json';
 import deepARMetadata from '../../shared/algorithmMetadata/forecastingDeepAR.json';
 import object2Vec from '../../shared/algorithmMetadata/object2Vec.json';
 import imageClassification from '../../shared/algorithmMetadata/imageClassification.json';
+import objectDetectionMetadata from '../../shared/algorithmMetadata/objectDetection.json';
 import factorizationMachines from '../../shared/algorithmMetadata/factorizationMachines.json';
 import semanticSegmentationMetadata from '../../shared/algorithmMetadata/semanticSegmentation.json';
 import React, { ReactNode } from 'react';
@@ -459,12 +460,168 @@ export const ML_ALGORITHMS: Algorithm[] = [
         defaultHyperParameters: []
     },
     {
-        active: false,
-        tunable: false,
+        // Docs: https://docs.aws.amazon.com/sagemaker/latest/dg/object-detection.html
+        active: true,
+        tunable: true,
         displayName: 'Vision - Object Detection (MxNet)',
         name: 'object-detection',
-        metadata: blankMetadata as AlgorithmMetadata,
-        defaultHyperParameters: []
+        metadata: objectDetectionMetadata as AlgorithmMetadata,
+        defaultHyperParameters: [{
+            ...staticParameterProperties,
+            key: 'base_network',
+            value: ['vgg-16'],
+            options: ['vgg-16','resnet-50'],
+            description: 'The base network architecture to use.',
+        },
+        {
+            ...staticParameterProperties,
+            key: 'use_pretrained_model',
+            value: ['1'],
+            options: ['0', '1'],
+            description: 'The algorithm toIndicates whether to use a pre-trained model for training. If set to 1, then the pre-trained model with corresponding architecture is loaded and used for training. Otherwise, the network is trained from scratch. use for semantic segmentation.',
+        },
+        {
+            ...staticParameterProperties,
+            key: 'num_classes',
+            value: [],
+            description: 'The number of output classes. This parameter defines the dimensions of the network output and is typically set to the number of classes in the dataset.',
+            zValidator: positiveIntValidator('num_classes', { required: true })
+        },
+        {
+            ...staticParameterProperties,
+            key: 'epochs',
+            value: ['30'],
+            description: 'The number of training epochs.',
+            zValidator: positiveIntValidator('epochs')
+        },
+        {
+            ...continuousParameterProperties,
+            scalingType: 'Logarithmic',
+            key: 'learning_rate',
+            value: ['0.001'],
+            description: 'The initial learning rate.',
+            zValidator: numberValidator('learning_rate', { min: 0.0000000001, max: 1, isFloat: true })
+        },
+        {
+            ...staticParameterProperties,
+            key: 'lr_scheduler_factor',
+            value: ['0.1'],
+            description: 'The ratio to reduce learning rate. Used in conjunction with the lr_scheduler_step parameter defined as lr_new = lr_old * lr_scheduler_factor.',
+            zValidator: numberValidator('lr_scheduler_factor', { min: 0.0000000001, max: 1, isFloat: true })
+        },
+        {
+            ...staticParameterProperties,
+            key: 'lr_scheduler_step',
+            value: [''],
+            description: 'The epochs at which to reduce the learning rate. The learning rate is reduced by lr_scheduler_factor at epochs listed in a comma-delimited string: "epoch1, epoch2, ...". For example, if the value is set to "10, 20" and the lr_scheduler_factor is set to 1/2, then the learning rate is halved after 10th epoch and then halved again after 20th epoch.'
+        },
+        {
+            ...categoricalParameterProperties,
+            key: 'optimizer',
+            value: ['sgd', 'adam', 'rmsprop', 'adadelta'],
+            options: ['sgd', 'adam', 'rmsprop', 'adadelta'],
+            description: 'The optimizer types. For details on optimizer values, see MXNet\'s API',
+        },
+        {
+            ...continuousParameterProperties,
+            key: 'momentum',
+            scalingType: 'ReverseLogarithmic',
+            value: ['0.9'],
+            description: 'The momentum for sgd. Ignored for other optimizers.',
+            zValidator: numberValidator('momentum', { min: 0.0000000001, max: 1, isFloat: true })
+        },
+        {
+            ...continuousParameterProperties,
+            key: 'weight_decay',
+            scalingType: 'Logarithmic',
+            value: ['0.0005'],
+            description: 'The weight decay coefficient for sgd and rmsprop. Ignored for other optimizers.',
+            zValidator: numberValidator('weight_decay', { min: 0.0000000001, max: 1, isFloat: true })
+        },
+        {
+            ...integerParameterProperties,
+            key: 'mini_batch_size',
+            scalingType: 'Linear',
+            value: ['32'],
+            description: 'The batch size for training. In a single-machine multi-gpu setting, each GPU handles mini_batch_size/num_gpu training samples. For the multi-machine training in dist_sync mode, the actual batch size is mini_batch_size*number of machines. A large mini_batch_size usually leads to faster training, but it may cause out of memory problem. The memory usage is related to mini_batch_size, image_shape, and base_network architecture. For example, on a single p3.2xlarge instance, the largest mini_batch_size without an out of memory error is 32 with the base_network set to "resnet-50" and an image_shape of 300. With the same instance, you can use 64 as the mini_batch_size with the base network vgg-16 and an image_shape of 300.',
+            zValidator: positiveIntValidator('mini_batch_size')
+        },
+        {
+            ...staticParameterProperties,
+            key: 'image_shape',
+            value: ['300'],
+            description: 'The image size for input images. We rescale the input image to a square image with this size. We recommend using 300 and 512 for better performance.',
+            zValidator: numberValidator('image_shape', { min: 300 })
+        },
+        {
+            ...staticParameterProperties,
+            key: 'label_width',
+            value: ['350'],
+            description: 'The force padding label width used to sync across training and validation data. For example, if one image in the data contains at most 10 objects, and each object\'s annotation is specified with 5 numbers, [class_id, left, top, width, height], then the label_width should be no smaller than (10*5 + header information length). The header information length is usually 2. We recommend using a slightly larger label_width for the training, such as 60 for this example.',
+            zValidator: numberValidator('label_width') // Console allows any int, but docs say must be positive int
+        },
+        {
+            ...staticParameterProperties,
+            key: 'num_training_samples',
+            value: [],
+            description: 'The number of training examples in the input dataset.',
+            zValidator: positiveIntValidator('num_training_samples', { required: true })
+        },
+        {
+            ...staticParameterProperties,
+            key: 'nms_threshold',
+            value: ['0.45'],
+            description: 'The non-maximum suppression threshold.',
+            zValidator: numberValidator('nms_threshold', { min: 0.0000000001, max: 1, isFloat: true })
+        },
+        {
+            ...staticParameterProperties,
+            key: 'overlap_threshold',
+            value: ['0.5'],
+            description: 'The evaluation overlap threshold.',
+            zValidator: numberValidator('overlap_threshold', { min: 0.0000000001, max: 1, isFloat: true })
+        },
+        {
+            ...staticParameterProperties,
+            key: 'freeze_layer_pattern',
+            value: ['false'],
+            description: 'The regular expression (regex) for freezing layers in the base network. For example, if we set freeze_layer_pattern = "^(conv1_|conv2_).*", then any layers with a name that contains "conv1_" or "conv2_" are frozen, which means that the weights for these layers are not updated during training. The layer names can be found in the network symbol files vgg16-symbol.json and resnet-50-symbol.json. Freezing a layer means that its weights can not be modified further. This can reduce training time significantly in exchange for modest losses in accuracy. This technique is commonly used in transfer learning where the lower layers in the base network do not need to be retrained.',
+        },
+        {
+            ...staticParameterProperties,
+            key: 'kv_store',
+            value: [],
+            options: ['dist_sync', 'dist_async'],
+            description: 'The weight update synchronization mode used for distributed training. The weights can be updated either synchronously or asynchronously across machines. Synchronous updates typically provide better accuracy than asynchronous updates but can be slower. See the Distributed Training MXNet tutorial for details. Note: This parameter is not applicable to single machine training.'
+        },
+        {
+            ...staticParameterProperties,
+            key: 'early_stopping',
+            value: ['false'],
+            options: ['true', 'false'],
+            description: 'True to use early stopping logic during training. False not to use it.',
+        },
+        {
+            ...staticParameterProperties,
+            key: 'early_stopping_min_epochs',
+            value: ['10'],
+            description: 'The minimum number of epochs that must be run before the early stopping logic can be invoked. It is used only when early_stopping = True.',
+            zValidator: positiveIntValidator('early_stopping_min_epochs')
+        },
+        {
+            ...staticParameterProperties,
+            key: 'early_stopping_patience',
+            value: ['5'],
+            description: 'The number of epochs to wait before ending training if no improvement, as defined by the early_stopping_tolerance hyperparameter, is made in the relevant metric. It is used only when early_stopping = True.',
+            zValidator: positiveIntValidator('early_stopping_patience')
+        },
+        {
+            ...staticParameterProperties,
+            key: 'early_stopping_tolerance',
+            value: ['0.0'],
+            description: 'The tolerance value that the relative improvement in validation:mAP, the mean average precision (mAP), is required to exceed to avoid early stopping. If the ratio of the change in the mAP divided by the previous best mAP is smaller than the early_stopping_tolerance value set, early stopping considers that there is no improvement. It is used only when early_stopping = True.',
+            zValidator: numberValidator('early_stopping_tolerance', { min: 0, max: 1, isFloat: true })
+        }]
     },
     {
         // Docs: https://docs.aws.amazon.com/sagemaker/latest/dg/segmentation-hyperparameters.html

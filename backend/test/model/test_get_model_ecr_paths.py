@@ -33,6 +33,8 @@ expected_images = {
     "object2vec": "382416733822.dkr.ecr.us-east-1.amazonaws.com/object2vec:1",
     "pca": "382416733822.dkr.ecr.us-east-1.amazonaws.com/pca:1",
     "xgboost": "811284229777.dkr.ecr.us-east-1.amazonaws.com/xgboost:latest",
+    "semantic-segmentation": "811284229777.dkr.ecr.us-east-1.amazonaws.com/semantic-segmentation:1",
+    "object-detection": "811284229777.dkr.ecr.us-east-1.amazonaws.com/object-detection:1",
 }
 
 # Need to mock the region in order to do the import......
