@@ -81,7 +81,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
     return (
         <Container>
             <ColumnLayout columns={1} borders='horizontal'>
-                <SpaceBetween direction="horizontal" size={'s'}>
+                <SpaceBetween direction='horizontal' size={'s'}>
                     <Button
                         onClick={() =>
                             editor.chain().focus().toggleHeading({ level: 1 }).run()
