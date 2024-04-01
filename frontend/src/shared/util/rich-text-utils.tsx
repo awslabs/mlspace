@@ -15,6 +15,7 @@ import { ColumnLayout, Container, Icon, SpaceBetween } from '@cloudscape-design/
 export type RichTextEditorProps = {
     value: string;
     onChange: CallbackFunction;
+    id: string;
 };
 
 export function RichTextEditor (props: RichTextEditorProps) {
@@ -160,12 +161,12 @@ export function RichTextEditor (props: RichTextEditorProps) {
                     <Button
                         ariaLabel={'Set color'}
                         variant='inline-link'
-                        onClick={() => document.getElementById('color-picker')?.click()}
+                        onClick={() => document.getElementById(`${props.id}-color-picker`)?.click()}
                     >
                         <label htmlFor='color-picker'></label>
                         <input
                             type='color'
-                            id='color-picker'
+                            id={`${props.id}-color-picker`}
                             style={{ display: 'none' }}
                             onInput={(event) =>
                                 editor.chain().focus().setColor(event.target.value).run()
