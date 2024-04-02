@@ -18,11 +18,13 @@ import { DatasetType } from '../model';
 
 const datasetRegex = new RegExp('s3://(.*?)/(.*)/datasets/(.*?)/(.*)');
 
-export const datasetFromS3Uri = (s3Uri: string): {
+export type DatasetContext = {
     Type: DatasetType;
     Name?: string;
     Location?: string;
-} | undefined => {
+};
+
+export const datasetFromS3Uri = (s3Uri: string): DatasetContext | undefined => {
     // Example: s3://mlspace-data-<acc-id>/<type(/subtype - optional)>/datasets/<ds-name>/train/
     if (s3Uri) {
         // matches[0] will be the entire string matched by the regex and the rest are the captures
@@ -45,5 +47,4 @@ export const datasetFromS3Uri = (s3Uri: string): {
             return dataset;
         }
     }
-    return undefined;
 };

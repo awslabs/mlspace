@@ -18,9 +18,8 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
-import boto3
 import jwt
 import urllib3
 
@@ -30,7 +29,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
-from ml_space_lambda.utils.common_functions import authorization_wrapper, retry_config
+from ml_space_lambda.utils.common_functions import authorization_wrapper
 
 logger = logging.getLogger(__name__)
 

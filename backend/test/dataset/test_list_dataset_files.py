@@ -62,32 +62,25 @@ def test_list_dataset_files_success(mock_s3, mock_dataset_dao, mock_global_datas
             "prefix": "global/datasets/example_dataset/",
             "bucket": "mlspace-data-bucket",
             "contents": [
-                {"key": "global/datasets/example_dataset/file1.txt", "size": 643},
-                {"key": "global/datasets/example_dataset/file2.png", "size": 1243},
-                {"prefix": "global/datasets/example_dataset/nested"},
+                {"key": "global/datasets/example_dataset/file1.txt", "size": 643, "type": "object"},
+                {"key": "global/datasets/example_dataset/file2.png", "size": 1243, "type": "object"},
+                {"prefix": "global/datasets/example_dataset/nested", "type": "prefix"},
             ],
         },
     )
 
-    assert (
-        lambda_handler(build_mock_event(mock_global_dataset), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(build_mock_event(mock_global_dataset), mock_context) == expected_response
     mock_s3.list_objects_v2.assert_called_with(
         Bucket=TEST_ENV_CONFIG["DATA_BUCKET"],
         Prefix="global/datasets/example_dataset/",
         Delimiter="/",
     )
-    mock_dataset_dao.get.assert_called_with(
-        mock_global_dataset.scope, mock_global_dataset.name
-    )
+    mock_dataset_dao.get.assert_called_with(mock_global_dataset.scope, mock_global_dataset.name)
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_list_dataset_files_success_with_prefix(
-    mock_s3, mock_dataset_dao, mock_global_dataset
-):
+def test_list_dataset_files_success_with_prefix(mock_s3, mock_dataset_dao, mock_global_dataset):
     mock_dataset_dao.get.return_value = mock_global_dataset
     mock_s3.list_objects_v2.return_value = {
         "MaxKeys": 1000,
@@ -105,24 +98,13 @@ def test_list_dataset_files_success_with_prefix(
             "prefix": "global/datasets/example_dataset/nested/",
             "bucket": "mlspace-data-bucket",
             "contents": [
-                {
-                    "key": "global/datasets/example_dataset/nested/file3.txt",
-                    "size": 346,
-                },
-                {
-                    "key": "global/datasets/example_dataset/nested/file4.png",
-                    "size": 3421,
-                },
+                {"key": "global/datasets/example_dataset/nested/file3.txt", "size": 346, "type": "object"},
+                {"key": "global/datasets/example_dataset/nested/file4.png", "size": 3421, "type": "object"},
             ],
         },
     )
 
-    assert (
-        lambda_handler(
-            build_mock_event(mock_global_dataset, {"prefix": "nested/"}), mock_context
-        )
-        == expected_response
-    )
+    assert lambda_handler(build_mock_event(mock_global_dataset, {"prefix": "nested/"}), mock_context) == expected_response
     mock_s3.list_objects_v2.assert_called_with(
         Bucket=TEST_ENV_CONFIG["DATA_BUCKET"],
         Prefix="global/datasets/example_dataset/nested/",
@@ -132,9 +114,7 @@ def test_list_dataset_files_success_with_prefix(
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_list_dataset_files_success_with_page_size(
-    mock_s3, mock_dataset_dao, mock_global_dataset
-):
+def test_list_dataset_files_success_with_page_size(mock_s3, mock_dataset_dao, mock_global_dataset):
     mock_dataset_dao.get.return_value = mock_global_dataset
     mock_s3.list_objects_v2.return_value = {
         "Prefix": "global/datasets/example_dataset/",
@@ -152,18 +132,13 @@ def test_list_dataset_files_success_with_page_size(
             "prefix": "global/datasets/example_dataset/",
             "bucket": "mlspace-data-bucket",
             "contents": [
-                {"key": "global/datasets/example_dataset/file1.txt", "size": 643},
-                {"key": "global/datasets/example_dataset/file2.png", "size": 1243},
+                {"key": "global/datasets/example_dataset/file1.txt", "size": 643, "type": "object"},
+                {"key": "global/datasets/example_dataset/file2.png", "size": 1243, "type": "object"},
             ],
         },
     )
 
-    assert (
-        lambda_handler(
-            build_mock_event(mock_global_dataset, {"pageSize": 2}), mock_context
-        )
-        == expected_response
-    )
+    assert lambda_handler(build_mock_event(mock_global_dataset, {"pageSize": 2}), mock_context) == expected_response
     mock_s3.list_objects_v2.assert_called_with(
         Bucket=TEST_ENV_CONFIG["DATA_BUCKET"],
         Prefix="global/datasets/example_dataset/",
@@ -174,9 +149,7 @@ def test_list_dataset_files_success_with_page_size(
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_list_dataset_files_success_with_next_token(
-    mock_s3, mock_dataset_dao, mock_global_dataset
-):
+def test_list_dataset_files_success_with_next_token(mock_s3, mock_dataset_dao, mock_global_dataset):
     mock_dataset_dao.get.return_value = mock_global_dataset
     mock_s3.list_objects_v2.return_value = {
         "MaxKeys": 1000,
@@ -193,17 +166,12 @@ def test_list_dataset_files_success_with_next_token(
             "prefix": "global/datasets/example_dataset/",
             "bucket": "mlspace-data-bucket",
             "contents": [
-                {"key": "global/datasets/example_dataset/file5.txt", "size": 789},
+                {"key": "global/datasets/example_dataset/file5.txt", "size": 789, "type": "object"},
             ],
         },
     )
 
-    assert (
-        lambda_handler(
-            build_mock_event(mock_global_dataset, {"nextToken": "abc123"}), mock_context
-        )
-        == expected_response
-    )
+    assert lambda_handler(build_mock_event(mock_global_dataset, {"nextToken": "abc123"}), mock_context) == expected_response
     mock_s3.list_objects_v2.assert_called_with(
         Bucket=TEST_ENV_CONFIG["DATA_BUCKET"],
         Prefix="global/datasets/example_dataset/",
@@ -231,25 +199,18 @@ def test_list_dataset_files_empty(mock_s3, mock_dataset_dao, mock_global_dataset
         },
     )
 
-    assert (
-        lambda_handler(build_mock_event(mock_global_dataset), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(build_mock_event(mock_global_dataset), mock_context) == expected_response
     mock_s3.list_objects_v2.assert_called_with(
         Bucket=TEST_ENV_CONFIG["DATA_BUCKET"],
         Prefix="global/datasets/example_dataset/",
         Delimiter="/",
     )
-    mock_dataset_dao.get.assert_called_with(
-        mock_global_dataset.scope, mock_global_dataset.name
-    )
+    mock_dataset_dao.get.assert_called_with(mock_global_dataset.scope, mock_global_dataset.name)
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_list_dataset_files_client_error(
-    mock_s3, mock_dataset_dao, mock_global_dataset
-):
+def test_list_dataset_files_client_error(mock_s3, mock_dataset_dao, mock_global_dataset):
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
         "ResponseMetadata": {"HTTPStatusCode": 400},
@@ -257,34 +218,26 @@ def test_list_dataset_files_client_error(
 
     expected_response = generate_html_response(
         400,
-        "An error occurred (ThrottlingException) when calling the"
-        " ListObjectsV2 operation: Dummy error message.",
+        "An error occurred (ThrottlingException) when calling the" " ListObjectsV2 operation: Dummy error message.",
     )
 
     mock_dataset_dao.get.return_value = mock_global_dataset
     mock_s3.list_objects_v2.side_effect = ClientError(error_msg, "ListObjectsV2")
 
-    assert (
-        lambda_handler(build_mock_event(mock_global_dataset), mock_context)
-        == expected_response
-    )
+    assert lambda_handler(build_mock_event(mock_global_dataset), mock_context) == expected_response
 
     mock_s3.list_objects_v2.assert_called_with(
         Bucket=TEST_ENV_CONFIG["DATA_BUCKET"],
         Prefix="global/datasets/example_dataset/",
         Delimiter="/",
     )
-    mock_dataset_dao.get.assert_called_with(
-        mock_global_dataset.scope, mock_global_dataset.name
-    )
+    mock_dataset_dao.get.assert_called_with(mock_global_dataset.scope, mock_global_dataset.name)
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
 def test_list_dataset_files_missing_parameters(mock_s3, mock_dataset_dao):
-    expected_response = generate_html_response(
-        400, "Missing event parameter: 'pathParameters'"
-    )
+    expected_response = generate_html_response(400, "Missing event parameter: 'pathParameters'")
     assert lambda_handler({}, mock_context) == expected_response
     mock_s3.list_objects_v2.assert_not_called()
     mock_dataset_dao.get.assert_not_called()

@@ -89,9 +89,7 @@ def edit(event, context):
     # Merge updates into the original item. Only a subset of the fields
     if "description" in body:
         if len(body["description"]) > 254:
-            raise Exception(
-                "Dataset description is over the max length of 254 characters."
-            )
+            raise Exception("Dataset description is over the max length of 254 characters.")
         if dataset_description_regex.search(body["description"]):
             raise Exception("Dataset description contains invalid character.")
 
@@ -159,9 +157,7 @@ def presigned_url(event, context):
         tagging_value = "<Tagging><TagSet>"
         for field_key in fields:
             tag_key = field_key.replace("x-amz-meta-", "")
-            tagging_value += (
-                f"<Tag><Key>{tag_key}</Key><Value>{fields[field_key]}</Value></Tag>"
-            )
+            tagging_value += f"<Tag><Key>{tag_key}</Key><Value>{fields[field_key]}</Value></Tag>"
         tagging_value += "</TagSet></Tagging>"
 
         fields["tagging"] = tagging_value
@@ -195,15 +191,10 @@ def create_dataset(event, context):
         scope = "global"
         directory_name = f"global/datasets/{dataset_name}/"
     else:
-        scope = body.get(
-            "datasetScope"
-        )  # username or project name for private/project scope respectively
+        scope = body.get("datasetScope")  # username or project name for private/project scope respectively
         directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
 
-    if (
-        dataset_type != event["headers"]["x-mlspace-dataset-type"]
-        or scope != event["headers"]["x-mlspace-dataset-scope"]
-    ):
+    if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
         raise Exception("Dataset headers do not match expected type and scope.")
 
     if not dataset_dao.get(scope, dataset_name):
@@ -226,18 +217,14 @@ def list_resources(event, context):
     username = event["requestContext"]["authorizer"]["principalId"]
     datasets = []
     # Get global datasets
-    datasets = dataset_dao.get_all_for_scope(
-        DatasetType.GLOBAL, DatasetType.GLOBAL.value
-    )
+    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
     # Get the users private datasets
     datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
 
     if event["pathParameters"] and "projectName" in event["pathParameters"]:
         project_name = event["pathParameters"]["projectName"].replace('"', "")
         # Get project datasets
-        datasets.extend(
-            dataset_dao.get_all_for_scope(DatasetType.PROJECT, project_name)
-        )
+        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PROJECT, project_name))
 
     return [dataset.to_dict() for dataset in datasets]
 
@@ -277,12 +264,8 @@ def list_files(event, context):
         {"nextToken": "ContinuationToken", "pageSize": "MaxKeys", "prefix": "Prefix"},
     )
 
-    dataset_prefix = get_dataset_prefix(
-        event["pathParameters"]["scope"], event["pathParameters"]["datasetName"]
-    )
-    computed_prefix = "".join(
-        [dataset_prefix, query_string_parameters.get("Prefix", "")]
-    )
+    dataset_prefix = get_dataset_prefix(event["pathParameters"]["scope"], event["pathParameters"]["datasetName"])
+    computed_prefix = "".join([dataset_prefix, query_string_parameters.get("Prefix", "")])
 
     query_parameters = {
         "Bucket": env_variables["DATA_BUCKET"],
@@ -314,13 +297,11 @@ def list_files(event, context):
     # drop unwated fields from contents
     if "Contents" in s3_response:
         for content in s3_response["Contents"]:
-            response["contents"].append(
-                {"key": content["Key"], "size": content["Size"]}
-            )
+            response["contents"].append({"key": content["Key"], "size": content["Size"], "type": "object"})
 
     # merge common prefixes with contents
     if "CommonPrefixes" in s3_response:
         for common_prefix in s3_response["CommonPrefixes"]:
-            response["contents"].append({"prefix": common_prefix["Prefix"]})
+            response["contents"].append({"prefix": common_prefix["Prefix"], "type": "prefix"})
 
     return response

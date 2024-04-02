@@ -28,7 +28,7 @@ from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataR
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission, ResourceType
-from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
+from ml_space_lambda.utils.common_functions import api_wrapper
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 project_dao = ProjectDAO()

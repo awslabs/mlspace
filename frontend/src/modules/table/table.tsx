@@ -13,13 +13,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
 import React, { useEffect, useState } from 'react';
 import { Button, Table as CloudscapeTable, SpaceBetween } from '@cloudscape-design/components';
 import {
     CollectionPreferences,
     Pagination,
-    TextFilter,
     Header,
 } from '@cloudscape-design/components';
 import { useCollection } from '@cloudscape-design/collection-hooks';
@@ -40,6 +38,7 @@ import {
 } from '../../entities/user/user.reducer';
 import { useAppSelector } from '../../config/store';
 import { useDispatch } from 'react-redux';
+import { MLTextFilter } from '../textfilter/textfilter';
 
 export default function Table ({
     tableName,
@@ -173,9 +172,7 @@ export default function Table ({
             data-cy={`${tableName}-table`}
             {...collectionProps}
             onSelectionChange={(event) => {
-                if (selectItemsCallback) {
-                    selectItemsCallback(event.detail.selectedItems);
-                }
+                selectItemsCallback?.(event.detail.selectedItems);
                 collectionProps.onSelectionChange!(event);
             }}
             columnDefinitions={columnDefinitions.map((column) => ({
@@ -243,12 +240,12 @@ export default function Table ({
                                             />
                                         )}
                                         {actions({
-                                            selectedItems: selectedItems,
-                                            allItems: allItems,
-                                            setItemsOverride: setItemsOverride,
-                                            loadingAction: loadingAction,
-                                            focusProps: focusProps,
-                                            focusFileUploadProps: focusFileUploadProps,
+                                            selectedItems,
+                                            allItems,
+                                            setItemsOverride,
+                                            loadingAction,
+                                            focusProps,
+                                            focusFileUploadProps,
                                         })}
                                     </SpaceBetween>
                                 )
@@ -262,7 +259,7 @@ export default function Table ({
             pagination={pagination}
             filter={
                 showFilter ? (
-                    <TextFilter
+                    <MLTextFilter
                         {...filterProps}
                         countText={getMatchesCountText(filteredItemsCount || 0)}
                         filteringAriaLabel={`Filter ${tableName}`}

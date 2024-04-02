@@ -23,7 +23,7 @@ export enum DatasetType {
 }
 
 export type IDataset = {
-    name?: string;
+    name: string;
     scope?: string;
     type?: DatasetType;
     status?: string;
@@ -34,9 +34,9 @@ export type IDataset = {
     files?: IDatasetFile[];
 };
 
-export const defaultDataset: IDataset = {
+export const defaultDataset: Partial<IDataset> = {
     scope: 'Global',
     files: [],
 };
 
-export const defaultValue: Readonly<IDataset> = defaultDataset;
+export const defaultValue: Readonly<Partial<IDataset>> = defaultDataset;
