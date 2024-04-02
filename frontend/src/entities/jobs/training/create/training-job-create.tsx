@@ -418,7 +418,16 @@ export default function TrainingJobCreate () {
                             disabled={state.formSubmitting}
                             variant='primary'
                             onClick={() => {
-                                handleSubmit();
+                                const parseResult = formSchema.safeParse(state.form);
+                                if (parseResult.success) {
+                                    handleSubmit();
+                                } else {
+                                    setState({
+                                        type: 'updateState',
+                                        payload: { validateAll: true },
+                                    });
+                                    scrollToInvalid();
+                                }
                             }}
                         >
                             Create training job
