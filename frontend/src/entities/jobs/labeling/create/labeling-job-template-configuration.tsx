@@ -45,6 +45,7 @@ export function LabelingJobTemplateConfiguration (props: LabelingJobTemplateConf
                                 shortInstruction: event,
                             });
                         }}
+                        id='editor-1'
                     />
                     <SpaceBetween direction='vertical' size='m'>
                         <FormField
@@ -152,6 +153,7 @@ export function LabelingJobTemplateConfiguration (props: LabelingJobTemplateConf
                                 fullInstruction: event,
                             });
                         }}
+                        id='editor-2'
                     />
                 </ExpandableSection>
             </SpaceBetween>
