@@ -245,6 +245,8 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                                 (hyperParameter) => hyperParameter.key === parameterRange.Name
                             );
                             if (hyperParameter !== undefined) {
+                                // Checks if the user tried to put a non-number value in the continuous/integer range
+                                let nanError = false;
                                 [parameterRange.MinValue, parameterRange.MaxValue].forEach(
                                     (value, index) => {
                                         // Only evaluate the validator if:
@@ -252,9 +254,9 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                                         // - OR the field has a value
                                         // - OR this is the max field and the min field has a value
                                         // This evaluation avoids the issue where a blank value is evaluated as a 0 on a forced safeParse even for optional fields
-                                        if (!hyperParameter.zValidator?.isOptional || value || (index === 1 && parameterRange.MinValue) ) {
-                                            const parseResult =
-                                            hyperParameter.zValidator?.safeParse(value);
+                                        if ((!hyperParameter.zValidator?.isOptional || value || (index === 1 && parameterRange.MinValue)) && !nanError ) {
+                                            // Any word alternatives should not apply to ranges
+                                            let parseResult = hyperParameter.zValidator?.safeParse(value);
                                             if (parseResult?.success === false) {
                                                 ctx.addIssue({
                                                     code: 'custom',
@@ -268,12 +270,24 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                                                             ) +
                                                         ` (${index === 0 ? 'min value' : 'max value'})`,
                                                 });
+                                            } else {
+                                                // Check if the user put an approved non-number alternate value in the range field and alert on this unique scenario
+                                                parseResult = z.coerce.number({ 
+                                                    invalid_type_error: `${hyperParameter.key} ${hyperParameter.type} range fields must be a number. (${index === 0 ? 'min value' : 'max value'})`,
+                                                }).safeParse(value);
+                                                if (parseResult?.success === false) {
+                                                    ctx.addIssue({
+                                                        ...parseResult.error.issues[0],
+                                                        path: ['hyperparameters', parameterRange.Name]
+                                                    });
+                                                    nanError = true;
+                                                }
                                             }
                                         }
                                     }
                                 );
 
-                                if (parameterRange.MinValue && parameterRange.MaxValue) {
+                                if (parameterRange.MinValue && parameterRange.MaxValue && !nanError) {
                                     if (
                                         parseFloat(parameterRange.MinValue) >
                                         parseFloat(parameterRange.MaxValue)
