@@ -28,6 +28,7 @@ expected_images = {
     "factorization-machines": "382416733822.dkr.ecr.us-east-1.amazonaws.com/factorization-machines:1",
     "forecasting-deepar": "522234722520.dkr.ecr.us-east-1.amazonaws.com/forecasting-deepar:1",
     "image-classification": "811284229777.dkr.ecr.us-east-1.amazonaws.com/image-classification:1",
+    "linear-learner": "382416733822.dkr.ecr.us-east-1.amazonaws.com/linear-learner:1",
     "kmeans": "382416733822.dkr.ecr.us-east-1.amazonaws.com/kmeans:1",
     "knn": "382416733822.dkr.ecr.us-east-1.amazonaws.com/knn:1",
     "object2vec": "382416733822.dkr.ecr.us-east-1.amazonaws.com/object2vec:1",
