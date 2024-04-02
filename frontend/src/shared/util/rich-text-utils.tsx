@@ -1,177 +1,220 @@
-import Quill from 'quill';
-import React, { useEffect } from 'react';
-import { useMemo } from 'react';
-import ReactQuill from 'react-quill';
+import React, { useCallback } from 'react';
 import { CallbackFunction } from '../../types';
-import 'react-quill/dist/quill.snow.css';
 
-function imageHandler (this: { quill: Quill }) {
-    const curQuill = this && this.quill;
-    const toolTip = curQuill.theme.tooltip;
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Button from '@cloudscape-design/components/button';
 
-    // save the default toolTip functions that we are overriding
-    const defaultToolTipSaveFunction = toolTip.save;
-    const defaultToolTipHideFunction = toolTip.hide;
-
-    toolTip.edit('image');
-    toolTip.textbox.placeholder = 'Enter image URL';
-    const input = toolTip.root.querySelector('input');
-    input.removeAttribute('data-formula');
-    input.removeAttribute('data-link');
-
-    // override the default save function
-    toolTip.save = function () {
-        this.quill.focus();
-        const cursorPosition = this.quill.getSelection().index;
-        const imageURL = this.textbox.value;
-
-        if (imageURL) {
-            try {
-                const validURL = imageURL;
-                if (validURL) {
-                    this.quill.insertEmbed(cursorPosition, 'image', validURL, 'user');
-                    this.quill.setSelection(cursorPosition + 1);
-                }
-            } catch (e) {
-                console.error(e);
-            }
-            // clear the toolTip text after saving
-            this.textbox.value = '';
-        }
-    };
-
-    // restore default toolTip appearance, save, and hide to prevent side effects for the link toolTip
-    toolTip.hide = () => {
-        toolTip.save = defaultToolTipSaveFunction;
-        toolTip.hide = defaultToolTipHideFunction;
-        toolTip.hide();
-    };
-}
+import Document from '@tiptap/extension-document';
+import TextStyle from '@tiptap/extension-text-style';
+import Link from '@tiptap/extension-link';
+import { Color } from '@tiptap/extension-color';
+import { ColumnLayout, Container, Icon, SpaceBetween } from '@cloudscape-design/components';
 
 export type RichTextEditorProps = {
     value: string;
     onChange: CallbackFunction;
+    id: string;
 };
 
 export function RichTextEditor (props: RichTextEditorProps) {
-    const addTitleNodeIfNeeded = (element, title) => {
-        const svg = element.querySelector('svg');
-        if (svg) {
-            if (!svg.querySelector('title')) {
-                const titleNode = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-                titleNode.textContent = title;
-                svg.prepend(titleNode);
-            }
-        }
-    };
-
-    const modules = useMemo(
-        () => ({
-            toolbar: {
-                container: [
-                    [
-                        { header: 1 },
-                        { header: 2 },
-                        'bold',
-                        'italic',
-                        { color: [] },
-                        'link',
-                        'image',
-                    ],
-                ],
-                handlers: {
-                    image: imageHandler,
-                },
-            },
+    const extensions = [
+        Image.configure({
+            inline: true,
         }),
-        []
-    );
+        Color.configure({
+            types: ['textStyle'],
+        }),
+        Document,
+        TextStyle,
+        StarterKit,
+        Link,
+    ];
 
-    const formats = ['header', 'bold', 'italic', 'color', 'link', 'image', 'list'];
+    const editor = useEditor({
+        extensions: extensions,
+        content: props.value,
+    });
 
-    useEffect(() => {
-        const toolbars = document.querySelectorAll('.ql-toolbar');
-        toolbars.forEach((toolbar) => {
-            const buttons = toolbar.getElementsByTagName('button');
-            for (let i = 0; i < buttons.length; i++) {
-                const button = buttons[i];
-                const className = button.getAttribute('class')?.toLowerCase();
-                if (className) {
-                    let buttonLabel;
-                    let imageLabel;
+    const addImage = useCallback(() => {
+        const url = window.prompt('URL');
 
-                    if (className.indexOf('bold') >= 0) {
-                        buttonLabel = 'Toggle bold text';
-                        imageLabel = 'Bold icon';
-                    } else if (className.indexOf('italic') >= 0) {
-                        buttonLabel = 'Toggle italic text';
-                        imageLabel = 'Italic icon';
-                    } else if (className.indexOf('header') >= 0 && button.value === '1') {
-                        buttonLabel = 'Toggle heading level 1';
-                        imageLabel = 'Heading level 1 icon';
-                    } else if (className.indexOf('header') >= 0 && button.value === '2') {
-                        buttonLabel = 'Toggle heading level 2';
-                        imageLabel = 'Heading level 2 icon';
-                    } else if (className.indexOf('link') >= 0) {
-                        buttonLabel = 'Toggle link text';
-                        imageLabel = 'Hyperlink icon';
-                    } else if (className.indexOf('image') >= 0) {
-                        buttonLabel = 'Insert image';
-                        imageLabel = 'Image icon';
-                    }
+        if (url) {
+            editor?.chain().focus().setImage({ src: url }).run();
+        }
+    }, [editor]);
 
-                    if (buttonLabel) {
-                        button.setAttribute('aria-label', buttonLabel);
-                    }
-                    if (imageLabel) {
-                        addTitleNodeIfNeeded(button, imageLabel);
-                    }
-                }
-            }
+    const setLink = useCallback(() => {
+        const previousUrl = editor?.getAttributes('link').href;
+        const url = window.prompt('URL', previousUrl);
 
-            const colorPicker = toolbar.querySelector('.ql-color-picker');
-            if (colorPicker) {
-                const label = colorPicker.getElementsByClassName('ql-picker-label')[0];
-                const optionsContainer = colorPicker.getElementsByClassName('ql-picker-options')[0];
-                const options = optionsContainer.getElementsByClassName('ql-picker-item');
+        // canceled
+        if (url === null) {
+            return;
+        }
 
-                label.setAttribute('role', 'button');
-                label.setAttribute('aria-haspopup', 'true');
-                label.setAttribute('tabIndex', '0');
-                label.setAttribute('aria-label', 'Set text color');
+        // empty
+        if (url === '') {
+            editor?.chain().focus().extendMarkRange('link').unsetLink().run();
 
-                optionsContainer.setAttribute('aria-hidden', 'true');
-                optionsContainer.setAttribute('aria-label', 'submenu');
+            return;
+        }
 
-                for (let x = 0; x < options.length; x++) {
-                    const item = options[x];
+        // update link
+        editor
+            ?.chain()
+            .focus()
+            .extendMarkRange('link')
+            .setLink({ href: url })
+            .run();
+    }, [editor]);
 
-                    // Read the css 'content' values and generate aria labels
-                    item.setAttribute('aria-label', item['dataset'].value);
-                    item.addEventListener('keyup', (e) => {
-                        if (e.keyCode === 13) {
-                            item.click();
-                            optionsContainer.setAttribute('aria-hidden', 'true');
-                        }
-                    });
-                }
+    if (!editor) {
+        return null;
+    }
 
-                label.addEventListener('keyup', (e) => {
-                    if (e.keyCode === 13) {
-                        label.click();
-                        optionsContainer.setAttribute('aria-hidden', 'false');
-                    }
-                });
-            }
-        });
-    }, []);
+    editor.on('update', ({ editor }) => {
+        props.onChange(editor.getHTML());
+    });
 
     return (
-        <ReactQuill
-            modules={modules}
-            formats={formats}
-            value={props.value}
-            onChange={props.onChange}
-        />
+        <Container>
+            <ColumnLayout columns={1} borders='horizontal'>
+                <SpaceBetween direction='horizontal' size={'s'}>
+                    <Button
+                        onClick={() =>
+                            editor.chain().focus().toggleHeading({ level: 1 }).run()
+                        }
+                        ariaLabel={'Toggle heading level 1'}
+                        variant='inline-link'
+                    >
+                        <Icon
+                            variant={
+                                editor.isActive('heading', { level: 1 }) ? 'normal' : 'subtle'
+                            }
+                            svg={
+                                <svg viewBox='0 0 18 18'>
+                                    <title>Heading level 1 icon</title>
+                                    {
+                                        // eslint-disable-next-line spellcheck/spell-checker
+                                    }<path d='M10,4V14a1,1,0,0,1-2,0V10H3v4a1,1,0,0,1-2,0V4A1,1,0,0,1,3,4V8H8V4a1,1,0,0,1,2,0Zm6.06787,9.209H14.98975V7.59863a.54085.54085,0,0,0-.605-.60547h-.62744a1.01119,1.01119,0,0,0-.748.29688L11.645,8.56641a.5435.5435,0,0,0-.022.8584l.28613.30762a.53861.53861,0,0,0,.84717.0332l.09912-.08789a1.2137,1.2137,0,0,0,.2417-.35254h.02246s-.01123.30859-.01123.60547V13.209H12.041a.54085.54085,0,0,0-.605.60547v.43945a.54085.54085,0,0,0,.605.60547h4.02686a.54085.54085,0,0,0,.605-.60547v-.43945A.54085.54085,0,0,0,16.06787,13.209Z'></path>
+                                </svg>
+                            }
+                        />
+                    </Button>
+                    <Button
+                        onClick={() =>
+                            editor.chain().focus().toggleHeading({ level: 2 }).run()
+                        }
+                        ariaLabel={'Toggle heading level 2'}
+                        variant='inline-link'
+                    >
+                        <Icon
+                            variant={
+                                editor.isActive('heading', { level: 2 }) ? 'normal' : 'subtle'
+                            }
+                            svg={
+                                <svg viewBox='0 0 18 18'>
+                                    <title>Heading level 2 icon</title>{' '}
+                                    <path
+                                        className='ql-fill'
+                                        d='M16.73975,13.81445v.43945a.54085.54085,0,0,1-.605.60547H11.855a.58392.58392,0,0,1-.64893-.60547V14.0127c0-2.90527,3.39941-3.42187,3.39941-4.55469a.77675.77675,0,0,0-.84717-.78125,1.17684,1.17684,0,0,0-.83594.38477c-.2749.26367-.561.374-.85791.13184l-.4292-.34082c-.30811-.24219-.38525-.51758-.1543-.81445a2.97155,2.97155,0,0,1,2.45361-1.17676,2.45393,2.45393,0,0,1,2.68408,2.40918c0,2.45312-3.1792,2.92676-3.27832,3.93848h2.79443A.54085.54085,0,0,1,16.73975,13.81445ZM9,3A.99974.99974,0,0,0,8,4V8H3V4A1,1,0,0,0,1,4V14a1,1,0,0,0,2,0V10H8v4a1,1,0,0,0,2,0V4A.99974.99974,0,0,0,9,3Z'
+                                    ></path>{' '}
+                                </svg>
+                            }
+                        />
+                    </Button>
+                    <Button
+                        onClick={() => editor.chain().focus().toggleBold().run()}
+                        ariaLabel={'Toggle bold'}
+                        variant='inline-link'
+                    >
+                        <Icon
+                            variant={editor.isActive('bold') ? 'normal' : 'subtle'}
+                            svg={
+                                <svg viewBox='0 0 18 18'>
+                                    <title>Bold icon</title>{' '}
+                                    <path d='M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z'></path>{' '}
+                                    <path d='M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z'></path>{' '}
+                                </svg>
+                            }
+                        />
+                    </Button>
+                    <Button
+                        onClick={() => editor.chain().focus().toggleItalic().run()}
+                        ariaLabel={'Toggle italic'}
+                        variant='inline-link'
+                    >
+                        <Icon
+                            variant={editor.isActive('italic') ? 'normal' : 'subtle'}
+                            svg={
+                                <svg viewBox='0 0 18 18'>
+                                    <title>Italic icon</title>{' '}
+                                    <line x1='7' x2='13' y1='4' y2='4'></line>{' '}
+                                    <line x1='5' x2='11' y1='14' y2='14'></line>{' '}
+                                    <line x1='8' x2='10' y1='14' y2='4'></line>{' '}
+                                </svg>
+                            }
+                        />
+                    </Button>
+                    <Button
+                        ariaLabel={'Set color'}
+                        variant='inline-link'
+                        onClick={() => document.getElementById(`${props.id}-color-picker`)?.click()}
+                    >
+                        <label htmlFor='color-picker'></label>
+                        <input
+                            type='color'
+                            id={`${props.id}-color-picker`}
+                            style={{ display: 'none' }}
+                            onInput={(event) =>
+                                editor.chain().focus().setColor(event.target.value).run()
+                            }
+                            value={editor.getAttributes('textStyle').color}
+                            data-testid='setColor'
+                        />
+                        <Icon
+                            variant='normal'
+                            svg={
+                                <svg viewBox='0 0 18 18'>
+                                    <title>Color icon</title>
+                                    <line x1='3' x2='15' y1='15' y2='15'></line>{' '}
+                                    <polyline points='5.5 11 9 3 12.5 11'></polyline>{' '}
+                                    <line x1='11.63' x2='6.38' y1='9' y2='9'></line>{' '}
+                                </svg>
+                            }
+                        />
+                    </Button>
+                    <Button onClick={setLink} ariaLabel={'Toggle Link'} variant='inline-link'>
+                        <Icon
+                            variant='normal'
+                            svg={
+                                <svg viewBox='0 0 18 18'>
+                                    <title>Hyperlink icon</title>{' '}
+                                    <line x1='7' x2='11' y1='7' y2='11'></line>{' '}
+                                    <path d='M8.9,4.577a3.476,3.476,0,0,1,.36,4.679A3.476,3.476,0,0,1,4.577,8.9C3.185,7.5,2.035,6.4,4.217,4.217S7.5,3.185,8.9,4.577Z'></path>{' '}
+                                    <path d='M13.423,9.1a3.476,3.476,0,0,0-4.679-.36,3.476,3.476,0,0,0,.36,4.679c1.392,1.392,2.5,2.542,4.679.36S14.815,10.5,13.423,9.1Z'></path>{' '}
+                                </svg>
+                            }
+                        />
+                    </Button>
+                    <Button onClick={addImage} ariaLabel={'Add Image'} variant='inline-link'>
+                        <Icon
+                            variant='normal'
+                            svg={
+                                <svg viewBox='0 0 18 18'>
+                                    <title>Image icon</title>{' '}
+                                    <rect height='10' width='12' x='3' y='4'></rect>{' '}
+                                    <circle cx='6' cy='7' r='1'></circle>{' '}
+                                    <polyline points='5 12 5 11 7 9 8 10 11 7 13 9 13 12 5 12'></polyline>{' '}
+                                </svg>
+                            }
+                        />
+                    </Button>
+                </SpaceBetween>
+                <EditorContent editor={editor} />
+            </ColumnLayout>
+        </Container>
     );
 }
