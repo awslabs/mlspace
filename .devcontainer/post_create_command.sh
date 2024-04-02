@@ -1,8 +1,9 @@
 #!/bin/bash
 
-npm install
 cd frontend/ && npm install
 cd ..
+
+npm install
 
 python3 -m venv .venv
 . .venv/bin/activate
