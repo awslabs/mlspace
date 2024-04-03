@@ -44,12 +44,6 @@ import _ from 'lodash';
 
 const algorithmNameRegex = new RegExp('/(.*):');
 
-const algorithmOptions = ML_ALGORITHMS.filter(
-    (algorithm) => algorithm.active && algorithm.tunable
-).map((algorithm) => {
-    return { value: algorithm.displayName };
-});
-
 export enum AlgorithmSource {
     BUILT_IN = 'built-in',
     CUSTOM = 'custom',
@@ -82,6 +76,12 @@ export function AlgorithmOptions (props: AlgorithmOptionsProps) {
         props;
     const trainingImages = useAppSelector(selectBuiltinTrainingImages);
     const dispatch = useAppDispatch();
+
+    const algorithmOptions = ML_ALGORITHMS.filter(
+        (algorithm) => algorithm.active && (algorithm.tunable || !isHPO)
+    ).map((algorithm) => {
+        return { value: algorithm.displayName };
+    });
 
     const applyAlgorithm = (algorithm : Algorithm) => {
         const hyperParameters = {} as any;
@@ -147,7 +147,7 @@ export function AlgorithmOptions (props: AlgorithmOptionsProps) {
 
         // Sets MetricDefinitions to the default for the algorithm
         fieldsToSet['AlgorithmSpecification.MetricDefinitions'] =
-            algorithm.metadata.metricDefinitions.map((metric) => {
+            algorithm.metadata.metricDefinitions?.map((metric) => {
                 return {
                     Name: metric.metricName,
                     Regex: metric.metricRegex,
@@ -436,7 +436,7 @@ export function AlgorithmOptions (props: AlgorithmOptionsProps) {
                                 },
                             },
                         ]}
-                        empty='No algorithm selected'
+                        empty='There are currently no resources.'
                         items={item.AlgorithmSpecification?.MetricDefinitions || []}
                     />
                 </Condition>
