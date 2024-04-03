@@ -328,64 +328,73 @@ export default function TrainingJobCreate () {
     function handleSubmit () {
         setState({ type: 'updateState', payload: { formSubmitting: true, validateAll: true } });
 
-        if (Object.values(formErrors).length > 0 || Object.values(state.touched).length === 0) {
-            setState({ type: 'updateState', payload: { formSubmitting: false } });
-            scrollToInvalid();
-        } else {
-            const payload = JSON.parse(JSON.stringify(state.form));
-            payload.ProjectName = projectName;
-            payload.UserName = userName;
-            if (algorithmSource === AlgorithmSource.CUSTOM) {
-                // Convert hyperparameters from array into map
-                const hyperParameterMap = {};
-                (state.form.HyperParameters || []).forEach((param) => {
-                    hyperParameterMap[param.key] = param.value;
-                });
-                payload.HyperParameters = hyperParameterMap;
-            } else {
-                // Can't override metrics for built-in algorithms
-                delete payload.AlgorithmSpecification.MetricDefinitions;
-            }
-
-            delete payload.OutputDataConfig.Dataset;
-            payload.InputDataConfig.forEach(
-                (inputDataConfig: InputDataConfig & DatasetExtension) =>
-                    delete inputDataConfig.Dataset
-            );
-            delete payload.AlgorithmSpecification.AlgorithmName;
-
-            dispatch(createTrainingJobThunk(payload)).then((result: any) => {
+        const parseResult = formSchema.safeParse(state.form);
+        if (parseResult.success) {
+            if (Object.values(formErrors).length > 0 || Object.values(state.touched).length === 0) {
                 setState({ type: 'updateState', payload: { formSubmitting: false } });
+                scrollToInvalid();
+            } else {
+                const payload = JSON.parse(JSON.stringify(state.form));
+                payload.ProjectName = projectName;
+                payload.UserName = userName;
+                if (algorithmSource === AlgorithmSource.CUSTOM) {
+                    // Convert hyperparameters from array into map
+                    const hyperParameterMap = {};
+                    (state.form.HyperParameters || []).forEach((param) => {
+                        hyperParameterMap[param.key] = param.value;
+                    });
+                    payload.HyperParameters = hyperParameterMap;
+                } else {
+                    // Can't override metrics for built-in algorithms
+                    delete payload.AlgorithmSpecification.MetricDefinitions;
+                }
 
-                if (result.type.endsWith('/fulfilled')) {
-                    notificationService.generateNotification(
-                        `Successfully created training job with name ${payload.TrainingJobName}`,
-                        'success'
-                    );
-                    if (result.payload?.DeletedMetricsDefinitions) {
+                delete payload.OutputDataConfig.Dataset;
+                payload.InputDataConfig.forEach(
+                    (inputDataConfig: InputDataConfig & DatasetExtension) =>
+                        delete inputDataConfig.Dataset
+                );
+                delete payload.AlgorithmSpecification.AlgorithmName;
+
+                dispatch(createTrainingJobThunk(payload)).then((result: any) => {
+                    setState({ type: 'updateState', payload: { formSubmitting: false } });
+
+                    if (result.type.endsWith('/fulfilled')) {
                         notificationService.generateNotification(
-                            'This training job leverages a built-in Amazon SageMaker algorithm. Metric definitions for these algorithms cannot be customized. The cloned training job was created using the default metric definitions for this algorithm. You can view the values in the details page of this new training job.',
-                            'info'
+                            `Successfully created training job with name ${payload.TrainingJobName}`,
+                            'success'
+                        );
+                        if (result.payload?.DeletedMetricsDefinitions) {
+                            notificationService.generateNotification(
+                                'This training job leverages a built-in Amazon SageMaker algorithm. Metric definitions for these algorithms cannot be customized. The cloned training job was created using the default metric definitions for this algorithm. You can view the values in the details page of this new training job.',
+                                'info'
+                            );
+                        }
+                        const newDataset = {
+                            name: state.form.OutputDataConfig.Dataset.Name,
+                            description: `Dataset created as part of the Training job: ${state.form.TrainingJobName}`,
+                            type: state.form.OutputDataConfig.Dataset.Type,
+                            scope: determineScope(state.form.OutputDataConfig.Dataset.Name, projectName, userName!)
+                        } as IDataset;
+                        createDatasetHandleAlreadyExists(newDataset);
+                        
+                        navigate(
+                            `/project/${projectName}/jobs/training/detail/${state.form.TrainingJobName}`
+                        );
+                    } else {
+                        notificationService.generateNotification(
+                            `Failed to create training job because: ${result.payload}`,
+                            'error'
                         );
                     }
-                    const newDataset = {
-                        name: state.form.OutputDataConfig.Dataset.Name,
-                        description: `Dataset created as part of the Training job: ${state.form.TrainingJobName}`,
-                        type: state.form.OutputDataConfig.Dataset.Type,
-                        scope: determineScope(state.form.OutputDataConfig.Dataset.Name, projectName, userName!)
-                    } as IDataset;
-                    createDatasetHandleAlreadyExists(newDataset);
-                    
-                    navigate(
-                        `/project/${projectName}/jobs/training/detail/${state.form.TrainingJobName}`
-                    );
-                } else {
-                    notificationService.generateNotification(
-                        `Failed to create training job because: ${result.payload}`,
-                        'error'
-                    );
-                }
+                });
+            }
+        } else {
+            setState({
+                type: 'updateState',
+                payload: { validateAll: true, formSubmitting: false  },
             });
+            scrollToInvalid();
         }
     }
 
@@ -418,16 +427,7 @@ export default function TrainingJobCreate () {
                             disabled={state.formSubmitting}
                             variant='primary'
                             onClick={() => {
-                                const parseResult = formSchema.safeParse(state.form);
-                                if (parseResult.success) {
-                                    handleSubmit();
-                                } else {
-                                    setState({
-                                        type: 'updateState',
-                                        payload: { validateAll: true },
-                                    });
-                                    scrollToInvalid();
-                                }
+                                handleSubmit();
                             }}
                         >
                             Create training job
