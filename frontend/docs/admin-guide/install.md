@@ -2,12 +2,12 @@
 outline: deep
 ---
 
-# MLSpace CDK Deployment
+# CDK Deployment
 
 ## Deployment Prerequisites
 
 ### Software
-In order to build and deploy MLSpace to your AWS account you will need the following software installed on your machine:
+In order to build and deploy {{ $params.APPLICATION_NAME }} to your AWS account you will need the following software installed on your machine:
 - [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [awscli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [nodejs](https://nodejs.org/en/download/)
@@ -16,7 +16,7 @@ In order to build and deploy MLSpace to your AWS account you will need the follo
 
 ### Information
 In addition to the required software you will also need to have the following information:
-- AWS account Id and region you'll be deploying MLSpace into (you'll need admin credentials or similar)
+- AWS account Id and region you'll be deploying {{ $params.APPLICATION_NAME }} into (you'll need admin credentials or similar)
 - IdP information including the OIDC endpoint and client name
 
 ### EMR Roles
@@ -25,10 +25,10 @@ In addition to the required software you will also need to have the following in
 When deploying in isolated regions you must ensure that the [EMR Service Linked Role](https://docs.aws.amazon.com/emr/latest/ManagementGuide/using-service-linked-roles.html) has been manually created prior to launching EMR Clusters.
 :::
 
-MLSpace leverages the default EMR roles which may already exist in your account if you've perviously
-launched an EMR cluster in your account. If these roles do not exist MLSpace can create these for
+{{ $params.APPLICATION_NAME }} leverages the default EMR roles which may already exist in your account if you've perviously
+launched an EMR cluster in your account. If these roles do not exist {{ $params.APPLICATION_NAME }} can create these for
 you as part of the CDK deployment but if you prefer to create these separately you can set
-`EMR_DEFAULT_ROLE_ARN` and `EMR_EC2_INSTANCE_ROLE_ARN` in `constants.ts` and MLSpace will use your
+`EMR_DEFAULT_ROLE_ARN` and `EMR_EC2_INSTANCE_ROLE_ARN` in `constants.ts` and {{ $params.APPLICATION_NAME }} will use your
 exisiting roles. If you need to create these roles outside of the CDK deployment the two roles should
 be configured as follows:
 
@@ -57,30 +57,30 @@ _The cleanup role needs to exist but we do not need the ARN_
 5. The role has a default name that you cannot change, you can update the description if you want and then click "Create role"
 
 ### Application Roles
-We generally expect customers to use their own roles for the MLSpace APIGW and lambda execution role as well as for the default notebook role.
+We generally expect customers to use their own roles for the {{ $params.APPLICATION_NAME }} APIGW and lambda execution role as well as for the default notebook role.
 While customers may scope these roles down based on the guidelines of their own organization, the following can be used to quickly stand up
-an instance of MLSpace for demo purposes only. As written these roles and policies should not be used for production usecases.
+an instance of {{ $params.APPLICATION_NAME }} for demo purposes only. As written these roles and policies should not be used for production usecases.
 
 The policies below include a number of placeholder variables that you'll need to replace. These policies are meant to serve as a starting point and are tightly scoped
-to the resources MLSpace expects to use, you can relax these restrictions as necessary
+to the resources {{ $params.APPLICATION_NAME }} expects to use, you can relax these restrictions as necessary
 or make any additional changes required for your environment.
 
 | Variable | Expected Value | Example |
 |--|--|--|
-|`{AWS_PARTITION}`| The partition into which MLSpace is being deployed. | `aws` |
-|`{AWS_REGION}`| The region into which MLSpace is being deployed. | `us-east-1` |
-|`{AWS_ACCOUNT}`| The account number of the account into which MLSpace is being deployed. | `123456789012` |
-|`{MLSPACE_KMS_KEY_ID}`| The id of the KMS Key which is being used to encrypt data in MLSpace. | `eeecf0d8-44f3-4b29-8b78-55de1b5dc153` |
-|`{MLSPACE_PRIVATE_SUBNET_1}`| The subnet id of one of the MLSpace VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
-|`{MLSPACE_PRIVATE_SUBNET_2}`| The subnet id of one of the MLSpace VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
-|`{MLSPACE_PRIVATE_SUBNET_3}`| The subnet id of one of the MLSpace VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
-|`{MLSPACE_VPC_SECURITY_GROUP}`| The id of the default security group for the MLSpace VPC. | `sg-903004f8` |
-|`{EMR_DEFAULT_ROLE_ARN}` | The arn of the role that will be used as the "ServiceRole" for all EMR Clusters created via MLSpace | `arn:aws:iam::123456789012:role/EMR_DefaultRole`|
-|`{EMR_EC2_INSTANCE_ROLE_ARN}` | The arn of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via MLSpace | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole`|
-| `{MLSPACE_APP_ROLE_NAME}` | The name of the MLSpace application role | `mlspace-app-role` |
+|`{AWS_PARTITION}`| The partition into which {{ $params.APPLICATION_NAME }} is being deployed. | `aws` |
+|`{AWS_REGION}`| The region into which {{ $params.APPLICATION_NAME }} is being deployed. | `us-east-1` |
+|`{AWS_ACCOUNT}`| The account number of the account into which {{ $params.APPLICATION_NAME }} is being deployed. | `123456789012` |
+|`{MLSPACE_KMS_KEY_ID}`| The id of the KMS Key which is being used to encrypt data in {{ $params.APPLICATION_NAME }}. | `eeecf0d8-44f3-4b29-8b78-55de1b5dc153` |
+|`{MLSPACE_PRIVATE_SUBNET_1}`| The subnet id of one of the {{ $params.APPLICATION_NAME }} VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
+|`{MLSPACE_PRIVATE_SUBNET_2}`| The subnet id of one of the {{ $params.APPLICATION_NAME }} VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
+|`{MLSPACE_PRIVATE_SUBNET_3}`| The subnet id of one of the {{ $params.APPLICATION_NAME }} VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
+|`{MLSPACE_VPC_SECURITY_GROUP}`| The id of the default security group for the {{ $params.APPLICATION_NAME }} VPC. | `sg-903004f8` |
+|`{EMR_DEFAULT_ROLE_ARN}` | The arn of the role that will be used as the "ServiceRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_DefaultRole`|
+|`{EMR_EC2_INSTANCE_ROLE_ARN}` | The arn of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole`|
+| `{MLSPACE_APP_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} application role | `mlspace-app-role` |
 
 #### Notebook Role
-In order to create the default MLSpace notebook policy and role do the following:
+In order to create the default {{ $params.APPLICATION_NAME }} notebook policy and role do the following:
 1. Login to your AWS account and go to the Policies section of the IAM Service in the AWS Console
 2. Create a new policy with using the JSON editor and paste the following in the text area (after replacing the placeholder variables):
 ```
@@ -345,7 +345,7 @@ In order to create the default MLSpace notebook policy and role do the following
 10. Once the role has been created record the role arn as we'll need to use it later.
 
 #### App Role
-In order to create the default MLSpace Application policy and role do the following:
+In order to create the default {{ $params.APPLICATION_NAME }} Application policy and role do the following:
 1. Login to your AWS account and go to the Policies section of the IAM Service in the AWS Console
 2. Create a new managed policy which will be used as a permissions boundary for dynamically created
 project users roles. This policy assumes you're using the default value for the S3 data and config
@@ -946,7 +946,7 @@ policy. From the IAM Service page click "Policies" on the left hand side.
 14. Once the role has been created record the role arn as we'll need to use it later.
 
 #### S3 Reader Role
-The MLSpace react app is hosted statically in S3 and accessed via an API Gateway S3 proxy integration. This proxy resource will use the role associated with the `S3_READER_ROLE_ARN` in `constants.ts` if specified. If you do not specify an ARN MLSpace will attempt to create a new role.  You can manually create the necessary policy and role using the following steps:
+The {{ $params.APPLICATION_NAME }} react app is hosted statically in S3 and accessed via an API Gateway S3 proxy integration. This proxy resource will use the role associated with the `S3_READER_ROLE_ARN` in `constants.ts` if specified. If you do not specify an ARN {{ $params.APPLICATION_NAME }} will attempt to create a new role.  You can manually create the necessary policy and role using the following steps:
 1. Login to your AWS account and go to the Policies section of the IAM Service in the AWS Console
 2. Create a new policy using the JSON editor and paste the following in the text area (after replacing the placeholder variables):
 ```
@@ -983,7 +983,7 @@ The MLSpace react app is hosted statically in S3 and accessed via an API Gateway
 10. Once the role has been created record the role arn as you'll need to update `constants.ts` to use it.
 
 #### API Gateway CloudWatch Role
-When `ENABLE_ACCESS_LOGGING` is set to `true` [API Gateway uses a single role account-wide](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-permissions) for interacting with CloudWatch. If you would like to provide that role to MLSpace you can set the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` otherwise the role will be automatically created during deployment. In order to create the API Gateway CloudWatch role manually you can take the following steps:
+When `ENABLE_ACCESS_LOGGING` is set to `true` [API Gateway uses a single role account-wide](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-permissions) for interacting with CloudWatch. If you would like to provide that role to {{ $params.APPLICATION_NAME }} you can set the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` otherwise the role will be automatically created during deployment. In order to create the API Gateway CloudWatch role manually you can take the following steps:
 1. Login to your AWS account and go to the Roles section of the IAM Service in the AWS Console.
 2. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 3. Copy and paste the following content into the "Custom trust policy" text area:
@@ -1010,16 +1010,16 @@ Update the values in `lib/constants.ts` based on your specific deployment needs.
 
 | Variable   |      Description      |  Default |
 |----------|:-------------|------:|
-| `AWS_ACCOUNT` | The account number that MLSPace is being deployed into. Used to disambiguated S3 buckets within a region. | - |
-| `AWS_REGION` | The region that MLSpace is being deployed into. This is only needed when you are using an existing VPC or KMS key and `EXISTING_KMS_MASTER_KEY_ARN` or `EXISTING_VPC_ID` is set. | - |
-| `IDP_ENDPOINT_SSM_PARAM` | If set, MLSpace will use the value of this parameter as the `OIDC_URL`. During deployment the value of this parameter will be read from SSM. This value takes precedence over `OIDC_URL` if both are set. | - |
-| `OIDC_URL` | The OIDC endpoint that will be used for MLSpace authentication | - |
-| `OIDC_CLIENT_NAME` | The OIDC client name that should be used by MLSpace for authentication | `web-client` |
+| `AWS_ACCOUNT` | The account number that {{ $params.APPLICATION_NAME }} is being deployed into. Used to disambiguated S3 buckets within a region. | - |
+| `AWS_REGION` | The region that {{ $params.APPLICATION_NAME }} is being deployed into. This is only needed when you are using an existing VPC or KMS key and `EXISTING_KMS_MASTER_KEY_ARN` or `EXISTING_VPC_ID` is set. | - |
+| `IDP_ENDPOINT_SSM_PARAM` | If set, {{ $params.APPLICATION_NAME }} will use the value of this parameter as the `OIDC_URL`. During deployment the value of this parameter will be read from SSM. This value takes precedence over `OIDC_URL` if both are set. | - |
+| `OIDC_URL` | The OIDC endpoint that will be used for {{ $params.APPLICATION_NAME }} authentication | - |
+| `OIDC_CLIENT_NAME` | The OIDC client name that should be used by {{ $params.APPLICATION_NAME }} for authentication | `web-client` |
 | `OIDC_REDIRECT_URL` | The redirect URL that should be used after succesfully authenticating with the OIDC provider. This will default to the API gateway URL generated by the CDK deployment but can be manually set if you're using custom DNS | `undefined` |
 | `OIDC_VERIFY_SSL` | Whether or not calls to the OIDC endpoint specified in the `OIDC_URL` environment variable should validate the server certificate | `True` |
 | `OIDC_VERIFY_SIGNATURE` | Whether or not the lambda authorizer should verify the JWT token signature | `True` |
-| `ADDITIONAL_LAMBDA_ENVIRONMENT_VARS` | A map of key value pairs which will be set as environment variables on every MLSpace lambda | `{}` |
-| `SYSTEM_BANNER_TEXT` | The text to display on the system banner displayed at the top and bottom of the MLSpace web application. If set to a blank string no banner will be displayed. | `` |
+| `ADDITIONAL_LAMBDA_ENVIRONMENT_VARS` | A map of key value pairs which will be set as environment variables on every {{ $params.APPLICATION_NAME }} lambda | `{}` |
+| `SYSTEM_BANNER_TEXT` | The text to display on the system banner displayed at the top and bottom of the {{ $params.APPLICATION_NAME }} web application. If set to a blank string no banner will be displayed. | `` |
 | `SYSTEM_BANNER_BACKGROUND_COLOR` | The background color of the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and rgb values. | `black` |
 | `SYSTEM_BANNER_TEXT_COLOR` | The color of the text displayed in the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and rgb values. | `white` |
 | `RESOURCE_TERMINATION_INTERVAL` | Interval (in minutes) to run the resource termination cleanup lambda | `60` |
@@ -1027,32 +1027,32 @@ Update the values in `lib/constants.ts` based on your specific deployment needs.
 | `PROJECTS_TABLE_NAME` |  Dynamo DB table to hold project related metadata | `mlspace-projects` |
 | `PROJECT_USERS_TABLE_NAME` |  Dynamo DB table to hold project membership related metadata. Including permissions and project/user specific IAM role data. | `mlspace-project-users` |
 | `USERS_TABLE_NAME` |  Dynamo DB table to hold user related metadata | `mlspace-users` |
-| `CONFIG_BUCKET_NAME` |  S3 bucket used to store MLSpace configuration files (notebook lifecycle configs, notebook params, etc) | `mlspace-config` |
+| `CONFIG_BUCKET_NAME` |  S3 bucket used to store {{ $params.APPLICATION_NAME }} configuration files (notebook lifecycle configs, notebook params, etc) | `mlspace-config` |
 | `DATA_BUCKET_NAME` |  S3 bucket used to store user uploaded dataset files | `mlspace-datasets` |
-| `LOGS_BUCKET_NAME` |  S3 bucket used to store logs from EMR clusters launched in MLSpace and, if configured, MLSpace cloudtrail events  | `mlspace-logs` |
+| `LOGS_BUCKET_NAME` |  S3 bucket used to store logs from EMR clusters launched in {{ $params.APPLICATION_NAME }} and, if configured, {{ $params.APPLICATION_NAME }} cloudtrail events  | `mlspace-logs` |
 | `ACCESS_LOGS_BUCKET_NAME` | S3 bucket which will store access logs if `ENABLE_ACCESS_LOGGING` is `true` | `mlspace-access-logs` |
-| `WEBSITE_BUCKET_NAME` |  S3 bucket used to store the static MLSpace website  | `mlspace-website` |
-| `MLSPACE_LIFECYCLE_CONFIG_NAME` |  Name of the default licycle config that should be used with MLSpace notebooks (will be generated as part of the CDK deployment)  | `mlspace-notebook-lifecycle-config` |
+| `WEBSITE_BUCKET_NAME` |  S3 bucket used to store the static {{ $params.APPLICATION_NAME }} website  | `mlspace-website` |
+| `MLSPACE_LIFECYCLE_CONFIG_NAME` |  Name of the default licycle config that should be used with {{ $params.APPLICATION_NAME }} notebooks (will be generated as part of the CDK deployment)  | `mlspace-notebook-lifecycle-config` |
 | `NOTEBOOK_PARAMETERS_FILE_NAME` |  Filename of the default notebook parameters that is generated as part of the CDK deployment  | `mlspace-website` |
-| `PERMISSIONS_BOUNDARY_POLICY_NAME` | Name of the managed policy used as a permissions boundary for dynamically created MLSpace roles | `mlspace-project-user-permission-boundary` |
+| `PERMISSIONS_BOUNDARY_POLICY_NAME` | Name of the managed policy used as a permissions boundary for dynamically created {{ $params.APPLICATION_NAME }} roles | `mlspace-project-user-permission-boundary` |
 | `KEY_MANAGER_ROLE_NAME` | Name of the IAM role with permissions to manage the KMS Key. If this property is set you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
-| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with MLSpace. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. |
-| `SYSTEM_TAG` | Tag which will be applied to all MLSpace resources created with the AWS account to which MLSpace is deployed | `MLSpace` |
-| `IAM_RESOURCE_PREFIX` | Value preprended to MLSpace dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
-| `MANAGE_IAM_ROLES` | This setting determines whether or not MLSpace will dynamically create unique roles per project/user combinations. | `true` |
-| `EXISTING_VPC_NAME` | If MLSpace is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`) | - |
-| `EXISTING_VPC_ID` | If MLSpace is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`) | - |
-| `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If MLSpace is being deployed into an existing VPC this should be the default security group of that VPC | - |
-| `APP_ROLE_ARN` | Arn of an existing IAM role to use for executing the MLSpace lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| `NOTEBOOK_ROLE_ARN` | Arn of an existing IAM role to associate with all notebooks created in MLSpace. If using dynamic roles based on  project/user combinations the specific combination role will be used instaed. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with {{ $params.APPLICATION_NAME }}. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. |
+| `SYSTEM_TAG` | Tag which will be applied to all {{ $params.APPLICATION_NAME }} resources created with the AWS account to which {{ $params.APPLICATION_NAME }} is deployed | `MLSpace` |
+| `IAM_RESOURCE_PREFIX` | Value preprended to {{ $params.APPLICATION_NAME }} dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
+| `MANAGE_IAM_ROLES` | This setting determines whether or not {{ $params.APPLICATION_NAME }} will dynamically create unique roles per project/user combinations. | `true` |
+| `EXISTING_VPC_NAME` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`) | - |
+| `EXISTING_VPC_ID` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`) | - |
+| `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the default security group of that VPC | - |
+| `APP_ROLE_ARN` | Arn of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| `NOTEBOOK_ROLE_ARN` | Arn of an existing IAM role to associate with all notebooks created in {{ $params.APPLICATION_NAME }}. If using dynamic roles based on  project/user combinations the specific combination role will be used instaed. This value must be set to an existing role because the default CDK deployment will not create one. | - |
 | `S3_READER_ROLE_ARN` | Arn of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
 | `EMR_DEFAULT_ROLE_ARN` | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | `EMR_EC2_INSTANCE_ROLE_ARN` | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
-| `ENABLE_ACCESS_LOGGING` | Whether or not to enable access logging for S3 and APIGW in MLSpace | `true` |
+| `ENABLE_ACCESS_LOGGING` | Whether or not to enable access logging for S3 and APIGW in {{ $params.APPLICATION_NAME }} | `true` |
 | `APIGATEWAY_CLOUDWATCH_ROLE_ARN` | If API Gateway access logging is enabled (`ENABLE_ACCESS_LOGGING` is true) then this is the arn of the role that will be used to push those access logs | - |
-| `CREATE_MLSPACE_CLOUDTRAIL_TRAIL` | Whether or not to create an MLSpace trail within the account | `true` |
+| `CREATE_MLSPACE_CLOUDTRAIL_TRAIL` | Whether or not to create an {{ $params.APPLICATION_NAME }} trail within the account | `true` |
 | `NEW_USERS_SUSPENDED` | Whether or not new user accounts will be created in a suspended state by default | `true` |
-| `ENABLE_TRANSLATE` | Whether or not translate capabilities will be deployed/enabled in MLSpace. If translate is not available in the region you are deploying to you should set this to `false` | `true` |
+| `ENABLE_TRANSLATE` | Whether or not translate capabilities will be deployed/enabled in {{ $params.APPLICATION_NAME }}. If translate is not available in the region you are deploying to you should set this to `false` | `true` |
 
 ### Production Web App
 In addition to updating the necessary parameters in the CDK constants file you will also need to create a production build of the web application. You can do this by changing to the web application directory (`MLSpace/frontend/`) and running:
@@ -1066,7 +1066,7 @@ There are no web application specific configuration parameters that need to be s
 ## Deploying the CDK application
 Enusre that the required role arns (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
 
-The MLSpace application is a standard CDK application and can be deployed just as any CDK application is deployed. From the `MLSpace/deployment/` directory you can run the following:
+The {{ $params.APPLICATION_NAME }} application is a standard CDK application and can be deployed just as any CDK application is deployed. From the `MLSpace/deployment/` directory you can run the following:
 ```
 npm install && cdk bootstrap <REPLACE WITH YOUR ACCOUNT NUMBER>/<REPLACE WITH TARGET REGION>
 ```

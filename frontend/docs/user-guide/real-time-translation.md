@@ -10,11 +10,11 @@ Translate features are not available in the us-isob region
 
 Users can perform real-time translation on both text phrases as well as documents of the currently available file types.
 Real-time translation is available to all users and is not associated with projects. Text translations are not retained
-in MLSpace. Translated documents will be downloaded upon translation for further use by the user.
+in {{ $params.APPLICATION_NAME }}. Translated documents will be downloaded upon translation for further use by the user.
 
 Auto-detection is an option for the source language for both text and document translation and is useful if the
 source language is unknown. If automatic detection of the source language is not working, please make sure that
-MLSpace has the proper IAM permissions for `comprehend:DetectDominantLanguage`.
+{{ $params.APPLICATION_NAME }} has the proper IAM permissions for `comprehend:DetectDominantLanguage`.
 
 ## Text Translation
 Translate provided text to a target language using either a designated source language or an auto-detected source

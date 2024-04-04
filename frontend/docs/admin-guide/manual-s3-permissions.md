@@ -1,22 +1,22 @@
-# Enabling Access To S3 Buckets In MLSpace
-MLSpace is configured with one data S3 bucket during deployment. If MLSpace users need to access files stored in other 
+# Enabling Access To S3 Buckets
+{{ $params.APPLICATION_NAME }} is configured with one data S3 bucket during deployment. If {{ $params.APPLICATION_NAME }} users need to access files stored in other 
 S3 buckets then this can be enabled using the following instructions.
 
 For examples in this documentation, the name of the bucket we will be enabling permissions for is `BucketToBeShared`
 
-**NOTE**: After following these instructions MLSpace users will be able to access the S3 buckets in their notebooks and for 
-job inputs, but MLSpace will not display these buckets as options in job inputs since these buckets were not 
-created with MLSpace.
+**NOTE**: After following these instructions {{ $params.APPLICATION_NAME }} users will be able to access the S3 buckets in their notebooks and for 
+job inputs, but {{ $params.APPLICATION_NAME }} will not display these buckets as options in job inputs since these buckets were not 
+created with {{ $params.APPLICATION_NAME }}.
 
-## Enable Access To A S3 Bucket For Use In MLSpace
-To make a bucket available in MLSpace follow steps in these sections:
+## Enable Access To A S3 Bucket
+To make a bucket available in {{ $params.APPLICATION_NAME }} follow steps in these sections:
 1. [Configure the Bucket's IAM Policy](#bucket-policy-configuration-non-mlspace-account-bucket-only)
 2. [Configure the Permissions Boundary](#configure-the-permissions-boundary)
 3. [Configure Access Permissions For The S3 Bucket](#controlling-permissions-to-the-s3-bucket)
 
-### Bucket Policy Configuration (Non-MLSpace Account Bucket Only)
-In order for the MLSpace account to have access to an external bucket, the bucket's policy will need to be configured
-to trust the MLSpace account.
+### Bucket Policy Configuration (External Account Bucket Only)
+In order for the {{ $params.APPLICATION_NAME }} account to have access to an external bucket, the bucket's policy will need to be configured
+to trust the {{ $params.APPLICATION_NAME }} account.
 
 #### Update Bucket Policy Through AWS Console
 To do this through the AWS console:
@@ -26,7 +26,7 @@ To do this through the AWS console:
 - Click on the name link for the desired bucket
 - On the bucket's details page click on the permissions tab
 - Scroll down and identify the "Bucket policy" section and click "Edit"
-- Create a policy that shares the bucket with the MLSpace account [like the example provided below](#example-bucket-policy)
+- Create a policy that shares the bucket with the {{ $params.APPLICATION_NAME }} account [like the example provided below](#example-bucket-policy)
 
 #### Update Bucket Policy Through AWS CLI
 - Assume credentials for the account that owns the bucket
@@ -49,7 +49,7 @@ policy.json:
 ```
 
 #### Example Bucket Policy
-Here is an example of a basic bucket policy that will allow the MLSpace account to access the bucket:
+Here is an example of a basic bucket policy that will allow the {{ $params.APPLICATION_NAME }} account to access the bucket:
 ```json
 {
     "Version": "2012-10-17",
@@ -80,23 +80,23 @@ Here is an example of a basic bucket policy that will allow the MLSpace account 
 Use the instructions below to configure IAM permissions so that the desired uses and projects have access to the bucket.
 
 ### Configure The Permissions Boundary
-MLSpace is designed to scope down IAM permissions to the minimum required by using a permissions boundary. In order 
+{{ $params.APPLICATION_NAME }} is designed to scope down IAM permissions to the minimum required by using a permissions boundary. In order 
 for the IAM permissions to access the bucket to not be scoped down, the permissions boundary will need to be modified.
 
 #### Updating The Permissions Boundary Policy
 Follow these steps to update the permissions boundary to allow access to the bucket:
-- Open the AWS console for the MLSpace Account with a role that can modify IAM permissions
+- Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions
 - Search for and go to the IAM service
 - In the side-navigation click "Policies"
 - Search for the name of permissions boundary policy
-  - This policy is configured during the [MLSpace install](./install.md#default-app-policy-and-role) and the recommended name is `mlspace-project-user-permission-boundary`
+  - This policy is configured during the [{{ $params.APPLICATION_NAME }} install](./install.md#default-app-policy-and-role) and the recommended name is `mlspace-project-user-permission-boundary`
 - Click on the name link for the policy
 - On the Policy page click on "Edit" in the "Permissions defined in this policy" section
 - Follow the instructions from the [Updating The IAM Policy Permissions section](#updating-the-iam-policy-permissions) for the policy and then resume these instructions
 - At the bottom of the edit page click "Next"
 - On the confirmation page click the "Save changes" button
 
-### Examples For Allowing Permissions On MLSpace Configured With Dynamic Roles
+### Examples For Allowing Permissions Configured With Dynamic Roles
 #### Make Bucket Available To All New Users
 In order to make the bucket available to all users, code that is used for dynamic policies
 for all users will need to be modified. This can be found in the backend code in 
@@ -107,14 +107,14 @@ Go to where `self.user_policy` is defined and find the section where S3 permissi
 Follow the instructions from the [Updating The IAM Policy Permissions section](#updating-the-iam-policy-permissions)
 for the `self.user_policy`
 
-Finally, for these changes to take effect, the application will need to be redeployed to the MLSpace account.
+Finally, for these changes to take effect, the application will need to be redeployed to the {{ $params.APPLICATION_NAME }} account.
 
-All MLSpace user accounts created from now own will have the updated permissions.
+All {{ $params.APPLICATION_NAME }} user accounts created from now own will have the updated permissions.
 
 #### Limiting Access To the Bucket For Certain Projects
 If access of the bucket should be scoped to only specific projects, then those projects' policies should be modified.
 
-- Open the AWS console for the MLSpace Account with a role that can modify IAM permissions
+- Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions
 - Search for and go to the IAM service
 - In the side-navigation click "Policies"
 - Search for the name of the project that should have access to the bucket
@@ -136,7 +136,7 @@ If access of a bucket should be limited to certain users, user-specific policy u
 instead of adding permissions directly to the user. It is only recommended to do this when it applies to only a small
 number of users.
 
-- Open the AWS console for the MLSpace Account with a role that can modify IAM permissions
+- Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions
 - Search for and go to the IAM service
 - In the side-navigation click "Policies"
 - Search for the name of the user that should have access to the bucket
@@ -152,11 +152,11 @@ on all of their projects.
 
 This can be applied to all users that need access to the bucket.
 
-### Examples For Allowing Permissions On MLSpace Configured With Dynamic Roles
-Permissions for this MLSpace configuration are controlled by the notebook and application policy configured
-in the [installation of MLSpace](./install.md#default-app-policy-and-role)
+### Examples For Allowing Permissions Configured With Dynamic Roles
+Permissions for this {{ $params.APPLICATION_NAME }} configuration are controlled by the notebook and application policy configured
+in the [installation of {{ $params.APPLICATION_NAME }}](./install.md#default-app-policy-and-role)
 
-The two policies that control permissions for MLSpace users are:
+The two policies that control permissions for {{ $params.APPLICATION_NAME }} users are:
 - The Notebook policy
   - This policy governs permissions for users within notebooks
 - The Application policy
@@ -165,7 +165,7 @@ The two policies that control permissions for MLSpace users are:
 Identify which policy the updated permissions should be added to and what the name of that policy is.
 
 Perform the following instructions for the desired policy:
-- Open the AWS console for the MLSpace Account with a role that can modify IAM permissions
+- Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions
 - Search for and go to the IAM service
 - In the side-navigation click "Policies"
 - Search for the name of the user that should have access to the bucket
@@ -227,5 +227,5 @@ Run the following code block:
 s3 = boto3.client("s3")
 s3.list_objects(Bucket="BucketToBeShared")
 ```
-If the codeblock runs without an error then the MLSpace user/project has been successfully given 
+If the codeblock runs without an error then the {{ $params.APPLICATION_NAME }} user/project has been successfully given 
 permissions for the bucket.

@@ -3,7 +3,7 @@ outline: deep
 ---
 
 # Grant Admin Permissions to Initial Admin
-By default users are created without any elevated privileges and, depending on the value set for `NEW_USERS_SUSPENDED`, will be created in a suspended state unable to interact with the application. In order to grant the inital Admin elevated privileges you'll need to modify the user record in Dynamo DB. Subsequent users can have permissions/suspension state managed directly in the MLSpace UI by any user with the `PMO` permission.
+By default users are created without any elevated privileges and, depending on the value set for `NEW_USERS_SUSPENDED`, will be created in a suspended state unable to interact with the application. In order to grant the inital Admin elevated privileges you'll need to modify the user record in Dynamo DB. Subsequent users can have permissions/suspension state managed directly in the {{ $params.APPLICATION_NAME }} UI by any user with the `PMO` permission.
 ## Using the AWS CLI
 
 You can use the aws CLI to make the necessary update, be sure to set the correct region and username. If you’ve updated the table name from the default you’ll also need to ensure that is correct.
@@ -20,7 +20,7 @@ aws dynamodb --region us-east-1 update-item \
 
 ## Using the AWS console
 
-Login to the AWS account you’ve deployed MLSpace to as a user with write permissions to DynamoDB (Admin works)
+Login to the AWS account you’ve deployed {{ $params.APPLICATION_NAME }} to as a user with write permissions to DynamoDB (Admin works)
 ![AWS Console](../img/initial-admin/aws-dashboard.png)
 Navigate to the DynamoDB console
 ![DynamoDB Dashboard](../img/initial-admin/ddb-dashboard.png)

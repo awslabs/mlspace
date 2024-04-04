@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress';
+import { APPLICATION_NAME } from '../../../lib/constants';
 
 const docItems = [
     {
@@ -7,14 +8,14 @@ const docItems = [
             { text: 'Install Guide', link: '/admin-guide/install' },
             { text: 'Getting Started', link: '/admin-guide/getting-started' },
             { text: 'Setting Initial Admin', link: '/admin-guide/initial-admin' },
-            { text: 'Configure AWS Cognito for MLSpace', link: '/admin-guide/configure-cognito' },
+            { text: `Configure AWS Cognito for ${APPLICATION_NAME}`, link: '/admin-guide/configure-cognito' },
         ]
       },
       {
           text: 'Advanced Configuration',
           items: [
-            { text: 'Enabling Access To S3 Buckets In MLSpace', link: '/admin-guide/manual-s3-permissions' },
-            { text: 'Custom Algorithm Containers In MLSpace', link: '/admin-guide/byom-permissions' },
+            { text: `Enabling Access To S3 Buckets In ${APPLICATION_NAME}`, link: '/admin-guide/manual-s3-permissions' },
+            { text: `Custom Algorithm Containers In ${APPLICATION_NAME}`, link: '/admin-guide/byom-permissions' },
             { text: 'Branding', link: '/admin-guide/branding' },
           ]
       },
@@ -37,7 +38,7 @@ const docItems = [
                 ]
             },
             { text: 'Datasets', link: '/user-guide/datasets' },
-            { text: 'MLSpace Administration', link: '/user-guide/administration-pages' },
+            { text: `${APPLICATION_NAME} Administration`, link: '/user-guide/administration-pages' },
             { text: 'Projects', link: '/user-guide/projects' },
             { text: 'User Preferences', link: '/user-guide/user-preferences' },
           ]
@@ -46,7 +47,7 @@ const docItems = [
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-    title: 'MLSpace Documentation',
+    title: `${APPLICATION_NAME} Documentation`,
     description: 'A collaborative data science environment',
     outDir: '../public/docs',
     base: process.env.DOCS_BASE_PATH || '/Prod/docs/',
@@ -63,5 +64,14 @@ export default defineConfig({
         search: {
             provider: 'local'
         }
+    },
+    transformPageData(pageData) {
+        pageData.params = {APPLICATION_NAME: APPLICATION_NAME, if: pageData.frontmatter, pag: pageData.title};
+
+        // Find and replace only in frontmatter
+        const regex = /MLSpace/g
+        var stringified = JSON.stringify(pageData.frontmatter).replace(regex, APPLICATION_NAME);
+
+        pageData.frontmatter = JSON.parse(stringified);
     }
 })
