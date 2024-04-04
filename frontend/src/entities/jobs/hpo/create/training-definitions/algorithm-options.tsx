@@ -436,7 +436,7 @@ export function AlgorithmOptions (props: AlgorithmOptionsProps) {
                                 },
                             },
                         ]}
-                        empty='There are currently no resources.'
+                        empty={item.AlgorithmSpecification?.AlgorithmName ? 'There are no metrics definitions for the selected algorithm' : 'No algorithm selected'}
                         items={item.AlgorithmSpecification?.MetricDefinitions || []}
                     />
                 </Condition>
