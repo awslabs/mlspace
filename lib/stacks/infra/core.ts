@@ -54,9 +54,12 @@ import {
     RESOURCE_TERMINATION_INTERVAL,
     SYSTEM_TAG,
     USERS_TABLE_NAME,
+    LAMBDA_CONFIGS,
 } from '../../constants';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { mapStringToArchitecture } from '../../utils/apiFunction'
 
 export type CoreStackProps = {
     readonly lambdaSourcePath: string;
@@ -253,6 +256,7 @@ export class CoreStack extends Stack {
             layers: [notifierLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,
             securityGroups: props.lambdaSecurityGroups,
+            architecture: mapStringToArchitecture(LAMBDA_CONFIGS.architecture),
         });
 
         s3NotificationLambda.addPermission('s3Notifier-invoke', {
@@ -291,6 +295,7 @@ export class CoreStack extends Stack {
             layers: [commonLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,
             securityGroups: props.lambdaSecurityGroups,
+            architecture: mapStringToArchitecture(LAMBDA_CONFIGS.architecture),
         });
 
         const ruleName = 'mlspace-rule-terminate-resources';
@@ -453,6 +458,7 @@ export class CoreStack extends Stack {
             layers: [commonLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,
             securityGroups: props.lambdaSecurityGroups,
+            architecture: mapStringToArchitecture(LAMBDA_CONFIGS.architecture),
         });
 
         // Event bridge rule for resource metadata capture

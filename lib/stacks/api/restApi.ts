@@ -48,10 +48,13 @@ import {
     OIDC_CLIENT_NAME,
     OIDC_REDIRECT_URI,
     OIDC_URL,
-    OIDC_VERIFY_SSL
+    OIDC_VERIFY_SSL,
+    LAMBDA_CONFIGS,
 } from '../../constants';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { mapStringToArchitecture } from '../../utils/apiFunction'
 
 export type SystemBannerConfiguration = {
     readonly text?: string;
@@ -285,6 +288,7 @@ export class RestApiStack extends Stack {
             },
             vpc: props.mlSpaceVPC,
             securityGroups: props.lambdaSecurityGroups,
+            architecture: mapStringToArchitecture(LAMBDA_CONFIGS.architecture),
         });
 
         this.mlspaceRequestAuthorizer = new RequestAuthorizer(this, 'MLSpaceAPIGWAuthorizer', {
@@ -343,3 +347,4 @@ export class RestApiStack extends Stack {
         this.mlSpaceRestApiRootResourceId = mlSpaceRestApi.restApiRootResourceId;
     }
 }
+

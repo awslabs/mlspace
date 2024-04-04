@@ -66,6 +66,15 @@ export const BUCKET_DEPLOYMENT_ROLE_ARN = '';
  * }
  */
 export const ADDITIONAL_LAMBDA_ENVIRONMENT_VARS: { [key: string]: string } = {};
+
+/*
+ * Optional mechanism for setting the lambda function architecture, default is "x86_64"
+ * change to "arm64" if/as needed based on the CDK build instance architecture
+ */
+export const LAMBDA_CONFIGS: { [key: string]: string } = {
+  architecture: 'x86_64',
+};
+
 /*
  * These roles must already exist in your account and have the required permissions.
  * The value here must be a valid arn similar to 'arn:aws:iam::111111111111:role/mls-notebook'

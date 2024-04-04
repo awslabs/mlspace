@@ -36,7 +36,9 @@ import {
     RESOURCE_SCHEDULE_TABLE_NAME,
     SYSTEM_TAG,
     USERS_TABLE_NAME,
+    LAMBDA_CONFIGS,
 } from '../constants';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 
 export type MLSpacePythonLambdaFunction = {
     id?: string;
@@ -90,6 +92,7 @@ export function registerAPIEndpoint (
         layers,
         vpc,
         securityGroups,
+        architecture: mapStringToArchitecture(LAMBDA_CONFIGS.architecture),
     });
     const functionResource = getOrCreateResource(stack, api.root, funcDef.path.split('/'));
     functionResource.addMethod(funcDef.method, new LambdaIntegration(handler), {
@@ -117,3 +120,15 @@ function getOrCreateResource (stack: Stack, parentResource: IResource, path: str
     }
     return resource;
 }
+
+// Mapping string to Architecture enum
+export const mapStringToArchitecture = (arch: string): lambda.Architecture => {
+    switch (arch) {
+        case 'arm64':
+            return lambda.Architecture.ARM_64;
+        case 'x86_64':
+            return lambda.Architecture.X86_64;
+        default:
+            throw new Error(`Unsupported architecture: ${arch}`);
+    }
+};
