@@ -12,8 +12,7 @@
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
-        "plugin:react-hooks/recommended",
-        "plugin:react/recommended"
+        "plugin:react-hooks/recommended"
     ],
     "rules": {
         "eqeqeq": [
@@ -187,6 +186,7 @@
                     "hostnames",
                     "hpo",
                     "href",
+                    "huber",
                     "hvm",
                     "hyperband",
                     "hyperparameter",
@@ -229,6 +229,8 @@
                     "mlspace",
                     "msd",
                     "mse",
+                    "mult",
+                    "multiclass",
                     "multilayer",
                     "ndcg",
                     "nlists",
@@ -271,6 +273,7 @@
                     "rmse",
                     "rmsprop",
                     "sagemaker",
+                    "scaler",
                     "scape",
                     "serializable",
                     "serverless",
@@ -299,11 +302,15 @@
                     "tol",
                     "toolbars",
                     "tooltip",
+                    "tsx",
                     "tunable",
                     "txt",
                     "tweedie",
                     "uid",
                     "uint",
+                    "unbias",
+                    "unbiases",
+                    "unbiasing",
                     "untouch",
                     "updaters",
                     "uri",

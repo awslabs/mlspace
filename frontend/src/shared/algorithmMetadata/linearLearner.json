@@ -1,0 +1,176 @@
+{
+  "metricDefinitions": [
+      {
+          "metricName": "test:binary_classification_accuracy",
+          "metricRegex": "#quality_metric: host=\\S+, test binary_classification_accuracy <score>=(\\S+)"
+      },
+      {
+          "metricName": "test:binary_f_beta",
+          "metricRegex": "#quality_metric: host=\\S+, test binary_f_\\S+ <score>=(\\S+)"
+      },
+      {
+          "metricName": "test:objective_loss",
+          "metricRegex": "#quality_metric: host=\\S+, test \\S+_objective <loss>=(\\S+)"
+      },
+      {
+          "metricName": "test:precision",
+          "metricRegex": "#quality_metric: host=\\S+, test precision <score>=(\\S+)"
+      },
+      {
+          "metricName": "test:recall",
+          "metricRegex": "#quality_metric: host=\\S+, test recall <score>=(\\S+)"
+      },
+      {
+          "metricName": "train:binary_classification_accuracy",
+          "metricRegex": "#quality_metric: host=\\S+, train binary_classification_accuracy <score>=(\\S+)"
+      },
+      {
+          "metricName": "test:roc_auc_score",
+          "metricRegex": "#quality_metric: host=\\S+, test roc_auc_score <score>=(\\S+)"
+      },
+      {
+          "metricName": "train:binary_f_beta",
+          "metricRegex": "#quality_metric: host=\\S+, train binary_f_\\S+ <score>=(\\S+)"
+      },
+      {
+          "metricName": "train:objective_loss",
+          "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, train \\S+_objective <loss>=(\\S+)"
+      },
+      {
+          "metricName": "train:objective_loss:final",
+          "metricRegex": "#quality_metric: host=\\S+, train \\S+_objective <loss>=(\\S+)"
+      },
+      {
+          "metricName": "train:precision",
+          "metricRegex": "#quality_metric: host=\\S+, train precision <score>=(\\S+)"
+      },
+      {
+          "metricName": "train:progress",
+          "metricRegex": "#progress_metric: host=\\S+, completed (\\S+) %"
+      },
+      {
+          "metricName": "train:recall",
+          "metricRegex": "#quality_metric: host=\\S+, train recall <score>=(\\S+)"
+      },
+      {
+          "metricName": "train:throughput",
+          "metricRegex": "#throughput_metric: host=\\S+, train throughput=(\\S+) records/second"
+      },
+      {
+          "metricName": "validation:binary_classification_accuracy",
+          "metricRegex": "#quality_metric: host=\\S+, validation binary_classification_accuracy <score>=(\\S+)"
+      },
+      {
+          "metricName": "validation:binary_f_beta",
+          "metricRegex": "#quality_metric: host=\\S+, validation binary_f_\\S+ <score>=(\\S+)"
+      },
+      {
+          "metricName": "validation:objective_loss",
+          "metricRegex": "#quality_metric: host=\\S+, epoch=\\S+, validation \\S+_objective <loss>=(\\S+)"
+      },
+      {
+          "metricName": "validation:objective_loss:final",
+          "metricRegex": "#quality_metric: host=\\S+, validation \\S+_objective <loss>=(\\S+)"
+      },
+      {
+          "metricName": "validation:precision",
+          "metricRegex": "#quality_metric: host=\\S+, validation precision <score>=(\\S+)"
+      },
+      {
+          "metricName": "validation:recall",
+          "metricRegex": "#quality_metric: host=\\S+, validation recall <score>=(\\S+)"
+      },
+      {
+          "metricName": "validation:roc_auc_score",
+          "metricRegex": "#quality_metric: host=\\S+, validation roc_auc_score <score>=(\\S+)"
+      },
+      {
+          "metricName": "validation:rmse",
+          "metricRegex": "#quality_metric: host=\\S+, validation rmse <loss>=(\\S+)"
+      }
+  ],
+  "objectiveMetrics": [
+      {
+          "metricName": "test:binary_classification_accuracy",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "test:binary_f_beta",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "test:objective_loss",
+          "metricType": "Minimize"
+      },
+      {
+          "metricName": "test:precision",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "test:recall",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "test:roc_auc_score",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "validation:binary_classification_accuracy",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "validation:binary_f_beta",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "validation:objective_loss",
+          "metricType": "Minimize"
+      },
+      {
+          "metricName": "validation:objective_loss:final",
+          "metricType": "Minimize"
+      },
+      {
+          "metricName": "validation:precision",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "validation:recall",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "validation:roc_auc_score",
+          "metricType": "Maximize"
+      },
+      {
+          "metricName": "validation:rmse",
+          "metricType": "Minimize"
+      }
+  ],
+  "tunable": true,
+  "tunableHyperParameters": [
+      {
+          "defaultParameterScale": "Logarithmic",
+          "parameterName": "wd"
+      },
+      {
+          "defaultParameterScale": "Logarithmic",
+          "parameterName": "l1"
+      },
+      {
+          "defaultParameterScale": "Logarithmic",
+          "parameterName": "learning_rate"
+      },
+      {
+          "defaultParameterScale": "Linear",
+          "parameterName": "mini_batch_size"
+      },
+      {
+          "parameterName": "use_bias"
+      },
+      {
+          "defaultParameterScale": "Logarithmic",
+          "parameterName": "positive_example_weight_mult"
+      }
+  ]
+}
