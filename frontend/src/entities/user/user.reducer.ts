@@ -129,10 +129,14 @@ export const UserSlice = createSlice({
                 };
             })
             .addMatcher(isFulfilled(updateUser), (state, action) => {
-                return {
-                    ...state,
-                    currentUser: action.payload.data
-                };
+                // Only update the user state if the user is updating themselves
+                // Admins updating other users should not assume the user identity of that user
+                if (state.currentUser.username === action.payload.data.username){
+                    return {
+                        ...state,
+                        currentUser: action.payload.data
+                    };
+                }
             })
             .addMatcher(isPending(getAllUsers), (state) => {
                 return {
