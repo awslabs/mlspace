@@ -29,19 +29,7 @@ import {
     ServicePrincipal
 } from 'aws-cdk-lib/aws-iam';
 import { IKey } from 'aws-cdk-lib/aws-kms';
-import {
-    APIGATEWAY_CLOUDWATCH_ROLE_ARN,
-    APP_ROLE_ARN,
-    EMR_DEFAULT_ROLE_ARN,
-    EMR_EC2_INSTANCE_ROLE_ARN,
-    ENABLE_ACCESS_LOGGING,
-    IAM_RESOURCE_PREFIX,
-    MANAGE_IAM_ROLES,
-    NOTEBOOK_ROLE_ARN,
-    PERMISSIONS_BOUNDARY_POLICY_NAME,
-    S3_READER_ROLE_ARN,
-    SYSTEM_TAG
-} from '../constants';
+import { MLSpaceConfig } from '../../bin/types';
 
 export type IAMStackProp = {
     readonly dataBucketName: string;
@@ -52,6 +40,7 @@ export type IAMStackProp = {
     readonly mlSpaceDefaultSecurityGroupId: string;
     readonly enableTranslate: boolean;
     readonly isIso?: boolean;
+    readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
 
 export class IAMStack extends Stack {
@@ -360,14 +349,14 @@ export class IAMStack extends Stack {
                     },
                 }),
             ];
-
+            
             if (props.enableTranslate) {
                 statements.push(translateIAMPermissionsPolicyStatement);
                 statements.push(new PolicyStatement({
                     effect: Effect.ALLOW,
                     actions: ['iam:PassRole'],
                     resources: [
-                        `arn:${this.partition}:iam::${this.account}:role/${IAM_RESOURCE_PREFIX}*`,
+                        `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
                     ],
                     conditions: {
                         StringEquals: {
@@ -382,7 +371,7 @@ export class IAMStack extends Stack {
             * IAM roles then the user/project policies that get attached to the dynamically created
             * notebook role will lock things down to global, project, and user levels.
             */
-            if (!MANAGE_IAM_ROLES) {
+            if (!props.mlspaceConfig.MANAGE_IAM_ROLES) {
                 statements.push(
                     new PolicyStatement({
                         effect: Effect.ALLOW,
@@ -398,11 +387,11 @@ export class IAMStack extends Stack {
             statements: notebookPolicyStatements(this.partition, Aws.REGION),
         });
 
-        if (NOTEBOOK_ROLE_ARN) {
+        if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
             this.mlSpaceNotebookRole = Role.fromRoleArn(
                 this,
                 'mlspace-notebook-role',
-                NOTEBOOK_ROLE_ARN
+                props.mlspaceConfig.NOTEBOOK_ROLE_ARN
             );
         } else {
             const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
@@ -423,12 +412,12 @@ export class IAMStack extends Stack {
         }
 
         /* App Role depends on permissions boundary */
-        if (MANAGE_IAM_ROLES) {
-            if (PERMISSIONS_BOUNDARY_POLICY_NAME) {
+        if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
+            if (props.mlspaceConfig.PERMISSIONS_BOUNDARY_POLICY_NAME) {
                 this.mlSpacePermissionsBoundary = ManagedPolicy.fromManagedPolicyName(
                     this,
                     'mlspace-existing-boundary',
-                    PERMISSIONS_BOUNDARY_POLICY_NAME
+                    props.mlspaceConfig.PERMISSIONS_BOUNDARY_POLICY_NAME
                 );
             } else {
                 const passRolePrincipals = props.enableTranslate
@@ -491,7 +480,7 @@ export class IAMStack extends Stack {
                                 *
                                 * This needs to match the IAM_RESOURCE_PREFIX prefix in iam_manager.py
                                 */
-                                resources: [`arn:*:iam::${this.account}:role/${IAM_RESOURCE_PREFIX}*`],
+                                resources: [`arn:*:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`],
                                 conditions: {
                                     StringEquals: {
                                         'iam:PassedToService': passRolePrincipals,
@@ -505,8 +494,8 @@ export class IAMStack extends Stack {
             }
         }
 
-        if (APP_ROLE_ARN) {
-            this.mlSpaceAppRole = Role.fromRoleArn(this, 'mlspace-app-role', APP_ROLE_ARN);
+        if (props.mlspaceConfig.APP_ROLE_ARN) {
+            this.mlSpaceAppRole = Role.fromRoleArn(this, 'mlspace-app-role', props.mlspaceConfig.APP_ROLE_ARN);
         } else {
             // ML Space Application role
             const mlSpaceAppRoleName = 'mlspace-app-role';
@@ -745,17 +734,17 @@ export class IAMStack extends Stack {
                 appPolicy.addStatements(translateIAMPermissionsPolicyStatement);
             }
 
-            if (MANAGE_IAM_ROLES && this.mlSpacePermissionsBoundary) {
+            if (props.mlspaceConfig.MANAGE_IAM_ROLES && this.mlSpacePermissionsBoundary) {
                 appPolicy.addStatements(
                     new PolicyStatement({
                         effect: Effect.ALLOW,
                         actions: ['iam:CreateRole'],
                         resources: [
-                            `arn:${this.partition}:iam::${this.account}:role/${IAM_RESOURCE_PREFIX}*`,
+                            `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
                         ],
                         conditions: {
                             StringEqualsIgnoreCase: {
-                                'iam:ResourceTag/system': SYSTEM_TAG,
+                                'iam:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
                             },
                             StringEquals: {
                                 'iam:PermissionsBoundary':
@@ -774,11 +763,11 @@ export class IAMStack extends Stack {
                         ],
                         // This needs to match the IAM_RESOURCE_PREFIX prefix in iam_manager.py
                         resources: [
-                            `arn:${this.partition}:iam::${this.account}:role/${IAM_RESOURCE_PREFIX}*`,
+                            `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
                         ],
                         conditions: {
                             StringEqualsIgnoreCase: {
-                                'iam:ResourceTag/system': SYSTEM_TAG,
+                                'iam:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
                             },
                         },
                     }),
@@ -805,14 +794,14 @@ export class IAMStack extends Stack {
                         ],
                         // This needs to match the IAM_RESOURCE_PREFIX prefix in iam_manager.py
                         resources: [
-                            `arn:${this.partition}:iam::${this.account}:policy/${IAM_RESOURCE_PREFIX}*`,
+                            `arn:${this.partition}:iam::${this.account}:policy/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
                         ],
                     }),
                     new PolicyStatement({
                         effect: Effect.ALLOW,
                         actions: ['iam:SimulatePrincipalPolicy', 'iam:TagRole'],
                         resources: [
-                            `arn:${this.partition}:iam::${this.account}:role/${IAM_RESOURCE_PREFIX}*`,
+                            `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
                         ],
                     }),
                     /*
@@ -829,7 +818,7 @@ export class IAMStack extends Stack {
                         effect: Effect.ALLOW,
                         actions: ['iam:PassRole'],
                         resources: [
-                            `arn:${this.partition}:iam::${this.account}:role/${IAM_RESOURCE_PREFIX}*`,
+                            `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
                         ],
                         conditions: {
                             StringEquals: {
@@ -879,11 +868,11 @@ export class IAMStack extends Stack {
             });
         }
 
-        if (S3_READER_ROLE_ARN) {
+        if (props.mlspaceConfig.S3_READER_ROLE_ARN) {
             this.s3ReaderRole = Role.fromRoleArn(
                 this,
                 'mlspace-s3-reader-role',
-                S3_READER_ROLE_ARN
+                props.mlspaceConfig.S3_READER_ROLE_ARN
             );
         } else {
             const s3WebsiteReadOnlyPolicy = new ManagedPolicy(this, 'mlspace-website-read-policy', {
@@ -903,10 +892,10 @@ export class IAMStack extends Stack {
             });
         }
 
-        if (ENABLE_ACCESS_LOGGING) {
-            if (APIGATEWAY_CLOUDWATCH_ROLE_ARN) {
+        if (props.mlspaceConfig.ENABLE_ACCESS_LOGGING) {
+            if (props.mlspaceConfig.APIGATEWAY_CLOUDWATCH_ROLE_ARN) {
                 new CfnAccount(this, 'mlspace-cwl-api-gateway-account', {
-                    cloudWatchRoleArn: APIGATEWAY_CLOUDWATCH_ROLE_ARN,
+                    cloudWatchRoleArn: props.mlspaceConfig.APIGATEWAY_CLOUDWATCH_ROLE_ARN,
                 });
             } else {
                 // Create CW Role
@@ -925,11 +914,11 @@ export class IAMStack extends Stack {
             }
         }
 
-        if (EMR_DEFAULT_ROLE_ARN) {
+        if (props.mlspaceConfig.EMR_DEFAULT_ROLE_ARN) {
             const existingEmrServiceRole = Role.fromRoleArn(
                 this,
                 'mlspace-emr_defaultrole',
-                EMR_DEFAULT_ROLE_ARN
+                props.mlspaceConfig.EMR_DEFAULT_ROLE_ARN
             );
             this.emrServiceRoleName = existingEmrServiceRole.roleName;
         } else {
@@ -947,11 +936,11 @@ export class IAMStack extends Stack {
             this.emrServiceRoleName = serviceRoleName;
         }
 
-        if (EMR_EC2_INSTANCE_ROLE_ARN) {
+        if (props.mlspaceConfig.EMR_EC2_INSTANCE_ROLE_ARN) {
             const existingEmrEC2Role = Role.fromRoleArn(
                 this,
                 'mlspace-emr_ec2_defaultrole',
-                EMR_EC2_INSTANCE_ROLE_ARN
+                props.mlspaceConfig.EMR_EC2_INSTANCE_ROLE_ARN
             );
             this.emrEC2RoleName = existingEmrEC2Role.roleName;
         } else {

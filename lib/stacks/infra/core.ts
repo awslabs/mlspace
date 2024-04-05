@@ -36,27 +36,9 @@ import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
 import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import {
-    ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
-    BUCKET_DEPLOYMENT_ROLE_ARN,
-    COMMON_LAYER_ARN_PARAM,
-    CREATE_MLSPACE_CLOUDTRAIL_TRAIL,
-    DATASETS_TABLE_NAME,
-    EMR_SECURITY_CONFIG_NAME,
-    ENABLE_ACCESS_LOGGING,
-    MLSPACE_LIFECYCLE_CONFIG_NAME,
-    NOTEBOOK_PARAMETERS_FILE_NAME,
-    NOTIFICATION_DISTRO,
-    PROJECTS_TABLE_NAME,
-    PROJECT_USERS_TABLE_NAME,
-    RESOURCE_METADATA_TABLE_NAME,
-    RESOURCE_SCHEDULE_TABLE_NAME,
-    RESOURCE_TERMINATION_INTERVAL,
-    SYSTEM_TAG,
-    USERS_TABLE_NAME,
-} from '../../constants';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
+import { MLSpaceConfig } from '../../../bin/types';
 
 export type CoreStackProps = {
     readonly lambdaSourcePath: string;
@@ -73,6 +55,7 @@ export type CoreStackProps = {
     readonly mlSpaceDefaultSecurityGroupId: string;
     readonly isIso?: boolean;
     readonly lambdaSecurityGroups: ISecurityGroup[];
+    readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
 
 export class CoreStack extends Stack {
@@ -84,7 +67,7 @@ export class CoreStack extends Stack {
 
         const logsServicePrincipal = new ServicePrincipal('logs.amazonaws.com');
 
-        if (NOTIFICATION_DISTRO) {
+        if (props.mlspaceConfig.NOTIFICATION_DISTRO) {
             new Subscription(this, 'Subscription', {
                 topic: new Topic(this, 'mlspace-topic'),
                 endpoint: props.notificationDistro,
@@ -93,7 +76,7 @@ export class CoreStack extends Stack {
         }
 
         let accessLogBucket = undefined;
-        if (ENABLE_ACCESS_LOGGING) {
+        if (props.mlspaceConfig.ENABLE_ACCESS_LOGGING) {
             accessLogBucket = new Bucket(this, 'mlspace-access-logs-bucket', {
                 bucketName: props.accessLogsBucketName,
                 encryption: BucketEncryption.S3_MANAGED,
@@ -143,19 +126,19 @@ export class CoreStack extends Stack {
             pSMSRoleARN: mlspaceNotebookRole.stringValue,
             pSMSSecurityGroupId: [secGroupId.stringValue],
             pSMSSubnetIds: subnetIds.stringValue,
-            pSMSLifecycleConfigName: MLSPACE_LIFECYCLE_CONFIG_NAME,
+            pSMSLifecycleConfigName: props.mlspaceConfig.MLSPACE_LIFECYCLE_CONFIG_NAME,
             pSMSDataBucketName: props.dataBucketName,
         };
 
         const configDeployment = new BucketDeployment(this, 'MLSpaceConfigDeployment', {
             sources: [
-                Source.jsonData(NOTEBOOK_PARAMETERS_FILE_NAME, notebookParams),
+                Source.jsonData(props.mlspaceConfig.NOTEBOOK_PARAMETERS_FILE_NAME, notebookParams),
                 Source.asset('./lib/resources/config'),
             ],
             destinationBucket: configBucket,
             prune: true,
-            role: BUCKET_DEPLOYMENT_ROLE_ARN
-                ? Role.fromRoleArn(this, 'mlspace-config-deploy-role', BUCKET_DEPLOYMENT_ROLE_ARN, {
+            role: props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN
+                ? Role.fromRoleArn(this, 'mlspace-config-deploy-role', props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN, {
                     mutable: false,
                 })
                 : undefined,
@@ -213,17 +196,17 @@ export class CoreStack extends Stack {
 
         const exampleDataDeployment = new BucketDeployment(this, 'MLSpaceExampleDataDeployment', {
             sources: [
-                Source.jsonData(NOTEBOOK_PARAMETERS_FILE_NAME, notebookParams),
+                Source.jsonData(props.mlspaceConfig.NOTEBOOK_PARAMETERS_FILE_NAME, notebookParams),
                 Source.asset('lib/resources/sagemaker/global/'),
             ],
             destinationKeyPrefix: 'global-read-only/resources/',
             destinationBucket: dataBucket,
             prune: false,
-            role: BUCKET_DEPLOYMENT_ROLE_ARN
+            role: props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN
                 ? Role.fromRoleArn(
                     this,
                     'mlspace-example-data-deploy-role',
-                    BUCKET_DEPLOYMENT_ROLE_ARN,
+                    props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN,
                     {
                         mutable: false,
                     }
@@ -244,11 +227,11 @@ export class CoreStack extends Stack {
             role: props.mlSpaceAppRole,
             environment: {
                 DATA_BUCKET: props.dataBucketName,
-                DATASETS_TABLE: DATASETS_TABLE_NAME,
-                PROJECTS_TABLE: PROJECTS_TABLE_NAME,
-                PROJECT_USERS_TABLE: PROJECT_USERS_TABLE_NAME,
-                USERS_TABLE: USERS_TABLE_NAME,
-                ...ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
+                DATASETS_TABLE: props.mlspaceConfig.DATASETS_TABLE_NAME,
+                PROJECTS_TABLE: props.mlspaceConfig.PROJECTS_TABLE_NAME,
+                PROJECT_USERS_TABLE: props.mlspaceConfig.PROJECT_USERS_TABLE_NAME,
+                USERS_TABLE: props.mlspaceConfig.USERS_TABLE_NAME,
+                ...props.mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
             },
             layers: [notifierLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,
@@ -271,7 +254,7 @@ export class CoreStack extends Stack {
 
         // Save common layer arn to SSM to avoid issue related to cross stack references
         new StringParameter(this, 'VersionArn', {
-            parameterName: COMMON_LAYER_ARN_PARAM,
+            parameterName: props.mlspaceConfig.COMMON_LAYER_ARN_PARAM,
             stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
         });
 
@@ -285,8 +268,8 @@ export class CoreStack extends Stack {
             timeout: Duration.minutes(15),
             role: props.mlSpaceAppRole,
             environment: {
-                RESOURCE_SCHEDULE_TABLE: RESOURCE_SCHEDULE_TABLE_NAME,
-                ...ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
+                RESOURCE_SCHEDULE_TABLE: props.mlspaceConfig.RESOURCE_SCHEDULE_TABLE_NAME,
+                ...props.mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
             },
             layers: [commonLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,
@@ -295,7 +278,7 @@ export class CoreStack extends Stack {
 
         const ruleName = 'mlspace-rule-terminate-resources';
         new Rule(this, ruleName, {
-            schedule: Schedule.rate(Duration.minutes(RESOURCE_TERMINATION_INTERVAL)),
+            schedule: Schedule.rate(Duration.minutes(props.mlspaceConfig.RESOURCE_TERMINATION_INTERVAL)),
             targets: [new LambdaFunction(terminateResourcesLambda)],
             ruleName: ruleName,
         });
@@ -339,7 +322,7 @@ export class CoreStack extends Stack {
         );
 
         // Cloudtrail setup
-        if (CREATE_MLSPACE_CLOUDTRAIL_TRAIL) {
+        if (props.mlspaceConfig.CREATE_MLSPACE_CLOUDTRAIL_TRAIL) {
             new Trail(this, 'mlspace-cloudtrail', {
                 trailName: 'mlspace-cloudtrail',
                 isMultiRegionTrail: true,
@@ -352,7 +335,7 @@ export class CoreStack extends Stack {
         const datasetScopeAttribute = { name: 'scope', type: AttributeType.STRING };
         const datasetNameAttribute = { name: 'name', type: AttributeType.STRING };
         new Table(this, 'mlspace-ddb-datasets', {
-            tableName: DATASETS_TABLE_NAME,
+            tableName: props.mlspaceConfig.DATASETS_TABLE_NAME,
             partitionKey: datasetScopeAttribute,
             sortKey: datasetNameAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
@@ -361,7 +344,7 @@ export class CoreStack extends Stack {
 
         // Projects Table
         new Table(this, 'mlspace-ddb-projects', {
-            tableName: PROJECTS_TABLE_NAME,
+            tableName: props.mlspaceConfig.PROJECTS_TABLE_NAME,
             partitionKey: { name: 'name', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
             encryption: TableEncryption.AWS_MANAGED,
@@ -371,7 +354,7 @@ export class CoreStack extends Stack {
         const projectAttribute = { name: 'project', type: AttributeType.STRING };
         const userAttribute = { name: 'user', type: AttributeType.STRING };
         const projectUsersTable = new Table(this, 'mlspace-ddb-project-users', {
-            tableName: PROJECT_USERS_TABLE_NAME,
+            tableName: props.mlspaceConfig.PROJECT_USERS_TABLE_NAME,
             partitionKey: projectAttribute,
             sortKey: userAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
@@ -387,7 +370,7 @@ export class CoreStack extends Stack {
 
         // Users Table
         new Table(this, 'mlspace-ddb-users', {
-            tableName: USERS_TABLE_NAME,
+            tableName: props.mlspaceConfig.USERS_TABLE_NAME,
             partitionKey: { name: 'username', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
             encryption: TableEncryption.AWS_MANAGED,
@@ -397,7 +380,7 @@ export class CoreStack extends Stack {
         const resourceIdAttribute = { name: 'resourceId', type: AttributeType.STRING };
         const resourceTypeAttribute = { name: 'resourceType', type: AttributeType.STRING };
         new Table(this, 'mlspace-ddb-resource-schedule', {
-            tableName: RESOURCE_SCHEDULE_TABLE_NAME,
+            tableName: props.mlspaceConfig.RESOURCE_SCHEDULE_TABLE_NAME,
             partitionKey: resourceIdAttribute,
             sortKey: resourceTypeAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
@@ -406,7 +389,7 @@ export class CoreStack extends Stack {
 
         // Resources Metadata Table
         const resourcesMetadataTable = new Table(this, 'mlspace-resource-metadata', {
-            tableName: RESOURCE_METADATA_TABLE_NAME,
+            tableName: props.mlspaceConfig.RESOURCE_METADATA_TABLE_NAME,
             partitionKey: resourceTypeAttribute,
             sortKey: resourceIdAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
@@ -427,7 +410,7 @@ export class CoreStack extends Stack {
 
         // EMR Security Configuration
         new CfnSecurityConfiguration(this, 'mlspace-emr-security-config', {
-            name: EMR_SECURITY_CONFIG_NAME,
+            name: props.mlspaceConfig.EMR_SECURITY_CONFIG_NAME,
             securityConfiguration: {
                 InstanceMetadataServiceConfiguration: {
                     MinimumInstanceMetadataServiceVersion: 2,
@@ -446,9 +429,9 @@ export class CoreStack extends Stack {
             timeout: Duration.seconds(90),
             role: props.mlSpaceAppRole,
             environment: {
-                RESOURCE_METADATA_TABLE: RESOURCE_METADATA_TABLE_NAME,
-                SYSTEM_TAG: SYSTEM_TAG,
-                ...ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
+                RESOURCE_METADATA_TABLE: props.mlspaceConfig.RESOURCE_METADATA_TABLE_NAME,
+                SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
+                ...props.mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
             },
             layers: [commonLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,

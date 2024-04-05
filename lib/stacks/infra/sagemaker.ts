@@ -17,15 +17,11 @@
 import { App, Fn, Stack, StackProps } from 'aws-cdk-lib';
 import { CfnNotebookInstanceLifecycleConfig } from 'aws-cdk-lib/aws-sagemaker';
 import { readFileSync } from 'fs';
-import {
-    MLSPACE_LIFECYCLE_CONFIG_NAME,
-    SYSTEM_BANNER_BACKGROUND_COLOR,
-    SYSTEM_BANNER_TEXT,
-    SYSTEM_BANNER_TEXT_COLOR
-} from '../../constants';
+import { MLSpaceConfig } from '../../../bin/types';
 
 export type SagemakerStackProp = {
     readonly dataBucketName: string;
+    readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
 
 export class SagemakerStack extends Stack {
@@ -36,7 +32,7 @@ export class SagemakerStack extends Stack {
         });
 
         new CfnNotebookInstanceLifecycleConfig(this, 'mlspace-notebook-lifecycle-config', {
-            notebookInstanceLifecycleConfigName: MLSPACE_LIFECYCLE_CONFIG_NAME,
+            notebookInstanceLifecycleConfigName: props.mlspaceConfig.MLSPACE_LIFECYCLE_CONFIG_NAME,
             onCreate: [
                 {
                     content: Fn.base64(
@@ -51,12 +47,12 @@ export class SagemakerStack extends Stack {
                 {
                     content: Fn.base64(
                         readFileSync('lib/resources/sagemaker/lifecycle-start.sh', 'utf8')
-                            .replace(/<BANNER_COLOR>/g, SYSTEM_BANNER_BACKGROUND_COLOR)
+                            .replace(/<BANNER_COLOR>/g, props.mlspaceConfig.SYSTEM_BANNER_BACKGROUND_COLOR)
                             .replace(
                                 /<BANNER_TEXT_COLOR>/g,
-                                SYSTEM_BANNER_TEXT_COLOR
+                                props.mlspaceConfig.SYSTEM_BANNER_TEXT_COLOR
                             )
-                            .replace(/<BANNER_TEXT>/g, SYSTEM_BANNER_TEXT)
+                            .replace(/<BANNER_TEXT>/g, props.mlspaceConfig.SYSTEM_BANNER_TEXT)
                     ),
                 },
             ],

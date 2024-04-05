@@ -33,7 +33,7 @@ export const NOTEBOOK_PARAMETERS_FILE_NAME = 'notebook-params.json';
 export const PERMISSIONS_BOUNDARY_POLICY_NAME = '';
 
 // This could be something like Admin or a dedicated role for KMS Key Management
-export const KEY_MANAGER_ROLE_NAME = '';
+export const KEY_MANAGER_ROLE_NAME = 'Admin';
 
 // Account ID is appended to s3 buckets to ensure uniqueness within region
 export const AWS_ACCOUNT = '';
@@ -81,13 +81,13 @@ export const EMR_EC2_INSTANCE_ROLE_ARN = '';
 export const EMR_SECURITY_CONFIG_NAME = 'MLSpace-EMR-SecurityConfig';
 
 // Set this to false to disable access logging on all MLSpace S3 buckets and the APIGW
-export const ENABLE_ACCESS_LOGGING = true;
+export const ENABLE_ACCESS_LOGGING = false;
 // If access logs are enabled API Gateway will use the Cloudwatch role for your account
 // if you have an existing role set that ARN here otherwise MLSpace will attempt to create
 // the role for you
 export const APIGATEWAY_CLOUDWATCH_ROLE_ARN = '';
 // Set this to false if you do not want to create an MLSpace specific trail
-export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = true;
+export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = false;
 
 // SSM property names
 export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
@@ -115,7 +115,7 @@ export const OIDC_CLIENT_NAME = '';
 export const OIDC_VERIFY_SSL = true;
 export const OIDC_VERIFY_SIGNATURE = true;
 // This defaults to the APIGW url but if you're using custom DNS you should set this to that
-export const OIDC_REDIRECT_URI = undefined;
+export const OIDC_REDIRECT_URI = '';
 // Optional system banner which will be displayed at the top and the bottom of MLSpace
 export const SYSTEM_BANNER_BACKGROUND_COLOR = 'black';
 export const SYSTEM_BANNER_TEXT = '';   // If this value is not set then no banner will be displayed
