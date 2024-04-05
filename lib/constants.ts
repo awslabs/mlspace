@@ -33,7 +33,7 @@ export const NOTEBOOK_PARAMETERS_FILE_NAME = 'notebook-params.json';
 export const PERMISSIONS_BOUNDARY_POLICY_NAME = '';
 
 // This could be something like Admin or a dedicated role for KMS Key Management
-export const KEY_MANAGER_ROLE_NAME = 'Admin';
+export const KEY_MANAGER_ROLE_NAME = '';
 
 // Account ID is appended to s3 buckets to ensure uniqueness within region
 export const AWS_ACCOUNT = '';
@@ -81,13 +81,13 @@ export const EMR_EC2_INSTANCE_ROLE_ARN = '';
 export const EMR_SECURITY_CONFIG_NAME = 'MLSpace-EMR-SecurityConfig';
 
 // Set this to false to disable access logging on all MLSpace S3 buckets and the APIGW
-export const ENABLE_ACCESS_LOGGING = false;
+export const ENABLE_ACCESS_LOGGING = true;
 // If access logs are enabled API Gateway will use the Cloudwatch role for your account
 // if you have an existing role set that ARN here otherwise MLSpace will attempt to create
 // the role for you
 export const APIGATEWAY_CLOUDWATCH_ROLE_ARN = '';
 // Set this to false if you do not want to create an MLSpace specific trail
-export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = false;
+export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = true;
 
 // SSM property names
 export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
