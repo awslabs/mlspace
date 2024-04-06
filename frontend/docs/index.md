@@ -1,5 +1,6 @@
 ---
 # https://vitepress.dev/reference/default-theme-home-page
+# MLSpace gets replaced by APPLICATION_NAME during dev and build
 layout: home
 
 hero:

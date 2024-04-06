@@ -4,7 +4,7 @@ outline: deep
 
 # Notebooks
 
-MLSpace allows users to spin-up SageMaker notebook instances within MLSpace projects. An Amazon SageMaker
+{{ $params.APPLICATION_NAME }} allows users to spin-up SageMaker notebook instances within {{ $params.APPLICATION_NAME }} projects. An Amazon SageMaker
 notebook instance is a machine learning compute instance running the Jupyter Notebook App. Jupyter is an
 open-source web application that allows you to create and share documents that contain live code, equations,
 visualizations and narrative text. Uses include: data cleaning and transformation, numerical simulation,
@@ -13,7 +13,7 @@ thought of as a web-based IDE that executes code on the server it is running on 
 
 ## Create a Notebook Instance
 
-All notebook instances in MLSpace must be associated with a project. After navigating to the notebook
+All notebook instances in {{ $params.APPLICATION_NAME }} must be associated with a project. After navigating to the notebook
 list within the context of project you can create a notebook by clicking the "Create notebook instance"
 button in the top right of the table.
 
@@ -25,21 +25,21 @@ be part of the same project as the notebook instance being created. If the EMR c
 it will not be available in the EMR cluster selection menu.
 
 If a notebook stop time has been configured by the project owner then that will also be visible in the
-"Notebook instance settings" section. This will be the daily stop time when MLSpace will automatically
+"Notebook instance settings" section. This will be the daily stop time when {{ $params.APPLICATION_NAME }} will automatically
 stop all active notebooks in the project. If the project owner has enabled the notebook stop time override
 option then a user will be able to modify this stop time when creating or updating a notebook. Stop times are
 approximate and will execute when the next stop workflow runs at a configured time interval.
 
 There are also advanced configuration options available to
 set the notebook volume size as well as to select from a list of available lifecycle configs. These
-configurations are managed externally to MLSpace and will vary depending on your specific installation.
+configurations are managed externally to {{ $params.APPLICATION_NAME }} and will vary depending on your specific installation.
 
 ## Manage a Notebook Instance
 
 Owners of a notebook instance can start, stop, update, delete, and launch jupyter for notebook instance
 from their personal notebook list accessed by clicking "Notebooks" under "My Resources" on the left
 sidebar navigation.	Projects also contain a notebook list that will include all notebooks associated
-with that project. MLSpace administrators can stop, delete, and update existing notebook instances.
+with that project. {{ $params.APPLICATION_NAME }} administrators can stop, delete, and update existing notebook instances.
 Additionally project owners can stop, delete, and update any notebooks associated with the project
 for which they are an owner. All of these actions can be taken from the notebook list or from the
 notebook details view.
@@ -63,7 +63,7 @@ Stop times are approximate and will execute when the next stop workflow runs at 
 
 ### Creating Resources In A Notebook
 When using a Sagemaker Notebook instance users can only create resources if they use the proper tags that allow
-them to be tracked by MLSpace. Failure to use the proper tags will result in an explicit deny error.
+them to be tracked by {{ $params.APPLICATION_NAME }}. Failure to use the proper tags will result in an explicit deny error.
 
 Tags must be applied when creating the following resources within a notebook instance:
 - Model
@@ -133,7 +133,7 @@ vpc_config = {
 }
 ```
 
-See the MLSpace example notebook “xgboost_mnist.ipynb” for reference. It can be found under the “global-resources” folder.
+See the {{ $params.APPLICATION_NAME }} example notebook “xgboost_mnist.ipynb” for reference. It can be found under the “global-resources” folder.
 
 ## Additional documentation
 - [Jupyter Notebooks](https://jupyter-notebook.readthedocs.io/en/latest/)
