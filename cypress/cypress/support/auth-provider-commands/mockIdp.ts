@@ -100,23 +100,18 @@ const loginToCognito = (baseUrl: string, username: string, password: string) => 
         () => {
             // Handle cognito portal information
             cy.request(baseUrl + '/env.js').then((resp) => {
-                console.log(resp.body);
                 const OIDC_URL_REGEX = /["']OIDC_URL['"]:\s*['"]([A-Za-z:\-._/0-9]+)['"]/;
                 const OIDC_APP_NAME_REGEX = /["']OIDC_CLIENT_NAME['"]:\s*['"]([A-Za-z:\-._/0-9]+)['"]/;
                 const oidcUrlMatches = OIDC_URL_REGEX.exec(resp.body);
-                console.log(oidcUrlMatches);
                 if (oidcUrlMatches && oidcUrlMatches.length === 2) {
                     cognitoOathEndpoint = oidcUrlMatches[1];
                 }
                 const oidcClientNameMatches = OIDC_APP_NAME_REGEX.exec(resp.body);
-                console.log(oidcClientNameMatches);
                 if (oidcClientNameMatches && oidcClientNameMatches.length === 2) {
                     cognitoOathClientName = oidcClientNameMatches[1];
                 }
                 cy.request(`${cognitoOathEndpoint}/.well-known/openid-configuration`).then((oathResponse) => {
-                    console.log(oathResponse);
                     cognitoAuthEndpoint = getTopLevelDomain(oathResponse.body.authorization_endpoint);
-                    console.log(cognitoAuthEndpoint);
 
                     // click the login link
                     cy.visit(baseUrl);
