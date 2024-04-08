@@ -4,7 +4,7 @@ outline: deep
 
 # User Preferences
 
-MLSpace users can customize personal timezone setting preferences.
+{{ $params.APPLICATION_NAME }} users can customize personal timezone setting preferences.
 
 ## Timezone
 

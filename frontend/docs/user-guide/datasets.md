@@ -51,9 +51,9 @@ Deleting a dataset will remove all files associated with the dataset including a
 (training output, etc) associated with the dataset.
 
 ## Bring Your Own Data!
-Through MLSpace, users will not have direct console access to Amazon Simple Storage Service (S3).
+Through {{ $params.APPLICATION_NAME }}, users will not have direct console access to Amazon Simple Storage Service (S3).
 Instead, users may upload their datasets via the “Bring Your Own Data (BYOD)” console. Users may
 select between three levels of privacy for a dataset — global datasets are visible to everyone
-registered in the MLSpace application. Here, one might upload benchmark datasets like SpaceNet or
+registered in the {{ $params.APPLICATION_NAME }} application. Here, one might upload benchmark datasets like SpaceNet or
 ImageNet which are open-source and used commonly within the community. Project level datasets are
 visible only within the scope of users in a project while private datasets are only visible to individuals.
