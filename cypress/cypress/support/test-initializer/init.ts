@@ -1,15 +1,23 @@
-import { BASE_URL, DEFAULT_USERNAME, DEFAULT_PASSWORD } from '../commands';
-import { TestProps } from './types';
+import { AUTH_TYPE, BASE_URL, DEFAULT_USERNAME, DEFAULT_PASSWORD } from '../commands';
+import { AuthType, TestProps } from './types';
 
 const initializeTest = (props: TestProps) => {
     Cypress.session.clearAllSavedSessions();
     const { login, projects, datasets, projectPrefix } = props;
     if (login) {
-        cy.loginByMockIdP(
-            BASE_URL,
-            DEFAULT_USERNAME,
-            DEFAULT_PASSWORD
-        );
+        if (AUTH_TYPE === AuthType.Cognito) {
+            cy.loginToCognito(
+                BASE_URL,
+                DEFAULT_USERNAME,
+                DEFAULT_PASSWORD
+            );
+        } else if (AUTH_TYPE === AuthType.Idp) {
+            cy.loginByMockIdP(
+                BASE_URL,
+                DEFAULT_USERNAME,
+                DEFAULT_PASSWORD
+            );
+        }
     }
 
     if (projectPrefix){

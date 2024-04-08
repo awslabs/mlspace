@@ -1,3 +1,14 @@
+const getTopLevelDomain = (url: string): string => {
+    const parts = url.split('/');
+    return parts[2];
+};
+
+
+const getTopLevelDomain = (url: string): string => {
+    const parts = url.split('/');
+    return parts[2];
+};
+
 const loginToMockIdP = (baseUrl: string, username: string, password: string) => {
     const log = Cypress.log({
         displayName: 'Mock IdP Login',
@@ -76,7 +87,9 @@ const loginToCognito = (baseUrl: string, username: string, password: string) => 
         message: [`🔐 Authenticating | ${username}`],
         autoEnd: false,
     });
-    let authOrigin = '';
+    let cognitoOathEndpoint = '';
+    let cognitoOathClientName = '';
+    let cognitoAuthEndpoint = '';
     log.snapshot('before');
     // Temporarily suppress exceptions. We expect to get 401's which will trigger the login redirect
     cy.on('uncaught:exception', () => {
@@ -87,39 +100,51 @@ const loginToCognito = (baseUrl: string, username: string, password: string) => 
         () => {
             // Handle cognito portal information
             cy.request(baseUrl + '/env.js').then((resp) => {
+                console.log(resp.body);
                 const OIDC_URL_REGEX = /["']OIDC_URL['"]:\s*['"]([A-Za-z:\-._/0-9]+)['"]/;
-                const matches = OIDC_URL_REGEX.exec(resp.body);
-                if (matches && matches.length === 2) {
-                    authOrigin = matches[1];
+                const OIDC_APP_NAME_REGEX = /["']OIDC_CLIENT_NAME['"]:\s*['"]([A-Za-z:\-._/0-9]+)['"]/;
+                const oidcUrlMatches = OIDC_URL_REGEX.exec(resp.body);
+                console.log(oidcUrlMatches);
+                if (oidcUrlMatches && oidcUrlMatches.length === 2) {
+                    cognitoOathEndpoint = oidcUrlMatches[1];
                 }
-                const getTopLevelDomain = (url: string): string => {
-                    const parts = url.split('.');
-                    return parts[parts.length - 2];
-                };
-                // click the login link
-                cy.visit(baseUrl);
-                cy.contains('button', 'Login').click();
-                //authOrigin = cy.location('origin');
-                cy.origin(
-                    authOrigin,
-                    {
-                        args: {
-                            username,
-                            password,
+                const oidcClientNameMatches = OIDC_APP_NAME_REGEX.exec(resp.body);
+                console.log(oidcClientNameMatches);
+                if (oidcClientNameMatches && oidcClientNameMatches.length === 2) {
+                    cognitoOathClientName = oidcClientNameMatches[1];
+                }
+                cy.request(`${cognitoOathEndpoint}/.well-known/openid-configuration`).then((oathResponse) => {
+                    console.log(oathResponse);
+                    cognitoAuthEndpoint = getTopLevelDomain(oathResponse.body.authorization_endpoint);
+                    console.log(cognitoAuthEndpoint);
+
+                    // click the login link
+                    cy.visit(baseUrl);
+                    cy.contains('button', 'Login').click();
+                    //authOrigin = cy.location('origin');
+                    cy.origin(
+                        cognitoAuthEndpoint,
+                        {
+                            args: {
+                                username,
+                                password,
+                            },
                         },
-                    },
-                    ({ username, password }) => {
-                        cy.get('#signInFormUsername').type(username);
-                    }
-                );
-                cy.wait(2000);
-                cy.url().should('equal', baseUrl);
+                        ({ username, password }) => {
+                            cy.get('input[name="username"]').filter(':visible').type(username, {force: true});
+                            cy.get('input[name="password"]').filter(':visible').type(password, {force: true});
+                            cy.get('input[value="Sign in"]').filter(':visible').click({force: true});
+                        }
+                    );
+                    cy.wait(2000);
+                    cy.url().should('equal', baseUrl);
+                });
             });
         },
         {
             validate: () => {
                 cy.wrap(sessionStorage)
-                    .invoke('getItem', `oidc.user:${authOrigin}:web-client`)
+                    .invoke('getItem', `oidc.user:${cognitoOathEndpoint}:${cognitoOathClientName}`)
                     .should('exist');
 
             }

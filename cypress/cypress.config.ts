@@ -1,4 +1,5 @@
 import { defineConfig } from "cypress";
+import { AuthType } from "./cypress/support/test-initializer/types";
 
 module.exports = defineConfig({
   e2e: {
@@ -10,6 +11,7 @@ module.exports = defineConfig({
   },
 
   env: {
+    auth_type: AuthType.Cognito,
     base_url: "",
     username: "",
     password: "",

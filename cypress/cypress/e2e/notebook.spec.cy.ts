@@ -1,3 +1,4 @@
+import { login } from '../support/commands';
 import { notebookInstance, newNotebookInstance, notebookOptions, project, computeTypes } from './resources';
 
 describe('Notebook Tests', () => {
@@ -59,11 +60,7 @@ describe('Notebook Tests', () => {
             nextToken: 'Bxkq6kVGFtq2y_MoigeqscPOdhXVbhiVtLoAmXb5jCqS'
         });
         // Call login routine
-        cy.loginByMockIdP(
-            baseUrl,
-            username,
-            password
-        );
+        login();
         // Navigate to notebook instances page
         cy.visit(`${baseUrl}#/project/${projectName}/notebook`);
         cy.url().should('include', `#/project/${projectName}/notebook`);

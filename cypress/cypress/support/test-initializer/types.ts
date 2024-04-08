@@ -1,3 +1,8 @@
+enum AuthType {
+    Cognito = "COGNITO",
+    Idp = "IDP",
+};
+
 type ProjectProps = {
     name: string;
     description: string;
@@ -19,4 +24,4 @@ type TestProps = {
     datasets?: DatasetProps[];
 };
 
-export { ProjectProps, DatasetProps, TestProps };
+export { ProjectProps, DatasetProps, TestProps, AuthType };

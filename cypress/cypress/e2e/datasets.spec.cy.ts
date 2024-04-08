@@ -48,7 +48,6 @@ describe('Dataset Tests', () => {
         cy.setValueCloudscapeInput('dataset-name-input', datasetName);
         cy.setValueCloudscapeTextArea('dataset-description-textarea', testDataset.DatasetDescription);
         cy.setValueCloudscapeSelect('dataset-type-select', testDataset.DatasetType.toLocaleLowerCase());
-        cy.setValueCloudscapeAutoSuggest('dataset-format-input', testDataset.DatasetFormat);
         cy.get('[data-cy="dataset-file-upload-input"]').as('fileInput');
         cy.fixture('test_upload_file.txt').then((fileContent) => {
             cy.get('@fileInput').attachFile({
@@ -62,14 +61,16 @@ describe('Dataset Tests', () => {
         cy.verifyCloudscapeInput('dataset-name-input', datasetName);
         cy.verifyCloudscapeTextArea('dataset-description-textarea', testDataset.DatasetDescription);
         cy.verifyCloudscapeSelect('dataset-type-select', testDataset.DatasetType);
-        cy.verifyCloudscapeAutoSuggest('dataset-format-input', testDataset.DatasetFormat);
         cy.get('[data-cy="dataset-submit-button"]').click();
-        // Verify dataset creation redirected to main notebook page
-        cy.url().should('include', `#/project/${testProjectName}/dataset`);
+        cy.wait(2000);
+        
+        // Verify dataset creation redirected to main dataset page
+        cy.url().should('include', `#/project/${testProjectName}/dataset`).should('include', datasetName);
 
         // Wait for the dataset to be populated and redirect to the datasets page
         // Occasional failures to load were observed at 5000ms wait time in development
-        cy.wait(7000);
+        cy.visit(`${BASE_URL}#/project/${testProjectName}/dataset`);
+        cy.wait(2000);
         cy.reload();
 
         // Verify dataset was created
@@ -94,7 +95,6 @@ describe('Dataset Tests', () => {
         cy.get('[data-cy="Name-value"]').should('have.text', testDataset.DatasetName);
         cy.get('[data-cy="Description-value"]').should('have.text', testDataset.DatasetDescription);
         cy.get('[data-cy="Access level-value"]').should('have.text', testDataset.DatasetType.toLowerCase());
-        cy.get('[data-cy="Format-value"]').should('have.text', testDataset.DatasetFormat);
         // Should not have the default empty text
         cy.get('[data-cy="Location-value"]').should('not.have.text', '-');
     });
@@ -137,7 +137,6 @@ describe('Dataset Tests', () => {
         cy.get(createWrapper().findInput('[data-cy="dataset-type"]').findNativeInput().toSelector()).should('have.value', testDataset.DatasetType.toLowerCase());
         cy.get(createWrapper().findInput('[data-cy="dataset-owner"]').findNativeInput().toSelector()).should('have.value', DEFAULT_USERNAME);
         cy.get(createWrapper().findTextarea('[data-cy="dataset-description"]').findNativeTextarea().toSelector()).should('have.value', testDataset.DatasetDescription);
-        cy.get(createWrapper().findAutosuggest('[data-cy="dataset-format"]').findNativeInput().toSelector()).should('have.value', testDataset.DatasetFormat);
 
         // Update description
         cy.get(createWrapper().findTextarea('[data-cy="dataset-description"]').findNativeTextarea().toSelector()).type(' Updated');

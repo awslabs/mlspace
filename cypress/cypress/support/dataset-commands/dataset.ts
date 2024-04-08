@@ -13,7 +13,6 @@ const createDataset = ({ name, description, type, format, files }: DatasetProps)
     cy.setValueCloudscapeInput('dataset-name-input', name);
     cy.setValueCloudscapeTextArea('dataset-description-textarea', description);
     cy.setValueCloudscapeSelect('dataset-type-select', type);
-    cy.setValueCloudscapeAutoSuggest('dataset-format-input', format);
     cy.get('[data-cy="dataset-file-upload-input"]').as('fileInput');
     files.forEach((file) => {
         cy.fixture(file).then((fileContent) => {
@@ -28,7 +27,6 @@ const createDataset = ({ name, description, type, format, files }: DatasetProps)
     cy.verifyCloudscapeInput('dataset-name-input', name);
     cy.verifyCloudscapeTextArea('dataset-description-textarea', description);
     cy.verifyCloudscapeSelect('dataset-type-select', capitalizeFirstLetter(type));
-    cy.verifyCloudscapeAutoSuggest('dataset-format-input', format);
     cy.get('[data-cy="dataset-submit-button"]').click();
     // Verify dataset creation redirected to main notebook page
     cy.url().should('include', '#/personal/dataset');

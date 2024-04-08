@@ -1,3 +1,5 @@
+import { login } from "../support/commands";
+
 describe('Project Tests', () => {
     const testProjectName = `e2eTest${(new Date()).getTime()}`;
     const testProjectDescription = 'This is an example project for E2E tests.';
@@ -10,11 +12,7 @@ describe('Project Tests', () => {
     });
 
     beforeEach(() => {
-        cy.loginByMockIdP(
-            baseUrl,
-            username,
-            password
-        );
+        login();
     });
 
     it('Create Project', () => {
