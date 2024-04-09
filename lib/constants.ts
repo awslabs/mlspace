@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
+
 // DynamoDB table names. If you modify these you may need to modify the application role policy
 // statements to ensure actions are allowed against the correct resources. The default policy
 // relies on all mlspace tables having a prefix of "mlspace-"
@@ -124,3 +126,6 @@ export const SYSTEM_BANNER_TEXT_COLOR = 'white';
 export const RESOURCE_TERMINATION_INTERVAL = 60;
 // The default suspension state for new users. If true, new users are suspended and can't perform actions until validated by a SysAdmin
 export const NEW_USERS_SUSPENDED = false;
+
+export const LAMBDA_ARCHITECTURE = Architecture.X86_64;
+export const LAMBDA_RUNTIME = Runtime.PYTHON_3_11;

@@ -16,12 +16,12 @@
 
 import * as path from 'path';
 import { existsSync, mkdirSync, rmdirSync, cpSync } from 'fs';
-import { Architecture, Code, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Architecture, Code, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { Asset } from 'aws-cdk-lib/aws-s3-assets';
 import { BundlingOutput } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { LAMBDA_ARCHITECTURE, LAMBDA_RUNTIME } from '../constants';
 
-export const ARCHITECTURE = Architecture.X86_64;
 const WORKING_DIR = process.cwd();
 
 /**
@@ -65,7 +65,7 @@ export class LambdaLayer extends Construct {
                 const layerAsset = new Asset(this, 'LayerAsset', {
                     path: buildDir,
                     bundling: {
-                        image: Runtime.PYTHON_3_11.bundlingImage,
+                        image: LAMBDA_RUNTIME.bundlingImage,
                         command: ['./create.sh'],
                         platform: architecture.dockerPlatform,
                         outputType: BundlingOutput.AUTO_DISCOVER,
@@ -82,7 +82,8 @@ export class LambdaLayer extends Construct {
 
         this.layerVersion = new LayerVersion(scope, `mlspace-${layerFileName}-lambda-layer`, {
             description,
-            compatibleRuntimes: [Runtime.PYTHON_3_11],
+            compatibleArchitectures: [LAMBDA_ARCHITECTURE],
+            compatibleRuntimes: [LAMBDA_RUNTIME],
             layerVersionName: `mlspace-${layerName}-layer`,
             code: layerCode,
         });
@@ -139,6 +140,6 @@ export function createLambdaLayer (
         layerName,
         description: `Lambda layer for ${layerIdentifier} dependencies needed by MLSpace`,
         layerIdentifier,
-        architecture: ARCHITECTURE
+        architecture: LAMBDA_ARCHITECTURE
     });
 }
