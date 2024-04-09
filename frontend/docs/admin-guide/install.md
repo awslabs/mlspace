@@ -25,7 +25,7 @@ In addition to the required software you will also need to have the following in
 When deploying in isolated regions you must ensure that the [EMR Service Linked Role](https://docs.aws.amazon.com/emr/latest/ManagementGuide/using-service-linked-roles.html) has been manually created prior to launching EMR Clusters.
 :::
 
-MLSpace leverages the default EMR roles which may already exist in your account if you've perviously
+MLSpace leverages the default EMR roles which may already exist in your account if you've previously
 launched an EMR cluster in your account. If these roles do not exist MLSpace can create these for
 you as part of the CDK deployment but if you prefer to create these separately you can set
 `EMR_DEFAULT_ROLE_ARN` and `EMR_EC2_INSTANCE_ROLE_ARN` in `constants.ts` and MLSpace will use your
@@ -1006,7 +1006,7 @@ When `ENABLE_ACCESS_LOGGING` is set to `true` [API Gateway uses a single role ac
 6. Once the role has been created record the role arn and update the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` to use the arn of the newly created role.
 
 ### Deployment Parameters
-Update the values in `lib/constants.ts` based on your specific deployment needs. Some of these will directly impact whether new resources are created within your account or whether existing resources (VPC, KMS, Roles, etc) will be leveraged.
+Use the MLSpace Config Wizard by running `npm run config` and select "Advanced Configuration" for an interactive prompt which will set configuration values on your behalf in a generated `config.json` file. Alternatively, update the values in `lib/constants.ts` based on your specific deployment needs. Some of these will directly impact whether new resources are created within your account or whether existing resources (VPC, KMS, Roles, etc) will be leveraged.
 
 | Variable   |      Description      |  Default |
 |----------|:-------------|------:|

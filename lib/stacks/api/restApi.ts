@@ -37,7 +37,7 @@ import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
-import { MLSpaceConfig } from '../../../bin/types';
+import { MLSpaceConfig } from '../../utils/configTypes';
 
 export type SystemBannerConfiguration = {
     readonly text?: string;

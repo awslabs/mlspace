@@ -38,7 +38,7 @@ import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
-import { MLSpaceConfig } from '../../../bin/types';
+import { MLSpaceConfig } from '../../utils/configTypes';
 
 export type CoreStackProps = {
     readonly lambdaSourcePath: string;

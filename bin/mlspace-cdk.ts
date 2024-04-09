@@ -35,7 +35,7 @@ import { KMSStack } from '../lib/stacks/kms';
 import { VPCStack } from '../lib/stacks/vpc';
 import { ADCLambdaCABundleAspect } from '../lib/utils/adcCertBundleAspect';
 import { ApiDeploymentStack } from '../lib/stacks/api/apiDeployment';
-import { MLSpaceConfig, generateConfig } from './types';
+import { MLSpaceConfig, generateConfig } from '../lib/utils/configTypes';
 
 
 const config: MLSpaceConfig = generateConfig();

@@ -51,7 +51,7 @@ import {
     SYSTEM_TAG,
     USERS_TABLE_NAME,
     WEBSITE_BUCKET_NAME
-} from '../lib/constants';
+} from '../constants';
 import * as fs from "fs";
 
 export interface MLSpaceConfig {
@@ -118,7 +118,8 @@ export interface MLSpaceConfig {
 
 const validateRequiredProperty = (val: string, name: string) => {
     if (!val) {
-        throw new Error(`${name} is a required property. \nPlease set the value in 'lib/constants.ts'.`);
+        throw new Error(`${name} is a required property. \nPlease run 'npm run config'` +
+        `and select the Basic Configuration option, which will walk you through setting up all required fields`);
     }
 };
 
@@ -153,12 +154,11 @@ export function generateConfig () {
         OIDC_VERIFY_SSL: OIDC_VERIFY_SSL,
         OIDC_VERIFY_SIGNATURE: OIDC_VERIFY_SIGNATURE,
         OIDC_REDIRECT_URI: OIDC_REDIRECT_URI,
-        // Other properties not handled in config.json
+        // Other properties not prompted for in config-helper
         SYSTEM_TAG: SYSTEM_TAG,
         IAM_RESOURCE_PREFIX: IAM_RESOURCE_PREFIX,
         APPLICATION_NAME: APPLICATION_NAME,
         PERMISSIONS_BOUNDARY_POLICY_NAME: PERMISSIONS_BOUNDARY_POLICY_NAME,
-        KEY_MANAGER_ROLE_NAME: KEY_MANAGER_ROLE_NAME,
         NOTIFICATION_DISTRO: NOTIFICATION_DISTRO,
         EXISTING_KMS_MASTER_KEY_ARN: EXISTING_KMS_MASTER_KEY_ARN,
         APIGATEWAY_CLOUDWATCH_ROLE_ARN: APIGATEWAY_CLOUDWATCH_ROLE_ARN,
@@ -170,12 +170,12 @@ export function generateConfig () {
         ENABLE_TRANSLATE: ENABLE_TRANSLATE,
         ENABLE_GROUNDTRUTH: ENABLE_GROUNDTRUTH,
         RESOURCE_TERMINATION_INTERVAL: RESOURCE_TERMINATION_INTERVAL,
-        NEW_USERS_SUSPENDED: NEW_USERS_SUSPENDED,
-        //Properties that can optionally be set in config.json
+        //Properties that are prompted for in the config-helper wizard
         AWS_ACCOUNT: AWS_ACCOUNT,
         AWS_REGION: AWS_REGION,
         OIDC_URL:  OIDC_URL,
         OIDC_CLIENT_NAME: OIDC_CLIENT_NAME,
+        KEY_MANAGER_ROLE_NAME: KEY_MANAGER_ROLE_NAME,
         EXISTING_VPC_NAME: EXISTING_VPC_NAME,
         EXISTING_VPC_ID: EXISTING_VPC_ID,
         EXISTING_VPC_DEFAULT_SECURITY_GROUP: EXISTING_VPC_DEFAULT_SECURITY_GROUP,
@@ -188,18 +188,21 @@ export function generateConfig () {
         SYSTEM_BANNER_BACKGROUND_COLOR: SYSTEM_BANNER_BACKGROUND_COLOR,
         SYSTEM_BANNER_TEXT: SYSTEM_BANNER_TEXT,
         SYSTEM_BANNER_TEXT_COLOR: SYSTEM_BANNER_TEXT_COLOR,
+        NEW_USERS_SUSPENDED: NEW_USERS_SUSPENDED,
     };
 
 
-    //Properties potentially set in config.json
+    //Check for properties set in config.json and default to that value if it exists
     if (fs.existsSync('lib/config.json')) {
         const fileConfig: MLSpaceConfig = JSON.parse(
             fs.readFileSync('lib/config.json').toString('utf8')
         );
+        //Configs set by the config-helper script
         config.AWS_ACCOUNT = fileConfig.AWS_ACCOUNT || config.AWS_ACCOUNT;
         config.AWS_REGION = fileConfig.AWS_REGION || config.AWS_REGION;
         config.OIDC_URL = fileConfig.OIDC_URL || config.OIDC_URL;
         config.OIDC_CLIENT_NAME = fileConfig.OIDC_CLIENT_NAME || config.OIDC_CLIENT_NAME;
+        config.KEY_MANAGER_ROLE_NAME = fileConfig.KEY_MANAGER_ROLE_NAME || KEY_MANAGER_ROLE_NAME
         config.EXISTING_VPC_NAME = fileConfig.EXISTING_VPC_NAME || config.EXISTING_VPC_NAME;
         config.EXISTING_VPC_ID = fileConfig.EXISTING_VPC_ID || config.EXISTING_VPC_ID;
         config.EXISTING_VPC_DEFAULT_SECURITY_GROUP = fileConfig.EXISTING_VPC_DEFAULT_SECURITY_GROUP || config.EXISTING_VPC_DEFAULT_SECURITY_GROUP;
@@ -212,6 +215,47 @@ export function generateConfig () {
         config.SYSTEM_BANNER_BACKGROUND_COLOR = fileConfig.SYSTEM_BANNER_BACKGROUND_COLOR || config.SYSTEM_BANNER_BACKGROUND_COLOR;
         config.SYSTEM_BANNER_TEXT = fileConfig.SYSTEM_BANNER_TEXT || config.SYSTEM_BANNER_TEXT;
         config.SYSTEM_BANNER_TEXT_COLOR = fileConfig.SYSTEM_BANNER_TEXT_COLOR || config.SYSTEM_BANNER_TEXT_COLOR;
+        config.NEW_USERS_SUSPENDED = fileConfig.NEW_USERS_SUSPENDED || config.NEW_USERS_SUSPENDED;
+        // Table names
+        config.DATASETS_TABLE_NAME = fileConfig.DATASETS_TABLE_NAME || config.DATASETS_TABLE_NAME;
+        config.PROJECTS_TABLE_NAME = fileConfig.PROJECTS_TABLE_NAME || config.PROJECTS_TABLE_NAME;
+        config.PROJECT_USERS_TABLE_NAME = fileConfig.PROJECT_USERS_TABLE_NAME || config.PROJECT_USERS_TABLE_NAME;
+        config.USERS_TABLE_NAME = fileConfig.USERS_TABLE_NAME || config.USERS_TABLE_NAME;
+        config.RESOURCE_SCHEDULE_TABLE_NAME = fileConfig.RESOURCE_SCHEDULE_TABLE_NAME || config.RESOURCE_SCHEDULE_TABLE_NAME;
+        config.RESOURCE_METADATA_TABLE_NAME = fileConfig.RESOURCE_METADATA_TABLE_NAME || config.RESOURCE_METADATA_TABLE_NAME;
+        // Bucket names
+        config.CONFIG_BUCKET_NAME = fileConfig.CONFIG_BUCKET_NAME || config.CONFIG_BUCKET_NAME;
+        config.DATA_BUCKET_NAME = fileConfig.DATA_BUCKET_NAME || config.DATA_BUCKET_NAME;
+        config.LOGS_BUCKET_NAME = fileConfig.LOGS_BUCKET_NAME || config.LOGS_BUCKET_NAME;
+        config.ACCESS_LOGS_BUCKET_NAME = fileConfig.ACCESS_LOGS_BUCKET_NAME || config.ACCESS_LOGS_BUCKET_NAME;
+        config.WEBSITE_BUCKET_NAME = fileConfig.WEBSITE_BUCKET_NAME || config.WEBSITE_BUCKET_NAME;
+        // Notebook settings
+        config.MLSPACE_LIFECYCLE_CONFIG_NAME = fileConfig.MLSPACE_LIFECYCLE_CONFIG_NAME || config.MLSPACE_LIFECYCLE_CONFIG_NAME;
+        config.NOTEBOOK_PARAMETERS_FILE_NAME = fileConfig.NOTEBOOK_PARAMETERS_FILE_NAME || config.NOTEBOOK_PARAMETERS_FILE_NAME;
+        // EMR settings
+        config.EMR_SECURITY_CONFIG_NAME = fileConfig.EMR_SECURITY_CONFIG_NAME || config.EMR_SECURITY_CONFIG_NAME;
+        // OIDC settings
+        config.IDP_ENDPOINT_SSM_PARAM = fileConfig.IDP_ENDPOINT_SSM_PARAM || config.IDP_ENDPOINT_SSM_PARAM;
+        config.INTERNAL_OIDC_URL = fileConfig.INTERNAL_OIDC_URL || config.INTERNAL_OIDC_URL;
+        config.OIDC_VERIFY_SSL = fileConfig.OIDC_VERIFY_SSL || config.OIDC_VERIFY_SSL;
+        config.OIDC_VERIFY_SIGNATURE = fileConfig.OIDC_VERIFY_SIGNATURE || config.OIDC_VERIFY_SIGNATURE;
+        config.OIDC_REDIRECT_URI = fileConfig.OIDC_REDIRECT_URI || config.OIDC_REDIRECT_URI;
+        // Other properties not prompted for in config-helper
+        config.SYSTEM_TAG = fileConfig.SYSTEM_TAG || config.SYSTEM_TAG;
+        config.IAM_RESOURCE_PREFIX = fileConfig.IAM_RESOURCE_PREFIX || config.IAM_RESOURCE_PREFIX;
+        config.APPLICATION_NAME = fileConfig.APPLICATION_NAME || config.APPLICATION_NAME;
+        config.PERMISSIONS_BOUNDARY_POLICY_NAME = fileConfig.PERMISSIONS_BOUNDARY_POLICY_NAME || config.PERMISSIONS_BOUNDARY_POLICY_NAME;
+        config.NOTIFICATION_DISTRO = fileConfig.NOTIFICATION_DISTRO || config.NOTIFICATION_DISTRO;
+        config.EXISTING_KMS_MASTER_KEY_ARN = fileConfig.EXISTING_KMS_MASTER_KEY_ARN || config.EXISTING_KMS_MASTER_KEY_ARN;
+        config.APIGATEWAY_CLOUDWATCH_ROLE_ARN = fileConfig.APIGATEWAY_CLOUDWATCH_ROLE_ARN || config.APIGATEWAY_CLOUDWATCH_ROLE_ARN;
+        config.COMMON_LAYER_ARN_PARAM = fileConfig.COMMON_LAYER_ARN_PARAM || config.COMMON_LAYER_ARN_PARAM;
+        config.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS = fileConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS || config.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS;
+        config.MANAGE_IAM_ROLES = fileConfig.MANAGE_IAM_ROLES || config.MANAGE_IAM_ROLES;
+        config.ENABLE_ACCESS_LOGGING = fileConfig.ENABLE_ACCESS_LOGGING || config.ENABLE_ACCESS_LOGGING;
+        config.CREATE_MLSPACE_CLOUDTRAIL_TRAIL = fileConfig.CREATE_MLSPACE_CLOUDTRAIL_TRAIL || config.CREATE_MLSPACE_CLOUDTRAIL_TRAIL;
+        config.ENABLE_TRANSLATE = fileConfig.ENABLE_TRANSLATE || config.ENABLE_TRANSLATE;
+        config.ENABLE_GROUNDTRUTH = fileConfig.ENABLE_GROUNDTRUTH || config.ENABLE_GROUNDTRUTH;
+        config.RESOURCE_TERMINATION_INTERVAL = fileConfig.RESOURCE_TERMINATION_INTERVAL || config.RESOURCE_TERMINATION_INTERVAL;
     }
 
     
@@ -227,4 +271,3 @@ export function generateConfig () {
 
     return config;
 }
-    

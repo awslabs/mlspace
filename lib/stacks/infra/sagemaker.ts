@@ -17,7 +17,7 @@
 import { App, Fn, Stack, StackProps } from 'aws-cdk-lib';
 import { CfnNotebookInstanceLifecycleConfig } from 'aws-cdk-lib/aws-sagemaker';
 import { readFileSync } from 'fs';
-import { MLSpaceConfig } from '../../../bin/types';
+import { MLSpaceConfig } from '../../utils/configTypes';
 
 export type SagemakerStackProp = {
     readonly dataBucketName: string;

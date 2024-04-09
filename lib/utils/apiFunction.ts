@@ -26,7 +26,7 @@ import {
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { IRole } from 'aws-cdk-lib/aws-iam';
 import { Code, Function, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
-import { MLSpaceConfig } from '../../bin/types';
+import { MLSpaceConfig } from './configTypes';
 
 export type MLSpacePythonLambdaFunction = {
     id?: string;

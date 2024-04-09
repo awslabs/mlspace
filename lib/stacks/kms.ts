@@ -23,7 +23,7 @@ import {
     Role,
 } from 'aws-cdk-lib/aws-iam';
 import { IKey, Key } from 'aws-cdk-lib/aws-kms';
-import { MLSpaceConfig } from '../../bin/types';
+import { MLSpaceConfig } from '../utils/configTypes';
 
 export type KMSStackProp = {
     readonly keyManagerRoleName: string;

@@ -29,7 +29,7 @@ import {
     ServicePrincipal
 } from 'aws-cdk-lib/aws-iam';
 import { IKey } from 'aws-cdk-lib/aws-kms';
-import { MLSpaceConfig } from '../../bin/types';
+import { MLSpaceConfig } from '../utils/configTypes';
 
 export type IAMStackProp = {
     readonly dataBucketName: string;

@@ -25,7 +25,7 @@ import {
     SubnetType,
     Vpc,
 } from 'aws-cdk-lib/aws-ec2';
-import { MLSpaceConfig } from '../../bin/types';
+import { MLSpaceConfig } from '../utils/configTypes';
 
 export type VPCStackProps = {
     readonly deployCFNEndpoint: boolean;

@@ -60,7 +60,7 @@ If selecting Advanced Config you will be prompted for the same properties Basic 
 The Advanced Config will ask:
 
 **Do you want to use existing VPC?**
-If you ansered yes you will be prompted for:
+If you answered yes you will be prompted for:
 
 - VPC Name: if MLSpace is being deployed into an existing VPC this should be the name of that VPC
 - VPC ID: if MLSpace is being deployed into an existing VPC this should be the ID of that VPC
