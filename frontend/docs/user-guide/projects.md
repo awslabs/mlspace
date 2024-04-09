@@ -3,7 +3,7 @@ outline: deep
 ---
 
 # Projects
-All work in MLSpace is organized through projects. You cannot use any of the services without first selecting or creating a project.
+All work in {{ $params.APPLICATION_NAME }} is organized through projects. You cannot use any of the services without first selecting or creating a project.
 
 There are two roles that a user may have in a project:
 - Owner
@@ -16,14 +16,14 @@ There are two roles that a user may have in a project:
     - May create new resources in the project
     - May access/use previously created project level resources
 
-The primary landing page in MLSpace will list all available projects based on your identity as well as allow you to create a new projects.
+The primary landing page in {{ $params.APPLICATION_NAME }} will list all available projects based on your identity as well as allow you to create a new projects.
 
 Users will not be able to see any existing projects unless they are added to a project by one of the the project owners. When you create a new project, you will automatically be assigned as the project owner. You can then add additional users to the project and assign them ownership privileges as necessary.
 
 ## Creating Projects
-MLSpace projects require a unique name between 3 and 24 characters in length (limited to alphanumeric characters) and a description (max length 4000 characters). Project name and descriptions will be visible on the MLSpace dashboard as well as the project details view.
+{{ $params.APPLICATION_NAME }} projects require a unique name between 3 and 24 characters in length (limited to alphanumeric characters) and a description (max length 4000 characters). Project name and descriptions will be visible on the {{ $params.APPLICATION_NAME }} dashboard as well as the project details view.
 
-An MLSpace project can also be configured to leverage resource scheduling. This is a feature where MLSpace will automatically terminate or stop resources after they have been active for a given length of time. This feature is useful for preventing unexpected costs that can come from forgotten resources.
+An {{ $params.APPLICATION_NAME }} project can also be configured to leverage resource scheduling. This is a feature where {{ $params.APPLICATION_NAME }} will automatically terminate or stop resources after they have been active for a given length of time. This feature is useful for preventing unexpected costs that can come from forgotten resources.
 
 * EMR clusters and SageMaker Endpoints can be configured to have a termination time. These resources will be terminated at the selected time and date. Termination times are approximate and will execute when the next termination workflow runs at a configured time interval.
 * SageMaker Notebooks will automatically be stopped at the selected time each day.
@@ -53,11 +53,11 @@ owner status, toggling collaborator status, and removing the selected user(s) fr
 - Suspending a project will stop all associated resources (eg, notebooks and endpoints) and flag the project as suspended
 - Once a project is suspended, it will no longer be visible to regular user of the application, but resources associated with the project will NOT be deleted, only stopped
 - Suspending a project may take some time depending on the number of active resources associated with the project
-- MLSpace administrators can continue to view suspended projects and the associated resources and optionally reinstate a suspended project
+- {{ $params.APPLICATION_NAME }} administrators can continue to view suspended projects and the associated resources and optionally reinstate a suspended project
 
 ## Leaving Project
 - When a user leaves a project it will remove their association with that project and have the following effects:
-    - The user will no longer see the project on their MLSpace dashboard
+    - The user will no longer see the project on their {{ $params.APPLICATION_NAME }} dashboard
     - The user will no longer be able to create resources associated with that project
     - Leaving a project will affect the following resources:
         - Notebooks created by the user in the project will be stopped

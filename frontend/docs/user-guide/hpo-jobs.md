@@ -22,7 +22,7 @@ for the specific algorithm you select.
 ### Custom Algorithm
 When defining training jobs you can choose from a built-in alogorithm or to bring your own algorithm from ECR. When
 using a custom algorithm you will need to define metric definitions as well as hyper parameters when creating the
-definition. Using a custom algorithm will require that MLSpace has been configured to allow access to ECR.
+definition. Using a custom algorithm will require that {{ $params.APPLICATION_NAME }} has been configured to allow access to ECR.
 
 Once you've defined the training jobs you'll also need to specify the resource configuration for the
 HPO job and finally review the job configuration.

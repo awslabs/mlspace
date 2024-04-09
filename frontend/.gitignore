@@ -23,6 +23,7 @@ lib/config.json
 
 # docs
 docs/.vitepress/dist
+docs/.vitepress/cache
 
 npm-debug.log*
 yarn-debug.log*
