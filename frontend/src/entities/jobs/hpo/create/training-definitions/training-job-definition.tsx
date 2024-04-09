@@ -39,6 +39,8 @@ import { HyperParameters } from './hyperparameters';
 import _ from 'lodash';
 import z from 'zod';
 import { ML_ALGORITHMS } from '../../../algorithms';
+import NotificationService from '../../../../../shared/layout/notification/notification.service';
+import { useAppDispatch } from '../../../../../config/store';
 
 export type TrainingJobDefinitionProps = FormProps<ITrainingJobDefinition> & {
     onSubmit(): void;
@@ -123,6 +125,8 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
             ? AlgorithmSource.BUILT_IN
             : AlgorithmSource.CUSTOM
     );
+    const dispatch = useAppDispatch();
+    const notificationService = NotificationService(dispatch);
 
     const [state, setState] = React.useReducer(
         (state: any, action: { type: string; payload: any }) => {
@@ -334,6 +338,12 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                 if (parseResult.success) {
                     onSubmit();
                 } else {
+                    // If there are any errors, make them visible to the user
+                    parseResult.error?.issues?.forEach((issue) => {
+                        notificationService.generateNotification(
+                            `Encountered From Error: ${issue.code} - ${issue.path.join(':')} - ${issue.message} ` +
+                            `| Expected: ${issue.expected} | Received: ${issue.received}`, 'error'); 
+                    });
                     setState({ type: 'updateState', payload: { validateAll: true } });
                 }
             }}
