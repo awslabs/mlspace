@@ -41,3 +41,5 @@ export const showAccessLevel = (dataset: IDataset) => {
 };
 
 export const deleteButtonAriaLabel = 'Delete selected files';
+export const downloadButtonAriaLabel = 'Download selected file';
+export const copyButtonAriaLabel = 'Copy selected file S3 URI';

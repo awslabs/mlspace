@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Form from '@cloudscape-design/components/form';
 import {
@@ -40,16 +40,18 @@ import {
 } from '../../../shared/model/dataset.model';
 import { enumToOptions, initCap } from '../../../shared/util/enum-utils';
 import './dataset-create.styles.css';
-import { ManageFiles } from '../manage/dataset.files';
-import { IDatasetFile } from '../../../shared/model/datasetfile.model';
-import { useAuth } from 'react-oidc-context';
-import { buildS3Keys, createDataset, determineScope, uploadFiles } from '../dataset.service';
-import NotificationService from '../../../shared/layout/notification/notification.service';
+import { createDataset, uploadResources } from '../dataset.service';
 import { z } from 'zod';
 import { createDatasetFromForm } from './dataset-create-functions';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
-import { scrollToInvalid, useValidationState } from '../../../shared/validation';
+import { scrollToInvalid, useValidationReducer } from '../../../shared/validation';
 import { DocTitle, scrollToPageHeader } from '../../../shared/doc';
+import DatasetBrowser from '../../../modules/dataset/dataset-browser';
+import { DatasetBrowserActions } from '../dataset.actions';
+import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-browser.types';
+import { DatasetResourceObject } from '../../../modules/dataset/dataset-browser.reducer';
+import NotificationService from '../../../shared/layout/notification/notification.service';
+import { useUsername } from '../../../shared/util/auth-utils';
 
 const formSchema = z.object({
     name: z
@@ -65,16 +67,14 @@ const formSchema = z.object({
         .regex(/^[\w\-\s'.]+$/, {
             message: 'Dataset description can contain only alphanumeric characters.',
         })
-        .max(254),
-    type: z.string({ invalid_type_error: 'A type must be selected.' }),
+        .max(254)
 });
 
 export function DatasetCreate () {
+    const username = useUsername();
     const [dataset] = useState(defaultDataset as IDataset);
-    const [datasetFileList, setDatasetFileList] = useState([] as IDatasetFile[]);
-    const { projectName } = useParams();
-    const auth = useAuth();
-    const username = auth.user!.profile.preferred_username;
+    const [datasetFileList, setDatasetFileList] = useState([] as DatasetResourceObject[]);
+    const { projectName = '' } = useParams();
 
     scrollToPageHeader();
     DocTitle('Create Dataset');
@@ -84,20 +84,14 @@ export function DatasetCreate () {
     const basePath = projectName ? `/project/${projectName}` : '/personal';
     const notificationService = NotificationService(dispatch);
 
-    const { updateForm, touchFieldHandler, setState, state } = useValidationState(formSchema, {
+    const { state, setState, errors, isValid, touchFields, setFields } = useValidationReducer(formSchema, {
         validateAll: false,
-        needsValidation: false,
-        datasets: {},
         form: {
             name: '',
             description: '',
-            type: null,
+            type: DatasetType.PRIVATE,
         },
-        touched: {
-            inputDataConfig: [],
-        },
-        formErrors: {} as any,
-        formValid: false,
+        touched: {},
         formSubmitting: false,
     });
 
@@ -114,12 +108,11 @@ export function DatasetCreate () {
     }, [dispatch, basePath, projectName]);
 
     async function handleSubmit () {
-        if (state.formValid) {
-            setState({type: 'updateState', payload: { formSubmitting: true } });
+        if (isValid) {
+            setState({ formSubmitting: true });
 
             // create new dataset from state.form
-            const newDataset = createDatasetFromForm(state.form, datasetFileList);
-            newDataset.scope = determineScope(newDataset.type, projectName, username!);
+            const newDataset = createDatasetFromForm(state.form, projectName, username);
             const response = await createDataset(newDataset).catch(() => {
                 // if dataset exists display message to user
                 notificationService.generateNotification(
@@ -127,13 +120,16 @@ export function DatasetCreate () {
                     'error'
                 );
             });
+
             if (response?.status === 200) {
-                const s3Keys = buildS3Keys(datasetFileList, newDataset, projectName, username!);
-                await uploadFiles(s3Keys, newDataset, notificationService, datasetFileList);
+                const resourceObjects = datasetFileList.filter((item): item is DatasetResourceObject => item.type === 'object');
+                await uploadResources(newDataset, resourceObjects, projectName!, username, notificationService);
+
                 // Need to clear state/reset the form
                 navigate(`${basePath}/dataset/${newDataset.scope}/${newDataset.name}`);
             }
-            setState({type: 'updateState', payload: { formSubmitting: false } });
+            
+            setState({ formSubmitting: false });
         } else {
             scrollToInvalid();
         }
@@ -168,7 +164,7 @@ export function DatasetCreate () {
                             dismissAriaLabel='Close'
                             triggerType='custom'
                             content={
-                                state.formValid ? (
+                                isValid ? (
                                     <StatusIndicator type='info'>
                                         Do not navigate away while dataset is being created.
                                     </StatusIndicator>
@@ -184,10 +180,10 @@ export function DatasetCreate () {
                                 loading={state.formSubmitting}
                                 variant='primary'
                                 onClick={() => {
-                                    setState({ type: 'validateAll' });
+                                    setState({ validateAll: true });
                                     handleSubmit();
                                 }}
-                                disabled={state.formSubmitting}
+                                disabled={!isValid}
                             >
                                 Create dataset
                             </Button>
@@ -195,91 +191,89 @@ export function DatasetCreate () {
                     </SpaceBetween>
                 }
             >
-                <Container>
-                    <SpaceBetween direction='vertical' size='s'>
-                        <FormField
-                            description='Maximum of 255 characters. Must be unique to the type that you choose. The dataset name must be unique to the scope (Global/Private/Project).'
-                            errorText={state.formErrors.name}
-                            label='Dataset name'
-                        >
-                            <Input
-                                data-cy='dataset-name-input'
-                                value={state.form.name}
-                                onChange={(event) => {
-                                    updateForm({ name: event.detail.value });
-                                }}
-                                onBlur={touchFieldHandler('name')}
-                            />
-                        </FormField>
-                        <FormField
-                            description='Description is required.'
-                            errorText={state.formErrors.description}
-                            label='Description'
-                        >
-                            <Textarea
-                                data-cy='dataset-description-textarea'
-                                value={state.form.description}
-                                onChange={(event) => {
-                                    updateForm({ description: event.detail.value });
-                                }}
-                                onBlur={touchFieldHandler('description')}
-                            />
-                        </FormField>
-                        <FormField
-                            description={
-                                window.env.MANAGE_IAM_ROLES ? (
-                                    'Global datasets are accessible from any project, project datasets ' +
-                                    'are accessible only to the project they were created in, and ' +
-                                    'private datasets are accessible to the user that created them.'
-                                ) : (
-                                    <Alert
-                                        statusIconAriaLabel='Info'
-                                        header='Dataset Access Limitations'
-                                    >
-                                        Dataset Type is used as a convention to organize data within
-                                        S3 but <strong>does not</strong> prevent other ${window.env.APPLICATION_NAME} users
-                                        from accessing data. Making a &quot;Private&quot; or
-                                        &quot;Project&quot; dataset is merely a convention and does
-                                        not enforce access control.
-                                    </Alert>
-                                )
-                            }
-                            errorText={state.formErrors.type}
-                            label='Dataset Type'
-                        >
-                            <Select
-                                data-cy='dataset-type-select'
-                                selectedOption={{
-                                    label: initCap(state.form.type || ''),
-                                    value: state.form.type,
-                                }}
-                                onChange={({ detail }) => {
-                                    updateForm({
-                                        type: detail.selectedOption.value! as DatasetType,
-                                    });
-                                }}
-                                options={
-                                    projectName!
-                                        ? enumToOptions(DatasetType, true)
-                                        : [
-                                            { label: 'Global', value: 'global' },
-                                            { label: 'Private', value: 'private' },
-                                        ]
+                <SpaceBetween direction='vertical' size='xl'>
+                    <Container>
+                        <SpaceBetween direction='vertical' size='s'>
+                            <FormField
+                                description='Maximum of 255 characters. Must be unique to the type that you choose. The dataset name must be unique to the scope (Global/Private/Project).'
+                                errorText={errors.name}
+                                label='Dataset name'
+                            >
+                                <Input
+                                    data-cy='dataset-name-input'
+                                    value={state.form.name}
+                                    onChange={({detail}) => setFields({name: detail.value})}
+                                    onBlur={() => touchFields(['name'])}
+                                />
+                            </FormField>
+                            <FormField
+                                description='Description is required.'
+                                errorText={errors.description}
+                                label='Description'
+                            >
+                                <Textarea
+                                    data-cy='dataset-description-textarea'
+                                    value={state.form.description}
+                                    onChange={({detail}) => setFields({description: detail.value})}
+                                    onBlur={() => touchFields(['description'])}
+                                />
+                            </FormField>
+                            <FormField
+                                description={
+                                    window.env.MANAGE_IAM_ROLES ? (
+                                        'Global datasets are accessible from any project, project datasets ' +
+                                        'are accessible only to the project they were created in, and ' +
+                                        'private datasets are accessible to the user that created them.'
+                                    ) : (
+                                        <Alert
+                                            statusIconAriaLabel='Info'
+                                            header='Dataset Access Limitations'
+                                        >
+                                            Dataset Type is used as a convention to organize data within
+                                            S3 but <strong>does not</strong> prevent other ${window.env.APPLICATION_NAME} users
+                                            from accessing data. Making a &quot;Private&quot; or
+                                            &quot;Project&quot; dataset is merely a convention and does
+                                            not enforce access control.
+                                        </Alert>
+                                    )
                                 }
-                                onBlur={touchFieldHandler('type')}
-                            />
-                        </FormField>
-                    </SpaceBetween>
-                </Container>
-                <br />
-                <Container>
-                    <ManageFiles
-                        dataset={dataset}
-                        filesOverride={datasetFileList}
-                        setFilesOverride={setDatasetFileList}
-                        readOnly={false}
-                    />
-                </Container>
+                                errorText={errors.type}
+                                label='Dataset Type'
+                            >
+                                <Select
+                                    data-cy='dataset-type-select'
+                                    selectedOption={{
+                                        label: initCap(state.form.type || ''),
+                                        value: state.form.type,
+                                    }}
+                                    options={
+                                        projectName!
+                                            ? enumToOptions(DatasetType, true)
+                                            : [
+                                                { label: 'Global', value: 'global' },
+                                                { label: 'Private', value: 'private' },
+                                            ]
+                                    }
+                                    onChange={({ detail }) => {
+                                        setFields({type: detail.selectedOption.value as keyof typeof DatasetType});
+                                    }}
+                                    onBlur={() => touchFields(['type'])}
+                                />
+                            </FormField>
+                        </SpaceBetween>
+                    </Container>
+                    <Container>
+                        <DatasetBrowser
+                            resource={dataset.location || ''}
+                            actions={DatasetBrowserActions}
+                            selectableItemsTypes={['objects']}
+                            manageMode={DatasetBrowserManageMode.Create}
+                            onItemsChange={useCallback(({detail}) => {
+                                setDatasetFileList(detail.items.filter((item): item is DatasetResourceObject => item.type === 'object'));
+                            }, [setDatasetFileList])}
+                        />
+                    </Container>
+                </SpaceBetween>
             </Form>
         </ContentLayout>
     );

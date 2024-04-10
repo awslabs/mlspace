@@ -22,7 +22,7 @@ import { DatasetContext } from '../../shared/util/dataset-utils';
 import { DatasetActionType, DatasetBrowserAction, DatasetBrowserState, DatasetResource } from './dataset-browser.reducer';
 import { formatDisplayNumber } from '../../shared/util/form-utils';
 import { convertBytesToHumanReadable } from '../../entities/dataset/create/dataset-upload.utils';
-import { DatasetBrowserDisplayMode } from './dataset-browser.types';
+import { DatasetBrowserDisplayMode, DatasetBrowserManageMode, DatasetBrowserSelectableItems } from './dataset-browser.types';
 
 /**
  * Returns the prefix for the provided path or an empty string if no prefix
@@ -68,9 +68,9 @@ export const stripDatasetPrefix = (path?: string): string => {
  * @param {DatasetContext} datasetContext optional context to get mode for
  * @returns {DatasetBrowserDisplayMode}
  */
-export const modeForDatasetContext = (datasetContext?: DatasetContext): DatasetBrowserDisplayMode => {
-    if (datasetContext?.Type) {
-        if (datasetContext?.Name) {
+export const modeForDatasetContext = (datasetContext?: Partial<DatasetContext>): DatasetBrowserDisplayMode => {
+    if (datasetContext?.type) {
+        if (datasetContext?.name) {
             return DatasetBrowserDisplayMode.Resource;
         }
 
@@ -112,7 +112,7 @@ function tablePropertiesForDatasetResources (state: DatasetBrowserState, setStat
                             <Link onFollow={() => {
                                 setState({
                                     type: DatasetActionType.DatasetContext,
-                                    payload: { ...state.datasetContext!, Location: stripDatasetPrefix(item.prefix) }
+                                    payload: { ...state.datasetContext!, location: stripDatasetPrefix(item.prefix) }
                                 });
                             } }>{item.name}</Link>
                         );
@@ -124,12 +124,11 @@ function tablePropertiesForDatasetResources (state: DatasetBrowserState, setStat
             id: 'size',
             header: 'Size',
             cell (item) {
-                switch (item.type) {
-                    case 'object':
-                        return item.size ? convertBytesToHumanReadable(item.size) : formatDisplayNumber(item.size);
-                    case 'prefix':
-                        return formatDisplayNumber(undefined);
+                if (item.type === 'object' && item.size) {
+                    return convertBytesToHumanReadable(item.size);
                 }
+    
+                return formatDisplayNumber(undefined);
             }
         }]
     };
@@ -146,7 +145,7 @@ function tablePropertiesForDatasets (state: DatasetBrowserState, setState: Dispa
                     <Link onFollow={() => {
                         setState({
                             type: DatasetActionType.DatasetContext,
-                            payload: { ...state.datasetContext!, Name: item.name }
+                            payload: { ...state.datasetContext!, name: item.name }
                         });
                     } }>{item.name}</Link>
                 );
@@ -170,7 +169,12 @@ function tablePropertiesForScopes (state: DatasetBrowserState, setState: Dispatc
                         setState({
                             type: DatasetActionType.State,
                             payload: {
-                                datasetContext: { Type: item.type }
+                                datasetContext: { type: item.type },
+                                filter: {
+                                    filteredItems: [],
+                                    filteringText: '',
+                                    filteringTextDisplay: ''
+                                }
                             }
                         });
                     } }>{item.name}</Link>
@@ -186,7 +190,7 @@ function tablePropertiesForScopes (state: DatasetBrowserState, setState: Dispatc
  * @param {DatasetContext} datasetContext optional dataset to build breadcrumbs from
  * @returns {BreadcrumbGroupProps.Item[]}
  */
-export function breadcrumbFromDataset (datasetContext?: DatasetContext, isPinned = false): BreadcrumbGroupProps.Item[] {
+export function breadcrumbFromDataset (datasetContext?: Partial<DatasetContext>, isPinned = false): BreadcrumbGroupProps.Item[] {
     const breadcrumbs = [{
         text: 'Scopes',
         href: ''
@@ -194,22 +198,22 @@ export function breadcrumbFromDataset (datasetContext?: DatasetContext, isPinned
 
     if (datasetContext) {
         breadcrumbs.push({
-            text: upperFirst(datasetContext.Type),
-            href: JSON.stringify({ Type: datasetContext.Type })
+            text: upperFirst(datasetContext.type),
+            href: JSON.stringify({ type: datasetContext.type })
         });
 
-        if (datasetContext.Name) {
+        if (datasetContext.name) {
             breadcrumbs.push({
-                text: datasetContext.Name,
-                href: JSON.stringify({ Type: datasetContext.Type, Name: datasetContext.Name })
+                text: datasetContext.name,
+                href: JSON.stringify({ type: datasetContext.type, name: datasetContext.name })
             });
 
-            prefixForPath(datasetContext.Location).split('/').reduce<string | undefined>((previous, current) => {
+            prefixForPath(datasetContext.location).split('/').reduce<string | undefined>((previous, current) => {
                 const location = [previous, `${current}/`].filter(Boolean).join('');
                 if (current) {
                     breadcrumbs.push({
                         text: `${current}/`,
-                        href: JSON.stringify({ Type: datasetContext.Type, Name: datasetContext.Name, Location: location })
+                        href: JSON.stringify({ type: datasetContext.type, name: datasetContext.name, location: location })
                     });
                 }
                 return location;
@@ -223,3 +227,13 @@ export function breadcrumbFromDataset (datasetContext?: DatasetContext, isPinned
 
     return breadcrumbs;
 }
+
+export const getSelectionType = (mode?: DatasetBrowserManageMode, selectableItemsTypes?: readonly DatasetBrowserSelectableItems[]): TableProps.SelectionType | undefined => {
+    if (mode) {
+        return 'multi';
+    }
+
+    if (selectableItemsTypes) {
+        return 'single';
+    }
+};

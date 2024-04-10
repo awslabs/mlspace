@@ -358,10 +358,11 @@ export function HPOJobCreate () {
                 payload.HPOJobDefinition.TrainingJobDefinitions.forEach((definition) => {
                     const dataset = datasetFromS3Uri(definition.OutputDataConfig.S3OutputPath);
                     const newDataset = {
-                        name: dataset?.Name,
+                        name: dataset?.name,
                         description: `Dataset created as part of the HPO job: ${state.form.HyperParameterTuningJobName}`,
-                        type: dataset?.Type,
-                        scope: dataset?.Location
+                        type: dataset?.type,
+                        location: dataset?.location,
+                        scope: dataset?.scope
                     } as IDataset;
                     createDatasetHandleAlreadyExists(newDataset);
                 });

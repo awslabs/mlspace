@@ -19,12 +19,11 @@ import { DatasetContext, datasetFromS3Uri } from '../../shared/util/dataset-util
 import { getDatasetsList } from '../../entities/dataset/dataset.reducer';
 import { useAppDispatch } from '../../config/store';
 import { useParams } from 'react-router-dom';
-import { modeForDatasetContext as displayModeForDatasetContext, prefixForPath, resourceForPath, tablePropertiesForDisplayMode } from './dataset-browser.utils';
+import { modeForDatasetContext as displayModeForDatasetContext, getSelectionType, prefixForPath, resourceForPath, tablePropertiesForDisplayMode } from './dataset-browser.utils';
 import { breadcrumbFromDataset } from './dataset-browser.utils';
 import { DatasetActionType, DatasetBrowserState, DatasetResource, datasetBrowserReducer, getDatasetContents } from './dataset-browser.reducer';
-import { useAuth } from 'react-oidc-context';
 import Condition from '../condition';
-import { DatasetBrowserDisplayMode } from './dataset-browser.types';
+import { DatasetBrowserDisplayMode, DatasetBrowserManageMode } from './dataset-browser.types';
 import { DatasetType, IDataset } from '../../shared/model';
 import { isFulfilled } from '@reduxjs/toolkit';
 import { MLTextFilter } from '../textfilter/textfilter';
@@ -33,21 +32,22 @@ import { getMatchesCountText } from '../../shared/util/table-utils';
 import { EmptyState } from '../table';
 import { DatasetBrowserProps } from './dataset-browser.types';
 import NotificationService from '../../shared/layout/notification/notification.service';
-import { getUsername } from '../../shared/util/auth-utils';
+import { useUsername } from '../../shared/util/auth-utils';
 
 export function DatasetBrowser (props: DatasetBrowserProps) {
-    const username = getUsername(useAuth());
+    const username = useUsername();
     const dispatch = useAppDispatch();
     const { projectName } = useParams();
-    const { resource, isPinned = false, header, selectableItemsTypes = [] } = props;
+    const { actions, resource, header, selectableItemsTypes = [], manageMode, onItemsChange } = props;
     const isSelectingObject = selectableItemsTypes.indexOf('objects') > -1;
     const isSelectingPrefix = selectableItemsTypes.indexOf('prefixes') > -1;
     const [state, setState] = React.useReducer(datasetBrowserReducer, {
         datasetContext: undefined,
         breadcrumbs: [],
         items: [],
+        selectedItems: [],
+        manageMode,
         isLoading: false,
-        isPinned,
         nextToken: undefined,
         username: username!,
         projectName: projectName!,
@@ -62,49 +62,60 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             openEnd: false,
             disabled: false,
         },
+        refresh: false
     });
-    const [selectedItems, setSelectedItems] = React.useState<any[]>([]);
+
     const displayMode = displayModeForDatasetContext(state.datasetContext);
+    const isCreating = state.manageMode === DatasetBrowserManageMode.Create;
 
     // memoize notification service so it doesn't cause infinite loops for fetchDatasetResources & fetchDatasets
     const notificationService = useMemo(() => {
         return NotificationService(dispatch);
     }, [dispatch]);
 
-    const fetchDatasetResources = useMemo(() => (datasetContext: DatasetContext, nextToken?: string, existingItems?: (DatasetResource | IDataset)[]) => dispatch(getDatasetContents({datasetContext, projectName, username, nextToken})).then((response) => {
-        if (isFulfilled(response)) {
-            // if nextToken is provided we're appending to existing items
-            const items = nextToken ? [...existingItems || []] : [];
-
-            const payload: Partial<Pick<DatasetBrowserState, 'items' | 'nextToken' | 'datasetContext' | 'filter' | 'isLoading'>> = {
-                items: items.concat(response.payload.data.contents),
-                nextToken: response.payload.data.nextToken,
-                isLoading: false
-            };
-
-            // if the dataset context location is for a resource update the filter too
-            const resourceStringForPath = resourceForPath(datasetContext.Location);
-            if (resourceStringForPath) {
-                payload.filter = {
-                    filteredItems: [],
-                    filteringTextDisplay: resourceStringForPath,
-                    filteringText: resourceStringForPath
-                };
-            }
-
-            setState({
-                type: DatasetActionType.State,
-                payload
-            });
-        } else {
-            // if an error occurred reset the component to a safe state
-            notificationService.generateNotification(`Failed to fetch resources for ${datasetContext.Name}`, 'error');
-            setState({
-                type: DatasetActionType.DatasetContext,
-                payload: undefined
+    const fetchDatasetResources = useMemo(() => (datasetContext: Partial<DatasetContext>, nextToken?: string, existingItems?: (DatasetResource | IDataset)[]) => {
+        if (state.manageMode !== DatasetBrowserManageMode.Create) {
+            return dispatch(getDatasetContents({datasetContext, projectName, username, nextToken})).then((response) => {
+                if (isFulfilled(response)) {
+                    // if nextToken is provided we're appending to existing items
+                    const items = nextToken ? [...existingItems || []] : [];
+        
+                    const payload: Partial<Pick<DatasetBrowserState, 'items' | 'nextToken' | 'datasetContext' | 'filter' | 'isLoading' | 'refresh'>> = {
+                        items: items.concat(response.payload.data.contents),
+                        nextToken: response.payload.data.nextToken,
+                        isLoading: false
+                    };
+        
+                    // if the dataset context location is for a resource update the filter too
+                    const resourceStringForPath = resourceForPath(datasetContext.location);
+                    if (resourceStringForPath) {
+                        payload.filter = {
+                            filteredItems: [],
+                            filteringTextDisplay: resourceStringForPath,
+                            filteringText: resourceStringForPath
+                        };
+                    }
+        
+                    setState({
+                        type: DatasetActionType.State,
+                        payload
+                    });
+                } else {
+                    // if an error occurred reset the component to a safe state
+                    notificationService.generateNotification(`Failed to fetch resources for ${datasetContext.name}`, 'error');
+                    setState({
+                        type: DatasetActionType.DatasetContext,
+                        payload: undefined
+                    });
+                }
             });
         }
-    }), [dispatch, projectName, username, notificationService]);
+
+        setState({
+            type: DatasetActionType.State,
+            payload: {isLoading: false}
+        });
+    }, [dispatch, projectName, username, notificationService, state.manageMode]);
 
     const fetchDatasets = useMemo(() => () => {
         dispatch(getDatasetsList(projectName)).then((response) => {
@@ -112,7 +123,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                 setState({
                     type: DatasetActionType.State,
                     payload: {
-                        items: response.payload.data.filter((dataset) => dataset.type === state.datasetContext?.Type),
+                        items: response.payload.data.filter((dataset) => dataset.type === state.datasetContext?.type),
                         isLoading: false
                     }
                 });
@@ -124,7 +135,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                 });
             }
         });
-    }, [dispatch, projectName, state.datasetContext?.Type, notificationService]);
+    }, [dispatch, projectName, state.datasetContext?.type, notificationService]);
 
 
     // refresh component if resource changes
@@ -135,39 +146,48 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             items: []
         };
 
-        setState({
-            type: DatasetActionType.State,
-            payload
-        });
-    }, [resource]);
-
-    // update the component if the datasetContext changes
-    useEffect(() => {
-        const payload: Partial<DatasetBrowserState> = {
-            breadcrumbs: breadcrumbFromDataset(state.datasetContext, isPinned),
-            isLoading: true
-        };
-
-        switch (displayMode) {
-            case DatasetBrowserDisplayMode.Resource:
-                // DatasetBrowser invariant requires state.datasetContext can never be undefined with this displayMode
-                if (state.datasetContext) {
-                    fetchDatasetResources(state.datasetContext);
-                }
-                break;
-            case DatasetBrowserDisplayMode.Dataset:
-                fetchDatasets();
-                break;
-            default:
-                payload.items = Object.keys(DatasetType).map((key) => ({ name: upperFirst(DatasetType[key]), type: DatasetType[key] }));
-                payload.isLoading = false;
+        if (state.manageMode === DatasetBrowserManageMode.Create) {
+            payload.datasetContext = {type: DatasetType.PRIVATE, name: 'NoName'};
         }
 
         setState({
             type: DatasetActionType.State,
             payload
         });
-    }, [state.datasetContext, isPinned, fetchDatasetResources, fetchDatasets, displayMode]);
+    }, [resource, state.manageMode]);
+
+    // update the component if the datasetContext changes
+    useEffect(() => {
+        const payload: Partial<DatasetBrowserState> = {
+            breadcrumbs: breadcrumbFromDataset(state.datasetContext, !!state.manageMode),
+            selectedItems: [],
+            isLoading: true
+        };
+
+        if (state.manageMode === DatasetBrowserManageMode.Create) {
+            payload.isLoading = false;
+        } else {
+            switch (displayMode) {
+                case DatasetBrowserDisplayMode.Resource:
+                    // DatasetBrowser invariant requires state.datasetContext can never be undefined with this displayMode
+                    if (state.datasetContext) {
+                        fetchDatasetResources(state.datasetContext);
+                    }
+                    break;
+                case DatasetBrowserDisplayMode.Dataset:
+                    fetchDatasets();
+                    break;
+                default:
+                    payload.items = Object.keys(DatasetType).map((key) => ({ name: upperFirst(DatasetType[key]), type: DatasetType[key] }));
+                    payload.isLoading = false;
+            }
+        }
+
+        setState({
+            type: DatasetActionType.State,
+            payload
+        });
+    }, [state.datasetContext, state.manageMode, fetchDatasetResources, fetchDatasets, displayMode, state.refresh]);
 
     const pageSize = 10;
     // recalculate pages if filteredItems or pageSize changes
@@ -190,10 +210,6 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
         }
     }, [state.pagination]);
 
-
-    // create the appropriate table properties for the current viewing context (scopes, listing datasets, listing a dataset resources)
-    const displayModeTableProperties = tablePropertiesForDisplayMode(displayMode, state, setState);
-
     // if items or filteringText changes recompute filteredItems
     useEffect(() => {
         setState({
@@ -208,6 +224,13 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
         });
     }, [state.items, state.filter.filteringText, state.filter.filteringTextDisplay]);
 
+    useEffect(() => {
+        onItemsChange?.(new CustomEvent('itemsChange', {detail: {items: state.items}}));
+    }, [state.items, onItemsChange]);
+
+    // create the appropriate table properties for the current viewing context (scopes, listing datasets, listing a dataset resources)
+    const displayModeTableProperties = tablePropertiesForDisplayMode(displayMode, state, setState);
+
     return (
         <Box>
             <SpaceBetween direction='vertical' size='s'>
@@ -215,32 +238,60 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     { header }
                 </Condition>
                 
-                <BreadcrumbGroup items={state.breadcrumbs} onClick={(event) => {
-                    event.preventDefault();
-
-                    setState({
-                        type: DatasetActionType.DatasetContext,
-                        payload: event.detail.href.length > 0 ? JSON.parse(event.detail.href) : undefined
-                    });
-                }} />
+                <Condition condition={state.manageMode !== DatasetBrowserManageMode.Create}>
+                    <BreadcrumbGroup items={state.breadcrumbs} onClick={(event) => {
+                        event.preventDefault();
+                        
+                        setState({
+                            type: DatasetActionType.DatasetContext,
+                            payload: event.detail.href.length > 0 ? JSON.parse(event.detail.href) : undefined
+                        });
+                    }} />
+                </Condition>
 
                 <Table
                     // add common properties shared by every display mode
-                    header={<Header counter={`(${state.items.length})`}>{displayMode}s</Header>}
-                    empty={EmptyState('No Entries exist')}
+                    header={<Header actions={actions?.({
+                        items: state.items,
+                        manageMode: state.manageMode,
+                        selectedItems: state.selectedItems,
+                        datasetContext: state.datasetContext,
+                        filter: state.filter,
+                    }, setState)} counter={
+                        state.selectedItems?.length > 0
+                            ? `(${state.selectedItems.length}/${state.items.length})`
+                            : `(${state.items.length})`
+                    }>{displayMode}s</Header>}
+                    empty={state.manageMode === DatasetBrowserManageMode.Create ? EmptyState('No files uploaded') : EmptyState('No Entries exist')}
                     filter={
                         <MLTextFilter
                             filteringText={state.filter.filteringTextDisplay}
                             requireEnter={true}
                             countText={getMatchesCountText(state.filter.filteredItems.length)}
                             onChange={({detail: {filteringText}}) => {
+                                // if creating a dataset there is no fetching from the server so just update the filter text and bail out early
+                                if (isCreating) {
+                                    return setState({
+                                        type: DatasetActionType.State,
+                                        payload: {
+                                            isLoading: false,
+                                            filter: {
+                                                ...state.filter,
+                                                filteringText: filteringText,
+                                                filteringTextDisplay: filteringText
+                                            }
+                                        }
+                                    });
+                                }
+
                                 const filteringTextPrefix = prefixForPath(filteringText);
                                 const filteringTextDisplayPrefix = prefixForPath(state.filter.filteringTextDisplay);
                                 const shouldFetch = filteringTextPrefix !== filteringTextDisplayPrefix;
 
                                 if (state.datasetContext) {
-                                    const payload: Pick<DatasetBrowserState, 'isLoading' | 'filter'> = {
+                                    const payload: Pick<DatasetBrowserState, 'isLoading' | 'filter' | 'selectedItems'> = {
                                         isLoading: shouldFetch,
+                                        selectedItems: shouldFetch ? [] : state.selectedItems,
                                         filter: {
                                             ...state.filter,
                                             filteringTextDisplay: filteringText,
@@ -260,8 +311,8 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
 
                                     if (shouldFetch) {
                                         // if the filter contains a prefix append that to the Location
-                                        const newContext = {...state.datasetContext, Location: [state.datasetContext.Location, filteringTextPrefix].join('')};
-                                        fetchDatasetResources(newContext);
+                                        const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
+                                        fetchDatasetResources(effectiveContext);
                                     }
                                 }
                             }}
@@ -285,25 +336,15 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     items={state.filter.filteredItems.slice((state.pagination.currentPageIndex - 1) * pageSize, (state.pagination.currentPageIndex) * pageSize)}
                     loading={state.isLoading}
                     loadingText={`Loading ${displayMode}s`}
-                    onSelectionChange={({detail}) => {
-                        setSelectedItems(detail.selectedItems);
-                        const selectedItem = detail.selectedItems?.[0];
-                        let selection: string | undefined = undefined;
-                        if (selectedItem) {
-                            switch (selectedItem?.type) {
-                                case 'object':
-                                    selection = `s3://${selectedItem.bucket}/${selectedItem.key}`;
-                                    break;
-                                case 'prefix':
-                                    selection = `s3://${selectedItem.bucket}/${selectedItem.prefix}`;
-                                    break;
-                                default:
-                                    selection = selectedItem.location;
+                    onSelectionChange={(event) => {
+                        setState({
+                            type: DatasetActionType.State,
+                            payload: {
+                                selectedItems: event.detail.selectedItems
                             }
-                                
-                        }     
+                        });
 
-                        props.onSelectionChange?.(new CustomEvent('selectionChange', {bubbles: false, detail: {selectedItem: selection}}));
+                        props.onSelectionChange?.(event);
                     }}
                     pagination={
                         <Pagination
@@ -324,18 +365,21 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                                 if (!detail.requestedPageAvailable && state.datasetContext) {
                                     const filteringTextPrefix = prefixForPath(state.filter.filteringTextDisplay);
                                     // if the filter contains a prefix append that to the Location
-                                    const newContext = {...state.datasetContext, Location: [state.datasetContext.Location, filteringTextPrefix].join('')};
-                                    fetchDatasetResources(newContext, state.nextToken, state.items);
+                                    const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
+                                    fetchDatasetResources(effectiveContext, state.nextToken, state.items);
                                 }
                             }}
                         />
                     }
-                    selectionType={selectableItemsTypes.length > 0 ? 'single' : undefined}
-                    selectedItems={selectedItems}
+                    selectionType={getSelectionType(state.manageMode, selectableItemsTypes)}
+                    selectedItems={state.selectedItems}
                     variant={'borderless'}
 
                     // add display mode specific properties
                     {...displayModeTableProperties}
+
+                    // merge in additional column definitions
+                    columnDefinitions={[...displayModeTableProperties.columnDefinitions, ...props.columnDefinitions || []]}
                 ></Table>
             </SpaceBetween>
         </Box>

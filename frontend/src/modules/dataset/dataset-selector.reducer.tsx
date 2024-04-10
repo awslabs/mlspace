@@ -1,5 +1,3 @@
-import { DatasetType } from '../../shared/model';
-
 /**
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
@@ -16,21 +14,16 @@ import { DatasetType } from '../../shared/model';
   limitations under the License.
 */
 export type DatasetResourceSelectorState = {
-    showModal: boolean;
     mode: DatasetResourceSelectorMode;
     resource?: string;
     selected?: string;
-    form: {
-        type: DatasetType,
-        name: string,
-        username: string,
-        projectName: string,
-    }
+    newDatasetUri?: string;
 };
 
 export enum DatasetResourceSelectorMode {
-    Browser = 'browser',
-    Create = 'create'
+    Browse = 'browser',
+    Create = 'create',
+    None = 'none'
 }
 
 /**

@@ -19,27 +19,29 @@ import React, { RefObject, useRef, useState } from 'react';
 import { IDataset } from '../../shared/model/dataset.model';
 import {
     getDatasetsList,
-    getFileEntities,
     deleteDatasetFromProject,
-    deleteFileFromDataset,
-    updateFileList,
     updateEntity,
+    deleteFileFromDataset,
 } from '../../entities/dataset/dataset.reducer';
-import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
+import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { Button, ButtonDropdown, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../config/store';
-import { mapFilesToDatasetFiles, deleteButtonAriaLabel } from './dataset.utils';
-import { IDatasetFile } from '../../shared/model/datasetfile.model';
+import { copyButtonAriaLabel, deleteButtonAriaLabel, downloadButtonAriaLabel } from './dataset.utils';
 import Condition from '../../modules/condition';
-import { buildS3Keys, uploadFiles } from './dataset.service';
-import { useAuth } from 'react-oidc-context';
+import { determineScope, getDownloadUrl, uploadResources } from './dataset.service';
 import NotificationService from '../../shared/layout/notification/notification.service';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
-import { setTableAnnouncement } from '../../shared/util/table-utils';
 import { deletionDescription } from '../../shared/util/form-utils';
 import { selectCurrentUser } from '../user/user.reducer';
 import { hasPermission } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
+import { DatasetActionType, DatasetBrowserAction, DatasetBrowserState, DatasetResourceObject } from '../../modules/dataset/dataset-browser.reducer';
+import { DatasetBrowserManageMode } from '../../modules/dataset/dataset-browser.types';
+import { useUsername } from '../../shared/util/auth-utils';
+import { prefixForPath, stripDatasetPrefix } from '../../modules/dataset/dataset-browser.utils';
+import { Dispatch as ReduxDispatch } from '@reduxjs/toolkit';
+import { Dispatch as ReactDispatch } from 'react';
+import { DatasetContext } from '../../shared/util/dataset-utils';
 
 function DatasetActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -62,153 +64,205 @@ function DatasetActions (props?: any) {
     );
 }
 
-function DatasetFileActions (props: any) {
+export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filter'>, setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>): React.ReactNode => {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
-    const dataset: IDataset = useAppSelector((state) => state.dataset.dataset);
+    const username = useUsername();
     const { projectName } = useParams();
-    const [chooseFileLoading, setChooseFileLoading] = useState(false);
-    const auth = useAuth();
-    const username = auth.user!.profile.preferred_username;
+    const {selectedItems, manageMode} = state;
+    const showDeleteButton = manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false;
+    const showUploadButton = manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false;
     const uploadFile: RefObject<HTMLInputElement> = useRef(null);
-    const datasetFileList = props.allItems;
-    const setFilesOverride = props.setItemsOverride;
-    const uploadFileRef = props?.focusFileUploadProps?.focusFileUploadProps;
-
-    const handleUploadFile = () => {
-        if (uploadFile.current) {
-            uploadFile.current.click();
-        }
-    };
-
-    const handleFileChange = async (e: any) => {
-        setChooseFileLoading(true);
-        if (e.target.files) {
-            const filesToUpload: File[] = Array.from(e.target.files);
-            const mappedFilesToUpload = filesToUpload.map((file: File) =>
-                mapFilesToDatasetFiles(file)
-            );
-            setTableAnnouncement('Selected files added to table');
-            if (!setFilesOverride) {
-                const s3Keys = buildS3Keys(mappedFilesToUpload, dataset, projectName, username!);
-                await uploadFiles(s3Keys, dataset, notificationService, mappedFilesToUpload);
-                dispatch(getFileEntities(dataset));
-            } else {
-                setFilesOverride([
-                    ...datasetFileList.concat(
-                        filesToUpload.map((file: File) => mapFilesToDatasetFiles(file))
-                    ),
-                ]);
-            }
-        }
-        setChooseFileLoading(false);
-    };
-
-    const removeFileFromFilesToUpload = () => {
-        if (datasetFileList.length === 0) {
-            return;
-        }
-        const filesToRemove = props?.selectedItems;
-        const currentFiles = [...datasetFileList];
-        const fileListFiltered: IDatasetFile[] = currentFiles.filter((element) => {
-            return !filesToRemove.some((innerElement: any) => {
-                return innerElement.key === element.key;
-            });
-        });
-        if (!setFilesOverride) {
-            dispatch(updateFileList(fileListFiltered));
-        } else {
-            setFilesOverride(fileListFiltered);
-        }
-        setTableAnnouncement('Selected files removed from table');
-    };
-
-    const ManageFilesButtons = () => (
-        <div>
-            <Button
-                disabled={props.selectedItems.length === 0}
-                onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href.endsWith('/create')
-                        ? removeFileFromFilesToUpload()
-                        : DatasetDeleteFileActionHandler(dispatch, dataset, props);
-                }}
-                ariaLabel={deleteButtonAriaLabel}
-            >
-                Delete
-            </Button>
-            <Button
-                data-cy='dataset-file-upload-button'
-                iconName='upload'
-                ref={uploadFileRef}
-                variant='normal'
-                formAction='none'
-                onClick={handleUploadFile}
-                loading={chooseFileLoading}
-            >
-                Upload file
-            </Button>
-            <input
-                data-cy='dataset-file-upload-input'
-                type='file'
-                ref={uploadFile}
-                style={{ display: 'none' }}
-                onChange={(e: any) => {
-                    handleFileChange(e);
-                }}
-                onBlur={() => {
-                    //This remains empty to regain keyboard focus
-                    //to the button after user closes the input window
-                    //for accessibility purposes
-                }}
-                multiple
-            />
-        </div>
-    );
+    const [disableUpload, setDisableUpload] = useState(false);
 
     return (
-        <SpaceBetween direction='horizontal' size='xs'>
-            <Condition condition={!setFilesOverride}>
+        <SpaceBetween size='xs' direction='horizontal'>
+            <Condition condition={manageMode !== DatasetBrowserManageMode.Create}>
                 <Button
-                    onClick={() => dispatch(getFileEntities(dataset))}
-                    ariaLabel={'Refresh dataset list'}
-                >
-                    <Icon name='refresh' />
+                    iconName='download'
+                    disabled={selectedItems.length !== 1 || selectedItems[0].type !== 'object'}
+                    onClick={async () => {
+                        const item = selectedItems[0];
+                        if (item.type === 'object') {
+                            const downloadUrl = await getDownloadUrl(item.key);
+                            window.open(downloadUrl, '_blank');
+                        }
+                    }}
+                    ariaLabel={downloadButtonAriaLabel}>
+                    Download
                 </Button>
             </Condition>
-            {window.location.href.endsWith('/edit') || window.location.href.endsWith('/create') ? (
-                <ManageFilesButtons />
-            ) : null}
+
+            <Condition condition={manageMode !== DatasetBrowserManageMode.Create}>
+                <Button
+                    iconName='copy'
+                    disabled={selectedItems.length !== 1}
+                    onClick={async () => {
+                        const item = selectedItems[0];
+                        switch (item.type) {
+                            case 'object':
+                                navigator.clipboard.writeText(`s3://${item.bucket}/${item.key}`);
+                                break;
+                            case 'prefix':
+                                navigator.clipboard.writeText(`s3://${item.bucket}/${item.prefix}`);
+                                break;
+                        }
+                    }}
+                    ariaLabel={copyButtonAriaLabel}>
+                    Copy S3 URI
+                </Button>
+            </Condition>
+
+            <Condition condition={showDeleteButton}>
+                <Button
+                    iconName='delete-marker'
+                    disabled={selectedItems.length === 0 || !!state.selectedItems.find((resource) => resource.type === 'prefix')}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        
+                        switch (manageMode) {
+                            case DatasetBrowserManageMode.Create:
+                                setState({
+                                    type: DatasetActionType.State,
+                                    payload: {
+                                        items: state.items.filter((item) => !selectedItems.includes(item)),
+                                        selectedItems: []
+                                    }
+                                });
+                                break;
+                            default:
+                                dispatch(
+                                    setDeleteModal({
+                                        resourceName: state.selectedItems.length === 1 ? state.selectedItems[0].name : `${state.selectedItems.length} file(s)`,
+                                        resourceType: 'dataset file(s)',
+                                        onConfirm: async () => {
+                                            const scope = determineScope(state.datasetContext?.type, projectName!, username);
+                                            const selectedItems = state.selectedItems?.filter((item): item is DatasetResourceObject => item.type === 'object')
+                                                .map((item) => {
+                                                    return stripDatasetPrefix(item.key);
+                                                })
+                                                .filter((item) => item);
+
+                                            return await dispatch(
+                                                deleteFileFromDataset({
+                                                    scope,
+                                                    datasetName: state.datasetContext?.name,
+                                                    files: selectedItems,
+                                                })
+                                            );
+                                        },
+                                        postConfirm: () => {
+                                            if (state.datasetContext) {
+                                                const filteringTextPrefix = prefixForPath(state.filter.filteringTextDisplay);
+                                                // if the filter contains a prefix append that to the Location
+                                                const effectiveContext = {...state.datasetContext, Location: [state.datasetContext.location, filteringTextPrefix].join('')};
+                                        
+                                                setState({
+                                                    type: DatasetActionType.State,
+                                                    payload: {
+                                                        datasetContext: effectiveContext,
+                                                        filter: {
+                                                            filteringText: '',
+                                                            filteringTextDisplay: '',
+                                                            filteredItems: []
+                                                        },
+                                                        refresh: Math.random()
+                                                    }
+                                                });
+                                            }
+                                        },
+                                        description: deletionDescription('Dataset file(s)'),
+                                    })
+                                );
+                                break;
+                        }
+                    }}
+                    ariaLabel={deleteButtonAriaLabel}>
+                    Delete
+                </Button>
+            </Condition>
+
+            <Condition condition={showUploadButton}>
+                <Button
+                    data-cy='dataset-file-upload-button'
+                    iconName='upload'
+                    variant='normal'
+                    formAction='none'
+                    onClick={() => uploadFile?.current?.click()}
+                    loading={disableUpload}
+                >
+                    Upload
+                </Button>
+                <input
+                    data-cy='dataset-file-upload-input'
+                    type='file'
+                    ref={uploadFile}
+                    style={{ display: 'none' }}
+                    onChange={async (event) => {
+                        const filesToUpload = Array.from(event.target?.files || []).map((file: File): DatasetResourceObject => ({
+                            bucket: '',
+                            type: 'object',
+                            key: `${state.datasetContext?.location || ''}${file.name}`,
+                            size: file.size,
+                            file,
+                            name: file.name,
+                        }));
+
+                        switch (manageMode) {
+                            case DatasetBrowserManageMode.Create:
+                                setState({
+                                    type: DatasetActionType.State,
+                                    payload: {
+                                        items: [...state.items, ...filesToUpload]
+                                    }
+                                });
+                                break;
+                            case DatasetBrowserManageMode.Edit:
+                                if (state.datasetContext) {
+                                    const filteringTextPrefix = prefixForPath(state.filter.filteringTextDisplay);
+                                    if (filteringTextPrefix) {
+                                        filesToUpload.forEach((file) => {
+                                            file.key = [filteringTextPrefix, file.key].join('');
+                                        });
+                                    }
+                                    
+                                    setDisableUpload(true);
+                                    // ensure cast to DatasetContext is valid
+                                    if (state.datasetContext.name && state.datasetContext.type) {
+                                        await uploadResources(state.datasetContext as DatasetContext, filesToUpload, projectName!, username, notificationService);
+                                    }
+                                    setDisableUpload(false);
+
+                                    // if the filter contains a prefix append that to the Location
+                                    const effectiveContext = {...state.datasetContext, Location: [state.datasetContext.location, filteringTextPrefix].join('')};
+
+                                    setState({
+                                        type: DatasetActionType.State,
+                                        payload: {
+                                            datasetContext: effectiveContext,
+                                            filter: {
+                                                filteringText: '',
+                                                filteringTextDisplay: '',
+                                                filteredItems: []
+                                            },
+                                            refresh: Math.random()
+                                        }
+                                    });
+                                }
+                                break;
+                        }
+                    }}
+                    onBlur={() => {
+                        //This remains empty to regain keyboard focus
+                        //to the button after user closes the input window
+                        //for accessibility purposes
+                    }}
+                    multiple
+                />
+            </Condition>
         </SpaceBetween>
     );
-}
-
-async function DatasetDeleteFileActionHandler (
-    dispatch: ThunkDispatch<any, any, Action>,
-    dataset: IDataset,
-    props?: any
-) {
-    const parsedKeys = props?.selectedItems.map((value: any) => value['key'].split('/').slice(-1));
-    const selectedFiles = parsedKeys.join(', ');
-    const newFileList = parsedKeys.map((f: any) => encodeURIComponent(f));
-
-    dispatch(
-        setDeleteModal({
-            resourceName: selectedFiles,
-            resourceType: 'dataset file(s)',
-            onConfirm: async () =>
-                await dispatch(
-                    deleteFileFromDataset({
-                        scope: dataset.scope,
-                        datasetName: dataset.name,
-                        files: newFileList,
-                    })
-                ),
-            postConfirm: () => dispatch(getFileEntities(dataset)),
-            description: deletionDescription('Dataset file(s)'),
-        })
-    );
-}
+};
 
 function IsAdminOrDatasetOwner (dataset: IDataset): boolean {
     const currentUser = useAppSelector(selectCurrentUser);
@@ -218,7 +272,7 @@ function IsAdminOrDatasetOwner (dataset: IDataset): boolean {
     );
 }
 
-function DatasetActionButton (nav: (endpoint: string) => void, dispatch: Dispatch, props?: any) {
+function DatasetActionButton (nav: (endpoint: string) => void, dispatch: ReduxDispatch, props?: any) {
     const selectedDataset = props?.selectedItems[0];
     const { projectName } = useParams();
 
@@ -290,4 +344,4 @@ const DatasetActionHandler = (
     }
 };
 
-export { DatasetActions, DatasetFileActions };
+export { DatasetActions };

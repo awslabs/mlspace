@@ -21,13 +21,14 @@ import { PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 import axios from '../../shared/util/axios-utils';
 import { BreadcrumbGroupProps, PaginationProps } from '@cloudscape-design/components';
+import { DatasetBrowserManageMode } from './dataset-browser.types';
 
 /**
  * Thunk parameter for {@link getDatasetContents}. Extends {@link ServerRequestProps} with
  * additional properties for fetching dataset contents.
  */
 export type DatasetServerRequestProps = ServerRequestProps & {
-    datasetContext: DatasetContext,
+    datasetContext: Partial<DatasetContext>,
     username?: string
 };
 
@@ -43,21 +44,22 @@ type DatasetResourceBase = {
 /**
  * Object variant of {@link DatasetResourceBase}
  */
-export type DatasetObjectResource = DatasetResourceBase & {
+export type DatasetResourceObject = DatasetResourceBase & {
     type: 'object',
     key: string,
-    size?: number
+    size?: number,
+    file?: File,
 };
 
 /**
  * Prefix variant of {@link DatasetResourceBase}
  */
-export type DatasetPrefixResource = DatasetResourceBase & {
+export type DatasetResourcePrefix = DatasetResourceBase & {
     type: 'prefix',
     prefix: string
 };
 
-export type DatasetResource = DatasetObjectResource | DatasetPrefixResource;
+export type DatasetResource = DatasetResourceObject | DatasetResourcePrefix;
 
 /**
  * Expected response structure for listing dataset contents
@@ -91,7 +93,7 @@ export type StateAction = PayloadAction<Partial<DatasetBrowserState>> & {
  * Action to update {@link DatasetBrowserState#datasetContext}. Related fields will
  * be reset to their defaults.
  */
-export type ContextAction = PayloadAction<DatasetContext | undefined> & {
+export type ContextAction = PayloadAction<Partial<DatasetContext> | undefined> & {
     type: DatasetActionType.DatasetContext;
 };
 
@@ -120,7 +122,7 @@ export type DatasetBrowserState = {
     /**
      * The current {@link DatasetContext} to display
      */
-    datasetContext?: DatasetContext;
+    datasetContext?: Partial<DatasetContext>;
     /**
      * List of {@link BreadcrumbGroupProps.Item} showing the ancestor contexts
      */
@@ -130,11 +132,20 @@ export type DatasetBrowserState = {
      */
     items: (DatasetResource | IDataset)[];
     /**
+     * Subset of {@link DatasetBrowserState#items} of selected items
+     */
+    selectedItems: (DatasetResource | IDataset)[];
+    /**
+     * Defines how the browser functions.
+     * - {@link DatasetBrowserManageMode#Create} will not fetch any data from the server and expects {@link DatasetBrowserState#items)} to be populated another way.
+     * - {@link DatasetBrowserManageMode#Edit} will not fetch any data from the server and expects {@link DatasetBrowserState#items)} to be populated another way.
+     */
+    manageMode?: DatasetBrowserManageMode,
+    /**
      * String showing  
      */
     nextToken?: string;
     isLoading: boolean;
-    isPinned?: boolean;
     username: string;
     projectName: string;
     filter: {
@@ -142,7 +153,8 @@ export type DatasetBrowserState = {
         filteringTextDisplay: string;
         filteredItems: (DatasetResource | IDataset)[];
     },
-    pagination: Pick<PaginationProps, 'currentPageIndex' | 'disabled' | 'openEnd' | 'pagesCount'>
+    pagination: Pick<PaginationProps, 'currentPageIndex' | 'disabled' | 'openEnd' | 'pagesCount'>,
+    refresh: any;
 };
 
 /**
@@ -152,9 +164,9 @@ export const getDatasetContents = createAsyncThunk(
     'dataset/list_files',
     async (props: DatasetServerRequestProps) => {
         const { datasetContext, projectName, username } = props;
-        let scope: string | undefined = datasetContext.Type;
+        let scope: string | undefined = datasetContext.type;
 
-        switch (datasetContext.Type) {
+        switch (datasetContext.type) {
             case DatasetType.PROJECT:
                 scope = projectName;
                 break;
@@ -162,7 +174,7 @@ export const getDatasetContents = createAsyncThunk(
                 scope = username;
         }
 
-        const requestUrl = new URL(`${window.env.LAMBDA_ENDPOINT}dataset/${scope}/${datasetContext.Name}/files`);
+        const requestUrl = new URL(`${window.env.LAMBDA_ENDPOINT}dataset/${scope}/${datasetContext.name}/files`);
 
         if (props.nextToken) {
             requestUrl.searchParams.set('nextToken', props.nextToken);
@@ -176,8 +188,8 @@ export const getDatasetContents = createAsyncThunk(
             requestUrl.searchParams.set('projectName', props.projectName);
         }
 
-        if (datasetContext?.Location) {
-            requestUrl.searchParams.set('prefix', datasetContext.Location);
+        if (datasetContext?.location) {
+            requestUrl.searchParams.set('prefix', datasetContext.location);
         }
 
         return axios.get<ListFilesResponse>(requestUrl.toString()).then((response) => {
@@ -214,7 +226,7 @@ export const datasetBrowserReducer: Reducer<DatasetBrowserState, DatasetBrowserA
             return {
                 ...state,
                 datasetContext: action.payload,
-                breadcrumbs: breadcrumbFromDataset(action.payload, state.isPinned),
+                breadcrumbs: breadcrumbFromDataset(action.payload, !!state.manageMode),
                 items: [],
                 nextToken: undefined,
                 filter: {

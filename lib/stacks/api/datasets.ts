@@ -98,7 +98,7 @@ export class DatasetsApiStack extends Stack {
                 name: 'delete_file',
                 resource: 'dataset',
                 description: 'Removes a file from a dataset',
-                path: 'dataset/{scope}/{datasetName}/{file}',
+                path: 'dataset/{scope}/{datasetName}/{file+}',
                 method: 'DELETE',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,

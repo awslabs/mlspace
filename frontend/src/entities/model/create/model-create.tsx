@@ -45,6 +45,7 @@ import { IModelContainerMode } from '../../../shared/model/container.model';
 import { AttributeEditorSchema } from '../../../modules/environment-variables/environment-variables';
 import { NetworkSettings } from '../../jobs/hpo/create/training-definitions/network-settings';
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
+import '../../../shared/validation/helpers/uri';
 
 export function ModelCreate () {
     const dispatch = useAppDispatch();
@@ -83,13 +84,13 @@ export function ModelCreate () {
                         Environment: AttributeEditorSchema,
                     })
                     .superRefine((container, ctx) => {
-                        if (container.Mode === IModelContainerMode.MULTI_MODEL) {
+                        if (container.Mode === IModelContainerMode.MULTI_MODEL || !!container.ModelDataUrl?.trim()) {
                             const parseResult = z
                                 .string({
                                     required_error:
                                         'Model artifacts are required when hosting multiple models in a single container',
                                 })
-                                .min(1)
+                                .s3Uri()
                                 .safeParse(container.ModelDataUrl);
                             if (!parseResult.success) {
                                 parseResult.error.issues.forEach((issue) => {

@@ -13,9 +13,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
-import { IDatasetFile } from './datasetfile.model';
-
 export enum DatasetType {
     GLOBAL = 'global',
     PRIVATE = 'private',
@@ -31,12 +28,8 @@ export type IDataset = {
     description?: string;
     location?: string;
     format?: string;
-    files?: IDatasetFile[];
 };
 
 export const defaultDataset: Partial<IDataset> = {
-    scope: 'Global',
-    files: [],
+    type: DatasetType.GLOBAL
 };
-
-export const defaultValue: Readonly<Partial<IDataset>> = defaultDataset;

@@ -17,6 +17,7 @@ import { FormFieldProps, InputProps } from '@cloudscape-design/components';
 import { NonCancelableEventHandler } from '@cloudscape-design/components/internal/events';
 import { IDataset } from '../../shared/model';
 import { DatasetResource } from './dataset-browser.reducer';
+import { PrefixedType } from '../../shared/util/types';
 
 type DatasetResourceSelectorSelectableItems = 'prefixes' | 'objects';
 
@@ -57,7 +58,7 @@ export type DatasetResourceSelectorProps = {
      */
     onChange?: NonCancelableEventHandler<DatasetResourceSelectorChangeDetail>;
     /**
-     * Label to display above input field.
+     * Should the create button be shown.
      */
-    label?: string;
-} & Omit<InputProps, 'i18nStrings' | 'onChange' | 'selectableItemsTypes' | 'viewHref' | 'value'> & Omit<FormFieldProps, 'i18nStrings'>;
+    showCreateButton?: boolean;
+} & PrefixedType<Omit<InputProps, 'onChange' | 'selectableItemsTypes' | 'viewHref' | 'value'>, 'input'> & PrefixedType<FormFieldProps, 'field'>;
