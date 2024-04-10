@@ -33,7 +33,7 @@ Configure MLSpace using Option 1 if:
 
 After running the MLSpace Config Wizard, a new file will be generated: `/lib/config.json`.
 
-When MLSpace is deployed it will merge the settings in `config.json` and `constants.ts` to determine the final configuration settings (giving precedence to values set in `config.json`).
+When MLSpace is deployed it will merge the settings in `/lib/config.json` and `constants.ts` to determine the final configuration settings (giving precedence to values set in `/lib/config.json`).
 
 Any values left empty while using the MLSpace Config Wizard will default to what is set in the `lib/constants.ts` file.
 

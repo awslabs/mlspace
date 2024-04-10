@@ -1006,7 +1006,7 @@ When `ENABLE_ACCESS_LOGGING` is set to `true` [API Gateway uses a single role ac
 6. Once the role has been created record the role arn and update the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` to use the arn of the newly created role.
 
 ### Deployment Parameters
-Use the MLSpace Config Wizard by running `npm run config` and select "Advanced Configuration" for an interactive prompt which will set configuration values on your behalf in a generated `config.json` file. Alternatively, update the values in `lib/constants.ts` based on your specific deployment needs. Some of these will directly impact whether new resources are created within your account or whether existing resources (VPC, KMS, Roles, etc) will be leveraged.
+Use the MLSpace Config Wizard by running `npm run config` and select "Advanced Configuration" for an interactive prompt which will set configuration values on your behalf in a generated `/lib/config.json` file. Alternatively, update the values in `/lib/constants.ts` based on your specific deployment needs. Some of these will directly impact whether new resources are created within your account or whether existing resources (VPC, KMS, Roles, etc) will be leveraged.
 
 | Variable   |      Description      |  Default |
 |----------|:-------------|------:|
