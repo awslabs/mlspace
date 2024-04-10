@@ -230,30 +230,6 @@ def list_resources(event, context):
 
 
 @api_wrapper
-def list_locations(event, context):
-    scope = event["pathParameters"]["scope"].replace('"', "")
-    type = event["pathParameters"]["type"].replace('"', "")
-    datasets_locations = []
-
-    datasets = dataset_dao.get_all_for_scope(DatasetType[type.upper()], scope)
-
-    for dataset in datasets:
-        datasets_locations.append(
-            {
-                "name": dataset.name,
-                "location": dataset.location,
-            }
-        )
-
-    env_variables = get_environment_variables()
-
-    return {
-        "bucket": f's3://{env_variables["DATA_BUCKET"]}',
-        "locations": datasets_locations,
-    }
-
-
-@api_wrapper
 def list_files(event, context):
     env_variables = get_environment_variables()
     query_string_parameters = event.get("queryStringParameters", {})

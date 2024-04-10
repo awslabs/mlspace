@@ -114,17 +114,6 @@ export class DatasetsApiStack extends Stack {
                     DATA_BUCKET: props.dataBucketName,
                 },
             },
-            {
-                name: 'list_locations',
-                resource: 'dataset',
-                description:
-                    'Lists the s3 locations of available datasets based on given access type',
-                path: 'dataset-locations/{type}/{scope}',
-                method: 'GET',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
         ];
 
         apis.forEach((f) => {

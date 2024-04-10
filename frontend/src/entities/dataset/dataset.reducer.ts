@@ -50,14 +50,6 @@ export const getDatasetsList = createAsyncThunk(
     }
 );
 
-export const getFileEntities = createAsyncThunk(
-    'dataset/fetch_file_entity_list',
-    async (dataset: IDataset) => {
-        const requestUrl = `/dataset/${dataset.scope}/${dataset.name}/files`;
-        return axios.get<any>(requestUrl);
-    }
-);
-
 export const getDatasetByScopeAndName = createAsyncThunk(
     'dataset/fetch_entity_by_id',
     async ({ scope, name }: any) => {
@@ -94,13 +86,6 @@ export const addDataset = createAsyncThunk('dataset/add_dataset', async (data: a
     return axios.post<IDataset>(requestUrl, data);
 });
 
-export const listDatasetsLocations = createAsyncThunk(
-    'project/list_datasets',
-    async ({ scope, type }: any) => {
-        return axios.get(`/dataset-locations/${type}/${scope}`).then((response) => response.data);
-    }
-);
-
 // slice
 
 export const DatasetSlice = createSlice({
@@ -132,14 +117,6 @@ export const DatasetSlice = createSlice({
                     dataset: data,
                 };
             })
-            .addMatcher(isFulfilled(getFileEntities), (state, action: any) => {
-                const { data } = action.payload;
-                return {
-                    ...state,
-                    loadingFileEntities: false,
-                    allFiles: data.Keys,
-                };
-            })
             .addMatcher(isFulfilled(deleteFileFromDataset), (state) => {
                 return {
                     ...state,
@@ -168,12 +145,6 @@ export const DatasetSlice = createSlice({
                 return {
                     ...state,
                     loadingDataset: true,
-                };
-            })
-            .addMatcher(isPending(getFileEntities), (state) => {
-                return {
-                    ...state,
-                    loadingFileEntities: true,
                 };
             })
             .addMatcher(isPending(editDataset), (state) => {

@@ -199,19 +199,3 @@ export const createDatasetHandleAlreadyExists = (dataset: IDataset) => {
         }
     });
 };
-
-export const listDatasetBucketAndLocations = async (scope: string, type: string) => {
-    const response = await axios.get(`/dataset-locations/${type}/${scope}`);
-    if (response.status === 200) {
-        return response.data;
-    }
-    return [];
-};
-
-export const listDatasetFiles = async (scope: string, name: string) => {
-    const response = await axios.get(`/dataset/${scope}/${name}/files`);
-    if (response.status === 200) {
-        return response.data;
-    }
-    return [];
-};
