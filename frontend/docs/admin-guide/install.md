@@ -38,7 +38,7 @@ be configured as follows:
 3. Select the "EMR" service from the dropdown and select the radio button for "EMR" under use case.
 4. Click the next button to advance to the policy screen, the necessary policy will already be attached. Click next to continue.
 5. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
-6. Once the role has been created record the role arn as we'll need to use it later.
+6. Once the role has been created record the role ARN as we'll need to use it later.
 
 #### Instance Role
 1. Login to your AWS account and go to the Roles section of the IAM Service in the AWS Console.
@@ -46,7 +46,7 @@ be configured as follows:
 3. Select the "EMR" service from the dropdown and select the radio button for "EMR Role for EC2" under use case.
 4. Click the next button to advance to the policy screen, the necessary policy will already be attached. Click next to continue.
 5. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
-6. Once the role has been created record the role arn as we'll need to use it later.
+6. Once the role has been created record the role ARN as we'll need to use it later.
 
 #### Cleanup Role
 _The cleanup role needs to exist but we do not need the ARN_
@@ -75,8 +75,8 @@ or make any additional changes required for your environment.
 |`{MLSPACE_PRIVATE_SUBNET_2}`| The subnet id of one of the {{ $params.APPLICATION_NAME }} VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
 |`{MLSPACE_PRIVATE_SUBNET_3}`| The subnet id of one of the {{ $params.APPLICATION_NAME }} VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
 |`{MLSPACE_VPC_SECURITY_GROUP}`| The id of the default security group for the {{ $params.APPLICATION_NAME }} VPC. | `sg-903004f8` |
-|`{EMR_DEFAULT_ROLE_ARN}` | The arn of the role that will be used as the "ServiceRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_DefaultRole`|
-|`{EMR_EC2_INSTANCE_ROLE_ARN}` | The arn of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole`|
+|`{EMR_DEFAULT_ROLE_ARN}` | The ARN of the role that will be used as the "ServiceRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_DefaultRole`|
+|`{EMR_EC2_INSTANCE_ROLE_ARN}` | The ARN of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole`|
 | `{MLSPACE_APP_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} application role | `mlspace-app-role` |
 
 #### Notebook Role
@@ -342,7 +342,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
 ```
 8. Click the next button and then select the checkbox next to the name of the policy you created in step 4 above.
 9. After selecting the checkbox for the policy click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
-10. Once the role has been created record the role arn as we'll need to use it later.
+10. Once the role has been created record the role ARN as we'll need to use it later.
 
 #### App Role
 In order to create the default {{ $params.APPLICATION_NAME }} Application policy and role do the following:
@@ -943,7 +943,7 @@ policy. From the IAM Service page click "Policies" on the left hand side.
 ```
 12. Click the next button and then select the checkbox next to the name of the policy you created in step 8 above. You will also need to attach the default notebook policy you previously created as well as the AWS managed policy `AWSLambdaVPCAccessExecutionRole`. In total you should have 3 policies attached to the role.
 13. After selecting the 3 policies click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
-14. Once the role has been created record the role arn as we'll need to use it later.
+14. Once the role has been created record the role ARN as we'll need to use it later.
 
 #### S3 Reader Role
 The {{ $params.APPLICATION_NAME }} react app is hosted statically in S3 and accessed via an API Gateway S3 proxy integration. This proxy resource will use the role associated with the `S3_READER_ROLE_ARN` in `constants.ts` if specified. If you do not specify an ARN {{ $params.APPLICATION_NAME }} will attempt to create a new role.  You can manually create the necessary policy and role using the following steps:
@@ -980,7 +980,7 @@ The {{ $params.APPLICATION_NAME }} react app is hosted statically in S3 and acce
 ```
 8. Click the next button and then select the checkbox next to the name of the policy you created in step 4 above.
 9. After selecting the policy click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
-10. Once the role has been created record the role arn as you'll need to update `constants.ts` to use it.
+10. Once the role has been created record the role ARN as you'll need to update `constants.ts` to use it.
 
 #### API Gateway CloudWatch Role
 When `ENABLE_ACCESS_LOGGING` is set to `true` [API Gateway uses a single role account-wide](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-permissions) for interacting with CloudWatch. If you would like to provide that role to {{ $params.APPLICATION_NAME }} you can set the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` otherwise the role will be automatically created during deployment. In order to create the API Gateway CloudWatch role manually you can take the following steps:
@@ -1003,7 +1003,7 @@ When `ENABLE_ACCESS_LOGGING` is set to `true` [API Gateway uses a single role ac
 ```
 4. Click the next button and then select the checkbox next to the AWS managed policy `AmazonAPIGatewayPushToCloudWatchLogs`.
 5. After selecting the managed policy click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
-6. Once the role has been created record the role arn and update the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` to use the arn of the newly created role.
+6. Once the role has been created record the role ARN and update the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` to use the ARN of the newly created role.
 
 ### Deployment Parameters
 Use the MLSpace Config Wizard by running `npm run config` and select "Advanced Configuration" for an interactive prompt which will set configuration values on your behalf in a generated `/lib/config.json` file. Alternatively, update the values in `/lib/constants.ts` based on your specific deployment needs. Some of these will directly impact whether new resources are created within your account or whether existing resources (VPC, KMS, Roles, etc) will be leveraged.
@@ -1036,20 +1036,20 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `NOTEBOOK_PARAMETERS_FILE_NAME` |  Filename of the default notebook parameters that is generated as part of the CDK deployment  | `mlspace-website` |
 | `PERMISSIONS_BOUNDARY_POLICY_NAME` | Name of the managed policy used as a permissions boundary for dynamically created {{ $params.APPLICATION_NAME }} roles | `mlspace-project-user-permission-boundary` |
 | `KEY_MANAGER_ROLE_NAME` | Name of the IAM role with permissions to manage the KMS Key. If this property is set you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
-| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with MLSpace. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. |
-| `SYSTEM_TAG` | Tag which will be applied to all MLSpace resources created with the AWS account to which MLSpace is deployed | `MLSpace` |
-| `IAM_RESOURCE_PREFIX` | Value preprended to MLSpace dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
-| `MANAGE_IAM_ROLES` | This setting determines whether or not MLSpace will dynamically create unique roles per project/user combinations. | `true` |
-| `EXISTING_VPC_NAME` | If MLSpace is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`) | - |
-| `EXISTING_VPC_ID` | If MLSpace is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`) | - |
-| `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If MLSpace is being deployed into an existing VPC this should be the default security group of that VPC | - |
-| `APP_ROLE_ARN` | Arn of an existing IAM role to use for executing the MLSpace lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| `NOTEBOOK_ROLE_ARN` | Arn of an existing IAM role to associate with all notebooks created in MLSpace. If using dynamic roles based on  project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with {{ $params.APPLICATION_NAME }}. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. |
+| `SYSTEM_TAG` | Tag which will be applied to all {{ $params.APPLICATION_NAME }} resources created with the AWS account to which {{ $params.APPLICATION_NAME }} is deployed | `MLSpace` |
+| `IAM_RESOURCE_PREFIX` | Value preprended to {{ $params.APPLICATION_NAME }} dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
+| `MANAGE_IAM_ROLES` | This setting determines whether or not {{ $params.APPLICATION_NAME }} will dynamically create unique roles per project/user combinations. | `true` |
+| `EXISTING_VPC_NAME` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`) | - |
+| `EXISTING_VPC_ID` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`) | - |
+| `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the default security group of that VPC | - |
+| `APP_ROLE_ARN` | Arn of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| `NOTEBOOK_ROLE_ARN` | Arn of an existing IAM role to associate with all notebooks created in {{ $params.APPLICATION_NAME }}. If using dynamic roles based on  project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
 | `S3_READER_ROLE_ARN` | Arn of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
 | `EMR_DEFAULT_ROLE_ARN` | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | `EMR_EC2_INSTANCE_ROLE_ARN` | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
 | `ENABLE_ACCESS_LOGGING` | Whether or not to enable access logging for S3 and APIGW in {{ $params.APPLICATION_NAME }} | `true` |
-| `APIGATEWAY_CLOUDWATCH_ROLE_ARN` | If API Gateway access logging is enabled (`ENABLE_ACCESS_LOGGING` is true) then this is the arn of the role that will be used to push those access logs | - |
+| `APIGATEWAY_CLOUDWATCH_ROLE_ARN` | If API Gateway access logging is enabled (`ENABLE_ACCESS_LOGGING` is true) then this is the ARN of the role that will be used to push those access logs | - |
 | `CREATE_MLSPACE_CLOUDTRAIL_TRAIL` | Whether or not to create an {{ $params.APPLICATION_NAME }} trail within the account | `true` |
 | `NEW_USERS_SUSPENDED` | Whether or not new user accounts will be created in a suspended state by default | `true` |
 | `ENABLE_TRANSLATE` | Whether or not translate capabilities will be deployed/enabled in {{ $params.APPLICATION_NAME }}. If translate is not available in the region you are deploying to you should set this to `false` | `true` |

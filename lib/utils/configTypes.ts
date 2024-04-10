@@ -1,3 +1,4 @@
+import _ = require('lodash');
 import {
     ACCESS_LOGS_BUCKET_NAME,
     ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
@@ -197,65 +198,7 @@ export function generateConfig () {
         const fileConfig: MLSpaceConfig = JSON.parse(
             fs.readFileSync('lib/config.json').toString('utf8')
         );
-        //Configs set by the config-helper script
-        config.AWS_ACCOUNT = fileConfig.AWS_ACCOUNT || config.AWS_ACCOUNT;
-        config.AWS_REGION = fileConfig.AWS_REGION || config.AWS_REGION;
-        config.OIDC_URL = fileConfig.OIDC_URL || config.OIDC_URL;
-        config.OIDC_CLIENT_NAME = fileConfig.OIDC_CLIENT_NAME || config.OIDC_CLIENT_NAME;
-        config.KEY_MANAGER_ROLE_NAME = fileConfig.KEY_MANAGER_ROLE_NAME || KEY_MANAGER_ROLE_NAME
-        config.EXISTING_VPC_NAME = fileConfig.EXISTING_VPC_NAME || config.EXISTING_VPC_NAME;
-        config.EXISTING_VPC_ID = fileConfig.EXISTING_VPC_ID || config.EXISTING_VPC_ID;
-        config.EXISTING_VPC_DEFAULT_SECURITY_GROUP = fileConfig.EXISTING_VPC_DEFAULT_SECURITY_GROUP || config.EXISTING_VPC_DEFAULT_SECURITY_GROUP;
-        config.S3_READER_ROLE_ARN = fileConfig.S3_READER_ROLE_ARN || config.S3_READER_ROLE_ARN;
-        config.BUCKET_DEPLOYMENT_ROLE_ARN = fileConfig.BUCKET_DEPLOYMENT_ROLE_ARN || config.BUCKET_DEPLOYMENT_ROLE_ARN;
-        config.NOTEBOOK_ROLE_ARN = fileConfig.NOTEBOOK_ROLE_ARN || config.NOTEBOOK_ROLE_ARN;
-        config.APP_ROLE_ARN = fileConfig.APP_ROLE_ARN || config.APP_ROLE_ARN;
-        config.EMR_DEFAULT_ROLE_ARN = fileConfig.EMR_DEFAULT_ROLE_ARN || config.EMR_DEFAULT_ROLE_ARN;
-        config.EMR_EC2_INSTANCE_ROLE_ARN = fileConfig.EMR_EC2_INSTANCE_ROLE_ARN || config.EMR_EC2_INSTANCE_ROLE_ARN;
-        config.SYSTEM_BANNER_BACKGROUND_COLOR = fileConfig.SYSTEM_BANNER_BACKGROUND_COLOR || config.SYSTEM_BANNER_BACKGROUND_COLOR;
-        config.SYSTEM_BANNER_TEXT = fileConfig.SYSTEM_BANNER_TEXT || config.SYSTEM_BANNER_TEXT;
-        config.SYSTEM_BANNER_TEXT_COLOR = fileConfig.SYSTEM_BANNER_TEXT_COLOR || config.SYSTEM_BANNER_TEXT_COLOR;
-        config.NEW_USERS_SUSPENDED = fileConfig.NEW_USERS_SUSPENDED || config.NEW_USERS_SUSPENDED;
-        // Table names
-        config.DATASETS_TABLE_NAME = fileConfig.DATASETS_TABLE_NAME || config.DATASETS_TABLE_NAME;
-        config.PROJECTS_TABLE_NAME = fileConfig.PROJECTS_TABLE_NAME || config.PROJECTS_TABLE_NAME;
-        config.PROJECT_USERS_TABLE_NAME = fileConfig.PROJECT_USERS_TABLE_NAME || config.PROJECT_USERS_TABLE_NAME;
-        config.USERS_TABLE_NAME = fileConfig.USERS_TABLE_NAME || config.USERS_TABLE_NAME;
-        config.RESOURCE_SCHEDULE_TABLE_NAME = fileConfig.RESOURCE_SCHEDULE_TABLE_NAME || config.RESOURCE_SCHEDULE_TABLE_NAME;
-        config.RESOURCE_METADATA_TABLE_NAME = fileConfig.RESOURCE_METADATA_TABLE_NAME || config.RESOURCE_METADATA_TABLE_NAME;
-        // Bucket names
-        config.CONFIG_BUCKET_NAME = fileConfig.CONFIG_BUCKET_NAME || config.CONFIG_BUCKET_NAME;
-        config.DATA_BUCKET_NAME = fileConfig.DATA_BUCKET_NAME || config.DATA_BUCKET_NAME;
-        config.LOGS_BUCKET_NAME = fileConfig.LOGS_BUCKET_NAME || config.LOGS_BUCKET_NAME;
-        config.ACCESS_LOGS_BUCKET_NAME = fileConfig.ACCESS_LOGS_BUCKET_NAME || config.ACCESS_LOGS_BUCKET_NAME;
-        config.WEBSITE_BUCKET_NAME = fileConfig.WEBSITE_BUCKET_NAME || config.WEBSITE_BUCKET_NAME;
-        // Notebook settings
-        config.MLSPACE_LIFECYCLE_CONFIG_NAME = fileConfig.MLSPACE_LIFECYCLE_CONFIG_NAME || config.MLSPACE_LIFECYCLE_CONFIG_NAME;
-        config.NOTEBOOK_PARAMETERS_FILE_NAME = fileConfig.NOTEBOOK_PARAMETERS_FILE_NAME || config.NOTEBOOK_PARAMETERS_FILE_NAME;
-        // EMR settings
-        config.EMR_SECURITY_CONFIG_NAME = fileConfig.EMR_SECURITY_CONFIG_NAME || config.EMR_SECURITY_CONFIG_NAME;
-        // OIDC settings
-        config.IDP_ENDPOINT_SSM_PARAM = fileConfig.IDP_ENDPOINT_SSM_PARAM || config.IDP_ENDPOINT_SSM_PARAM;
-        config.INTERNAL_OIDC_URL = fileConfig.INTERNAL_OIDC_URL || config.INTERNAL_OIDC_URL;
-        config.OIDC_VERIFY_SSL = fileConfig.OIDC_VERIFY_SSL || config.OIDC_VERIFY_SSL;
-        config.OIDC_VERIFY_SIGNATURE = fileConfig.OIDC_VERIFY_SIGNATURE || config.OIDC_VERIFY_SIGNATURE;
-        config.OIDC_REDIRECT_URI = fileConfig.OIDC_REDIRECT_URI || config.OIDC_REDIRECT_URI;
-        // Other properties not prompted for in config-helper
-        config.SYSTEM_TAG = fileConfig.SYSTEM_TAG || config.SYSTEM_TAG;
-        config.IAM_RESOURCE_PREFIX = fileConfig.IAM_RESOURCE_PREFIX || config.IAM_RESOURCE_PREFIX;
-        config.APPLICATION_NAME = fileConfig.APPLICATION_NAME || config.APPLICATION_NAME;
-        config.PERMISSIONS_BOUNDARY_POLICY_NAME = fileConfig.PERMISSIONS_BOUNDARY_POLICY_NAME || config.PERMISSIONS_BOUNDARY_POLICY_NAME;
-        config.NOTIFICATION_DISTRO = fileConfig.NOTIFICATION_DISTRO || config.NOTIFICATION_DISTRO;
-        config.EXISTING_KMS_MASTER_KEY_ARN = fileConfig.EXISTING_KMS_MASTER_KEY_ARN || config.EXISTING_KMS_MASTER_KEY_ARN;
-        config.APIGATEWAY_CLOUDWATCH_ROLE_ARN = fileConfig.APIGATEWAY_CLOUDWATCH_ROLE_ARN || config.APIGATEWAY_CLOUDWATCH_ROLE_ARN;
-        config.COMMON_LAYER_ARN_PARAM = fileConfig.COMMON_LAYER_ARN_PARAM || config.COMMON_LAYER_ARN_PARAM;
-        config.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS = fileConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS || config.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS;
-        config.MANAGE_IAM_ROLES = fileConfig.MANAGE_IAM_ROLES || config.MANAGE_IAM_ROLES;
-        config.ENABLE_ACCESS_LOGGING = fileConfig.ENABLE_ACCESS_LOGGING || config.ENABLE_ACCESS_LOGGING;
-        config.CREATE_MLSPACE_CLOUDTRAIL_TRAIL = fileConfig.CREATE_MLSPACE_CLOUDTRAIL_TRAIL || config.CREATE_MLSPACE_CLOUDTRAIL_TRAIL;
-        config.ENABLE_TRANSLATE = fileConfig.ENABLE_TRANSLATE || config.ENABLE_TRANSLATE;
-        config.ENABLE_GROUNDTRUTH = fileConfig.ENABLE_GROUNDTRUTH || config.ENABLE_GROUNDTRUTH;
-        config.RESOURCE_TERMINATION_INTERVAL = fileConfig.RESOURCE_TERMINATION_INTERVAL || config.RESOURCE_TERMINATION_INTERVAL;
+        _.merge(config, [fileConfig]);
     }
 
     

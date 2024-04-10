@@ -69,12 +69,12 @@ If you answered yes you will be prompted for:
 **Do you want to use existing IAM Roles?**
 If you answered yes you will be prompted for:
 
-- S3 Reader Role ARN: arn of an existing IAM role to use for reading from the static website S3 bucket
-- Bucket Deployment Role ARN: arn of an existing IAM role to use for deploying to the static website S3 bucket
-- Notebook Role ARN: arn of an existing IAM role to associate with all notebooks created in MLSpace
-- App Role ARN: arn of an existing IAM role to use for executing the MLSpace lambdas
-- EMR Default Role ARN: arn of an existing IAM role that will be used as the 'ServiceRole' for all EMR clusters
-- EMR EC2 Instance Role ARN: arn of an existing role that will be used as the 'JobFlowRole' and 'AutoScalingRole' for all EMR clusters
+- S3 Reader Role ARN: ARN of an existing IAM role to use for reading from the static website S3 bucket
+- Bucket Deployment Role ARN: ARN of an existing IAM role to use for deploying to the static website S3 bucket
+- Notebook Role ARN: ARN of an existing IAM role to associate with all notebooks created in MLSpace
+- App Role ARN: ARN of an existing IAM role to use for executing the MLSpace lambdas
+- EMR Default Role ARN: ARN of an existing IAM role that will be used as the 'ServiceRole' for all EMR clusters
+- EMR EC2 Instance Role ARN: ARN of an existing role that will be used as the 'JobFlowRole' and 'AutoScalingRole' for all EMR clusters
 
 **Do you want to modify the banner displayed on MLSpace?**
 If you answered yes you will be prompted for:
@@ -172,7 +172,7 @@ If the config-helper doesn't provide the level of customization you need for you
 | EMR_DEFAULT_ROLE_ARN | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | EMR_EC2_INSTANCE_ROLE_ARN | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
 | ENABLE_ACCESS_LOGGING | Whether or not to enable access logging for S3 and APIGW in MLSpace | `true` |
-| APIGATEWAY_CLOUDWATCH_ROLE_ARN | If API Gateway access logging is enabled (`ENABLE_ACCESS_LOGGING` is true) then this is the arn of the role that will be used to push those access logs | - |
+| APIGATEWAY_CLOUDWATCH_ROLE_ARN | If API Gateway access logging is enabled (`ENABLE_ACCESS_LOGGING` is true) then this is the ARN of the role that will be used to push those access logs | - |
 | CREATE_MLSPACE_CLOUDTRAIL_TRAIL | Whether or not to create an MLSpace trail within the account | `true` |
 | NEW_USERS_SUSPENDED | Whether or not new user accounts will be created in a suspended state by default | `false` |
 | ENABLE_TRANSLATE | Whether or not translate capabilities will be deployed/enabled in MLSpace. If translate is not available in the region you are deploying to you should set this to `false` | `true` |
