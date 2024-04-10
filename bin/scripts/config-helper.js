@@ -2,11 +2,8 @@ const fs = require('fs');
 const figlet = require("figlet");
 const { prompt } = require('enquirer');
 
-
-enum ConfigType {
-    BASIC = 'basic',
-    ADVANCED = 'advanced'
-}
+const BASIC = 'basic';
+const ADVANCED = 'advanced';
 
 // Stores all user answers
 let answers = {}
@@ -23,15 +20,15 @@ async function createConfig() {
         type: "select",
         name: "configType",
         choices: [
-            { message: "Basic Config - only prompts for the properties which must be set in order to deploy MLSpace.", name: ConfigType.BASIC },
-            { message: "Advanced Config - prompts for required fields as well as optional configurations which are commonly customized.", name: ConfigType.ADVANCED },
+            { message: "Basic Config - only prompts for the properties which must be set in order to deploy MLSpace.", name: BASIC },
+            { message: "Advanced Config - prompts for required fields as well as optional configurations which are commonly customized.", name: ADVANCED },
         ],
         message: "Select a configuration type:",
     })
 
     await basicConfigPrompts();
 
-    if(configTypeResponse.configType === ConfigType.ADVANCED) {
+    if(configTypeResponse.configType === ADVANCED) {
         await advancedConfigPrompts();
     }
     

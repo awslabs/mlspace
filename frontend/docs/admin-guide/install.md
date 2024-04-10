@@ -1036,7 +1036,6 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `NOTEBOOK_PARAMETERS_FILE_NAME` |  Filename of the default notebook parameters that is generated as part of the CDK deployment  | `mlspace-website` |
 | `PERMISSIONS_BOUNDARY_POLICY_NAME` | Name of the managed policy used as a permissions boundary for dynamically created {{ $params.APPLICATION_NAME }} roles | `mlspace-project-user-permission-boundary` |
 | `KEY_MANAGER_ROLE_NAME` | Name of the IAM role with permissions to manage the KMS Key. If this property is set you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
-<<<<<<< HEAD
 | `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with MLSpace. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. |
 | `SYSTEM_TAG` | Tag which will be applied to all MLSpace resources created with the AWS account to which MLSpace is deployed | `MLSpace` |
 | `IAM_RESOURCE_PREFIX` | Value preprended to MLSpace dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
@@ -1046,17 +1045,6 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If MLSpace is being deployed into an existing VPC this should be the default security group of that VPC | - |
 | `APP_ROLE_ARN` | Arn of an existing IAM role to use for executing the MLSpace lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
 | `NOTEBOOK_ROLE_ARN` | Arn of an existing IAM role to associate with all notebooks created in MLSpace. If using dynamic roles based on  project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-=======
-| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with {{ $params.APPLICATION_NAME }}. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. |
-| `SYSTEM_TAG` | Tag which will be applied to all {{ $params.APPLICATION_NAME }} resources created with the AWS account to which {{ $params.APPLICATION_NAME }} is deployed | `MLSpace` |
-| `IAM_RESOURCE_PREFIX` | Value preprended to {{ $params.APPLICATION_NAME }} dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
-| `MANAGE_IAM_ROLES` | This setting determines whether or not {{ $params.APPLICATION_NAME }} will dynamically create unique roles per project/user combinations. | `true` |
-| `EXISTING_VPC_NAME` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`) | - |
-| `EXISTING_VPC_ID` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`) | - |
-| `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the default security group of that VPC | - |
-| `APP_ROLE_ARN` | Arn of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| `NOTEBOOK_ROLE_ARN` | Arn of an existing IAM role to associate with all notebooks created in {{ $params.APPLICATION_NAME }}. If using dynamic roles based on  project/user combinations the specific combination role will be used instaed. This value must be set to an existing role because the default CDK deployment will not create one. | - |
->>>>>>> 3d6d488f396ecffe62706a4fed858f297caa44f7
 | `S3_READER_ROLE_ARN` | Arn of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
 | `EMR_DEFAULT_ROLE_ARN` | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | `EMR_EC2_INSTANCE_ROLE_ARN` | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
