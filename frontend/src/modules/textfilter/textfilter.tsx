@@ -19,7 +19,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import Condition from '../condition';
 import { debounce } from 'lodash';
 
-export type MLTextFilterProps = TextFilterProps & {
+export type MLSTextFilterProps = TextFilterProps & {
     onKeyDown?: CancelableEventHandler<BaseKeyDetail>,
     requireEnter?: boolean,
     delay?: number
@@ -28,7 +28,7 @@ export type MLTextFilterProps = TextFilterProps & {
 const KEYCODE_ENTER = 13;
 const KEYCODE_ESC = 27;
 
-export function MLTextFilter (props: MLTextFilterProps) {
+export function MLSTextFilter (props: MLSTextFilterProps) {
     const { requireEnter = false, delay = 200, onKeyDown, onChange, onDelayedChange, filteringText } = props;
 
     const [state, setState] = React.useReducer((state, action: Partial<{dirty: boolean, filteringText: string}>) => {
@@ -62,54 +62,56 @@ export function MLTextFilter (props: MLTextFilterProps) {
 
     return (
         <Grid gridDefinition={[{colspan: 6}]}>
-            <FormField constraintText={constraintText} stretch={true}>
-                <Input
-                    type='search'
-                    value={state.filteringText}
-                    placeholder={props.filteringPlaceholder}
-                    clearAriaLabel={props.filteringClearAriaLabel}
-                    disabled={props.disabled}
-                    ariaLabel={props.filteringAriaLabel}
-                    onChange={(event) => {
-                        const isEmpty = !event.detail.value;
-                        
-                        if (requireEnter) {
-                            setState({
-                                dirty: !isEmpty,
-                                filteringText: event.detail.value
-                            });
-                        }
-                        
-                        if (!requireEnter || isEmpty) {
-                            onChange?.(new CustomEvent('change', {cancelable: false, detail: { filteringText: event.detail.value }}));
-                            debouncedOnDelayedChange?.(event);
-                        }
-                    }}
-                    onKeyDown={(event) => {
-                        if (requireEnter) {
-                            if (event.detail.keyCode === KEYCODE_ENTER && state.dirty) {
-                                onChange?.(new CustomEvent('change', {cancelable: false, detail: { filteringText: state.filteringText }}));
-                                setState({dirty: false});
-                            } else if (event.detail.keyCode === KEYCODE_ESC) {
-                                onChange?.(new CustomEvent('change', {cancelable: false, detail: { filteringText: '' }}));
-                                setState({dirty: false});
-                                event.preventDefault();
-                                event.stopPropagation();
+            <>
+                <FormField constraintText={constraintText} stretch={true}>
+                    <Input
+                        type='search'
+                        value={state.filteringText}
+                        placeholder={props.filteringPlaceholder}
+                        clearAriaLabel={props.filteringClearAriaLabel}
+                        disabled={props.disabled}
+                        ariaLabel={props.filteringAriaLabel}
+                        onChange={(event) => {
+                            const isEmpty = !event.detail.value;
+                            
+                            if (requireEnter) {
+                                setState({
+                                    dirty: !isEmpty,
+                                    filteringText: event.detail.value
+                                });
                             }
-                        }
-                        
-                        onKeyDown?.(event);
-                    }} />
-            </FormField>
-            <FormField>
-                <Condition condition={!!props.filteringText}>
-                    <TextContent>
-                        <p>
-                            { props.countText }
-                        </p>
-                    </TextContent>
-                </Condition>
-            </FormField>
+                            
+                            if (!requireEnter || isEmpty) {
+                                onChange?.(new CustomEvent('change', {cancelable: false, detail: { filteringText: event.detail.value }}));
+                                debouncedOnDelayedChange?.(event);
+                            }
+                        }}
+                        onKeyDown={(event) => {
+                            if (requireEnter) {
+                                if (event.detail.keyCode === KEYCODE_ENTER && state.dirty) {
+                                    onChange?.(new CustomEvent('change', {cancelable: false, detail: { filteringText: state.filteringText }}));
+                                    setState({dirty: false});
+                                } else if (event.detail.keyCode === KEYCODE_ESC) {
+                                    onChange?.(new CustomEvent('change', {cancelable: false, detail: { filteringText: '' }}));
+                                    setState({dirty: false});
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                }
+                            }
+                            
+                            onKeyDown?.(event);
+                        }} />
+                </FormField>
+                <FormField>
+                    <Condition condition={!!props.filteringText}>
+                        <TextContent>
+                            <p>
+                                { props.countText }
+                            </p>
+                        </TextContent>
+                    </Condition>
+                </FormField>
+            </>
         </Grid>
     );
 }

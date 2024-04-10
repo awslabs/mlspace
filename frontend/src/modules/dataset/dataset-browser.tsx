@@ -26,7 +26,7 @@ import Condition from '../condition';
 import { DatasetBrowserDisplayMode, DatasetBrowserManageMode } from './dataset-browser.types';
 import { DatasetType, IDataset } from '../../shared/model';
 import { isFulfilled } from '@reduxjs/toolkit';
-import { MLTextFilter } from '../textfilter/textfilter';
+import { MLSTextFilter } from '../textfilter/textfilter';
 import { upperFirst } from 'lodash';
 import { getMatchesCountText } from '../../shared/util/table-utils';
 import { EmptyState } from '../table';
@@ -264,7 +264,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     }>{displayMode}s</Header>}
                     empty={state.manageMode === DatasetBrowserManageMode.Create ? EmptyState('No files uploaded') : EmptyState('No Entries exist')}
                     filter={
-                        <MLTextFilter
+                        <MLSTextFilter
                             filteringText={state.filter.filteringTextDisplay}
                             requireEnter={true}
                             countText={getMatchesCountText(state.filter.filteredItems.length)}

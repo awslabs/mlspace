@@ -93,10 +93,10 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                             resource={state.resource || ''}
                             selectableItemsTypes={props.selectableItemsTypes}
                             onSelectionChange={({detail: {selectedItems}}) => {
+                                let selected: string | undefined = undefined;
+
                                 const selectedItem = selectedItems?.[0];
                                 if (selectedItem) {
-                                    let selected: string | undefined = undefined;
-
                                     switch (selectedItem?.type) {
                                         // if type is object then selected item is DatasetResourceObject
                                         case 'object':
@@ -111,8 +111,9 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                                             selected = selectedItem.location;
                                     }
 
-                                    setState({selected});
                                 }
+                                
+                                setState({selected});
                             }}
                         />
                     </Modal>

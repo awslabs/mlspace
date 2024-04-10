@@ -38,7 +38,7 @@ import {
 } from '../../entities/user/user.reducer';
 import { useAppSelector } from '../../config/store';
 import { useDispatch } from 'react-redux';
-import { MLTextFilter } from '../textfilter/textfilter';
+import { MLSTextFilter } from '../textfilter/textfilter';
 
 export default function Table ({
     tableName,
@@ -259,7 +259,7 @@ export default function Table ({
             pagination={pagination}
             filter={
                 showFilter ? (
-                    <MLTextFilter
+                    <MLSTextFilter
                         {...filterProps}
                         countText={getMatchesCountText(filteredItemsCount || 0)}
                         filteringAriaLabel={`Filter ${tableName}`}

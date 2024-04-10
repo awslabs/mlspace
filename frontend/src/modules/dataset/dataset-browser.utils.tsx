@@ -199,7 +199,7 @@ export function breadcrumbFromDataset (datasetContext?: Partial<DatasetContext>,
     if (datasetContext) {
         breadcrumbs.push({
             text: upperFirst(datasetContext.type),
-            href: JSON.stringify({ type: datasetContext.type })
+            href: JSON.stringify({ Type: datasetContext.type })
         });
 
         if (datasetContext.name) {
