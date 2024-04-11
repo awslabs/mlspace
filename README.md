@@ -23,7 +23,7 @@ In addition to the required software you will also need to have the following in
 
 There are two options for configuring MLSpace for deployment:
 
-### Option 1 - configure using the MLSpace Config Wizard
+### Option 1 (Recommended)- Configure using the MLSpace Config Wizard
 
 Configure MLSpace using Option 1 if:
 
@@ -55,7 +55,7 @@ If selecting Basic Config, the properties you will be prompted for are:
 - OIDC URL: the OIDC endpoint that will be used for MLSpace authentication
 - OIDC Client Name: the OIDC client name that should be used by MLSpace for authentication
 
-If selecting Advanced Config you will be prompted for the same properties Basic Config prompts for, as well as other optional values. Anything not specific will use the defaults in `constants.ts` and/or provisioned by MLSpace. 
+If selecting Advanced Config you will be prompted for the same properties Basic Config prompts for, as well as other optional values. Anything not specified will use the defaults in `constants.ts` and/or provisioned by MLSpace.
 
 The Advanced Config will ask:
 
@@ -83,7 +83,7 @@ If you answered yes you will be prompted for:
 - System Banner Background Color: the background color of the system banner if enabled
 - System Banner Text Color: the color of the text displayed in the system banner if enabled
 
-### Option 2 - configure by updating lib/constants.ts
+### Option 2 - Configure by updating lib/constants.ts
 
 Configure MLSpace using Option 2 if:
 
