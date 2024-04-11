@@ -99,7 +99,7 @@ export class RestApiStack extends Stack {
     public mlSpaceRestApiId: string;
     public mlSpaceRestApiRootResourceId: string;
 
-    constructor(parent: App, id: string, props: RestApiStackProperties) {
+    constructor (parent: App, id: string, props: RestApiStackProperties) {
         super(parent, id, {
             terminationProtection: false,
             ...props,
