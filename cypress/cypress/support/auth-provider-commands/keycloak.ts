@@ -1,4 +1,4 @@
-const loginToKeycloak = (baseUrl: string, username: string, password: string) => {
+const loginToKeycloak = (baseUrl: string, keyCloakUrl: string, username: string, password: string) => {
     const log = Cypress.log({
         displayName: 'Keycloak LOGIN',
         message: [`🔐 Authenticating | ${username}`],
@@ -14,7 +14,7 @@ const loginToKeycloak = (baseUrl: string, username: string, password: string) =>
         () => {
             cy.visit(baseUrl);
             cy.origin(
-                'https://ec2-52-55-68-28.compute-1.amazonaws.com/',
+                keyCloakUrl,
                 {
                     args: {
                         username,
@@ -22,7 +22,6 @@ const loginToKeycloak = (baseUrl: string, username: string, password: string) =>
                     },
                 },
                 ({ username, password }) => {
-                    // Cognito log in page has some elements of the same id but are off screen.
                     // We only want the visible elements to log in
                     cy.get('input[name="username"]:visible').type(username);
                     cy.get('input[name="password"]:visible').type(password, {
@@ -40,7 +39,7 @@ const loginToKeycloak = (baseUrl: string, username: string, password: string) =>
         {
             validate: () => {
                 cy.wrap(sessionStorage)
-                    .invoke('getItem', 'oidc.user:https://ec2-52-55-68-28.compute-1.amazonaws.com/realms/mlspace:web-client')
+                    .invoke('getItem', `oidc.user:${keyCloakUrl}realms/mlspace:web-client`)
                     .should('exist');
 
             }
@@ -53,6 +52,6 @@ const loginToKeycloak = (baseUrl: string, username: string, password: string) =>
 
 
 // right now our custom command is light. More on this later!
-Cypress.Commands.add('loginByKeycloak', (baseUrl: string, username: string, password: string) => {
-    return loginToKeycloak(baseUrl, username, password);
+Cypress.Commands.add('loginByKeycloak', (baseUrl: string, keyCloakUrl: string, username: string, password: string) => {
+    return loginToKeycloak(baseUrl, keyCloakUrl, username, password);
 });

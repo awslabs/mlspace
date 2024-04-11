@@ -33,6 +33,7 @@
         "node_modules",
         "dist",
         "backend",
-        "frontend"
+        "frontend",
+        "cypress"
     ]
 }

@@ -27,13 +27,7 @@
         "cypress:open": "cypress open",
         "cypress:run": "cypress run",
         "clean": "rm -rf build/ node_modules/",
-        "lint:fix": "eslint --fix cypress/",
-        "release": "cp -R node_modules build && cp -R cypress build && cp cypress.config.ts build && cp tsconfig.json build && cp cypress.d.ts build && cp package.json build && cp package-lock.json build"
-    },
-    "npm-pretty-much": {
-        "publishLibCommonJs": false,
-        "runRelease": "release",
-        "runTest": "never"
+        "lint:fix": "eslint --fix cypress/"
     },
     "lint-staged": {
         "**/*.{js,jsx,ts,tsx}": [

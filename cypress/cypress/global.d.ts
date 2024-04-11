@@ -1,6 +1,6 @@
 declare namespace Cypress {
     type Chainable = {
-        loginByKeycloak(baseUrl: string, username: string, password: string): Chainable<Response>;
+        loginByKeycloak(baseUrl: string, keyCloakUrl: string, username: string, password: string): Chainable<Response>;
         loginByMockIdP(baseUrl: string, username: string, password: string): Chainable<Response>;
         getAccessibilityDefects(): Chainable<Array<any>>;
         setValueCloudscapeInput(dataSelector: string, value: string): Chainable<Response>;

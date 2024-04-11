@@ -50,7 +50,6 @@ export const project = {
 export const dataset = {
     DatasetName: 'E2EDatasetTest',
     DatasetDescription: 'E2E test dataset',
-    DatasetClassification: 'UNCLASSIFIED',
     DatasetType: 'Global',
     DatasetFormat: 'text/plain',
 };

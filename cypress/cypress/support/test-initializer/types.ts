@@ -1,7 +1,7 @@
 enum AuthType {
-    Cognito = "COGNITO",
-    Idp = "IDP",
-};
+    Cognito = 'COGNITO',
+    Idp = 'IDP',
+}
 
 type ProjectProps = {
     name: string;

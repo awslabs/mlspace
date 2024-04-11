@@ -1,4 +1,4 @@
-import { login } from "../support/commands";
+import { login } from '../support/commands';
 
 describe('Project Tests', () => {
     const testProjectName = `e2eTest${(new Date()).getTime()}`;

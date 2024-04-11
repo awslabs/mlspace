@@ -37,14 +37,12 @@ describe('Batch Translate Tests', () => {
         ]
     };
 
-    /* eslint-disable spellcheck/spell-checker */
     const knownAccessibilityDefects = [
         'The aria-posinset attribute is not allowed on this element because it does not have the correct role attribute',
         'The aria-posinset attribute is not allowed on this LI because it does not have the correct role attribute',
         'The aria-posinset and aria-setsize attribute pair is not allowed on this LI because it does not have the correct role attribute',
         'The aria-setsize attribute is not allowed on this LI because it does not have the correct role attribute',
     ];
-    /* eslint-enable spellcheck/spell-checker */
 
     before(() => {
         cy.initializeTest(testProps);

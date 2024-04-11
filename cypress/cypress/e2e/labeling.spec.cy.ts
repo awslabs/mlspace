@@ -106,35 +106,35 @@ describe('GroundTruth Labeling Job Tests', () => {
                 createdAt: Date.now(),
                 lastUpdatedAt: Date.now(),
                 resourceCounts: {
-                    "batch-translate-job": {
-                        "Total": 0
+                    'batch-translate-job': {
+                        'Total': 0
                     },
-                    "cluster": {
-                        "Total": 0
+                    'cluster': {
+                        'Total': 0
                     },
-                    "endpoint": {
-                        "Total": 0
+                    'endpoint': {
+                        'Total': 0
                     },
-                    "endpoint-config": {
-                        "Total": 0
+                    'endpoint-config': {
+                        'Total': 0
                     },
-                    "hpo-job": {
-                        "Total": 0
+                    'hpo-job': {
+                        'Total': 0
                     },
-                    "labeling-job": {
-                        "Total": 0
+                    'labeling-job': {
+                        'Total': 0
                     },
-                    "model": {
-                        "Total": 0
+                    'model': {
+                        'Total': 0
                     },
-                    "notebook-instance": {
-                        "Total": 0
+                    'notebook-instance': {
+                        'Total': 0
                     },
-                    "training-job": {
-                        "Total": 0
+                    'training-job': {
+                        'Total': 0
                     },
-                    "transform-job": {
-                        "Total": 0
+                    'transform-job': {
+                        'Total': 0
                     }
                 }
             }
