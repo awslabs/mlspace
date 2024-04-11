@@ -24,7 +24,7 @@ from botocore.config import Config
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
 from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
-from ml_space_lambda.utils.dict_utils import filter_dict, map_dict_keys
+from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, map_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -253,7 +253,7 @@ def list_files(event, context):
 
     # don't allow arbitrary query string parameters added to the query_parameters dict
     allowed_query_string_parameters = ["MaxKeys", "ContinuationToken"]
-    for key in filter_dict(query_string_parameters, allowed_query_string_parameters):
+    for key in filter_dict_by_keys(query_string_parameters, allowed_query_string_parameters):
         query_parameters[key] = query_string_parameters[key]
 
     # convert MaxKeys to int if it exists
