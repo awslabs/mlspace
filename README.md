@@ -1,5 +1,7 @@
 # MLSpace
 
+[![Full Documentation](https://img.shields.io/badge/Full%20Documentation-blue?style=for-the-badge&logo=Vite&logoColor=white)](https://awslabs.github.io/mlspace/)
+
 ## Deployment Prerequisites
 
 ### Software
