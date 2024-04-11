@@ -25,10 +25,12 @@ import {
 } from 'aws-cdk-lib/aws-apigateway';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { IRole } from 'aws-cdk-lib/aws-iam';
-import { Code, Function, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Code, Function, ILayerVersion } from 'aws-cdk-lib/aws-lambda';
 import {
     ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
     DATASETS_TABLE_NAME,
+    LAMBDA_ARCHITECTURE,
+    LAMBDA_RUNTIME,
     MANAGE_IAM_ROLES,
     PROJECTS_TABLE_NAME,
     PROJECT_USERS_TABLE_NAME,
@@ -66,7 +68,8 @@ export function registerAPIEndpoint (
     const functionId = `mls-lambda-${funcDef.id || [funcDef.resource, funcDef.name].join('-')}`;
     const handler = new Function(stack, functionId, {
         functionName: functionId,
-        runtime: Runtime.PYTHON_3_11,
+        runtime: LAMBDA_RUNTIME,
+        architecture: LAMBDA_ARCHITECTURE,
         handler: `ml_space_lambda.${funcDef.resource}.lambda_functions.${funcDef.name}`,
         code: Code.fromAsset(lambdaSourcePath),
         description: funcDef.description,

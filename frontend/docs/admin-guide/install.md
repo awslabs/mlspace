@@ -1053,6 +1053,8 @@ Update the values in `lib/constants.ts` based on your specific deployment needs.
 | `CREATE_MLSPACE_CLOUDTRAIL_TRAIL` | Whether or not to create an {{ $params.APPLICATION_NAME }} trail within the account | `true` |
 | `NEW_USERS_SUSPENDED` | Whether or not new user accounts will be created in a suspended state by default | `true` |
 | `ENABLE_TRANSLATE` | Whether or not translate capabilities will be deployed/enabled in {{ $params.APPLICATION_NAME }}. If translate is not available in the region you are deploying to you should set this to `false` | `true` |
+| `LAMBDA_RUNTIME` | The lambda runtime to use for {{ $params.APPLICATION_NAME }} lambda functions and layers. This needs to be a python runtime available in the region in which {{ $params.APPLICATION_NAME }} is being deployed. | Python 3.11 |
+| `LAMBDA_ARCHITECTURE` | The architecture on which to deploy the {{ $params.APPLICATION_NAME }} lambda functions. All lambda layers will also need to be built for the selected archiecture. You can do this by ensuring you run the `cdk deploy` command from a machine with the same architecture you're targeting. | x86 |
 
 ### Production Web App
 In addition to updating the necessary parameters in the CDK constants file you will also need to create a production build of the web application. You can do this by changing to the web application directory (`MLSpace/frontend/`) and running:
