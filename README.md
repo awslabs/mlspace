@@ -1,5 +1,7 @@
 # MLSpace
 
+[![Full Documentation](https://img.shields.io/badge/Full%20Documentation-blue?style=for-the-badge&logo=Vite&logoColor=white)](https://awslabs.github.io/mlspace/)
+
 ## Deployment Prerequisites
 
 ### Software
@@ -65,6 +67,8 @@ Update the values in `lib/constants.ts` based on your specific deployment needs.
 | CREATE_MLSPACE_CLOUDTRAIL_TRAIL | Whether or not to create an MLSpace trail within the account | `true` |
 | NEW_USERS_SUSPENDED | Whether or not new user accounts will be created in a suspended state by default | `false` |
 | ENABLE_TRANSLATE | Whether or not translate capabilities will be deployed/enabled in MLSpace. If translate is not available in the region you are deploying to you should set this to `false` | `true` |
+| LAMBDA_RUNTIME | The lambda runtime to use for MLSpace lambda functions and layers. This needs to be a python runtime available in the region in which MLSpace is being deployed. | Python 3.11 |
+| LAMBDA_ARCHITECTURE | The architecture on which to deploy the MLSpace lambda functions. All lambda layers will also need to be built for the selected archiecture. You can do this by ensuring you run the `cdk deploy` command from a machine with the same architecture you're targeting. | x86 |
 
 
 ### Creating a production optimized web app build
