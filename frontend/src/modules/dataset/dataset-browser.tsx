@@ -53,7 +53,6 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
         projectName: projectName!,
         filter: {
             filteringText: '',
-            filteringTextDisplay: '',
             filteredItems: []
         },
         pagination: {
@@ -68,7 +67,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     const displayMode = displayModeForDatasetContext(state.datasetContext);
     const isCreating = state.manageMode === DatasetBrowserManageMode.Create;
 
-    // memoize notification service so it doesn't cause infinite loops for fetchDatasetResources & fetchDatasets
+    // memoize notification service so it doesn't cause infinite loops when used in react hooks for fetchDatasetResources & fetchDatasets
     const notificationService = useMemo(() => {
         return NotificationService(dispatch);
     }, [dispatch]);
@@ -80,21 +79,11 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     // if nextToken is provided we're appending to existing items
                     const items = nextToken ? [...existingItems || []] : [];
         
-                    const payload: Partial<Pick<DatasetBrowserState, 'items' | 'nextToken' | 'datasetContext' | 'filter' | 'isLoading' | 'refresh'>> = {
+                    const payload: Partial<DatasetBrowserState> = {
                         items: items.concat(response.payload.data.contents),
                         nextToken: response.payload.data.nextToken,
                         isLoading: false
                     };
-        
-                    // if the dataset context location is for a resource update the filter too
-                    const resourceStringForPath = resourceForPath(datasetContext.location);
-                    if (resourceStringForPath) {
-                        payload.filter = {
-                            filteredItems: [],
-                            filteringTextDisplay: resourceStringForPath,
-                            filteringText: resourceStringForPath
-                        };
-                    }
         
                     setState({
                         type: DatasetActionType.State,
@@ -115,7 +104,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             type: DatasetActionType.State,
             payload: {isLoading: false}
         });
-    }, [dispatch, projectName, username, notificationService, state.manageMode]);
+    }, [state.manageMode, dispatch, projectName, username, notificationService]);
 
     const fetchDatasets = useMemo(() => () => {
         dispatch(getDatasetsList(projectName)).then((response) => {
@@ -216,13 +205,12 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             type: DatasetActionType.Filter,
             payload: {
                 filteringText: state.filter.filteringText,
-                filteringTextDisplay: state.filter.filteringTextDisplay,
                 filteredItems: state.items.filter((item) => {
-                    return !!item.name?.includes(state.filter.filteringText);
+                    return !!item.name?.includes(resourceForPath(state.filter.filteringText));
                 })
             }
         });
-    }, [state.items, state.filter.filteringText, state.filter.filteringTextDisplay]);
+    }, [state.items, state.filter.filteringText]);
 
     useEffect(() => {
         onItemsChange?.(new CustomEvent('itemsChange', {detail: {items: state.items}}));
@@ -265,7 +253,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     empty={state.manageMode === DatasetBrowserManageMode.Create ? EmptyState('No files uploaded') : EmptyState('No Entries exist')}
                     filter={
                         <MLSTextFilter
-                            filteringText={state.filter.filteringTextDisplay}
+                            filteringText={state.filter.filteringText}
                             requireEnter={true}
                             countText={getMatchesCountText(state.filter.filteredItems.length)}
                             onChange={({detail: {filteringText}}) => {
@@ -278,31 +266,24 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                                             filter: {
                                                 ...state.filter,
                                                 filteringText: filteringText,
-                                                filteringTextDisplay: filteringText
                                             }
                                         }
                                     });
                                 }
 
                                 const filteringTextPrefix = prefixForPath(filteringText);
-                                const filteringTextDisplayPrefix = prefixForPath(state.filter.filteringTextDisplay);
+                                const filteringTextDisplayPrefix = prefixForPath(state.filter.filteringText);
                                 const shouldFetch = filteringTextPrefix !== filteringTextDisplayPrefix;
 
                                 if (state.datasetContext) {
-                                    const payload: Pick<DatasetBrowserState, 'isLoading' | 'filter' | 'selectedItems'> = {
+                                    const payload: Partial<DatasetBrowserState> = {
                                         isLoading: shouldFetch,
                                         selectedItems: shouldFetch ? [] : state.selectedItems,
                                         filter: {
                                             ...state.filter,
-                                            filteringTextDisplay: filteringText,
                                             filteringText
                                         }
                                     };
-
-                                    // if there is a a prefix then the actual filter text should not include the prefix
-                                    if (filteringTextPrefix) {
-                                        payload.filter.filteringText = resourceForPath(filteringText); 
-                                    }
 
                                     setState({
                                         type: DatasetActionType.State,
@@ -363,7 +344,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                             }}
                             onNextPageClick={({detail}) => {
                                 if (!detail.requestedPageAvailable && state.datasetContext) {
-                                    const filteringTextPrefix = prefixForPath(state.filter.filteringTextDisplay);
+                                    const filteringTextPrefix = prefixForPath(state.filter.filteringText);
                                     // if the filter contains a prefix append that to the Location
                                     const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
                                     fetchDatasetResources(effectiveContext, state.nextToken, state.items);

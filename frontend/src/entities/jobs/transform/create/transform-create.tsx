@@ -31,7 +31,6 @@ import {
     ContentLayout,
 } from '@cloudscape-design/components';
 import { ITransform, defaultValue } from '../../../../shared/model/transform.model';
-import { IDataset } from '../../../../shared/model/dataset.model';
 import { useAppDispatch, useAppSelector } from '../../../../config/store';
 import { setBreadcrumbs } from '../../../../shared/layout/navigation/navigation.reducer';
 import NotificationService from '../../../../shared/layout/notification/notification.service';
@@ -59,7 +58,7 @@ import {
     AttributeEditorSchema,
     EnvironmentVariables,
 } from '../../../../modules/environment-variables/environment-variables';
-import { createDatasetHandleAlreadyExists } from '../../../dataset/dataset.service';
+import { tryCreateDataset } from '../../../dataset/dataset.service';
 import DatasetResourceSelector from '../../../../modules/dataset/dataset-selector';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 
@@ -209,13 +208,10 @@ export function TransformCreate () {
                 .then((response) => {
                     if (response.status === 200) {
                         const dataset = datasetFromS3Uri(state.form.TransformInput?.DataSource?.S3DataSource?.S3Uri);
-                        const newDataset = {
-                            name: dataset?.name,
-                            description: `Dataset created as part of the Batch Transform job: ${state.form.TransformJobName}`,
-                            type: dataset?.type,
-                            scope: dataset?.scope
-                        } as IDataset;
-                        createDatasetHandleAlreadyExists(newDataset);
+                        if (dataset) {
+                            dataset.description = `Dataset created as part of the Batch Transform job: ${state.form.TransformJobName}`;
+                            tryCreateDataset(dataset);
+                        }
 
                         notificationService.generateNotification(
                             'Successfully created batch transform job.',

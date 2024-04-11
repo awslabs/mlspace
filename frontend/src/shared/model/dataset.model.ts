@@ -20,7 +20,7 @@ export enum DatasetType {
 }
 
 export type IDataset = {
-    name: string;
+    name?: string;
     scope?: string;
     type?: DatasetType;
     status?: string;
@@ -30,6 +30,6 @@ export type IDataset = {
     format?: string;
 };
 
-export const defaultDataset: Partial<IDataset> = {
-    type: DatasetType.GLOBAL
+export const defaultDataset: IDataset = {
+    scope: DatasetType.GLOBAL
 };

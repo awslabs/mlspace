@@ -22,7 +22,6 @@ import {
     PayloadAction,
 } from '@reduxjs/toolkit';
 import { IDataset } from '../../shared/model/dataset.model';
-import { IDatasetFile } from '../../shared/model/datasetfile.model';
 import axios from '../../shared/util/axios-utils';
 
 const initialState = {
@@ -33,7 +32,6 @@ const initialState = {
     dataset: {},
     loadingFileEntities: false,
     showModal: false,
-    allFiles: [] as IDatasetFile[],
     presignedUrls: [] as any[],
 };
 
@@ -95,9 +93,6 @@ export const DatasetSlice = createSlice({
         updateEntity (state, action: PayloadAction<IDataset>) {
             state.dataset = action.payload;
         },
-        updateFileList (state, action: PayloadAction<IDatasetFile[]>) {
-            state.allFiles = action.payload;
-        },
     },
     extraReducers (builder) {
         builder
@@ -158,7 +153,7 @@ export const DatasetSlice = createSlice({
 
 // Reducer
 export default DatasetSlice.reducer;
-export const { updateEntity, updateFileList } = DatasetSlice.actions;
+export const { updateEntity } = DatasetSlice.actions;
 export const loadingDatasetsList = (state: any) => state.dataset.loadingDatasetsList;
 export const loadingDataset = (state: any) => state.dataset.loadingDataset;
 export const loadingFiles = (state: any) => state.dataset.loadingFileEntities;

@@ -40,8 +40,8 @@ import { prefixedSetFields, prefixedTouchFields } from '../../../../../shared/va
 import Condition from '../../../../../modules/condition';
 import { enumToOptions } from '../../../../../shared/util/enum-utils';
 import { createInputDataConfig } from '../../../create.functions';
-import { datasetFromS3Uri } from '../../../../../shared/util/dataset-utils';
 import DatasetResourceSelector from '../../../../../modules/dataset/dataset-selector';
+import { datasetFromS3Uri } from '../../../../../shared/util/dataset-utils';
 
 export type InputDataConfigurationProps = FormProps<(InputDataConfig & DatasetExtension)[]>;
 

@@ -45,8 +45,7 @@ import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { getDate, getPaddedNumberString } from '../../../../shared/util/date-utils';
 import { ML_ALGORITHMS } from '../../algorithms';
 import { getImageName } from './training-definitions/algorithm-options';
-import { createDatasetHandleAlreadyExists } from '../../../dataset/dataset.service';
-import { IDataset } from '../../../../shared/model';
+import { tryCreateDataset } from '../../../dataset/dataset.service';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 
 export type HPOJobCreateState = {
@@ -357,14 +356,10 @@ export function HPOJobCreate () {
                 );
                 payload.HPOJobDefinition.TrainingJobDefinitions.forEach((definition) => {
                     const dataset = datasetFromS3Uri(definition.OutputDataConfig.S3OutputPath);
-                    const newDataset = {
-                        name: dataset?.name,
-                        description: `Dataset created as part of the HPO job: ${state.form.HyperParameterTuningJobName}`,
-                        type: dataset?.type,
-                        location: dataset?.location,
-                        scope: dataset?.scope
-                    } as IDataset;
-                    createDatasetHandleAlreadyExists(newDataset);
+                    if (dataset) {
+                        dataset.description = `Dataset created as part of the HPO job: ${state.form.HyperParameterTuningJobName}`;
+                        tryCreateDataset(dataset);
+                    }
                 });
                 
                 navigate(

@@ -71,8 +71,7 @@ import { AttributeEditorSchema } from '../../../../modules/environment-variables
 import { NetworkSettings } from '../../hpo/create/training-definitions/network-settings';
 import { InputDataConfiguration } from '../../hpo/create/training-definitions/input-data-configuration';
 import { OutputDataConfiguration } from '../../hpo/create/training-definitions/output-data-configuration';
-import { createDatasetHandleAlreadyExists } from '../../../dataset/dataset.service';
-import { IDataset } from '../../../../shared/model';
+import { tryCreateDataset } from '../../../dataset/dataset.service';
 import { generateNameConstraintText } from '../../../../shared/util/form-utils';
 import { useUsername } from '../../../../shared/util/auth-utils';
 import '../../../../shared/validation/helpers/uri';
@@ -362,14 +361,8 @@ export default function TrainingJobCreate () {
 
                         const dataset = datasetFromS3Uri(state.form.OutputDataConfig.S3OutputPath);
                         if (dataset) {
-                            const newDataset = {
-                                name: dataset.name,
-                                description: `Dataset created as part of the Training job: ${state.form.TrainingJobName}`,
-                                type: dataset.type,
-                                location: dataset?.location,
-                                scope: dataset?.scope
-                            } as IDataset;
-                            createDatasetHandleAlreadyExists(newDataset);
+                            dataset.description = `Dataset created as part of the Training job: ${state.form.TrainingJobName}`;
+                            tryCreateDataset(dataset);
                         }
                         
                         navigate(

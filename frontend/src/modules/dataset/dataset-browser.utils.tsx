@@ -109,7 +109,7 @@ function tablePropertiesForDatasetResources (state: DatasetBrowserState, setStat
                 switch (item.type) {
                     case 'prefix':                       
                         return (
-                            <Link onFollow={() => {
+                            <Link data-cy={item.name} onFollow={() => {
                                 setState({
                                     type: DatasetActionType.DatasetContext,
                                     payload: { ...state.datasetContext!, location: stripDatasetPrefix(item.prefix) }
@@ -117,7 +117,9 @@ function tablePropertiesForDatasetResources (state: DatasetBrowserState, setStat
                             } }>{item.name}</Link>
                         );
                     case 'object':
-                        return item.name;
+                        return (
+                            <div data-cy={item.name}>{item.name}</div>
+                        );
                 }
             },
         }, {
@@ -142,7 +144,7 @@ function tablePropertiesForDatasets (state: DatasetBrowserState, setState: Dispa
             header: 'Dataset Name',
             cell (item) {
                 return (
-                    <Link onFollow={() => {
+                    <Link data-cy={item.name} onFollow={() => {
                         setState({
                             type: DatasetActionType.DatasetContext,
                             payload: { ...state.datasetContext!, name: item.name }
@@ -165,7 +167,7 @@ function tablePropertiesForScopes (state: DatasetBrowserState, setState: Dispatc
             header: 'Name',
             cell (item) {
                 return (
-                    <Link onFollow={() => {
+                    <Link data-cy={item.name} onFollow={() => {
                         setState({
                             type: DatasetActionType.State,
                             payload: {
@@ -173,7 +175,6 @@ function tablePropertiesForScopes (state: DatasetBrowserState, setState: Dispatc
                                 filter: {
                                     filteredItems: [],
                                     filteringText: '',
-                                    filteringTextDisplay: ''
                                 }
                             }
                         });

@@ -45,14 +45,13 @@ import {
     defaultEncryptionKey,
 } from '../../../shared/model/translate.model';
 import { enumToOptions } from '../../../shared/util/enum-utils';
-import { IDataset } from '../../../shared/model/dataset.model';
 import { useAuth } from 'react-oidc-context';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import {
     getCustomTerminologyList,
     getTranslateLanguagesList,
 } from '../../../shared/util/translate-utils';
-import { createDatasetHandleAlreadyExists } from '../../dataset/dataset.service';
+import { tryCreateDataset } from '../../dataset/dataset.service';
 import DatasetResourceSelector from '../../../modules/dataset/dataset-selector';
 import '../../../shared/validation/helpers/uri';
 import { datasetFromS3Uri } from '../../../shared/util/dataset-utils';
@@ -201,14 +200,8 @@ export function BatchTranslateCreate () {
                 
                 const dataset = datasetFromS3Uri(state.form.OutputDataConfig.S3Uri);
                 if (dataset) {
-                    const newDataset = {
-                        name: dataset.name,
-                        description: `Dataset created as part of the Batch Translate job: ${state.form.JobName}`,
-                        type: dataset.type,
-                        scope: dataset.scope
-                    } as IDataset;
-    
-                    createDatasetHandleAlreadyExists(newDataset);
+                    dataset.description = `Dataset created as part of the Batch Translate job: ${state.form.JobName}`;    
+                    tryCreateDataset(dataset);
                 }
 
                 navigate(`/project/${projectName}/batch-translate/${response.payload.JobId}`);
@@ -342,6 +335,7 @@ export function BatchTranslateCreate () {
                                 touchFields(['InputDataConfig.S3Uri']);
                             }}
                             inputInvalid={!!formErrors?.InputDataConfig?.S3Uri}
+                            inputData-cy='s3-output-location-input'
                             fieldErrorText={formErrors?.InputDataConfig?.S3Uri}
                             resource={state.form?.InputDataConfig?.S3Uri || ''}
                         />

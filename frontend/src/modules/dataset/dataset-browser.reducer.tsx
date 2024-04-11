@@ -150,7 +150,6 @@ export type DatasetBrowserState = {
     projectName: string;
     filter: {
         filteringText: string;
-        filteringTextDisplay: string;
         filteredItems: (DatasetResource | IDataset)[];
     },
     pagination: Pick<PaginationProps, 'currentPageIndex' | 'disabled' | 'openEnd' | 'pagesCount'>,
@@ -231,7 +230,6 @@ export const datasetBrowserReducer: Reducer<DatasetBrowserState, DatasetBrowserA
                 nextToken: undefined,
                 filter: {
                     filteringText: '',
-                    filteringTextDisplay: '',
                     filteredItems: []
                 }
             };

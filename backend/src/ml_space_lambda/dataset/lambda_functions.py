@@ -241,6 +241,8 @@ def list_files(event, context):
     )
 
     dataset_prefix = get_dataset_prefix(event["pathParameters"]["scope"], event["pathParameters"]["datasetName"])
+    # this joins dataset path with the user supplied prefix
+    # example: "private/aUsername/datasets/aDatasetName/" + "path/to/files/"
     computed_prefix = "".join([dataset_prefix, query_string_parameters.get("Prefix", "")])
 
     query_parameters = {
@@ -249,14 +251,16 @@ def list_files(event, context):
         "Delimiter": "/",
     }
 
-    # constrain which query parameters can be supplied
+    # don't allow arbitrary query string parameters added to the query_parameters dict
     allowed_query_string_parameters = ["MaxKeys", "ContinuationToken"]
     for key in filter_dict(query_string_parameters, allowed_query_string_parameters):
         query_parameters[key] = query_string_parameters[key]
 
+    # convert MaxKeys to int if it exists
     if "MaxKeys" in query_parameters:
         # make sure MaxKeys is an int
         query_parameters["MaxKeys"] = int(query_parameters["MaxKeys"])
+
     s3_response = s3.list_objects_v2(**query_parameters)
     response = {}
 
@@ -270,14 +274,16 @@ def list_files(event, context):
 
     response["contents"] = []
 
-    # drop unwated fields from contents
+    # add s3_resource["Contents"] to the response
     if "Contents" in s3_response:
-        for content in s3_response["Contents"]:
-            response["contents"].append({"key": content["Key"], "size": content["Size"], "type": "object"})
+        response["contents"].append(
+            map(lambda content: {"key": content["Key"], "size": content["Size"], "type": "object"}, s3_resource["Contents"])
+        )
 
-    # merge common prefixes with contents
+    # add s3_resource["CommonPrefixes"] to the response
     if "CommonPrefixes" in s3_response:
-        for common_prefix in s3_response["CommonPrefixes"]:
-            response["contents"].append({"prefix": common_prefix["Prefix"], "type": "prefix"})
+        response["contents"].append(
+            map(lambda common_prefix: {"prefix": common_prefix["Prefix"], "type": "prefix"}, s3_response["CommonPrefixes"])
+        )
 
     return response

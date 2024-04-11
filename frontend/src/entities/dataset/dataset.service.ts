@@ -88,15 +88,13 @@ export const uploadToS3 = async (presignedUrl: any, file: any) => {
 export const buildS3KeysForResourceObjects = (
     resourceObjects: DatasetResourceObject[],
     datasetContext: DatasetContext,
-    projectName: string,
-    username: string
 ): [string, DatasetResourceObject][] => {
     return resourceObjects.map((resourceObject) => {
-        switch (datasetContext.type) {
+        switch (datasetContext.type!) {
             case DatasetType.PROJECT:
-                return [`project/${projectName}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
+                return [`project/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
             case DatasetType.PRIVATE:
-                return [`private/${username}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
+                return [`private/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
             case DatasetType.GLOBAL:
                 return [`global/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
         }
@@ -134,11 +132,11 @@ export const determineScope = (
     }
 };
 
-export async function uploadResources (datasetContext: DatasetContext, resourceObjects: DatasetResourceObject[], projectName: string, username: string, notificationService: any) {
+export async function uploadResources (datasetContext: DatasetContext, resourceObjects: DatasetResourceObject[], notificationService: any) {
     let successCount = 0;
     const failedUploads: string[] = [];
 
-    for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext, projectName, username)) {
+    for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
         const presignedUrl = await fetchPresignedURL(s3Uri);
 
         if (presignedUrl?.data) {
@@ -190,7 +188,7 @@ export async function createDataset (dataset: IDataset) {
     }
 }
 
-export const createDatasetHandleAlreadyExists = (dataset: IDataset) => {
+export const tryCreateDataset = (dataset: IDataset) => {
     createDataset(dataset).catch((error) => {
         const expectedError = `Bad Request: Dataset ${dataset.name} already exists.`;
         // Any error that the dataset already existing is unexpected

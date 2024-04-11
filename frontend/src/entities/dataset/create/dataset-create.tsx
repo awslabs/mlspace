@@ -123,7 +123,7 @@ export function DatasetCreate () {
 
             if (response?.status === 200) {
                 const resourceObjects = datasetFileList.filter((item): item is DatasetResourceObject => item.type === 'object');
-                await uploadResources(newDataset, resourceObjects, projectName!, username, notificationService);
+                await uploadResources(newDataset, resourceObjects, notificationService);
 
                 // Need to clear state/reset the form
                 navigate(`${basePath}/dataset/${newDataset.scope}/${newDataset.name}`);

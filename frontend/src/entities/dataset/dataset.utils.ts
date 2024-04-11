@@ -14,22 +14,12 @@
   limitations under the License.
 */
 
-import { IDatasetFile } from '../../shared/model/datasetfile.model';
 import { IDataset } from '../../shared/model/dataset.model';
-import { convertBytesToHumanReadable } from './create/dataset-upload.utils';
 
 export const validateName = function (datasetName: string) {
     // Validate that the instance name follows the naming guidelines
     const valid = /^[A-Za-z0-9][a-zA-Z0-9-]*/;
     return valid.test(datasetName);
-};
-
-export const mapFilesToDatasetFiles = (file: File) => {
-    return {
-        key: file.name,
-        size: convertBytesToHumanReadable(file.size),
-        file: file,
-    } as IDatasetFile;
 };
 
 export const showAccessLevel = (dataset: IDataset) => {

@@ -14,14 +14,9 @@
   limitations under the License.
 */
 
-import { DatasetType } from '../model';
+import { DatasetType, IDataset } from '../model';
 
-export type DatasetContext = {
-    location?: string
-    name: string,
-    type: DatasetType,
-    scope?: string
-};
+export type DatasetContext = IDataset & Required<Pick<IDataset, 'name' | 'type'>>;
 
 export const datasetFromS3Uri = (s3Uri: string): DatasetContext | undefined => {
     // Example: s3://mlspace-data-<acc-id>/<type(/subtype - optional)>/datasets/<ds-name>/train/
@@ -50,5 +45,5 @@ export type DatasetComponentsMatch = {
 };
 
 export const datasetComponents = (path?: string): DatasetComponentsMatch => {
-    return path?.match(/^s3:\/\/(?<bucket>[a-z0-9][a-z0-9.-]{1,61}[a-z0-9])\/(?<type>global|(private|project))(\/(?<scope>[^/]+))?\/datasets\/(?<name>[^/]+)\/(?<location>(?<prefix>([^/]+\/)+)?(?<object>[^/]+)?)$/)?.groups || {};
+    return path?.match(/^s3:\/\/(?<bucket>.+?)\/(?<type>global|private|project)(\/(?<scope>.+))?\/datasets\/(?<name>.+?)\/(?<location>(?<prefix>(.+?\/)+)?(?<object>.+)?)$/)?.groups || {};
 };

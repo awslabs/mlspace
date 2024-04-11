@@ -229,7 +229,7 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                     setDisableUpload(true);
                                     // ensure cast to DatasetContext is valid
                                     if (state.datasetContext.name && state.datasetContext.type) {
-                                        await uploadResources(state.datasetContext as DatasetContext, filesToUpload, projectName!, username, notificationService);
+                                        await uploadResources(state.datasetContext as DatasetContext, filesToUpload, notificationService);
                                     }
                                     setDisableUpload(false);
 
