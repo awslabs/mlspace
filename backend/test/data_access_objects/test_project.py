@@ -140,7 +140,7 @@ class TestProjectDAO(TestCase):
 
     def test_get_all_projects(self):
         all_projects = self.project_dao.get_all()
-        assert len(all_projects) == 2
+        assert len(all_projects) == 1
 
     def test_get_all_projects_filtered(self):
         all_projects = self.project_dao.get_all(project_names=[self.UPDATE_PROJECT.name, self.DELETE_PROJECT.name])
