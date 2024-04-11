@@ -89,6 +89,7 @@ Configure MLSpace using Option 2 if:
 
 - the MLSpace Config Wizard doesn't configure all of the settings you need to customize
 - you wish to have your configuration changes in a file that's committed to git
+- will have to resolve conflicts when upgrading MLSpace
 
 If you are pre-creating roles you will need to ensure that the required role arns (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
 
