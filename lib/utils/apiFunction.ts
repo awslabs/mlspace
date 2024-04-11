@@ -57,7 +57,8 @@ export function registerAPIEndpoint (
     const functionId = `mls-lambda-${funcDef.id || [funcDef.resource, funcDef.name].join('-')}`;
     const handler = new Function(stack, functionId, {
         functionName: functionId,
-        runtime: Runtime.PYTHON_3_11,
+        runtime: mlspaceConfig.LAMBDA_RUNTIME,
+        architecture: mlspaceConfig.LAMBDA_ARCHITECTURE,
         handler: `ml_space_lambda.${funcDef.resource}.lambda_functions.${funcDef.name}`,
         code: Code.fromAsset(lambdaSourcePath),
         description: funcDef.description,

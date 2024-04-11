@@ -1,3 +1,18 @@
+/**
+  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License").
+  You may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 import _ = require('lodash');
 import {
     ACCESS_LOGS_BUCKET_NAME,
@@ -27,6 +42,8 @@ import {
     IDP_ENDPOINT_SSM_PARAM,
     INTERNAL_OIDC_URL,
     KEY_MANAGER_ROLE_NAME,
+    LAMBDA_ARCHITECTURE,
+    LAMBDA_RUNTIME,
     LOGS_BUCKET_NAME,
     MANAGE_IAM_ROLES,
     MLSPACE_LIFECYCLE_CONFIG_NAME,
@@ -54,6 +71,7 @@ import {
     WEBSITE_BUCKET_NAME
 } from '../constants';
 import * as fs from "fs";
+import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 
 export interface MLSpaceConfig {
     //Table names
@@ -98,6 +116,8 @@ export interface MLSpaceConfig {
     ENABLE_GROUNDTRUTH: boolean,
     RESOURCE_TERMINATION_INTERVAL: number,
     NEW_USERS_SUSPENDED: boolean,
+    LAMBDA_ARCHITECTURE: Architecture,
+    LAMBDA_RUNTIME: Runtime,
     //Properties that can optionally be set in config.json
     AWS_ACCOUNT: string,
     AWS_REGION: string,
@@ -171,6 +191,8 @@ export function generateConfig () {
         ENABLE_TRANSLATE: ENABLE_TRANSLATE,
         ENABLE_GROUNDTRUTH: ENABLE_GROUNDTRUTH,
         RESOURCE_TERMINATION_INTERVAL: RESOURCE_TERMINATION_INTERVAL,
+        LAMBDA_ARCHITECTURE: LAMBDA_ARCHITECTURE,
+        LAMBDA_RUNTIME: LAMBDA_RUNTIME,
         //Properties that are prompted for in the config-helper wizard
         AWS_ACCOUNT: AWS_ACCOUNT,
         AWS_REGION: AWS_REGION,

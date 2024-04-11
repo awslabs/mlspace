@@ -7,7 +7,9 @@ outline: deep
 ## Deployment Prerequisites
 
 ### Software
+
 In order to build and deploy {{ $params.APPLICATION_NAME }} to your AWS account you will need the following software installed on your machine:
+
 - [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [awscli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [nodejs](https://nodejs.org/en/download/)
@@ -15,7 +17,9 @@ In order to build and deploy {{ $params.APPLICATION_NAME }} to your AWS account 
 
 
 ### Information
+
 In addition to the required software you will also need to have the following information:
+
 - AWS account Id and region you'll be deploying {{ $params.APPLICATION_NAME }} into (you'll need admin credentials or similar)
 - IdP information including the OIDC endpoint and client name
 
@@ -33,6 +37,7 @@ exisiting roles. If you need to create these roles outside of the CDK deployment
 be configured as follows:
 
 #### Service Role
+
 1. Login to your AWS account and go to the Roles section of the IAM Service in the AWS Console.
 2. Click the "Create role" button and then click the "AWS service" card under "Trusted entity type".
 3. Select the "EMR" service from the dropdown and select the radio button for "EMR" under use case.
@@ -41,6 +46,7 @@ be configured as follows:
 6. Once the role has been created record the role ARN as we'll need to use it later.
 
 #### Instance Role
+
 1. Login to your AWS account and go to the Roles section of the IAM Service in the AWS Console.
 2. Click the "Create role" button and then click the "AWS service" card under "Trusted entity type".
 3. Select the "EMR" service from the dropdown and select the radio button for "EMR Role for EC2" under use case.
@@ -49,7 +55,9 @@ be configured as follows:
 6. Once the role has been created record the role ARN as we'll need to use it later.
 
 #### Cleanup Role
+
 _The cleanup role needs to exist but we do not need the ARN_
+
 1. Login to your AWS account and go to the Roles section of the IAM Service in the AWS Console.
 2. Click the "Create role" button and then click the "AWS service" card under "Trusted entity type".
 3. Select the "EMR" service from the dropdown and select the radio button for "EMR - Cleanup" under use case.
@@ -57,6 +65,7 @@ _The cleanup role needs to exist but we do not need the ARN_
 5. The role has a default name that you cannot change, you can update the description if you want and then click "Create role"
 
 ### Application Roles
+
 We generally expect customers to use their own roles for the {{ $params.APPLICATION_NAME }} APIGW and lambda execution role as well as for the default notebook role.
 While customers may scope these roles down based on the guidelines of their own organization, the following can be used to quickly stand up
 an instance of {{ $params.APPLICATION_NAME }} for demo purposes only. As written these roles and policies should not be used for production usecases.
@@ -80,10 +89,13 @@ or make any additional changes required for your environment.
 | `{MLSPACE_APP_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} application role | `mlspace-app-role` |
 
 #### Notebook Role
+
 In order to create the default {{ $params.APPLICATION_NAME }} notebook policy and role do the following:
+
 1. Login to your AWS account and go to the Policies section of the IAM Service in the AWS Console
 2. Create a new policy with using the JSON editor and paste the following in the text area (after replacing the placeholder variables):
-```
+
+```JSON
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -321,12 +333,14 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
     ]
 }
 ```
+
 3. Click next and optionally add tags to this policy
 4. Click next again and enter a name for this policy. You can name the policy whatever you'd like but ensure you remember it as you'll need it when creating the role.
 5. After the policy has been created you are now ready to create the role. From the IAM Service page click "Roles" on the left hand side.
 6. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 7. Copy and paste the following content into the "Custom trust policy" text area:
-```
+
+```JSON
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -340,19 +354,23 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
     ]
 }
 ```
+
 8. Click the next button and then select the checkbox next to the name of the policy you created in step 4 above.
 9. After selecting the checkbox for the policy click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
 10. Once the role has been created record the role ARN as we'll need to use it later.
 
 #### App Role
+
 In order to create the default {{ $params.APPLICATION_NAME }} Application policy and role do the following:
+
 1. Login to your AWS account and go to the Policies section of the IAM Service in the AWS Console
 2. Create a new managed policy which will be used as a permissions boundary for dynamically created
 project users roles. This policy assumes you're using the default value for the S3 data and config
 bucket names (`mlspace-data-{AWS_ACCOUNT}` and `mlspace-config-{AWS_ACCOUNT}`).
 If you're using a custom data bucket name you'll need to update the resource values within the policy.
 Using the JSON editor paste the following in the text area (after replacing the placeholder variables):
-```
+
+```JSON
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -642,6 +660,7 @@ Using the JSON editor paste the following in the text area (after replacing the 
     ]
 }
 ```
+
 3. Click next and optionally add tags to this policy.
 4. Click next again and enter a name for this policy. You can name the policy whatever you'd like
 but ensure you remember it as you'll need it when creating the role. The example below assumes you've
@@ -650,7 +669,8 @@ you'll need to update the `"iam:PermissionsBoundary` condition in the `iam:Creat
 5. After the permission boundary policy has been created you are now ready to create the application
 policy. From the IAM Service page click "Policies" on the left hand side.
 6. Create a new policy with using the JSON editor and paste the following in the text area (after replacing the placeholder variables):
-```
+
+```JSON
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -922,12 +942,14 @@ policy. From the IAM Service page click "Policies" on the left hand side.
     ]
 }
 ```
+
 7. Click next and optionally add tags to this policy
 8. Click next again and enter a name for this policy. You can name the policy whatever you'd like but ensure you remember it as you'll need it when creating the role.
 9. After the policy has been created you are now ready to create the role. From the IAM Service page click "Roles" on the left hand side.
 10. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 11. Copy and paste the following content into the "Custom trust policy" text area:
-```
+
+```JSON
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -941,15 +963,19 @@ policy. From the IAM Service page click "Policies" on the left hand side.
     ]
 }
 ```
+
 12. Click the next button and then select the checkbox next to the name of the policy you created in step 8 above. You will also need to attach the default notebook policy you previously created as well as the AWS managed policy `AWSLambdaVPCAccessExecutionRole`. In total you should have 3 policies attached to the role.
 13. After selecting the 3 policies click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
 14. Once the role has been created record the role ARN as we'll need to use it later.
 
 #### S3 Reader Role
+
 The {{ $params.APPLICATION_NAME }} react app is hosted statically in S3 and accessed via an API Gateway S3 proxy integration. This proxy resource will use the role associated with the `S3_READER_ROLE_ARN` in `constants.ts` if specified. If you do not specify an ARN {{ $params.APPLICATION_NAME }} will attempt to create a new role.  You can manually create the necessary policy and role using the following steps:
+
 1. Login to your AWS account and go to the Policies section of the IAM Service in the AWS Console
 2. Create a new policy using the JSON editor and paste the following in the text area (after replacing the placeholder variables):
-```
+
+```JSON
 {
     "Version": "2012-10-17",
     "Statement": [{
@@ -959,12 +985,14 @@ The {{ $params.APPLICATION_NAME }} react app is hosted statically in S3 and acce
     }]
 }
 ```
+
 3. Click next and optionally add tags to this policy.
 4. Click next again and enter a name for this policy. You can name the policy whatever you'd like but ensure you remember it as you'll need it when creating the role.
 5. After the policy has been created you are now ready to create the role. From the IAM Service page click "Roles" on the left hand side.
 6. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 7. Copy and paste the following content into the "Custom trust policy" text area:
-```
+
+```JSON
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -978,16 +1006,20 @@ The {{ $params.APPLICATION_NAME }} react app is hosted statically in S3 and acce
     ]
 }
 ```
+
 8. Click the next button and then select the checkbox next to the name of the policy you created in step 4 above.
 9. After selecting the policy click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
 10. Once the role has been created record the role ARN as you'll need to update `constants.ts` to use it.
 
 #### API Gateway CloudWatch Role
+
 When `ENABLE_ACCESS_LOGGING` is set to `true` [API Gateway uses a single role account-wide](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-permissions) for interacting with CloudWatch. If you would like to provide that role to {{ $params.APPLICATION_NAME }} you can set the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` otherwise the role will be automatically created during deployment. In order to create the API Gateway CloudWatch role manually you can take the following steps:
+
 1. Login to your AWS account and go to the Roles section of the IAM Service in the AWS Console.
 2. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 3. Copy and paste the following content into the "Custom trust policy" text area:
-```
+
+```JSON
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -1001,11 +1033,13 @@ When `ENABLE_ACCESS_LOGGING` is set to `true` [API Gateway uses a single role ac
     ]
 }
 ```
+
 4. Click the next button and then select the checkbox next to the AWS managed policy `AmazonAPIGatewayPushToCloudWatchLogs`.
 5. After selecting the managed policy click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
 6. Once the role has been created record the role ARN and update the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` to use the ARN of the newly created role.
 
 ### Deployment Parameters
+
 Use the MLSpace Config Wizard by running `npm run config` and select "Advanced Configuration" for an interactive prompt which will set configuration values on your behalf in a generated `/lib/config.json` file. Alternatively, update the values in `/lib/constants.ts` based on your specific deployment needs. Some of these will directly impact whether new resources are created within your account or whether existing resources (VPC, KMS, Roles, etc) will be leveraged.
 
 | Variable   |      Description      |  Default |
@@ -1053,24 +1087,33 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `CREATE_MLSPACE_CLOUDTRAIL_TRAIL` | Whether or not to create an {{ $params.APPLICATION_NAME }} trail within the account | `true` |
 | `NEW_USERS_SUSPENDED` | Whether or not new user accounts will be created in a suspended state by default | `true` |
 | `ENABLE_TRANSLATE` | Whether or not translate capabilities will be deployed/enabled in {{ $params.APPLICATION_NAME }}. If translate is not available in the region you are deploying to you should set this to `false` | `true` |
+| `LAMBDA_RUNTIME` | The lambda runtime to use for {{ $params.APPLICATION_NAME }} lambda functions and layers. This needs to be a python runtime available in the region in which {{ $params.APPLICATION_NAME }} is being deployed. | Python 3.11 |
+| `LAMBDA_ARCHITECTURE` | The architecture on which to deploy the {{ $params.APPLICATION_NAME }} lambda functions. All lambda layers will also need to be built for the selected archiecture. You can do this by ensuring you run the `cdk deploy` command from a machine with the same architecture you're targeting. | x86 |
 
 ### Production Web App
+
 In addition to updating the necessary parameters in the CDK constants file you will also need to create a production build of the web application. You can do this by changing to the web application directory (`MLSpace/frontend/`) and running:
-```
+
+```Bash
 npm run clean && npm install
 ```
+
 This will generate a production optimized build of the web application and place the required artifacts in the `build/` directory.
 
 There are no web application specific configuration parameters that need to be set as the configuration will be dynamically generated as part of the CDK deployment based on the variables set there.
 
 ## Deploying the CDK application
+
 Enusre that the required role arns (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
 
 The {{ $params.APPLICATION_NAME }} application is a standard CDK application and can be deployed just as any CDK application is deployed. From the `MLSpace/deployment/` directory you can run the following:
-```
+
+```Bash
 npm install && cdk bootstrap <REPLACE WITH YOUR ACCOUNT NUMBER>/<REPLACE WITH TARGET REGION>
 ```
+
 Once the account has been bootstrap you can deploy the application. (Optionally include `--require-approval never` in the below command if you don't want to confirm changes):
-```
+
+```Bash
 cdk deploy --all
 ```

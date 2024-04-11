@@ -23,7 +23,7 @@ import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
 import { Effect, IRole, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { IKey } from 'aws-cdk-lib/aws-kms';
-import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Code, Function } from 'aws-cdk-lib/aws-lambda';
 import {
     Bucket,
     BucketAccessControl,
@@ -220,7 +220,8 @@ export class CoreStack extends Stack {
             functionName: 'mls-lambda-s3-notifier',
             description:
                 'S3 event notification function to handle ddb actions in response to dataset file actions',
-            runtime: Runtime.PYTHON_3_11,
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
             handler: 'ml_space_lambda.s3_event_put_notification.lambda_function.lambda_handler',
             code: Code.fromAsset(props.lambdaSourcePath),
             timeout: Duration.seconds(5),
@@ -262,7 +263,8 @@ export class CoreStack extends Stack {
             functionName: 'mls-lambda-resource-terminator',
             description:
                 'Sweeper function that stops/terminates resources based on scheduled configuration',
-            runtime: Runtime.PYTHON_3_11,
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
             handler: 'ml_space_lambda.resource_scheduler.lambda_functions.terminate_resources',
             code: Code.fromAsset(props.lambdaSourcePath),
             timeout: Duration.minutes(15),
@@ -423,7 +425,8 @@ export class CoreStack extends Stack {
             functionName: 'mls-lambda-resource-metadata',
             description:
                 'Lambda to process event bridge notifications and update corresponding entries in the mlspace resource metadata ddb table.',
-            runtime: Runtime.PYTHON_3_11,
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
             handler: 'ml_space_lambda.resource_metadata.lambda_functions.process_event',
             code: Code.fromAsset(props.lambdaSourcePath),
             timeout: Duration.seconds(90),

@@ -30,7 +30,7 @@ import {
 } from 'aws-cdk-lib/aws-apigateway';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { IRole, Role } from 'aws-cdk-lib/aws-iam';
-import { Code, Function, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Code, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { LogGroup } from 'aws-cdk-lib/aws-logs';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
@@ -87,7 +87,7 @@ export class RestApiStack extends Stack {
     public mlSpaceRestApiId: string;
     public mlSpaceRestApiRootResourceId: string;
 
-    constructor(parent: App, id: string, props: RestApiStackProperties) {
+    constructor (parent: App, id: string, props: RestApiStackProperties) {
         super(parent, id, {
             terminationProtection: false,
             ...props,
@@ -255,7 +255,8 @@ export class RestApiStack extends Stack {
         }
 
         const authorizerLambda = new Function(this, 'MLSpaceAuthorizerLambda', {
-            runtime: Runtime.PYTHON_3_11,
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
             handler: 'ml_space_lambda.authorizer.lambda_function.lambda_handler',
             functionName: 'mls-lambda-authorizer',
             code: Code.fromAsset(props.lambdaSourcePath),
