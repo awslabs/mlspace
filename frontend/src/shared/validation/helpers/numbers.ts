@@ -28,7 +28,7 @@ type rangeValidatorProps = {
 
 /**
  * Creates a validator for ensuring a number meets the required conditions
- * 
+ *
  * @param fieldName Name of the field being validated
  * @param inputProps Properties that ensure the validity of the field
  * @returns A validator for the field that ensures the desired requirements
@@ -87,7 +87,10 @@ export const numberValidator = (
     }
 
     if (!props.required) {
-        wrapperContext = wrapperContext.optional();
+        // Marking as optional alone isn't sufficient if the number context includes a
+        // minimum or maximum property which is always the case here. Adding the literal
+        // allows for a truly optional value when parsing
+        wrapperContext = wrapperContext.optional().or(z.literal(''));
     }
 
     return wrapperContext;
@@ -103,7 +106,7 @@ export const floatValidator = (fieldName: string, required = false, positive = f
 };
 
 export const positiveIntValidator = (fieldName: string, inputProps : rangeValidatorProps = { }) => {
-    return numberValidator(fieldName, 
+    return numberValidator(fieldName,
         {
             min: 1,
             ...inputProps
