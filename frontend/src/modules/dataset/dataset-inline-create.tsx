@@ -75,7 +75,7 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
     
     return (
         <SpaceBetween size='m' direction='vertical'>
-            <FormField label='Dataset name' description='Maximum of 255 characters. Must be unique to the type that you choose. The dataset name must be unique to the scope (Global/Private/Project).'>
+            <FormField label='Dataset type' description='Project datasets are accessible only to the project they were created in and private datasets are accessible to the user that created them.'>
                 <Select
                     selectedOption={createOptions.find((o) => o.value === state.form.type)!}
                     options={createOptions}
@@ -86,7 +86,7 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
                     }}  />
             </FormField>
 
-            <FormField label='Dataset type' description='Global datasets are accessible from any project, project datasets are accessible only to the project they were created in, and private datasets are accessible to the user that created them.'
+            <FormField label='Dataset name' description='Maximum of 255 characters. Must be unique to the type that you choose. The dataset name must be unique to the scope (Private/Project).'
                 errorText={errors?.name}>
                 <Input value={state.form?.name || ''} type='text' onChange={({detail}) => {
                     setFields({

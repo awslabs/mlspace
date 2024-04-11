@@ -93,7 +93,7 @@ export function MLSTextFilter (props: MLSTextFilterProps) {
                                     setState({dirty: false});
                                 } else if (event.detail.keyCode === KEYCODE_ESC) {
                                     onChange?.(new CustomEvent('change', {cancelable: false, detail: { filteringText: '' }}));
-                                    setState({dirty: false});
+                                    setState({dirty: false, filteringText: ''});
                                     event.preventDefault();
                                     event.stopPropagation();
                                 }
