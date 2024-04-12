@@ -58,6 +58,7 @@ import {
 } from '../../../shared/util/translate-utils';
 import { determineScope, createDatasetHandleAlreadyExists } from '../../dataset/dataset.service';
 import Condition from '../../../modules/condition';
+import { AUTO_SOURCE_LANGUAGE_UNSUPPORTED } from '..';
 
 export function BatchTranslateCreate () {
     const [errorText] = useState('');
@@ -77,8 +78,7 @@ export function BatchTranslateCreate () {
     scrollToPageHeader();
     DocTitle('Create translation job');
 
-    // the dependencies needed for language detection aren't available in us-iso-east-1
-    const supportsAutoLanguageDetection = window.env.AWS_REGION !== 'us-iso-east-1';
+    const supportsAutoLanguageDetection = !AUTO_SOURCE_LANGUAGE_UNSUPPORTED.includes(window.env.AWS_REGION);
     if (supportsAutoLanguageDetection) {
         sourceLanguages.push(autoOption);
     }
