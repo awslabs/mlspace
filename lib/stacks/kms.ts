@@ -23,10 +23,11 @@ import {
     Role,
 } from 'aws-cdk-lib/aws-iam';
 import { IKey, Key } from 'aws-cdk-lib/aws-kms';
-import { EXISTING_KMS_MASTER_KEY_ARN } from '../constants';
+import { MLSpaceConfig } from '../utils/configTypes';
 
 export type KMSStackProp = {
     readonly keyManagerRoleName: string;
+    readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
 
 export class KMSStack extends Stack {
@@ -38,8 +39,8 @@ export class KMSStack extends Stack {
             ...props,
         });
 
-        if (EXISTING_KMS_MASTER_KEY_ARN) {
-            this.masterKey = Key.fromKeyArn(this, 'imported-kms-key', EXISTING_KMS_MASTER_KEY_ARN);
+        if (props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN) {
+            this.masterKey = Key.fromKeyArn(this, 'imported-kms-key', props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN);
         } else {
             this.masterKey = new Key(this, 'mlspace-kms-key', {
                 policy: new PolicyDocument({

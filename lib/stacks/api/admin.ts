@@ -17,11 +17,6 @@
 import { App, Stack } from 'aws-cdk-lib';
 import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import {
-    COMMON_LAYER_ARN_PARAM,
-    NEW_USERS_SUSPENDED,
-    NOTEBOOK_PARAMETERS_FILE_NAME,
-} from '../../constants';
 import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
 import { RestApi } from 'aws-cdk-lib/aws-apigateway';
@@ -37,7 +32,7 @@ export class AdminApiStack extends Stack {
         const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
             this,
             'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, COMMON_LAYER_ARN_PARAM)
+            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
         );
 
         const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
@@ -67,7 +62,7 @@ export class AdminApiStack extends Stack {
                 path: 'user',
                 method: 'POST',
                 environment: {
-                    NEW_USER_SUSPENSION_DEFAULT: NEW_USERS_SUSPENDED ? 'True' : 'False',
+                    NEW_USER_SUSPENSION_DEFAULT: props.mlspaceConfig.NEW_USERS_SUSPENDED ? 'True' : 'False',
                 },
             },
             {
@@ -100,7 +95,7 @@ export class AdminApiStack extends Stack {
                 method: 'GET',
                 environment: {
                     BUCKET: props.configBucketName,
-                    S3_KEY: NOTEBOOK_PARAMETERS_FILE_NAME,
+                    S3_KEY: props.mlspaceConfig.NOTEBOOK_PARAMETERS_FILE_NAME,
                 },
             },
             {
@@ -158,7 +153,7 @@ export class AdminApiStack extends Stack {
                 method: 'GET',
                 environment: {
                     BUCKET: props.configBucketName,
-                    S3_KEY: NOTEBOOK_PARAMETERS_FILE_NAME,
+                    S3_KEY: props.mlspaceConfig.NOTEBOOK_PARAMETERS_FILE_NAME,
                 },
             },
             {
@@ -190,6 +185,7 @@ export class AdminApiStack extends Stack {
                 f,
                 props.mlSpaceVPC,
                 props.securityGroups,
+                props.mlspaceConfig,
                 props.permissionsBoundaryArn
             );
         });
