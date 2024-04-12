@@ -274,15 +274,15 @@ def list_files(event, context):
 
     response["contents"] = []
 
-    # add s3_resource["Contents"] to the response
+    # add s3_response["Contents"] to the response
     if "Contents" in s3_response:
-        response["contents"].append(
-            map(lambda content: {"key": content["Key"], "size": content["Size"], "type": "object"}, s3_resource["Contents"])
+        response["contents"].extend(
+            map(lambda content: {"key": content["Key"], "size": content["Size"], "type": "object"}, s3_response["Contents"])
         )
 
-    # add s3_resource["CommonPrefixes"] to the response
+    # add s3_response["CommonPrefixes"] to the response
     if "CommonPrefixes" in s3_response:
-        response["contents"].append(
+        response["contents"].extend(
             map(lambda common_prefix: {"prefix": common_prefix["Prefix"], "type": "prefix"}, s3_response["CommonPrefixes"])
         )
 
