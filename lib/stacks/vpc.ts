@@ -25,11 +25,7 @@ import {
     SubnetType,
     Vpc,
 } from 'aws-cdk-lib/aws-ec2';
-import {
-    EXISTING_VPC_DEFAULT_SECURITY_GROUP,
-    EXISTING_VPC_ID,
-    EXISTING_VPC_NAME,
-} from '../constants';
+import { MLSpaceConfig } from '../utils/configTypes';
 
 export type VPCStackProps = {
     readonly deployCFNEndpoint: boolean;
@@ -39,6 +35,7 @@ export type VPCStackProps = {
     readonly deployS3Endpoint: boolean;
     readonly deploySTSEndpoint: boolean;
     readonly isIso?: boolean;
+    readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
 export class VPCStack extends Stack {
     public readonly vpc: IVpc;
@@ -55,12 +52,12 @@ export class VPCStack extends Stack {
         const isIsoEast = this.region === 'us-iso-east-1';
         const isIsoWest = this.region === 'us-iso-west-1';
 
-        if (EXISTING_VPC_NAME && EXISTING_VPC_ID && EXISTING_VPC_DEFAULT_SECURITY_GROUP) {
+        if (props.mlspaceConfig.EXISTING_VPC_NAME && props.mlspaceConfig.EXISTING_VPC_ID && props.mlspaceConfig.EXISTING_VPC_DEFAULT_SECURITY_GROUP) {
             this.vpc = Vpc.fromLookup(this, 'imported-vpc', {
-                vpcId: EXISTING_VPC_ID,
-                vpcName: EXISTING_VPC_NAME,
+                vpcId: props.mlspaceConfig.EXISTING_VPC_ID,
+                vpcName: props.mlspaceConfig.EXISTING_VPC_NAME,
             });
-            this.vpcSecurityGroupId = EXISTING_VPC_DEFAULT_SECURITY_GROUP;
+            this.vpcSecurityGroupId = props.mlspaceConfig.EXISTING_VPC_DEFAULT_SECURITY_GROUP;
         } else {
             const mlSpaceVPC = new Vpc(this, 'MLSpace-VPC', {
                 enableDnsHostnames: true,
