@@ -24,7 +24,7 @@ from botocore.config import Config
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
 from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
-from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, map_dict_keys
+from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, rename_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -235,7 +235,7 @@ def list_files(event, context):
     query_string_parameters = event.get("queryStringParameters", {})
 
     # map query parameters keys to api parameter names
-    query_string_parameters = map_dict_keys(
+    query_string_parameters = rename_dict_keys(
         query_string_parameters,
         {"nextToken": "ContinuationToken", "pageSize": "MaxKeys", "prefix": "Prefix"},
     )

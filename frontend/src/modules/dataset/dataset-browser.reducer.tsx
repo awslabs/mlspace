@@ -36,7 +36,7 @@ export type DatasetServerRequestProps = ServerRequestProps & {
  * Base type for the contents of a dataset
  */
 type DatasetResourceBase = {
-    type: string,
+    type: 'object' | 'prefix',
     bucket: string,
     name: string
 };
