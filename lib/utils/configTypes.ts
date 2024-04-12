@@ -220,10 +220,8 @@ export function generateConfig () {
         const fileConfig: MLSpaceConfig = JSON.parse(
             fs.readFileSync('lib/config.json').toString('utf8')
         );
-        _.merge(config, [fileConfig]);
+        _.merge(config, fileConfig);
     }
-
-    
 
     validateRequiredProperty(config.AWS_ACCOUNT, 'AWS_ACCOUNT');
     validateRequiredProperty(config.OIDC_URL, 'OIDC_URL');
