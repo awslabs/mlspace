@@ -139,9 +139,14 @@ class ProjectDAO(DynamoDBObjectStore):
     def get_all(
         self, include_suspended: Optional[bool] = False, project_names: Optional[List[str]] = None
     ) -> List[ProjectModel]:
-        if include_suspended:
-            json_response = self._scan().records
-        elif project_names is not None:
+        expression_attribute_values: Dict[str, Any] = {}
+        filter_expressions = []
+
+        if not include_suspended:
+            expression_attribute_values[":suspended"] = include_suspended
+            filter_expressions.append("suspended = :suspended")
+
+        if project_names is not None:
             # If we specified a filter but it was empty then just return an empty list
             if not project_names:
                 return []
@@ -154,15 +159,16 @@ class ProjectDAO(DynamoDBObjectStore):
             for i in range(len(project_names)):
                 expressions.append(f":p{i}")
 
-            expression_attribute_values: Dict[str, Any] = {":suspended": False}
+            filter_expressions.append(f"#name IN ({', '.join(expressions)})")
+
             for index, expression in enumerate(expressions):
                 expression_attribute_values[expression] = project_names[index]
 
-            json_response = self._scan(
-                filter_expression=f"suspended = :suspended AND #name IN ({', '.join(expressions)})",
-                expression_names={"#name": "name"},
-                expression_values=json.loads(dynamodb_json.dumps(expression_attribute_values)),
-            ).records
-        else:
-            json_response = self._scan().records
+        json_response = self._scan(
+            filter_expression=" AND ".join(filter_expressions) if filter_expressions else None,
+            expression_names={"#name": "name"} if project_names else None,
+            expression_values=(
+                json.loads(dynamodb_json.dumps(expression_attribute_values)) if expression_attribute_values else None
+            ),
+        ).records
         return [ProjectModel.from_dict(entry) for entry in json_response]

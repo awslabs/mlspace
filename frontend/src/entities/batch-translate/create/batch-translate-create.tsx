@@ -58,11 +58,13 @@ import {
 } from '../../../shared/util/translate-utils';
 import { determineScope, createDatasetHandleAlreadyExists } from '../../dataset/dataset.service';
 import Condition from '../../../modules/condition';
+import { AUTO_SOURCE_LANGUAGE_UNSUPPORTED } from '..';
 
 export function BatchTranslateCreate () {
     const [errorText] = useState('');
     const [customTerminologies, setCustomTerminologies] = useState([]);
     const [languages, setLanguages] = useState([]);
+    const sourceLanguages: OptionDefinition[] = [];
     const [s3OutputUri, setS3OutputUri] = useState('');
     const autoOption: SelectProps.Option = { label: 'Auto (auto)', value: 'auto' };
     const { projectName } = useParams();
@@ -75,6 +77,12 @@ export function BatchTranslateCreate () {
         'Maximum of 255 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.';
     scrollToPageHeader();
     DocTitle('Create translation job');
+
+    const supportsAutoLanguageDetection = !AUTO_SOURCE_LANGUAGE_UNSUPPORTED.includes(window.env.AWS_REGION);
+    if (supportsAutoLanguageDetection) {
+        sourceLanguages.push(autoOption);
+    }
+    sourceLanguages.push(...languages);
 
     //JobName is prepended with '{projectname}-{username}'
     const formSchema = z.object({
@@ -349,7 +357,7 @@ export function BatchTranslateCreate () {
                                 />
                             </FormField>
                             <FormField
-                                description="The language code of the input language. Specify the language if all input documents share the same language. If you do not know the language of the source files, or your input documents contains different source languages, select 'auto'."
+                                description={`The language code of the input language. Specify the language if all input documents share the same language. ${supportsAutoLanguageDetection ? 'If you do not know the language of the source files, or your input documents contains different source languages, select \'auto\'.' : ''}`}
                                 errorText={formErrors.SourceLanguageCode}
                                 label='Source Language'
                             >
@@ -360,7 +368,7 @@ export function BatchTranslateCreate () {
                                             SourceLanguageCode: detail.selectedOption.value!,
                                         });
                                     }}
-                                    options={[autoOption, ...languages]}
+                                    options={sourceLanguages}
                                     selectedAriaLabel='Selected input language'
                                     filteringType='auto'
                                     data-cy='source-language-select'

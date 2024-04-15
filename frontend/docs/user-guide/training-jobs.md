@@ -17,7 +17,7 @@ simply lets the user know when it’s done!
 ### Custom Algorithm
 When creating training jobs you can choose from a built-in alogorithm or to bring your own algorithm from ECR. When
 using a custom algorithm you will need to define metric definitions as well as hyper parameters when creating the
-training job. Using a custom algorithm will require that MLSpace has been configured to allow access to ECR.
+training job. Using a custom algorithm will require that {{ $params.APPLICATION_NAME }} has been configured to allow access to ECR.
 
 ## Training Job details
 The details view for training jobs allows you to review the settings used to create the job including,

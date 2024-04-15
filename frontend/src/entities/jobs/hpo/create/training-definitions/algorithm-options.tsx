@@ -337,14 +337,13 @@ export function AlgorithmOptions (props: AlgorithmOptionsProps) {
                             })
                         }
                         onRemoveButtonClick={({ detail: { itemIndex } }) => {
-                            touchFields(
-                                [`AlgorithmSpecification.MetricDefinitions[${itemIndex}]`],
-                                ModifyMethod.Unset
-                            );
-                            const toRemove = {} as any;
-                            toRemove[`AlgorithmSpecification.MetricDefinitions[${itemIndex}]`] =
-                                true;
-                            setFields(toRemove, ModifyMethod.Unset);
+                            setFields({
+                                'AlgorithmSpecification.MetricDefinitions': (
+                                    item.AlgorithmSpecification?.MetricDefinitions || []
+                                ).filter((item, index) => {
+                                    return index !== itemIndex;
+                                })
+                            });
                         }}
                         items={item.AlgorithmSpecification?.MetricDefinitions}
                         addButtonText='Add metric'

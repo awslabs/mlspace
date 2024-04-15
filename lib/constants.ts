@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
+
 // DynamoDB table names. If you modify these you may need to modify the application role policy
 // statements to ensure actions are allowed against the correct resources. The default policy
 // relies on all mlspace tables having a prefix of "mlspace-"
@@ -115,7 +117,7 @@ export const OIDC_CLIENT_NAME = '';
 export const OIDC_VERIFY_SSL = true;
 export const OIDC_VERIFY_SIGNATURE = true;
 // This defaults to the APIGW url but if you're using custom DNS you should set this to that
-export const OIDC_REDIRECT_URI = undefined;
+export const OIDC_REDIRECT_URI = '';
 // Optional system banner which will be displayed at the top and the bottom of MLSpace
 export const SYSTEM_BANNER_BACKGROUND_COLOR = 'black';
 export const SYSTEM_BANNER_TEXT = '';   // If this value is not set then no banner will be displayed
@@ -124,3 +126,6 @@ export const SYSTEM_BANNER_TEXT_COLOR = 'white';
 export const RESOURCE_TERMINATION_INTERVAL = 60;
 // The default suspension state for new users. If true, new users are suspended and can't perform actions until validated by a SysAdmin
 export const NEW_USERS_SUSPENDED = false;
+
+export const LAMBDA_ARCHITECTURE = Architecture.X86_64;
+export const LAMBDA_RUNTIME = Runtime.PYTHON_3_11;

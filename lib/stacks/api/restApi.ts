@@ -30,28 +30,14 @@ import {
 } from 'aws-cdk-lib/aws-apigateway';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { IRole, Role } from 'aws-cdk-lib/aws-iam';
-import { Code, Function, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Code, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { LogGroup } from 'aws-cdk-lib/aws-logs';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import {
-    ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
-    APPLICATION_NAME,
-    BUCKET_DEPLOYMENT_ROLE_ARN,
-    COMMON_LAYER_ARN_PARAM,
-    ENABLE_ACCESS_LOGGING,
-    ENABLE_GROUNDTRUTH,
-    IDP_ENDPOINT_SSM_PARAM,
-    INTERNAL_OIDC_URL,
-    MANAGE_IAM_ROLES,
-    OIDC_CLIENT_NAME,
-    OIDC_REDIRECT_URI,
-    OIDC_URL,
-    OIDC_VERIFY_SSL
-} from '../../constants';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
+import { MLSpaceConfig } from '../../utils/configTypes';
 
 export type SystemBannerConfiguration = {
     readonly text?: string;
@@ -76,6 +62,7 @@ export type ApiStackProperties = {
     readonly permissionsBoundaryArn?: string;
     readonly emrEC2RoleName?: string;
     readonly emrServiceRoleName?: string;
+    readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
 
 export type RestApiStackProperties = {
@@ -92,6 +79,7 @@ export type RestApiStackProperties = {
     readonly enableMigrationUI?: boolean;
     readonly enableTranslate: boolean;
     readonly systemBannerConfiguration: SystemBannerConfiguration;
+    readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
 
 export class RestApiStack extends Stack {
@@ -113,7 +101,7 @@ export class RestApiStack extends Stack {
             throttlingRateLimit: 100,
             throttlingBurstLimit: 100,
         };
-        if (ENABLE_ACCESS_LOGGING) {
+        if (props.mlspaceConfig.ENABLE_ACCESS_LOGGING) {
             const apiAccessLogGroup = new LogGroup(this, 'mlspace-APIGWLogGroup', {
                 logGroupName: '/aws/apigateway/MLSpace',
                 removalPolicy: RemovalPolicy.DESTROY,
@@ -258,16 +246,17 @@ export class RestApiStack extends Stack {
         const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
             this,
             'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, COMMON_LAYER_ARN_PARAM)
+            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
         );
 
         let ssmIdPEndpoint;
-        if (IDP_ENDPOINT_SSM_PARAM) {
-            ssmIdPEndpoint = StringParameter.valueForStringParameter(this, IDP_ENDPOINT_SSM_PARAM);
+        if (props.mlspaceConfig.IDP_ENDPOINT_SSM_PARAM) {
+            ssmIdPEndpoint = StringParameter.valueForStringParameter(this, props.mlspaceConfig.IDP_ENDPOINT_SSM_PARAM);
         }
 
         const authorizerLambda = new Function(this, 'MLSpaceAuthorizerLambda', {
-            runtime: Runtime.PYTHON_3_11,
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
             handler: 'ml_space_lambda.authorizer.lambda_function.lambda_handler',
             functionName: 'mls-lambda-authorizer',
             code: Code.fromAsset(props.lambdaSourcePath),
@@ -277,11 +266,11 @@ export class RestApiStack extends Stack {
             role: props.mlSpaceAppRole,
             layers: [jwtDependencyLayer.layerVersion, commonLambdaLayer],
             environment: {
-                OIDC_URL: ssmIdPEndpoint || INTERNAL_OIDC_URL || OIDC_URL,
-                OIDC_CLIENT_NAME,
-                OIDC_VERIFY_SSL: OIDC_VERIFY_SSL ? 'True' : 'False',
+                OIDC_URL: ssmIdPEndpoint || props.mlspaceConfig.INTERNAL_OIDC_URL || props.mlspaceConfig.OIDC_URL,
+                OIDC_CLIENT_NAME: props.mlspaceConfig.OIDC_CLIENT_NAME,
+                OIDC_VERIFY_SSL: props.mlspaceConfig.OIDC_VERIFY_SSL ? 'True' : 'False',
                 OIDC_VERIFY_SIGNATURE: props.verifyOIDCTokenSignature ? 'True' : 'False',
-                ...ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
+                ...props.mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
             },
             vpc: props.mlSpaceVPC,
             securityGroups: props.lambdaSecurityGroups,
@@ -295,17 +284,18 @@ export class RestApiStack extends Stack {
 
         // Dynamic config relies on api URL and we don't want to do this in a separate stack
         const appEnvironmentConfig = {
-            OIDC_URL: ssmIdPEndpoint || OIDC_URL,
-            OIDC_REDIRECT_URI: OIDC_REDIRECT_URI || mlSpaceRestApi.url,
-            OIDC_CLIENT_NAME,
+            OIDC_URL: ssmIdPEndpoint ||  props.mlspaceConfig.OIDC_URL,
+            OIDC_REDIRECT_URI:  props.mlspaceConfig.OIDC_REDIRECT_URI || mlSpaceRestApi.url,
+            OIDC_CLIENT_NAME:  props.mlspaceConfig.OIDC_CLIENT_NAME,
             LAMBDA_ENDPOINT: mlSpaceRestApi.url,
-            MANAGE_IAM_ROLES,
+            MANAGE_IAM_ROLES:  props.mlspaceConfig.MANAGE_IAM_ROLES,
             SHOW_MIGRATION_OPTIONS: props.enableMigrationUI,
             ENABLE_TRANSLATE: props.enableTranslate,
-            ENABLE_GROUNDTRUTH: ENABLE_GROUNDTRUTH,
+            ENABLE_GROUNDTRUTH: props.mlspaceConfig.ENABLE_GROUNDTRUTH,
             SYSTEM_BANNER: props.systemBannerConfiguration,
-            APPLICATION_NAME: APPLICATION_NAME,
-            DATASET_BUCKET: props.dataBucketName
+            APPLICATION_NAME: props.mlspaceConfig.APPLICATION_NAME,
+            DATASET_BUCKET: props.dataBucketName,
+            AWS_REGION: props.mlspaceConfig.AWS_REGION
         };
 
         // MLSpace static react app
@@ -322,11 +312,11 @@ export class RestApiStack extends Stack {
             ],
             destinationBucket: websiteBucket,
             prune: true,
-            role: BUCKET_DEPLOYMENT_ROLE_ARN
+            role: props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN
                 ? Role.fromRoleArn(
                     this,
                     'mlspace-website-deploy-role',
-                    BUCKET_DEPLOYMENT_ROLE_ARN,
+                    props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN,
                     {
                         mutable: false,
                     }
