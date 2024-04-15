@@ -117,7 +117,7 @@ export const OIDC_CLIENT_NAME = '';
 export const OIDC_VERIFY_SSL = true;
 export const OIDC_VERIFY_SIGNATURE = true;
 // This defaults to the APIGW url but if you're using custom DNS you should set this to that
-export const OIDC_REDIRECT_URI = undefined;
+export const OIDC_REDIRECT_URI = '';
 // Optional system banner which will be displayed at the top and the bottom of MLSpace
 export const SYSTEM_BANNER_BACKGROUND_COLOR = 'black';
 export const SYSTEM_BANNER_TEXT = '';   // If this value is not set then no banner will be displayed

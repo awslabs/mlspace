@@ -18,6 +18,9 @@ public/docs
 public/env.js
 public/git-info.js
 
+# config
+lib/config.json
+
 # docs
 docs/.vitepress/dist
 docs/.vitepress/cache

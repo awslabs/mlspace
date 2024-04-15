@@ -6,7 +6,7 @@ export type ApiDeploymentStackProps = {
 } & StackProps;
 
 export class ApiDeploymentStack extends Stack {
-    constructor(parent: App, name: string, props: ApiDeploymentStackProps) {
+    constructor (parent: App, name: string, props: ApiDeploymentStackProps) {
         super(parent, name, {
             terminationProtection: false,
             ...props,
@@ -24,4 +24,4 @@ export class ApiDeploymentStack extends Stack {
         // https://github.com/aws/aws-cdk/issues/25582
         (deployment as any).resource.stageName = 'Prod';
     }
-  }
+}

@@ -25,20 +25,8 @@ import {
 } from 'aws-cdk-lib/aws-apigateway';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { IRole } from 'aws-cdk-lib/aws-iam';
-import { Code, Function, ILayerVersion } from 'aws-cdk-lib/aws-lambda';
-import {
-    ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
-    DATASETS_TABLE_NAME,
-    LAMBDA_ARCHITECTURE,
-    LAMBDA_RUNTIME,
-    MANAGE_IAM_ROLES,
-    PROJECTS_TABLE_NAME,
-    PROJECT_USERS_TABLE_NAME,
-    RESOURCE_METADATA_TABLE_NAME,
-    RESOURCE_SCHEDULE_TABLE_NAME,
-    SYSTEM_TAG,
-    USERS_TABLE_NAME,
-} from '../constants';
+import { Code, Function, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { MLSpaceConfig } from './configTypes';
 
 export type MLSpacePythonLambdaFunction = {
     id?: string;
@@ -63,29 +51,30 @@ export function registerAPIEndpoint (
     funcDef: MLSpacePythonLambdaFunction,
     vpc: IVpc,
     securityGroups: ISecurityGroup[],
-    permissionsBoundaryArn?: string
+    mlspaceConfig: MLSpaceConfig,
+    permissionsBoundaryArn?: string,
 ) {
     const functionId = `mls-lambda-${funcDef.id || [funcDef.resource, funcDef.name].join('-')}`;
     const handler = new Function(stack, functionId, {
         functionName: functionId,
-        runtime: LAMBDA_RUNTIME,
-        architecture: LAMBDA_ARCHITECTURE,
+        runtime: mlspaceConfig.LAMBDA_RUNTIME,
+        architecture: mlspaceConfig.LAMBDA_ARCHITECTURE,
         handler: `ml_space_lambda.${funcDef.resource}.lambda_functions.${funcDef.name}`,
         code: Code.fromAsset(lambdaSourcePath),
         description: funcDef.description,
         environment: {
-            DATASETS_TABLE: DATASETS_TABLE_NAME,
-            PROJECTS_TABLE: PROJECTS_TABLE_NAME,
-            PROJECT_USERS_TABLE: PROJECT_USERS_TABLE_NAME,
-            USERS_TABLE: USERS_TABLE_NAME,
-            RESOURCE_SCHEDULE_TABLE: RESOURCE_SCHEDULE_TABLE_NAME,
-            RESOURCE_METADATA_TABLE: RESOURCE_METADATA_TABLE_NAME,
-            SYSTEM_TAG: SYSTEM_TAG,
-            MANAGE_IAM_ROLES: MANAGE_IAM_ROLES ? 'True' : '',
+            DATASETS_TABLE: mlspaceConfig.DATASETS_TABLE_NAME,
+            PROJECTS_TABLE: mlspaceConfig.PROJECTS_TABLE_NAME,
+            PROJECT_USERS_TABLE: mlspaceConfig.PROJECT_USERS_TABLE_NAME,
+            USERS_TABLE: mlspaceConfig.USERS_TABLE_NAME,
+            RESOURCE_SCHEDULE_TABLE: mlspaceConfig.RESOURCE_SCHEDULE_TABLE_NAME,
+            RESOURCE_METADATA_TABLE: mlspaceConfig.RESOURCE_METADATA_TABLE_NAME,
+            SYSTEM_TAG: mlspaceConfig.SYSTEM_TAG,
+            MANAGE_IAM_ROLES: mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
             NOTEBOOK_ROLE_NAME: notebookRoleName,
             PERMISSIONS_BOUNDARY_ARN: permissionsBoundaryArn || '',
             ...funcDef.environment,
-            ...ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
+            ...mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
         },
         timeout: Duration.seconds(180),
         memorySize: 512,

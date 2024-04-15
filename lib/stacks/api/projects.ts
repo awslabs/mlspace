@@ -17,7 +17,6 @@
 import { App, Stack } from 'aws-cdk-lib';
 import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { COMMON_LAYER_ARN_PARAM, EMR_SECURITY_CONFIG_NAME } from '../../constants';
 import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
 import { RestApi } from 'aws-cdk-lib/aws-apigateway';
@@ -33,7 +32,7 @@ export class ProjectsApiStack extends Stack {
         const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
             this,
             'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, COMMON_LAYER_ARN_PARAM)
+            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
         );
 
         const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
@@ -203,7 +202,7 @@ export class ProjectsApiStack extends Stack {
                 environment: {
                     BUCKET: props.configBucketName,
                     S3_KEY: props.notebookParamFileKey,
-                    EMR_SECURITY_CONFIGURATION: EMR_SECURITY_CONFIG_NAME,
+                    EMR_SECURITY_CONFIGURATION: props.mlspaceConfig.EMR_SECURITY_CONFIG_NAME,
                     EMR_EC2_ROLE_NAME: props.emrEC2RoleName || '',
                     EMR_SERVICE_ROLE_NAME: props.emrServiceRoleName || '',
                     DATA_BUCKET: props.dataBucketName,
@@ -231,6 +230,7 @@ export class ProjectsApiStack extends Stack {
                 f,
                 props.mlSpaceVPC,
                 props.securityGroups,
+                props.mlspaceConfig,
                 props.permissionsBoundaryArn
             );
         });

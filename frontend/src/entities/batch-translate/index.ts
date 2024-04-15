@@ -16,4 +16,12 @@
 
 import BatchTranslate from './batch-translate';
 
+/**
+ * List of regions that don't support 'auto' source language detection
+ */
+export const AUTO_SOURCE_LANGUAGE_UNSUPPORTED = [
+    // currently AWS Batch isn't supported in this region which breaks 'auto' source detection
+    'us-iso-east-1'
+];
+
 export default BatchTranslate;
