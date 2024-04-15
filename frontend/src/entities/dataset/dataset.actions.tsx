@@ -133,7 +133,7 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                             default:
                                 dispatch(
                                     setDeleteModal({
-                                        resourceName: state.selectedItems.length === 1 ? state.selectedItems[0].name : `${state.selectedItems.length} file(s)`,
+                                        resourceName: state.selectedItems.length === 1 ? (state.selectedItems[0].name || '1 file') : `${state.selectedItems.length} file(s)`,
                                         resourceType: 'dataset file(s)',
                                         onConfirm: async () => {
                                             const scope = determineScope(state.datasetContext?.type, projectName!, username);
@@ -153,7 +153,7 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                         },
                                         postConfirm: () => {
                                             if (state.datasetContext) {
-                                                const filteringTextPrefix = prefixForPath(state.filter.filteringTextDisplay);
+                                                const filteringTextPrefix = prefixForPath(state.filter.filteringText);
                                                 // if the filter contains a prefix append that to the Location
                                                 const effectiveContext = {...state.datasetContext, Location: [state.datasetContext.location, filteringTextPrefix].join('')};
                                         
@@ -163,7 +163,6 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                                         datasetContext: effectiveContext,
                                                         filter: {
                                                             filteringText: '',
-                                                            filteringTextDisplay: '',
                                                             filteredItems: []
                                                         },
                                                         refresh: Math.random()
@@ -219,7 +218,7 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                 break;
                             case DatasetBrowserManageMode.Edit:
                                 if (state.datasetContext) {
-                                    const filteringTextPrefix = prefixForPath(state.filter.filteringTextDisplay);
+                                    const filteringTextPrefix = prefixForPath(state.filter.filteringText);
                                     if (filteringTextPrefix) {
                                         filesToUpload.forEach((file) => {
                                             file.key = [filteringTextPrefix, file.key].join('');
@@ -242,7 +241,6 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                             datasetContext: effectiveContext,
                                             filter: {
                                                 filteringText: '',
-                                                filteringTextDisplay: '',
                                                 filteredItems: []
                                             },
                                             refresh: Math.random()

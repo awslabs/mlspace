@@ -14,7 +14,7 @@
   limitations under the License.
 */
 import { Box, BreadcrumbGroup, Header, Pagination, SpaceBetween, Table } from '@cloudscape-design/components';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { DatasetContext, datasetFromS3Uri } from '../../shared/util/dataset-utils';
 import { getDatasetsList } from '../../entities/dataset/dataset.reducer';
 import { useAppDispatch } from '../../config/store';
@@ -72,7 +72,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
         return NotificationService(dispatch);
     }, [dispatch]);
 
-    const fetchDatasetResources = useMemo(() => (datasetContext: Partial<DatasetContext>, nextToken?: string, existingItems?: (DatasetResource | IDataset)[]) => {
+    const fetchDatasetResources = useCallback((datasetContext: Partial<DatasetContext>, nextToken?: string, existingItems?: (DatasetResource | IDataset)[]) => {
         if (state.manageMode !== DatasetBrowserManageMode.Create) {
             return dispatch(getDatasetContents({datasetContext, projectName, username, nextToken})).then((response) => {
                 if (isFulfilled(response)) {
@@ -126,8 +126,8 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
         });
     }, [dispatch, projectName, state.datasetContext?.type, notificationService]);
 
-
-    // refresh component if resource changes
+    // The resource is expected to be empty on most first loads, but if it is an S3 URI try and create the datasetContext
+    // based on that URI.
     useEffect(() => {
         const datasetContext = datasetFromS3Uri(resource);
         const payload: Partial<Pick<DatasetBrowserState, 'datasetContext' | 'filter' | 'items'>> = {
@@ -145,7 +145,8 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
         });
     }, [resource, state.manageMode]);
 
-    // update the component if the datasetContext changes
+    // Update the component if the datasetContext changes. This is expected to occur whenever the browser is going to display
+    // a different scope, dataset, or prefix.
     useEffect(() => {
         const payload: Partial<DatasetBrowserState> = {
             breadcrumbs: breadcrumbFromDataset(state.datasetContext, !!state.manageMode),
