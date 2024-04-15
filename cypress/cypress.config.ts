@@ -29,6 +29,7 @@ module.exports = defineConfig({
   env: {
     auth_type: AuthType.Cognito,
     base_url: "",
+    lambda_endpoint: "",
     username: "",
     password: "",
   },
