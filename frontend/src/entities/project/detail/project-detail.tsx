@@ -38,6 +38,7 @@ import {
 import { selectCurrentUser } from '../../user/user.reducer';
 import { Timezone } from '../../../shared/model/user.model';
 import _ from 'lodash';
+import { useBackgroundRefresh } from '../../../shared/util/hooks';
 
 function ProjectDetail () {
     const { projectName } = useParams();
@@ -60,6 +61,11 @@ function ProjectDetail () {
         dispatch(setBreadcrumbs([getBase(projectName)]));
         dispatch(setActiveHref('/#'));
     }, [dispatch, navigate, projectName, project.name]);
+
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        dispatch(getProject({projectName: projectName!, includeResourceCounts: true}));
+    }, [dispatch]);
 
     const allowOverrideText = (
         suspensionVal?: number | string | undefined,
@@ -164,18 +170,18 @@ function ProjectDetail () {
                     header='Project details'
                     actions={ProjectHomeActions()}
                     info={projectDetails}
-                    loading={loadingProjectDetails}
+                    loading={loadingProjectDetails && !isBackgroundRefreshing}
                 />
                 <DetailsContainer
                     columns={3}
                     header='Default resource scheduling'
                     info={resourceScheduleSummary}
-                    loading={loadingProjectDetails}
+                    loading={loadingProjectDetails && !isBackgroundRefreshing}
                 />
                 <Container>
                     <SpaceBetween size='l'>
                         <Header variant='h2'>Project resources</Header>
-                        {loadingProjectDetails ? (
+                        {loadingProjectDetails && !isBackgroundRefreshing ? (
                             <StatusIndicator type='loading'>Loading project resources</StatusIndicator>
                         ) : (projectResourceCounts?.[ResourceType.NOTEBOOK] &&
                             <ColumnLayout borders='horizontal' columns={1}>

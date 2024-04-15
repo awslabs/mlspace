@@ -44,6 +44,7 @@ import { getProject } from '../../project/project.reducer';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { hasPermission, isAdminOrProjectOwner } from '../../../shared/util/permission-utils';
 import { deletionDescription } from '../../../shared/util/form-utils';
+import { useBackgroundRefresh } from '../../../shared/util/hooks';
 
 function NotebookDetail () {
     const { projectName, name } = useParams();
@@ -92,6 +93,11 @@ function NotebookDetail () {
             });
         }
     }, [name, notebook.NotebookInstanceStatus]);
+
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        dispatch(describeNotebookInstance(name!));
+    }, [dispatch]);
 
     const notebookDetails = new Map<string, ReactNode>();
     notebookDetails.set('Name', notebook.NotebookInstanceName);
@@ -303,13 +309,13 @@ function NotebookDetail () {
                             Edit
                         </Button>
                     }
-                    loading={loadingNotebook}
+                    loading={loadingNotebook && !isBackgroundRefreshing}
                 />
                 <DetailsContainer
                     header='Permissions and encryption'
                     columns={3}
                     info={permissionsInfo}
-                    loading={loadingNotebook}
+                    loading={loadingNotebook && !isBackgroundRefreshing}
                 />
                 <LogsComponent
                     resourceType='NotebookInstances'

@@ -27,7 +27,7 @@ import {
     StatusIndicator,
     Tabs,
 } from '@cloudscape-design/components';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams} from 'react-router-dom';
 import { formatDate, formatDateDiff } from '../../../../shared/util/date-utils';
 import { useAppDispatch, useAppSelector } from '../../../../config/store';
@@ -46,6 +46,7 @@ import { prettyStatus } from '../../../../shared/util/table-utils';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import NotificationService from '../../../../shared/layout/notification/notification.service';
+import { useBackgroundRefresh } from '../../../../shared/util/hooks';
 
 export function HPOJobDetail () {
     const { projectName, jobName } = useParams();
@@ -65,33 +66,33 @@ export function HPOJobDetail () {
         job: null as any,
     });
 
-    useEffect(() => {
-        const loadAll = async () => {
-            const hpoTrainingJob = await dispatch(describeHPOJob(jobName!))
-                .unwrap()
-                .catch(() => {
-                    navigate('/404');
-                });
-            const trainingJobs = await dispatch(describeHPOJobChildren(jobName!)).then(
-                (response) => response.payload
-            );
-            if (hpoTrainingJob.BestTrainingJob !== undefined) {
-                const bestTrainingJob = await dispatch(
-                    describeTrainingJob(hpoTrainingJob.BestTrainingJob.TrainingJobName)
-                ).then((response) => response.payload);
-                setState((s) => ({
-                    ...s,
-                    hpoTrainingJob,
-                    trainingJobs,
-                    bestTrainingJob,
-                }));
-            } else {
-                setState((s) => ({ ...s, hpoTrainingJob, trainingJobs }));
-            }
-        };
+    const loadAll = useCallback(async () => {
+        const hpoTrainingJob = await dispatch(describeHPOJob(jobName!))
+            .unwrap()
+            .catch(() => {
+                navigate('/404');
+            });
+        const trainingJobs = await dispatch(describeHPOJobChildren(jobName!)).then(
+            (response) => response.payload
+        );
+        if (hpoTrainingJob.BestTrainingJob !== undefined) {
+            const bestTrainingJob = await dispatch(
+                describeTrainingJob(hpoTrainingJob.BestTrainingJob.TrainingJobName)
+            ).then((response) => response.payload);
+            setState((s) => ({
+                ...s,
+                hpoTrainingJob,
+                trainingJobs,
+                bestTrainingJob,
+            }));
+        } else {
+            setState((s) => ({ ...s, hpoTrainingJob, trainingJobs }));
+        }
+    }, [dispatch, jobName, navigate]);
 
+    useEffect(() => {
         loadAll();
-    }, [dispatch, navigate, jobName]);
+    }, [dispatch, navigate, jobName, loadAll]);
 
     useEffect(() => {
         dispatch(
@@ -116,9 +117,14 @@ export function HPOJobDetail () {
         trainingJobDefinitions.push(state.hpoTrainingJob.TrainingJobDefinition);
     }
 
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        loadAll();
+    }, [dispatch], (state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Failed && state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Completed));
+
     return (
         <ContentLayout header={<Header variant='h1'>{jobName}</Header>}>
-            {HPOJobDetailsLoading ? (
+            {HPOJobDetailsLoading && !isBackgroundRefreshing ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
                 </Container>

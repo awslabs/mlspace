@@ -47,6 +47,7 @@ import { InputDataConfig } from '../../hpo/hpo-job.model';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { LogsComponent } from '../../../../shared/util/log-utils';
 import { createModelFromTrainingJob } from '../training-job.actions';
+import { useBackgroundRefresh } from '../../../../shared/util/hooks';
 
 export function TrainingJobDetail () {
     const { projectName, trainingJobName } = useParams();
@@ -80,9 +81,14 @@ export function TrainingJobDetail () {
         );
     }, [dispatch, projectName, trainingJobName]);
 
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        dispatch(describeTrainingJob(String(trainingJobName)));
+    }, [dispatch], (trainingJob.TrainingJobStatus !== JobStatus.Failed && trainingJob.TrainingJobStatus !== JobStatus.Completed));
+
     return (
         <ContentLayout header={<Header variant='h1'>{trainingJobName}</Header>}>
-            {loadingJobDetails ? (
+            {loadingJobDetails && !isBackgroundRefreshing ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
                 </Container>

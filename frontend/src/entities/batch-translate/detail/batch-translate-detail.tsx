@@ -40,6 +40,7 @@ import {
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { getDownloadUrl } from '../../dataset/dataset.service';
+import { useBackgroundRefresh } from '../../../shared/util/hooks';
 
 function BatchTranslateDetail () {
     const { projectName, jobId } = useParams();
@@ -70,6 +71,11 @@ function BatchTranslateDetail () {
             );
         }
     }, [dispatch, projectName, jobId, batchTranslateJob.JobName]);
+
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        dispatch(describeBatchTranslateJob(jobId!));
+    }, [dispatch], (batchTranslateJob?.JobStatus !== TranslateJobStatus.Failed && batchTranslateJob?.JobStatus !== TranslateJobStatus.Completed && batchTranslateJob?.JobStatus !== TranslateJobStatus.CompletedWithError));
 
     const batchJobSummary = new Map<string, ReactNode>();
 
@@ -138,7 +144,7 @@ function BatchTranslateDetail () {
             <ContentLayout header={<Header variant='h1'>{batchTranslateJob.JobName}</Header>}>
                 <SpaceBetween size='xxl'>
                     <DetailsContainer
-                        loading={jobLoading}
+                        loading={jobLoading && !isBackgroundRefreshing}
                         columns={3}
                         header='Summary'
                         info={batchJobSummary}
