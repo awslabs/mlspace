@@ -63,7 +63,6 @@ export function BatchTranslateCreate () {
     const [customTerminologies, setCustomTerminologies] = useState([]);
     const [languages, setLanguages] = useState([]);
     const sourceLanguages: OptionDefinition[] = [];
-    const [s3OutputUri, setS3OutputUri] = useState('');
     const autoOption: SelectProps.Option = { label: 'Auto (auto)', value: 'auto' };
     const { projectName } = useParams();
     const dispatch = useAppDispatch();
