@@ -114,7 +114,7 @@ The projects table contains project level metadata such as project name, descrip
 | createdAt | Number | Timestamp of when the project was created in {{ $params.APPLICATION_NAME }}.|
 
 #### Project Users Table
-The projects users table serves as a mapping table between projects and users. Additionally it contains the permissions which a particular user has on the corresponding project and assuming dynamic roles are enabled the role arn of the unique project user role. The partition key is `project` and the sort key is `user`. There is a Keys Only projection global secondary index (GSI) for reverse lookup with a partition key of `user` and a sort key of `project`.
+The projects users table serves as a mapping table between projects and users. Additionally it contains the permissions which a particular user has on the corresponding project and assuming dynamic roles are enabled the role ARN of the unique project user role. The partition key is `project` and the sort key is `user`. There is a Keys Only projection global secondary index (GSI) for reverse lookup with a partition key of `user` and a sort key of `project`.
 
 |Attribute|Type|Description|
 |--|--|--|

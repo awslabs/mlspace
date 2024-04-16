@@ -37,6 +37,7 @@ declare global {
             ENABLE_TRANSLATE?: boolean;
             ENABLE_GROUNDTRUTH?: boolean;
             APPLICATION_NAME?: string;
+            AWS_REGION: string;
         };
         gitInfo?: {
             revisionTag?: string;
