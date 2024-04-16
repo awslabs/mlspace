@@ -15,12 +15,17 @@
 #
 
 import json
+import os
 from unittest import mock
 
 import pytest
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
 from ml_space_lambda.enums import DatasetType
+
+
+def pytest_generate_tests(metafunc):
+    os.environ["LAMBDA_TASK_ROOT"] = "./src/"
 
 
 @pytest.fixture
