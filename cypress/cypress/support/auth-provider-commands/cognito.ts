@@ -35,8 +35,8 @@ const loginToCognito = (baseUrl: string, username: string, password: string) => 
         () => {
             // Handle cognito portal information
             cy.request(baseUrl + '/env.js').then((resp) => {
-                const OIDC_URL_REGEX = /["']*OIDC_URL['"]*:\s*['"]*([A-Za-z:\-._/0-9]+)['"]*/;
-                const OIDC_APP_NAME_REGEX = /["']*OIDC_CLIENT_NAME['"]*:\s*['"]*([A-Za-z:\-._/0-9]+)['"]*/;
+                const OIDC_URL_REGEX = /["']?OIDC_URL['"]?:\s*['"]?([A-Za-z:\-._/0-9]+)['"]?/;
+                const OIDC_APP_NAME_REGEX = /["']?OIDC_CLIENT_NAME['"]?:\s*['"]?([A-Za-z:\-._/0-9]+)['"]?/;
                 const oidcUrlMatches = OIDC_URL_REGEX.exec(resp.body);
                 if (oidcUrlMatches && oidcUrlMatches.length === 2) {
                     cognitoOathEndpoint = oidcUrlMatches[1];

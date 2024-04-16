@@ -29,6 +29,7 @@ module.exports = defineConfig({
   env: {
     auth_type: AuthType.Cognito,
     base_url: "",
+    // lambda_endpoint is only needed if base_url targets a localhost implementation
     lambda_endpoint: "",
     username: "",
     password: "",
