@@ -16,15 +16,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+/**
+ * A custom hook that runs an action periodically in the background to refresh data.
+ * 
+ * @param {Function} action - The function to run periodically to refresh data 
+ * @param {Array} deps - The dependencies of the action function
+ * @param {boolean} condition - A condition that must be true for the action to run
+ * @returns {boolean} isBackgroundRefreshing - Whether the background refresh is currently running
+*/
 export function useBackgroundRefresh (action: () => void, deps: readonly unknown[] = [], condition = true): boolean {
-    /**
-     * A custom hook that runs an action periodically in the background to refresh data.
-     * 
-     * @param {Function} action - The function to run periodically to refresh data 
-     * @param {Array} deps - The dependencies of the action function
-     * @param {boolean} condition - A condition that must be true for the action to run
-     * @returns {boolean} isBackgroundRefreshing - Whether the background refresh is currently running
-    */
 
     const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false);
     const callbackAction = useCallback(action, [action, ...deps]);
