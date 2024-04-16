@@ -32,6 +32,7 @@ import { setResourceScheduleModal } from '../../../modules/modal/modal.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import { selectCurrentUser } from '../../user/user.reducer';
+import { useBackgroundRefresh } from '../../../shared/util/hooks';
 
 function EMRDetail () {
     const { projectName, clusterId, clusterName } = useParams();
@@ -62,6 +63,11 @@ function EMRDetail () {
             );
         }
     }, [dispatch, basePath, projectName, clusterId, clusterName]);
+
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        dispatch(getEMRCluster(clusterId!));
+    }, [dispatch]);
 
     const clusterSummary = new Map<string, ReactNode>();
 
@@ -123,7 +129,7 @@ function EMRDetail () {
             >
                 <SpaceBetween size='xxl'>
                     <DetailsContainer
-                        loading={clusterLoading}
+                        loading={clusterLoading && !isBackgroundRefreshing}
                         columns={4}
                         header='Summary'
                         info={clusterSummary}

@@ -38,6 +38,7 @@ declare global {
             ENABLE_GROUNDTRUTH?: boolean;
             APPLICATION_NAME?: string;
             AWS_REGION: string;
+            BACKGROUND_REFRESH_INTERVAL: number;
         };
         gitInfo?: {
             revisionTag?: string;

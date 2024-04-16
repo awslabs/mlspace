@@ -295,7 +295,8 @@ export class RestApiStack extends Stack {
             SYSTEM_BANNER: props.systemBannerConfiguration,
             APPLICATION_NAME: props.mlspaceConfig.APPLICATION_NAME,
             DATASET_BUCKET: props.dataBucketName,
-            AWS_REGION: props.mlspaceConfig.AWS_REGION
+            AWS_REGION: props.mlspaceConfig.AWS_REGION,
+            BACKGROUND_REFRESH_INTERVAL: props.mlspaceConfig.BACKGROUND_REFRESH_INTERVAL
         };
 
         // MLSpace static react app

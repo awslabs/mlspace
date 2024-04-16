@@ -33,6 +33,7 @@ import { useParams } from 'react-router-dom';
 import { ILogRequestParams } from '../model/log.model';
 import { TranslateJobStatus } from '../model/translate.model';
 import _ from 'lodash';
+import { useBackgroundRefresh } from './hooks';
 
 export const linkify = (
     resource: string,
@@ -191,6 +192,11 @@ export type PaginationLoadingState = {
      * Whether additional resources are being loaded with a pagination token.
      */
     loadingAdditional: boolean;
+
+    /**
+     * Whether additional resources are being loaded in the background.
+     */
+    loadingInBackground: boolean;
 };
 
 export enum TableSortOrder {
@@ -243,7 +249,7 @@ export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerS
         } as T;
 
         const result = await dispatch(props.fetchDataThunk(params));
-        setLoading({ loadingAdditional: false, loadingEmpty: false });
+        setLoading({ loadingAdditional: false, loadingEmpty: false, loadingInBackground: false });
         // Store the latest pagination token from the API response
         if (result.payload) {
             setNextToken(result.payload.data.nextToken);
@@ -260,6 +266,12 @@ export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerS
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loading.loadingEmpty]);
+
+    // Refresh data in the background to keep state fresh
+    useBackgroundRefresh(() => {
+        setLoading({ loadingAdditional: false, loadingEmpty: false, loadingInBackground: true });
+        fetchData(false);
+    });
 
     useEffect(() => {
         setLoading({ ...loading, loadingEmpty: true });

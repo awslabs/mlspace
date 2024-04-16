@@ -89,7 +89,7 @@ export default function Table ({
             },
             pagination: { pageSize: preferences.pageSize },
             sorting: {},
-            selection: {},
+            selection: {keepSelection: true},
         });
 
     const { selectedItems } = collectionProps;
@@ -97,6 +97,7 @@ export default function Table ({
     const [serverSideLoading, setServerSideLoading] = useState<PaginationLoadingState>({
         loadingEmpty: false,
         loadingAdditional: false,
+        loadingInBackground: false
     });
 
     const tableHeaderVariant =
@@ -184,7 +185,7 @@ export default function Table ({
             loading={
                 serverFetch
                     ? serverSideLoading.loadingAdditional || serverSideLoading.loadingEmpty
-                    : loadingItems
+                    : loadingItems && serverSideLoading.loadingInBackground
             }
             loadingText={loadingText}
             selectionType={tableType}

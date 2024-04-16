@@ -41,6 +41,7 @@ import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import DetailsContainer from '../../../../modules/details-container';
 import { LogsComponent } from '../../../../shared/util/log-utils';
+import { useBackgroundRefresh } from '../../../../shared/util/hooks';
 
 function TransformDetail () {
     const { projectName, name } = useParams();
@@ -70,6 +71,12 @@ function TransformDetail () {
             ])
         );
     }, [dispatch, navigate, basePath, name, projectName]);
+
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        dispatch(describeBatchTransformJob(name));
+    }, [dispatch], (transform.TransformJobStatus !== JobStatus.Failed && transform.TransformJobStatus !== JobStatus.Completed));
+
     const jobSummary = new Map<string, ReactNode>();
     jobSummary.set('Job name', transform.TransformJobName!);
     jobSummary.set('Status', prettyStatus(transform.TransformJobStatus, transform.FailureReason));
@@ -147,7 +154,7 @@ function TransformDetail () {
                 </Header>
             }
         >
-            {loadingTransformDetails ? (
+            {loadingTransformDetails && !isBackgroundRefreshing ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
                 </Container>
