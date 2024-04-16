@@ -14,10 +14,11 @@
   limitations under the License.
 */
 
+import { DatasetResourceObject } from '../../modules/dataset/dataset-browser.reducer';
 import { DatasetType, IDataset } from '../../shared/model/dataset.model';
-import { IDatasetFile } from '../../shared/model/datasetfile.model';
 import axios from '../../shared/util/axios-utils';
 import { default as Axios } from 'axios';
+import { DatasetContext } from '../../shared/util/dataset-utils';
 
 export const getPresignedUrls = async (data: any) => {
     const requestUrl = '/dataset/presigned-url';
@@ -84,42 +85,25 @@ export const uploadToS3 = async (presignedUrl: any, file: any) => {
     return basicAxios.post(url, formData, headers);
 };
 
-export const buildS3Keys = (
-    files: IDatasetFile[],
-    dataset: IDataset,
-    projectName: string | undefined,
-    username: string
-) => {
-    const s3Keys: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-        switch (dataset.type) {
+export const buildS3KeysForResourceObjects = (
+    resourceObjects: DatasetResourceObject[],
+    datasetContext: DatasetContext,
+): [string, DatasetResourceObject][] => {
+    return resourceObjects.map((resourceObject) => {
+        switch (datasetContext.type!) {
             case DatasetType.PROJECT:
-                s3Keys.push(`project/${projectName}/datasets/${dataset.name}/${files[i].key}`);
-                break;
+                return [`project/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
+            case DatasetType.PRIVATE:
+                return [`private/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
             case DatasetType.GLOBAL:
-                s3Keys.push(`global/datasets/${dataset.name}/${files[i].key}`);
-                break;
-            default:
-                s3Keys.push(`private/${username}/datasets/${dataset.name}/${files[i].key}`);
-                break;
+                return [`global/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
         }
-    }
-
-    return s3Keys;
+    });
 };
 
-export const fetchPresignedURL = async (s3Key: string, dataset: IDataset) => {
-    const metadata: Map<string, string> = new Map([
-        ['dataset-description', dataset.description || ''],
-        ['dataset-format', dataset.format || ''],
-    ]);
-
+export const fetchPresignedURL = async (s3Key: string) => {
     const conditions: Record<string, string>[] = [];
     const fields: Map<string, string> = new Map<string, string>();
-    metadata.forEach((value, key) => {
-        fields.set(`x-amz-meta-${key}`, value);
-        conditions.push({ [`x-amz-meta-${key}`]: value });
-    });
 
     // This method gets a presigned s3 post from Lambda. The Lambda's IAM Role will be used for the upload.
     const data = {
@@ -148,33 +132,32 @@ export const determineScope = (
     }
 };
 
-export async function uploadFiles (
-    s3Keys: string[],
-    dataset: IDataset,
-    notificationService: any,
-    datasetFileList: IDatasetFile[]
-) {
+export async function uploadResources (datasetContext: DatasetContext, resourceObjects: DatasetResourceObject[], notificationService: any) {
     let successCount = 0;
     const failedUploads: string[] = [];
-    for (let i = 0; i < s3Keys.length; i++) {
-        const presignedURL = await fetchPresignedURL(s3Keys[i], dataset);
-        if (presignedURL && presignedURL.data) {
-            const uploadResponse = await uploadToS3(presignedURL.data, datasetFileList[i]);
+
+    for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
+        const presignedUrl = await fetchPresignedURL(s3Uri);
+
+        if (presignedUrl?.data) {
+            const uploadResponse = await uploadToS3(presignedUrl.data, resourceObject);
+
             if (uploadResponse.status === 204) {
                 successCount++;
-            } else {
-                failedUploads.push(datasetFileList[i].key!);
+                continue;
             }
-        } else {
-            failedUploads.push(datasetFileList[i].key!);
         }
+
+        failedUploads.push(resourceObject.key);
     }
+
     if (successCount > 0) {
         notificationService.generateNotification(
             `Successfully uploaded ${successCount} file(s).`,
             'success'
         );
     }
+    
     if (failedUploads.length > 0) {
         notificationService.generateNotification(
             `Failed to upload file: ${failedUploads.pop()}` +
@@ -205,7 +188,7 @@ export async function createDataset (dataset: IDataset) {
     }
 }
 
-export const createDatasetHandleAlreadyExists = (dataset: IDataset) => {
+export const tryCreateDataset = (dataset: IDataset) => {
     createDataset(dataset).catch((error) => {
         const expectedError = `Bad Request: Dataset ${dataset.name} already exists.`;
         // Any error that the dataset already existing is unexpected
@@ -213,20 +196,4 @@ export const createDatasetHandleAlreadyExists = (dataset: IDataset) => {
             throw error;
         }
     });
-};
-
-export const listDatasetBucketAndLocations = async (scope: string, type: string) => {
-    const response = await axios.get(`/dataset-locations/${type}/${scope}`);
-    if (response.status === 200) {
-        return response.data;
-    }
-    return [];
-};
-
-export const listDatasetFiles = async (scope: string, name: string) => {
-    const response = await axios.get(`/dataset/${scope}/${name}/files`);
-    if (response.status === 200) {
-        return response.data;
-    }
-    return [];
 };

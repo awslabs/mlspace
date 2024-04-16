@@ -13,7 +13,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
 import z from 'zod';
 import _ from 'lodash';
 import { ModifyMethod } from './modify-method';
@@ -232,6 +231,7 @@ export type ValidationReducerResponse<S> = {
     state: S;
     setState(newState: Partial<S>, method?: ModifyMethod): void;
     errors: any;
+    isValid: boolean,
     setFields: SetFieldsFunction;
     touchFields: TouchFieldsFunction;
 };
@@ -239,7 +239,7 @@ export type ValidationReducerResponse<S> = {
 export const useValidationReducer = <F, S extends ValidationReducerBaseState<F>>(
     formSchema: any,
     initialState: S
-): ValidationReducerResponse<S> => {
+): ValidationReducerResponse<S & ValidationReducerBaseState<F>> => {
     const [state, setState] = React.useReducer((state: S, action: ValidationReducerAction) => {
         // perform a deep copy of the state so this reducer is considered a "pure" reducer with no side effects
         // otherwise ModifyMethod.Unset can splice the wrong index if this reducer is called multiple times (which is expected behavior with React.StrictMode)
@@ -305,7 +305,8 @@ export const useValidationReducer = <F, S extends ValidationReducerBaseState<F>>
     return {
         state,
         errors,
-        setState: (newState: any, method: ValidationStateActionMethod = ModifyMethod.Default) => {
+        isValid: parseResult.success,
+        setState: (newState: Partial<S>, method: ValidationStateActionMethod = ModifyMethod.Default) => {
             setState({
                 type: ValidationReducerActionTypes.STATE,
                 method,

@@ -25,14 +25,14 @@ import { CallbackFunction } from '../../types';
 import { ServerRequestProps } from '../../shared/util/table-utils';
 import { ActionCreatorWithoutPayload, AsyncThunk } from '@reduxjs/toolkit';
 
-type TableProps = {
+type TableProps<Entry = TableEntry> = {
     tableName?: string;
     tableType?: CloudscapeTableProps.SelectionType;
     actions?: any;
     selectItemsCallback?: CallbackFunction;
-    allItems: TableEntry[];
+    allItems: Entry[];
     setItemsOverride?: CallbackFunction;
-    columnDefinitions: CloudscapeTableProps.ColumnDefinition<TableEntry>[];
+    columnDefinitions: CloudscapeTableProps.ColumnDefinition<Entry>[];
     visibleColumns?: readonly string[];
     visibleContentPreference?: CollectionPreferencesProps.VisibleContentPreference;
     // Unique property of table items that can be used for tracking purposes ie arn

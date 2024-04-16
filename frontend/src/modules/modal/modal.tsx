@@ -27,6 +27,8 @@ function Modal ({
     onConfirm,
     children,
     showLoading = true,
+    size,
+    disableConfirm = false
 }: ModalProps) {
     const [confirmed, setConfirmed] = useState(false);
     useEffect(() => {
@@ -34,23 +36,25 @@ function Modal ({
             setConfirmed(false);
         }
     }, [visible]);
+
     return (
         <CloudscapeModal
-            onDismiss={() => onDismiss()}
+            onDismiss={onDismiss}
             visible={visible}
             closeAriaLabel='Close modal'
             footer={
                 <Box float='right'>
                     <SpaceBetween direction='horizontal' size='xs'>
-                        <Button data-cy='modal-cancel-btn' onClick={() => onDismiss()}>
+                        <Button data-cy='modal-cancel-btn' onClick={() => onDismiss(new CustomEvent('dismiss', {cancelable: false, detail: {reason: 'dismissButton'}}))}>
                             {dismissText}
                         </Button>
                         <Button
+                            disabled={disableConfirm}
                             data-cy='modal-confirm-btn'
                             variant='primary'
                             onClick={() => {
                                 setConfirmed(true);
-                                onConfirm();
+                                onConfirm(new CustomEvent('confirm', {cancelable: false}));
                             }}
                             loading={showLoading && confirmed}
                         >
@@ -60,6 +64,7 @@ function Modal ({
                 </Box>
             }
             header={title}
+            size={size}
         >
             {children}
         </CloudscapeModal>

@@ -40,6 +40,8 @@ import { prettyStatus } from '../../../../shared/util/table-utils';
 import { formatDate } from '../../../../shared/util/date-utils';
 import { getLabelingJobType, getTotalLabelingObjectCount } from '../labeling-job.common';
 import DetailsContainer from '../../../../modules/details-container';
+import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import { JobStatus } from '../../job.model';
 
 export function LabelingJobDetail () {
     const { projectName, jobName } = useParams();
@@ -73,6 +75,11 @@ export function LabelingJobDetail () {
         );
     }, [dispatch, projectName, jobName]);
 
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        dispatch(describeLabelingJob(String(jobName)));
+    }, [dispatch], (labelingJob.LabelingJobStatus !== JobStatus.Failed && labelingJob.LabelingJobStatus !== JobStatus.Completed));
+
     const labelingJobSettings = new Map<string, ReactNode>();
     labelingJobSettings.set('Job name', labelingJob.LabelingJobName);
     labelingJobSettings.set(
@@ -96,7 +103,7 @@ export function LabelingJobDetail () {
 
     return (
         <ContentLayout header={<Header variant='h1'>{jobName}</Header>}>
-            {loadingJobDetails ? (
+            {loadingJobDetails && !isBackgroundRefreshing ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
                 </Container>

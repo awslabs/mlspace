@@ -18,9 +18,8 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
-import boto3
 import jwt
 import urllib3
 
@@ -30,7 +29,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
-from ml_space_lambda.utils.common_functions import authorization_wrapper, retry_config
+from ml_space_lambda.utils.common_functions import authorization_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -209,27 +208,7 @@ def lambda_handler(event, context):
                         logging.exception(e)
                         logging.info("Access Denied. Encountered error while determining notebook access policy.")
                 elif "scope" in path_params:
-                    if (
-                        requested_resource.startswith("/dataset-locations/")
-                        and "type" in path_params
-                        and request_method == "GET"
-                    ):
-                        # Check if user has access to scope
-                        target_scope = path_params["scope"]
-                        target_type = path_params["type"]
-                        if target_type == "global":
-                            # Everyone can access global
-                            policy_statement["Effect"] = "Allow"
-                        elif target_type == "private" and target_scope == user.username:
-                            # If the scope matches the username it's a private scope
-                            policy_statement["Effect"] = "Allow"
-                        elif target_type == "project":
-                            # If the scope matches the username it's a private scope
-                            project_user = project_user_dao.get(target_scope, user.username)
-                            if project_user:
-                                policy_statement["Effect"] = "Allow"
-
-                    elif "datasetName" in path_params:
+                    if "datasetName" in path_params:
                         try:
                             if _handle_dataset_request(
                                 request_method,

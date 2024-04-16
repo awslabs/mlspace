@@ -47,6 +47,7 @@ import { hasPermission } from '../../../shared/util/permission-utils';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { setResourceScheduleModal } from '../../../modules/modal/modal.reducer';
 import { modifyResourceTerminationSchedule } from '../../../shared/util/resource-schedule.service';
+import { useBackgroundRefresh } from '../../../shared/util/hooks';
 
 function EndpointDetail () {
     const { projectName, name } = useParams();
@@ -84,6 +85,11 @@ function EndpointDetail () {
             ])
         );
     }, [dispatch, navigate, name, projectName]);
+
+    // Refresh data in the background to keep state fresh
+    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+        dispatch(getEndpoint(name!));
+    }, [dispatch]);
 
     const endpointSettings = new Map<string, ReactNode>();
     endpointSettings.set('Name', endpoint.EndpointName!);
@@ -136,7 +142,7 @@ function EndpointDetail () {
     return (
         <Condition condition={endpoint !== undefined}>
             <ContentLayout header={<Header variant='h1'>{name}</Header>}>
-                {endpointDetailsLoading ? (
+                {endpointDetailsLoading && !isBackgroundRefreshing ? (
                     <Container>
                         <StatusIndicator type='loading'>Loading details</StatusIndicator>
                     </Container>
