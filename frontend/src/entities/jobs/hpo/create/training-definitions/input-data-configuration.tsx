@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { FormProps } from '../../../form-props';
-import { ModifyMethod } from '../../../../../shared/validation/modify-method';
 import {
     CompressionType,
     DatasetExtension,
@@ -34,23 +33,14 @@ import {
     Grid,
     Header,
     Input,
-    RadioGroup,
     Select,
     SpaceBetween,
 } from '@cloudscape-design/components';
 import { prefixedSetFields, prefixedTouchFields } from '../../../../../shared/validation';
 import Condition from '../../../../../modules/condition';
 import { enumToOptions } from '../../../../../shared/util/enum-utils';
-import { DatasetType } from '../../../../../shared/model/dataset.model';
 import { createInputDataConfig } from '../../../create.functions';
-import { useAppDispatch } from '../../../../../config/store';
-import { useParams } from 'react-router-dom';
-import { useAuth } from 'react-oidc-context';
-import {
-    listDatasetBucketAndLocations,
-    listDatasetFiles,
-} from '../../../../dataset/dataset.service';
-import NotificationService from '../../../../../shared/layout/notification/notification.service';
+import DatasetResourceSelector from '../../../../../modules/dataset/dataset-selector';
 import { datasetFromS3Uri } from '../../../../../shared/util/dataset-utils';
 
 export type InputDataConfigurationProps = FormProps<(InputDataConfig & DatasetExtension)[]>;
@@ -127,22 +117,8 @@ export function InputDataConfiguration (props: InputDataConfigurationProps) {
 
 export type ChannelProps = FormProps<InputDataConfig & DatasetExtension>;
 export function Channel (props: ChannelProps) {
-    const { projectName } = useParams();
-    const auth = useAuth();
-    const userName = auth.user!.profile.preferred_username;
     // This setFields is prefixed to reference the input configuration for this channel
     const { item, setFields, touchFields, formErrors } = props;
-    const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
-    const [notifiedOfMissingInput, setNotifiedOfMissingInput] = useState(false);
-
-    const [state, setState] = React.useState({
-        bucket: '',
-        datasets: [] as any[],
-        datasetFiles: [],
-        datasetsLoaded: false,
-        scope: 'global',
-    });
 
     // When the InputDataConfig is loaded, check if there is existing path information
     useEffect(() => {
@@ -154,69 +130,6 @@ export function Channel (props: ChannelProps) {
         // Running on initial render and don't want to update with dependencies
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    useEffect(() => {
-        let scope = 'global';
-        if (item.Dataset?.Type) {
-            switch (item.Dataset.Type) {
-                case DatasetType.PRIVATE:
-                    scope = userName!;
-                    break;
-                case DatasetType.PROJECT:
-                    scope = projectName!;
-                    break;
-            }
-            listDatasetBucketAndLocations(scope, item.Dataset.Type).then((datasetsInfo) => {
-                setState((s) => ({
-                    ...s,
-                    bucket: datasetsInfo.bucket,
-                    datasets: datasetsInfo.locations,
-                    datasetsLoaded: true,
-                    scope: scope,
-                }));
-            });
-        }
-
-        // Uses touchFields, but isn't dependent
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatch, item.Dataset?.Type, projectName, userName]);
-
-    useEffect(() => {
-        if (item.Dataset?.Name && state.datasetsLoaded) {
-            const dataset = state.datasets.find(
-                (dataset: any) => dataset.name === item.Dataset?.Name
-            );
-
-            // If the dataset is found, update the file values
-            // This should apply in any case where the value is selected from the drop-down
-            if (dataset !== undefined) {
-                listDatasetFiles(state.scope, item.Dataset.Name).then((datasetFiles) => {
-                    const datasetLocation = dataset.location.replace(/s3:\/\/.+?\//, '');
-                    const fileOptions = datasetFiles.Keys.map(
-                        ({ key }: { key: string; size: number }) =>
-                            key.substr(datasetLocation.length)
-                    ).filter((value: string) => value.trim().length > 0);
-
-                    setState((s) => ({
-                        ...s,
-                        datasetFiles: fileOptions,
-                    }));
-                });
-            } else if (item.Dataset.Name && !notifiedOfMissingInput) {
-                // If the dataset is not found, set the name back to undefined to clear the field
-                // Should only apply in cloning or when Dataset and the .Name is set to an inaccessible Dataset
-                setNotifiedOfMissingInput(true);
-                notificationService.generateNotification(
-                    `The input location for the "${item.ChannelName}" channel of the job is not available and was unset.`,
-                    'warning'
-                );
-                setFields({ 'Dataset.Name': undefined });
-            }
-        }
-
-        // Several dependencies that we don't want to hook on: setFields, setNotifiedOfMissingInput, etc
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatch, item.Dataset?.Name, projectName, userName, state.datasetsLoaded]);
 
     /**
      * InputDataConfig Field to Property Mappings
@@ -317,40 +230,6 @@ export function Channel (props: ChannelProps) {
                     { colspan: { default: 12, xxs: 4 } },
                 ]}
             >
-                <FormField label='Data source'>
-                    <RadioGroup
-                        value={'S3'}
-                        items={[{ value: 'S3', label: 'S3' }]}
-                        onChange={() => {
-                            return null;
-                        }}
-                    />
-                </FormField>
-                <FormField label='Data access type'>
-                    <RadioGroup
-                        value={item.Dataset?.Type || DatasetType.GLOBAL}
-                        items={enumToOptions(DatasetType, true)}
-                        onChange={(event) => {
-                            setFields(
-                                {
-                                    Dataset: {
-                                        Type: DatasetType[
-                                            event.detail.value.toUpperCase() as keyof typeof DatasetType
-                                        ],
-                                    },
-                                },
-                                ModifyMethod.Set
-                            );
-                        }}
-                    />
-                </FormField>
-            </Grid>
-            <Grid
-                gridDefinition={[
-                    { colspan: { default: 12, xxs: 4 } },
-                    { colspan: { default: 12, xxs: 4 } },
-                ]}
-            >
                 <FormField label='S3 data type'>
                     <Select
                         selectedOption={{ value: item.DataSource.S3DataSource?.S3DataType }}
@@ -380,64 +259,21 @@ export function Channel (props: ChannelProps) {
                     />
                 </FormField>
             </Grid>
-            <FormField label='S3 location' errorText={formErrors?.Dataset?.Name}>
-                <Select
-                    placeholder='Select an input location'
-                    empty='No datasets found.'
-                    selectedOption={item.Dataset?.Name ? { value: item.Dataset?.Name } : null}
-                    options={state.datasets.map((location: { name: string; location: string }) => {
-                        return { value: location.name };
-                    })}
-                    onChange={(event) => {
-                        const dataset = state.datasets.find(
-                            (dataset: { name: string; location: string }) =>
-                                dataset.name === event.detail.selectedOption.value
-                        );
-
-                        setFields({
-                            // Setting the Dataset.Name triggers a useEffect that performs additional processing
-                            Dataset: {
-                                Type: item.Dataset?.Type,
-                                Name: event.detail.selectedOption.value,
-                                Location: '',
-                            },
-                            'DataSource.S3DataSource.S3Uri': dataset.location,
-                        });
-                        setState((s) => ({
-                            ...s,
-                            datasetFiles: [],
-                        }));
-                    }}
-                />
-            </FormField>
-            <Condition condition={item.Dataset?.Name !== undefined}>
-                <FormField label='Files' errorText={formErrors?.Dataset?.Location}>
-                    <Select
-                        selectedOption={
-                            item.Dataset?.Location ? { value: item.Dataset?.Location } : null
-                        }
-                        placeholder={'No file, use folder'}
-                        options={[
-                            { value: '', label: 'No file, use folder' },
-                            ...(state.datasetFiles?.map((l: string) => {
-                                return { value: l, label: l };
-                            }) || []),
-                        ]}
-                        onChange={(event) => {
-                            const dataset = state.datasets.find(
-                                (dataset: { name: string; location: string }) =>
-                                    dataset.name === item.Dataset?.Name
-                            );
-
-                            setFields({
-                                'Dataset.Location': event.detail.selectedOption.value,
-                                'DataSource.S3DataSource.S3Uri':
-                                    dataset.location + event.detail.selectedOption.value,
-                            });
-                        }}
-                    />
-                </FormField>
-            </Condition>
+            <DatasetResourceSelector
+                fieldLabel={'S3 Location'}
+                selectableItemsTypes={['objects']}
+                onChange={({detail}) => {
+                    setFields({
+                        'DataSource.S3DataSource.S3Uri': detail.resource,
+                    });
+                }}
+                inputOnBlur={() => {
+                    touchFields(['DataSource.S3DataSource.S3Uri']);
+                }}
+                inputInvalid={!!formErrors?.DataSource?.S3DataSource?.S3Uri}
+                fieldErrorText={formErrors?.DataSource?.S3DataSource?.S3Uri}
+                resource={item.DataSource.S3DataSource?.S3Uri || ''}
+            />
         </SpaceBetween>
     );
 }

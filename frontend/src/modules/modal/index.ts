@@ -14,18 +14,21 @@
   limitations under the License.
 */
 
-import { CallbackFunction } from '../../types';
+import { NonCancelableEventHandler } from '@cloudscape-design/components/internal/events';
 import Modal from './modal';
+import { ModalProps as CloudscapeModalProps } from '@cloudscape-design/components';
 
-type ModalProps = {
+type ModalProps =  {
     title: string;
     visible: boolean;
     dismissText: string;
     confirmText: string;
-    onDismiss: CallbackFunction;
-    onConfirm: CallbackFunction;
+    onDismiss: NonCancelableEventHandler<CloudscapeModalProps.DismissDetail>;
+    onConfirm: NonCancelableEventHandler
     children?: JSX.Element;
     showLoading?: boolean;
+    size?: CloudscapeModalProps.Size;
+    disableConfirm?: boolean
 };
 
 export default Modal;

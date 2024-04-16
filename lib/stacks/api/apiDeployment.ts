@@ -1,5 +1,5 @@
 import { App, Stack, StackProps } from 'aws-cdk-lib';
-import { Deployment, RestApi, Stage } from 'aws-cdk-lib/aws-apigateway';
+import { Deployment, RestApi } from 'aws-cdk-lib/aws-apigateway';
 
 export type ApiDeploymentStackProps = {
     readonly restApiId: string;

@@ -40,6 +40,7 @@ import { TrainingJobsTable } from '../../../jobs/training/training-jobs.table';
 import { JobStatus } from '../../../jobs/job.model';
 import { EnvironmentVariables } from '../../../../modules/environment-variables/environment-variables';
 import { generateNameConstraintText } from '../../../../shared/util/form-utils';
+import DatasetResourceSelector from '../../../../modules/dataset/dataset-selector';
 
 export type CreateModelContainerProps = {
     state: IModelContainer;
@@ -129,8 +130,10 @@ function CreateModelContainer (props: CreateModelContainerProps) {
                             statusType={loadingImageOptions ? 'loading' : 'finished'}
                         />
                     </FormField>
-                    <FormField
-                        label={
+                    <DatasetResourceSelector
+                        selectableItemsTypes={['prefixes']}
+                        resource={state.ModelDataUrl || ''}
+                        fieldLabel={
                             <span>
                                 Location of model artifacts{' '}
                                 <Condition
@@ -141,7 +144,7 @@ function CreateModelContainer (props: CreateModelContainerProps) {
                                 </Condition>
                             </span>
                         }
-                        description={
+                        fieldDescription={
                             <>
                                 Type the URL where model artifacts are stored in S3 or select a{' '}
                                 <Link
@@ -156,15 +159,11 @@ function CreateModelContainer (props: CreateModelContainerProps) {
                                 to populate the artifact path.
                             </>
                         }
-                        errorText={errors?.ModelDataUrl}
-                    >
-                        <Input
-                            placeholder='s3://bucket/path-to-your-data/'
-                            ariaLabel='Model artifacts S3 location'
-                            value={state.ModelDataUrl || ''}
-                            onChange={({ detail }) => setFields({ ModelDataUrl: detail.value })}
-                        />
-                    </FormField>
+                        fieldErrorText={errors?.ModelDataUrl}
+                        inputAriaLabel='Model artifacts S3 location'
+                        onChange={({ detail }) => setFields({ ModelDataUrl: detail.resource })}
+                        inputOnBlur={() => touchFields(['ModelDataUrl'])}
+                    />
                     <FormField
                         label={
                             <span>
