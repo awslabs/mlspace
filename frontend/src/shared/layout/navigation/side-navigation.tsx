@@ -181,7 +181,7 @@ export default function SideNavigation () {
                 <Box>
                     <div
                         style={{
-                            position: 'absolute',
+                            position: 'relative',
                             bottom: 10,
                             left: 10,
                             fontSize: '10px',
