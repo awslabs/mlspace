@@ -18,7 +18,7 @@ export const convertBytesToHumanReadable = (size: number) => {
     const i: number = size === 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
     return size > 0 ?
         // Using Console S3 Table as an example: 1 decimal normal, 0 decimal for empty
-        (size / Math.pow(1024, i)).toFixed(1) + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i] :
+        (size / Math.pow(1024, i)).toFixed(1) + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i] :
         '0 B';
 };
 

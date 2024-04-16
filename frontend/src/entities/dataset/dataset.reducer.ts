@@ -22,7 +22,6 @@ import {
     PayloadAction,
 } from '@reduxjs/toolkit';
 import { IDataset } from '../../shared/model/dataset.model';
-import { IDatasetFile } from '../../shared/model/datasetfile.model';
 import axios from '../../shared/util/axios-utils';
 
 const initialState = {
@@ -33,7 +32,6 @@ const initialState = {
     dataset: {},
     loadingFileEntities: false,
     showModal: false,
-    allFiles: [] as IDatasetFile[],
     presignedUrls: [] as any[],
 };
 
@@ -47,14 +45,6 @@ export const getDatasetsList = createAsyncThunk(
             requestUrl = `/project/${projectName}/datasets`;
         }
         return axios.get<IDataset[]>(requestUrl);
-    }
-);
-
-export const getFileEntities = createAsyncThunk(
-    'dataset/fetch_file_entity_list',
-    async (dataset: IDataset) => {
-        const requestUrl = `/dataset/${dataset.scope}/${dataset.name}/files`;
-        return axios.get<any>(requestUrl);
     }
 );
 
@@ -77,9 +67,9 @@ export const deleteDatasetFromProject = createAsyncThunk(
 export const deleteFileFromDataset = createAsyncThunk(
     'dataset/remove_file_from_dataset',
     async ({ scope, datasetName, files }: any) => {
-        for (let i = 0; i < files.length; i++) {
-            const requestUrl = `/dataset/${scope}/${datasetName}/${files[i]}`;
-            await axios.delete<IDataset>(requestUrl);
+        for (const file of files) {
+            const requestUrl = `/dataset/${scope}/${datasetName}/${file}`;
+            await axios.delete<IDataset>(requestUrl);            
         }
     }
 );
@@ -94,13 +84,6 @@ export const addDataset = createAsyncThunk('dataset/add_dataset', async (data: a
     return axios.post<IDataset>(requestUrl, data);
 });
 
-export const listDatasetsLocations = createAsyncThunk(
-    'project/list_datasets',
-    async ({ scope, type }: any) => {
-        return axios.get(`/dataset-locations/${type}/${scope}`).then((response) => response.data);
-    }
-);
-
 // slice
 
 export const DatasetSlice = createSlice({
@@ -109,9 +92,6 @@ export const DatasetSlice = createSlice({
     reducers: {
         updateEntity (state, action: PayloadAction<IDataset>) {
             state.dataset = action.payload;
-        },
-        updateFileList (state, action: PayloadAction<IDatasetFile[]>) {
-            state.allFiles = action.payload;
         },
     },
     extraReducers (builder) {
@@ -130,14 +110,6 @@ export const DatasetSlice = createSlice({
                     ...state,
                     loadingDataset: false,
                     dataset: data,
-                };
-            })
-            .addMatcher(isFulfilled(getFileEntities), (state, action: any) => {
-                const { data } = action.payload;
-                return {
-                    ...state,
-                    loadingFileEntities: false,
-                    allFiles: data.Keys,
                 };
             })
             .addMatcher(isFulfilled(deleteFileFromDataset), (state) => {
@@ -170,12 +142,6 @@ export const DatasetSlice = createSlice({
                     loadingDataset: true,
                 };
             })
-            .addMatcher(isPending(getFileEntities), (state) => {
-                return {
-                    ...state,
-                    loadingFileEntities: true,
-                };
-            })
             .addMatcher(isPending(editDataset), (state) => {
                 return {
                     ...state,
@@ -187,7 +153,7 @@ export const DatasetSlice = createSlice({
 
 // Reducer
 export default DatasetSlice.reducer;
-export const { updateEntity, updateFileList } = DatasetSlice.actions;
+export const { updateEntity } = DatasetSlice.actions;
 export const loadingDatasetsList = (state: any) => state.dataset.loadingDatasetsList;
 export const loadingDataset = (state: any) => state.dataset.loadingDataset;
 export const loadingFiles = (state: any) => state.dataset.loadingFileEntities;
