@@ -19,7 +19,6 @@ import {
     Checkbox,
     ExpandableSection,
     FormField,
-    Input,
     Select,
     SpaceBetween,
     Textarea,
@@ -28,6 +27,7 @@ import {
 import Condition from '../../../modules/condition';
 import { EndpointConfigComponentOptions } from '../common-components';
 import { IDataCaptureConfig } from '../../../shared/model/endpoint-config.model';
+import DatasetResourceSelector from '../../../modules/dataset/dataset-selector';
 
 export const DataCapture = ({
     endpointConfig,
@@ -110,24 +110,23 @@ export const DataCapture = ({
                             Prediction response
                         </Checkbox>
                     </FormField>
-                    <FormField
-                        description='Amazon SageMaker will save the prediction requests and responses along with metadata for your endpoint at this location.'
-                        label={<span>S3 location to store data collected</span>}
-                    >
-                        <Input
-                            value={endpointConfig.DataCaptureConfig.DestinationS3Uri}
-                            onChange={({ detail }) => {
-                                const updatedCaptureConfig = JSON.parse(
-                                    JSON.stringify(endpointConfig.DataCaptureConfig)
-                                );
-                                updatedCaptureConfig.DestinationS3Uri = detail.value;
-                                setEndpointConfig!({
-                                    ...endpointConfig,
-                                    DataCaptureConfig: updatedCaptureConfig,
-                                });
-                            }}
-                        />
-                    </FormField>
+                    <DatasetResourceSelector
+                        fieldLabel={<span>S3 location to store data collected</span>}
+                        fieldDescription='Amazon SageMaker will save the prediction requests and responses along with metadata for your endpoint at this location.'
+                        selectableItemsTypes={['prefixes']}
+                        showCreateButton={true}
+                        onChange={({ detail }) => {
+                            const updatedCaptureConfig = JSON.parse(
+                                JSON.stringify(endpointConfig.DataCaptureConfig)
+                            );
+                            updatedCaptureConfig.DestinationS3Uri = detail.resource;
+                            setEndpointConfig!({
+                                ...endpointConfig,
+                                DataCaptureConfig: updatedCaptureConfig,
+                            });
+                        }}
+                        resource={endpointConfig.DataCaptureConfig.DestinationS3Uri}
+                    />
                     <FormField
                         description='Amazon SageMaker will randomly sample and save the specified percentage of traffic to your endpoint.'
                         label={<span>Sampling percentage (%)</span>}

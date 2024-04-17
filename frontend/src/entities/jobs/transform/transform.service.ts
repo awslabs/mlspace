@@ -17,14 +17,6 @@
 import axios, { setProjectHeader } from '../../../shared/util/axios-utils';
 import { JobNameAndProject } from '../job.model';
 
-export const fetchS3Options = async (scope: string, type: string) => {
-    const response = await axios.get(`/dataset-locations/${type}/${scope}`);
-    if (response.status === 200) {
-        return response.data.locations;
-    }
-    return [];
-};
-
 export const stopTransformJob = async ({ jobName, projectName }: JobNameAndProject) => {
     return axios.post(`/job/transform/${jobName}/stop`, undefined, setProjectHeader(projectName));
 };

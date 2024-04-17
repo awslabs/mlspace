@@ -15,7 +15,6 @@
 */
 
 import { JobStatus } from '../../entities/jobs/job.model';
-import { TableEntry } from '../../modules/table';
 
 export type ITransform = {
     AutoMLJobArn?: string;
@@ -47,13 +46,13 @@ export type ITransform = {
     };
     ModelName?: string;
     TransformEndTime?: string;
-    TransformInput?: {
+    TransformInput: {
         CompressionType?: string;
         ContentType?: string;
-        DataSource?: {
-            S3DataSource?: {
+        DataSource: {
+            S3DataSource: {
                 S3DataType?: string;
-                S3Uri?: string;
+                S3Uri: string;
             };
         };
         SplitType?: string;
@@ -75,11 +74,11 @@ export type ITransform = {
     TransformStartTime?: string;
     ProjectName?: string;
     duration?: string;
-} & TableEntry;
+};
 
-export const defaultValue: Readonly<ITransform> = {
+export const defaultValue: Readonly<ITransform> & {id: string} = {
     id: '0',
-    TransformInput: { DataSource: { S3DataSource: {} } },
+    TransformInput: { DataSource: { S3DataSource: { S3Uri: ''} } },
     TransformOutput: {},
     TransformResources: {
         InstanceCount: 1,

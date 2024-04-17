@@ -14,15 +14,20 @@
   limitations under the License.
 */
 
-export type IDatasetFile = {
-    key?: string;
-    size?: string;
-    file?: File;
-    bucket?: string;
-};
+import { useAuth } from 'react-oidc-context';
 
-export const defaultIDatasetFile: IDatasetFile = {
-    key: 'default',
-};
+/**
+ * React hook to get username of current signed in user.
+ * 
+ * @returns {string}
+ */
+export const useUsername = (): string => {
+    const auth = useAuth();
+    
+    const username = auth.user?.profile.preferred_username;
+    if (!username) {
+        throw 'No username available.';
+    }
 
-export const defaultValue: Readonly<IDatasetFile> = defaultIDatasetFile;
+    return username;
+};

@@ -36,7 +36,6 @@ import _ from 'lodash';
 import { HyperparameterField } from '../../hyperparameter-field';
 import { createTrainingJob } from '../../create.functions';
 import { useEffect } from 'react';
-import { useAuth } from 'react-oidc-context';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
     duplicateAttributeRefinement,
@@ -72,9 +71,11 @@ import { AttributeEditorSchema } from '../../../../modules/environment-variables
 import { NetworkSettings } from '../../hpo/create/training-definitions/network-settings';
 import { InputDataConfiguration } from '../../hpo/create/training-definitions/input-data-configuration';
 import { OutputDataConfiguration } from '../../hpo/create/training-definitions/output-data-configuration';
-import { createDatasetHandleAlreadyExists, determineScope } from '../../../dataset/dataset.service';
-import { IDataset } from '../../../../shared/model';
+import { tryCreateDataset } from '../../../dataset/dataset.service';
 import { generateNameConstraintText } from '../../../../shared/util/form-utils';
+import { useUsername } from '../../../../shared/util/auth-utils';
+import '../../../../shared/validation/helpers/uri';
+import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 
 const ALGORITHMS: { [key: string]: Algorithm } = {};
 ML_ALGORITHMS.filter((algorithm) => algorithm.defaultHyperParameters.length > 0).map(
@@ -83,8 +84,7 @@ ML_ALGORITHMS.filter((algorithm) => algorithm.defaultHyperParameters.length > 0)
 
 export default function TrainingJobCreate () {
     const { projectName } = useParams();
-    const auth = useAuth();
-    const userName = auth.user!.profile.preferred_username!;
+    const userName = useUsername();
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const navigate = useNavigate();
@@ -252,25 +252,13 @@ export default function TrainingJobCreate () {
                     }),
                 DataSource: z.object({
                     S3DataSource: z.object({
-                        S3Uri: z.string().startsWith('s3://'),
-                    }),
-                }),
-                Dataset: z.object({
-                    Name: z.string({
-                        required_error:
-                            'S3 location is required - please select a dataset from the list',
+                        S3Uri: z.string().s3Uri()
                     }),
                 }),
             })
         ),
         OutputDataConfig: z.object({
-            S3OutputPath: z.string().startsWith('s3://'),
-            Dataset: z.object({
-                Name: z.string({
-                    required_error:
-                        'S3 output location is required',
-                }),
-            }),
+            S3OutputPath: z.string().datasetUri(),
         }),
     });
 
@@ -370,13 +358,12 @@ export default function TrainingJobCreate () {
                                 'info'
                             );
                         }
-                        const newDataset = {
-                            name: state.form.OutputDataConfig.Dataset.Name,
-                            description: `Dataset created as part of the Training job: ${state.form.TrainingJobName}`,
-                            type: state.form.OutputDataConfig.Dataset.Type,
-                            scope: determineScope(state.form.OutputDataConfig.Dataset.Name, projectName, userName!)
-                        } as IDataset;
-                        createDatasetHandleAlreadyExists(newDataset);
+
+                        const dataset = datasetFromS3Uri(state.form.OutputDataConfig.S3OutputPath);
+                        if (dataset) {
+                            dataset.description = `Dataset created as part of the Training job: ${state.form.TrainingJobName}`;
+                            tryCreateDataset(dataset);
+                        }
                         
                         navigate(
                             `/project/${projectName}/jobs/training/detail/${state.form.TrainingJobName}`
