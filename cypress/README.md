@@ -1,9 +1,21 @@
 # Test Setup
 
-In `cypress.config.ts` change the `base_url` field to either `http://localhost:3000/` or the URL of your dev stack.
+In `cypress.config.ts` the following environment variables need to be configured:
+- `auth_type` - The type of autentication used for the target MLSpace implementation. Cognito is recommended for development setups with configuration instructions in the MLSpace docs
+- `base_url` - set to either `http://localhost:3000/` or the URL of your dev stack (e.g. `https://<api gateway id>.execute-api.us-east-1.amazonaws.com/Prod/`).
+- `lambda_endpoint` - Only needed if `base_url` is targeting a localhost implementation. This should be the lambda APIs for the deployed MLSpace backend (e.g. `https://<api gateway id>.execute-api.us-east-1.amazonaws.com/Prod/`)
+- `username` - The username that cypress will use to login and conduct tests
+- `password` - The password cypress will attempt to use to login with the provided username
 
+#### Example cypress.config.ts env setup for localhost:
 ```
-<TBD>
+env: {
+    auth_type: AuthType.Cognito,
+    base_url: "http://localhost:3000/Prod",
+    lambda_endpoint: "https://abcde12345.execute-api.us-east-1.amazonaws.com/Prod",
+    username: "myusername",
+    password: "mypassword",
+  }
 ```
 
 # Running the tests

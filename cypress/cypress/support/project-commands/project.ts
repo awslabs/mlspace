@@ -16,13 +16,11 @@
 
 import { dismissNotification } from '../cloudscape-utils/utils';
 import { ProjectProps } from '../test-initializer/types';
-import { BASE_URL } from '../commands';
-
-const baseUrl = Cypress.env('base_url');
+import { BASE_URL, LAMBDA_ENDPOINT } from '../commands';
 
 const createProject = ({ name, description }: ProjectProps) => {
     cy.intercept('GET', `**/project/${name}**`).as('getProject');
-    cy.visit(baseUrl);
+    cy.visit(BASE_URL);
     cy.contains('Create Project').click();
     cy.url().should('include', '/project/create');
     cy.setValueCloudscapeInput('name-input', name);
@@ -37,7 +35,7 @@ const createProject = ({ name, description }: ProjectProps) => {
 };
 
 const deleteProject = (projectName: string) => {
-    cy.visit(`${baseUrl}/#/project/${projectName}`);
+    cy.visit(`${BASE_URL}/#/project/${projectName}`);
     cy.contains('Actions').click();
     cy.contains('Suspend project', { timeout: 5000 }).click();
     cy.contains(`Suspend ${projectName}?`);
@@ -68,7 +66,7 @@ const deleteProjectsWithPrefix = (projectNamePrefix: string, maxNumberOfDeletes 
         if (sessionStorageKey.startsWith('oidc.user')) {
             // Use OIDC header to connect to the project API
             cy.request({
-                url: `${BASE_URL}/project/`,
+                url: LAMBDA_ENDPOINT ? `${LAMBDA_ENDPOINT}/project/` : `${BASE_URL}/project/`,
                 headers: {
                     Authorization: `Bearer ${JSON.parse(sessionStorage.getItem(sessionStorageKey)!).id_token}`
                 },

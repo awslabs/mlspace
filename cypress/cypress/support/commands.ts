@@ -28,6 +28,8 @@ import { AuthType } from './test-initializer/types';
 
 export const AUTH_TYPE = Cypress.env('auth_type');
 export const BASE_URL = Cypress.env('base_url');
+// This is only used if BASE_URL targets a "localhost" implementation (e.g. "http://localhost:3000/Prod")
+export const LAMBDA_ENDPOINT = Cypress.env('lambda_endpoint');
 export const DEFAULT_USERNAME = Cypress.env('username');
 export const DEFAULT_PASSWORD = Cypress.env('password');
 
