@@ -34,15 +34,15 @@ export const DEFAULT_PASSWORD = Cypress.env('password');
 export function login (baseUrl: string = BASE_URL, username: string = DEFAULT_USERNAME, password: string = DEFAULT_PASSWORD) {
     if (AUTH_TYPE === AuthType.Cognito) {
         cy.loginByCognito(
-            BASE_URL,
-            DEFAULT_USERNAME,
-            DEFAULT_PASSWORD
+            baseUrl,
+            username,
+            password
         );
     } else if (AUTH_TYPE === AuthType.Idp) {
         cy.loginByMockIdP(
-            BASE_URL,
-            DEFAULT_USERNAME,
-            DEFAULT_PASSWORD
+            baseUrl,
+            username,
+            password
         );
     }
 }

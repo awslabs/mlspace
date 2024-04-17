@@ -27,7 +27,8 @@
         "cypress:open": "cypress open",
         "cypress:run": "cypress run",
         "clean": "rm -rf build/ node_modules/",
-        "lint:fix": "eslint --fix cypress/"
+        "lint:fix": "eslint --fix cypress/",
+        "format": "eslint --fix cypress/"
     },
     "lint-staged": {
         "**/*.{js,jsx,ts,tsx}": [

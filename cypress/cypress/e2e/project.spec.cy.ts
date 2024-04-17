@@ -20,8 +20,6 @@ describe('Project Tests', () => {
     const testProjectName = `e2eTest${(new Date()).getTime()}`;
     const testProjectDescription = 'This is an example project for E2E tests.';
     const baseUrl = Cypress.env('base_url');
-    const username = Cypress.env('username');
-    const password = Cypress.env('password');
 
     before(() => {
         Cypress.session.clearAllSavedSessions();

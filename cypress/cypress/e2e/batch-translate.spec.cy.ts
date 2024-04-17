@@ -53,12 +53,12 @@ describe('Batch Translate Tests', () => {
         ]
     };
 
-    const knownAccessibilityDefects = [
-        'The aria-posinset attribute is not allowed on this element because it does not have the correct role attribute',
-        'The aria-posinset attribute is not allowed on this LI because it does not have the correct role attribute',
-        'The aria-posinset and aria-setsize attribute pair is not allowed on this LI because it does not have the correct role attribute',
-        'The aria-setsize attribute is not allowed on this LI because it does not have the correct role attribute',
-    ];
+    // const knownAccessibilityDefects = [
+    //     'The aria-posinset attribute is not allowed on this element because it does not have the correct role attribute',
+    //     'The aria-posinset attribute is not allowed on this LI because it does not have the correct role attribute',
+    //     'The aria-posinset and aria-setsize attribute pair is not allowed on this LI because it does not have the correct role attribute',
+    //     'The aria-setsize attribute is not allowed on this LI because it does not have the correct role attribute',
+    // ];
 
     before(() => {
         cy.initializeTest(testProps);
