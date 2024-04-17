@@ -104,7 +104,7 @@ const formSchema = z.object({
         )
         .superRefine(duplicateAttributeRefinement('ChannelName')),
     OutputDataConfig: z.object({
-        S3OutputPath: z.string().datasetPrefix(),
+        S3OutputPath: z.string().datasetUri(),
     }),
 });
 
