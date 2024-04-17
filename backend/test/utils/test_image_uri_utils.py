@@ -16,7 +16,7 @@
 
 from unittest import mock
 
-from ml_space_lambda.utils.image_uris import check_algorithm_specifications_for_builtin
+from ml_space_lambda.utils.image_uri_utils import delete_metric_definition_for_builtin_algorithms
 
 TEST_ENV_CONFIG = {"LAMBDA_TASK_ROOT": "./src/"}
 
@@ -42,7 +42,7 @@ def _get_test_algorithm_specification(image_uri: str):
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 def test_check_algorithm_specification_for_builtin_not_builtin():
     assert (
-        check_algorithm_specifications_for_builtin(
+        delete_metric_definition_for_builtin_algorithms(
             _get_test_algorithm_specification("123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1")
         )
         is False
@@ -51,6 +51,6 @@ def test_check_algorithm_specification_for_builtin_not_builtin():
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 def test_check_algorithm_specification_for_builtin_is_builtin():
-    assert check_algorithm_specifications_for_builtin(
+    assert delete_metric_definition_for_builtin_algorithms(
         _get_test_algorithm_specification("123456789012.dkr.ecr.us-east-1.amazonaws.com/xgboost:1")
     )

@@ -31,46 +31,6 @@ import botocore
 
 logger = logging.getLogger(__name__)
 
-### START CUSTOM MLSPACE ADDITIONS FOR DETECTING BUILT-IN ALGORITHMS
-# Most images are named the same as their frameworks except for the below exceptions
-IMAGE_TO_FRAMEWORK_NAME_CONVERSIONS = {"sagemaker-xgboost": "xgboost"}
-
-
-def _check_image_framework_name(framework) -> str:
-    if framework in IMAGE_TO_FRAMEWORK_NAME_CONVERSIONS:
-        return IMAGE_TO_FRAMEWORK_NAME_CONVERSIONS[framework]
-    else:
-        return framework
-
-
-def _get_image_components(image_uri) -> dict:
-    split = image_uri.split("/")
-    region_info_split = split[0].split(".")
-    framework_info_split = split[1].split(":")
-    return {
-        "region": region_info_split[3],
-        "framework": _check_image_framework_name(framework_info_split[0]),
-        "version": framework_info_split[1],
-    }
-
-
-def check_algorithm_specifications_for_builtin(algorithm_specifications) -> bool:
-    # If the image is a known AWS built-in container
-    image_components = _get_image_components(algorithm_specifications["TrainingImage"])
-    try:
-        # If the retrieve is successful, then the image/framework is a built-in algorithm
-        retrieve(
-            image_components["framework"], image_components["region"], version=image_components["version"], image_scope=None
-        )
-        del algorithm_specifications["MetricDefinitions"]
-        return True
-    except IOError:
-        # An exception occurs if the image/framework is not a detected built-in
-        return False
-
-
-### END CUSTOM ADDITIONS
-
 ECR_URI_TEMPLATE = "{registry}.dkr.{hostname}/{repository}"
 HUGGING_FACE_FRAMEWORK = "huggingface"
 HUGGING_FACE_LLM_FRAMEWORK = "huggingface-llm"

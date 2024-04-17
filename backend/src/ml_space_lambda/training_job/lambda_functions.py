@@ -25,12 +25,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
-
-# The sagemaker SDK isn't directly compatible with Lambda
-# https://github.com/aws/sagemaker-python-sdk/issues/1200
-# To get around this we just grabbed the single file of the SDK that we need in order to generate
-# image URIs
-from ml_space_lambda.utils.image_uris import check_algorithm_specifications_for_builtin
+from ml_space_lambda.utils.image_uri_utils import delete_metric_definition_for_builtin_algorithms
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -42,7 +37,6 @@ resource_metadata_dao = ResourceMetadataDAO()
 
 @api_wrapper
 def create(event, context):
-    deleted_metric_definitions = False
     event_body = json.loads(event["body"])
     training_job_name = event_body["TrainingJobName"]
     hyper_parameters = event_body["HyperParameters"]
@@ -104,11 +98,16 @@ def create(event, context):
         EnableInterContainerTrafficEncryption=True,
     )
 
-    deleted_metric_definitions = check_algorithm_specifications_for_builtin(training_job_definition["AlgorithmSpecification"])
+    deleted_metric_definitions = delete_metric_definition_for_builtin_algorithms(
+        training_job_definition["AlgorithmSpecification"]
+    )
 
     try:
         response = sagemaker.create_training_job(**training_job_definition)
     except botocore.exceptions.ClientError as error:
+        # This if should no longer occur due to delete_metric_definition_for_builtin_algorithm(), but is left as a failsafe for built-in algorithms where the framework name doesn't match the repository name
+        # Example of framework = repository name - image_uri_config/semantic-segmentation.json
+        # Example of framework != repository name - image_uri_config/xgboost.json OR image_uri_config/huggingface.json
         if "You can't override the metric definitions for Amazon SageMaker algorithms" in error.response["Error"]["Message"]:
             del training_job_definition["AlgorithmSpecification"]["MetricDefinitions"]
             response = sagemaker.create_training_job(**training_job_definition)
