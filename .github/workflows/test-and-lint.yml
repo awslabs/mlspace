@@ -87,7 +87,6 @@ jobs:
       with:
         node-version: 20.x
     - name: Install dependencies
-      working-directory: ./cypress
       run: |
         npm install
     - name: Lint
