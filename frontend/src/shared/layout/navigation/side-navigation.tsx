@@ -187,7 +187,6 @@ export default function SideNavigation () {
                     style={{
                         fontSize: '10px',
                         marginTop: 'auto',
-                        color: '#969696',
                         alignSelf: 'flex-end',
                         marginRight: 'auto',
                         padding: '10px',
