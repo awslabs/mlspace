@@ -20,8 +20,7 @@ import {
     SideNavigation as CloudScapeSideNavigation,
     SideNavigationProps,
     Header,
-    FormField,
-    Box,
+    FormField
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setActiveHref, setItemsForProjectName } from './navigation.reducer';
@@ -103,7 +102,13 @@ export default function SideNavigation () {
     ];
 
     return (
-        <>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: '1',
+            // eslint-disable-next-line spellcheck/spell-checker
+            height: '100vh',
+        }}>
             {
                 // Cloudscape built-in nav header doesn't allow us to include the select dropdown and
                 // also lacks some required customization to pass accessibility audits
@@ -178,18 +183,18 @@ export default function SideNavigation () {
                 }
             />
             {window.gitInfo && (
-                <Box>
-                    <div
-                        style={{
-                            position: 'absolute',
-                            bottom: 10,
-                            left: 10,
-                            fontSize: '10px',
-                            color: '#969696'
-                        }}
-                        title={window.gitInfo?.gitHash}>{window.gitInfo?.revisionTag}</div>
-                </Box>
+                <div
+                    style={{
+                        fontSize: '10px',
+                        marginTop: 'auto',
+                        alignSelf: 'flex-end',
+                        marginRight: 'auto',
+                        padding: '10px',
+                    }}
+                    title={window.gitInfo?.gitHash}>
+                    {window.gitInfo?.revisionTag}
+                </div>
             )}
-        </>
+        </div>
     );
 }
