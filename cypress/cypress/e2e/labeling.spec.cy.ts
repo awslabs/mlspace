@@ -42,10 +42,6 @@ describe('GroundTruth Labeling Job Tests', () => {
         login: true,
     };
 
-    // const knownAccessibilityDefects = [
-    //     'The aria-rowindex attribute is not allowed on this TR'
-    // ] as string[];
-
     const fakeCreatedJob = {
         'LabelingJobStatus': 'InProgress',
         'LabelCounters': {
