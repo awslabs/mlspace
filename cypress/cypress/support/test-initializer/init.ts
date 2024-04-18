@@ -17,6 +17,8 @@
 import { AUTH_TYPE, BASE_URL, DEFAULT_USERNAME, DEFAULT_PASSWORD } from '../commands';
 import { AuthType, TestProps } from './types';
 
+let resizerErrorIframeClosed = false;
+
 const initializeTest = (props: TestProps) => {
     Cypress.session.clearAllSavedSessions();
     const { login, projects, datasets, projectPrefix } = props;
@@ -45,6 +47,18 @@ const initializeTest = (props: TestProps) => {
     });
     datasets?.forEach((dataset) => {
         cy.createDataset(dataset);
+    });
+
+    const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/;
+    Cypress.on('uncaught:exception', (err) => {
+        /* returning false here prevents Cypress from failing the test */
+        if (resizeObserverLoopErrRe.test(err.message)) {
+            if (!resizerErrorIframeClosed) {
+                cy.get('iframe').invoke('remove');
+                resizerErrorIframeClosed = true;
+            }
+            return false;
+        }
     });
 };
 

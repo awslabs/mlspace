@@ -119,7 +119,7 @@ export function LabelingJobCreate () {
             OutputConfig: z.object({
                 S3OutputPath: z.string().min(1, {
                     message: 'Must enter output dataset.',
-                }).s3Prefix(),
+                }).datasetUri(),
             }),
             HumanTaskConfig: z.object({
                 NumberOfHumanWorkersPerDataObject: z

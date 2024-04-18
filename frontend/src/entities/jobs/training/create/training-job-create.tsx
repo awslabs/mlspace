@@ -258,7 +258,7 @@ export default function TrainingJobCreate () {
             })
         ),
         OutputDataConfig: z.object({
-            S3OutputPath: z.string().datasetPrefix(),
+            S3OutputPath: z.string().datasetUri(),
         }),
     });
 

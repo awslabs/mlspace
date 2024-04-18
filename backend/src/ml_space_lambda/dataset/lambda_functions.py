@@ -232,7 +232,7 @@ def list_resources(event, context):
 @api_wrapper
 def list_files(event, context):
     env_variables = get_environment_variables()
-    query_string_parameters = event.get("queryStringParameters", {})
+    query_string_parameters = event.get("queryStringParameters") or {}
 
     # map query parameters keys to api parameter names
     query_string_parameters = rename_dict_keys(

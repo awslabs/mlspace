@@ -131,7 +131,7 @@ export function TransformCreate () {
         TransformOutput: z.object({
             Accept: z.string().max(256).optional(),
             AssembleWith: z.string().optional(),
-            S3OutputPath: z.string({ required_error: 'S3 output location is required' }).max(1024).s3Prefix(),
+            S3OutputPath: z.string({ required_error: 'S3 output location is required' }).max(1024).datasetUri(),
         }),
         TransformResources: z.object({
             InstanceCount: z.number().gte(1).lte(100),
