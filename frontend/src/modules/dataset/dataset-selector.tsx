@@ -92,7 +92,7 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                         <DatasetBrowser
                             resource={state.resource || ''}
                             selectableItemsTypes={props.selectableItemsTypes}
-                            onSelectionChange={({detail: {selectedItems}}) => {
+                            onSelectionChange={useCallback(({detail: {selectedItems}}) => {
                                 let selected: string | undefined = undefined;
 
                                 const selectedItem = selectedItems?.[0];
@@ -114,7 +114,7 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                                 }
                                 
                                 setState({selected});
-                            }}
+                            }, [setState])}
                         />
                     </Modal>
                 </Condition>

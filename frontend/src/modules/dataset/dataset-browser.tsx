@@ -38,7 +38,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     const username = useUsername();
     const dispatch = useAppDispatch();
     const { projectName } = useParams();
-    const { actions, resource, header, selectableItemsTypes = [], manageMode, onItemsChange } = props;
+    const { actions, resource, header, selectableItemsTypes = [], manageMode, onItemsChange, onSelectionChange } = props;
     const isSelectingObject = selectableItemsTypes.indexOf('objects') > -1;
     const isSelectingPrefix = selectableItemsTypes.indexOf('prefixes') > -1;
     const [state, setState] = React.useReducer(datasetBrowserReducer, {
@@ -84,6 +84,11 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                         nextToken: response.payload.data.nextToken,
                         isLoading: false
                     };
+
+                    // if existingItems isn't supplied when we're effectively changing view contexts so selectedItems should be cleared
+                    if (!existingItems) {
+                        payload.selectedItems = [];
+                    }
         
                     setState({
                         type: DatasetActionType.State,
@@ -217,6 +222,10 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
         onItemsChange?.(new CustomEvent('itemsChange', {detail: {items: state.items}}));
     }, [state.items, onItemsChange]);
 
+    useEffect(() => {
+        onSelectionChange?.(new CustomEvent('selectionChange', {cancelable: false, detail: { selectedItems: state.selectedItems}}));
+    }, [onSelectionChange, state.selectedItems]);
+
     // create the appropriate table properties for the current viewing context (scopes, listing datasets, listing a dataset resources)
     const displayModeTableProperties = tablePropertiesForDisplayMode(displayMode, state, setState);
 
@@ -328,8 +337,6 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                                 selectedItems: event.detail.selectedItems
                             }
                         });
-
-                        props.onSelectionChange?.(event);
                     }}
                     pagination={
                         <Pagination
