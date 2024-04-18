@@ -312,7 +312,7 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
     }
 
     const stepValidator = [
-        ['DefinitionName', 'TuningObjective.MetricName', 'TuningObjective.Type', 'hyperparameters'],
+        ['DefinitionName', 'TuningObjective.MetricName', 'TuningObjective.Type', 'hyperparameters', 'AlgorithmSpecification'],
         ['InputDataConfig', 'OutputDataConfig'],
         ['ResourceConfig'],
     ];
@@ -355,6 +355,11 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
             onNavigate={(event) => {
                 switch (event.detail.reason) {
                     case 'step':
+                        setState({
+                            type: 'updateState',
+                            payload: { activeStepIndex: event.detail.requestedStepIndex },
+                        });
+                        break;
                     case 'previous':
                         setState({
                             type: 'updateState',
