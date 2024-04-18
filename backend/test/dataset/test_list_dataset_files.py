@@ -210,6 +210,28 @@ def test_list_dataset_files_empty(mock_s3, mock_dataset_dao, mock_global_dataset
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
+def test_list_dataset_files_no_querystring(mock_s3, mock_dataset_dao, mock_global_dataset):
+    mock_dataset_dao.get.return_value = mock_global_dataset
+    mock_s3.list_objects_v2.return_value = {
+        "Prefix": "global/datasets/example_dataset/",
+        "MaxKeys": 1000,
+    }
+
+    expected_response = generate_html_response(
+        200,
+        {
+            "pageSize": 1000,
+            "prefix": "global/datasets/example_dataset/",
+            "bucket": "mlspace-data-bucket",
+            "contents": [],
+        },
+    )
+
+    assert lambda_handler(build_mock_event(mock_global_dataset, None), mock_context) == expected_response
+
+
+@mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
 def test_list_dataset_files_client_error(mock_s3, mock_dataset_dao, mock_global_dataset):
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
