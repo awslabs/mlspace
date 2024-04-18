@@ -229,8 +229,6 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     // create the appropriate table properties for the current viewing context (scopes, listing datasets, listing a dataset resources)
     const displayModeTableProperties = tablePropertiesForDisplayMode(displayMode, state, setState);
 
-    console.log('outer filtering text', state.filter.filteringText);
-
     return (
         <Box>
             <SpaceBetween direction='vertical' size='s'>
@@ -288,7 +286,6 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                                 const shouldFetch = filteringTextPrefix !== filteringTextDisplayPrefix;
 
                                 if (state.datasetContext) {
-                                    console.log('filterText', filteringText);
                                     const payload: Partial<DatasetBrowserState> = {
                                         isLoading: shouldFetch,
                                         selectedItems: shouldFetch ? [] : state.selectedItems,
