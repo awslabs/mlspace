@@ -23,7 +23,6 @@ describe('Notebook Tests', () => {
     const projectName = `e2eTestProject${testTime}`;
     const baseUrl = Cypress.env('base_url');
     const username = Cypress.env('username');
-    const password = Cypress.env('password');
 
 
     before(() => {

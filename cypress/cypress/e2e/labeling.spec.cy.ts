@@ -42,12 +42,6 @@ describe('GroundTruth Labeling Job Tests', () => {
         login: true,
     };
 
-    /* eslint-disable spellcheck/spell-checker */
-    const knownAccessibilityDefects = [
-        'The aria-rowindex attribute is not allowed on this TR'
-    ] as string[];
-    /* eslint-enable spellcheck/spell-checker */
-
     const fakeCreatedJob = {
         'LabelingJobStatus': 'InProgress',
         'LabelCounters': {
