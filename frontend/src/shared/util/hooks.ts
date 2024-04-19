@@ -34,7 +34,7 @@ export function useBackgroundRefresh (action: () => void, deps: readonly unknown
             const timerId = setInterval(() => {
                 setIsBackgroundRefreshing(true);
                 callbackAction();
-            }, window.env.BACKGROUND_REFRESH_INTERVAL * 1000);
+            }, (window.env.BACKGROUND_REFRESH_INTERVAL || 60) * 1000);
             
             return () => {
                 clearInterval(timerId);
