@@ -77,3 +77,12 @@ If using a remote machine without UI mirroring, then screenshots/videos of the t
 
     Compression progress:  100%
 ```
+
+# Linting
+
+To ensure that code is meeting the enforced code standards you can run the following command within the `cypress` directory:
+```
+npm run lint:fix
+```
+
+Linting will also run when executing the `act` command in the base project directory

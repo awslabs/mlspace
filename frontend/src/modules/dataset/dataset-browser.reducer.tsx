@@ -173,25 +173,25 @@ export const getDatasetContents = createAsyncThunk(
                 scope = username;
         }
 
-        const requestUrl = new URL(`${window.env.LAMBDA_ENDPOINT}dataset/${scope}/${datasetContext.name}/files`);
+        const searchParams = new URLSearchParams();
 
         if (props.nextToken) {
-            requestUrl.searchParams.set('nextToken', props.nextToken);
+            searchParams.set('nextToken', props.nextToken);
         }
 
         if (props.pageSize) {
-            requestUrl.searchParams.set('pageSize', String(props.pageSize));
+            searchParams.set('pageSize', String(props.pageSize));
         }
 
         if (props.projectName) {
-            requestUrl.searchParams.set('projectName', props.projectName);
+            searchParams.set('projectName', props.projectName);
         }
 
         if (datasetContext?.location) {
-            requestUrl.searchParams.set('prefix', datasetContext.location);
+            searchParams.set('prefix', datasetContext.location);
         }
 
-        return axios.get<ListFilesResponse>(requestUrl.toString()).then((response) => {
+        return axios.get<ListFilesResponse>(`/dataset/${scope}/${datasetContext.name}/files?${searchParams.toString()}`).then((response) => {
             response.data.contents.forEach((resource) => {
                 // copy bucket from top level of response to individual resources for easier management
                 resource.bucket = response.data.bucket;

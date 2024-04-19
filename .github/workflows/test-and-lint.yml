@@ -74,7 +74,25 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 20.x
-    - name: Install dependencies and lint
+    - name: Install dependencies
       run: |
         npm install
-
+    - name: Lint
+      run: |
+        npm run lint:fix
+  cypress_build:
+    name: Cypress
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+    - name: Install dependencies
+      run: |
+        npm install
+    - name: Lint
+      working-directory: ./cypress
+      run: |
+        npm run lint:fix
