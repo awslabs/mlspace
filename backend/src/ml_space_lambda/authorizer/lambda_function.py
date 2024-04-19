@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import time
+import urllib
 from typing import Any, Dict, Optional, Tuple
 
 import jwt
@@ -100,7 +101,13 @@ def lambda_handler(event, context):
             "context": response_context,
         }
 
-    username = token_info["preferred_username"]
+    username = (
+        urllib.parse.unquote(token_info["preferred_username"])
+        .replace(",", "-")
+        .replace(".", "-")
+        .replace("=", "-")
+        .replace(" ", "-")
+    )
     requested_resource = event["resource"]
     path_params = event["pathParameters"]
     request_method = event["httpMethod"]
