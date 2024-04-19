@@ -107,7 +107,7 @@ export default function TrainingJobCreate () {
 
     const cloneTrainingJob = (trainingJobDetails) => {
         // The deep clone prevents issues with developer mode double invoking, though is probably slightly less efficient
-        const clonedJob = _.cloneDeep(trainingJobDetails);
+        const clonedJob = _.merge(createTrainingJob(), _.cloneDeep(trainingJobDetails));
 
         // Update name to be unique
         // In development this will trigger twice. Alternative is a deep copy of the object, but isn't as efficient
