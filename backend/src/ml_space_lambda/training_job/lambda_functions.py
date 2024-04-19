@@ -25,6 +25,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
+from ml_space_lambda.utils.image_uri_utils import delete_metric_definition_for_builtin_algorithms
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -96,15 +97,27 @@ def create(event, context):
         EnableNetworkIsolation=event_body["EnableNetworkIsolation"] if "EnableNetworkIsolation" in event_body else True,
         EnableInterContainerTrafficEncryption=True,
     )
+
+    deleted_metric_definitions = delete_metric_definition_for_builtin_algorithms(
+        training_job_definition["AlgorithmSpecification"]
+    )
+
     try:
         response = sagemaker.create_training_job(**training_job_definition)
     except botocore.exceptions.ClientError as error:
+        # This if should no longer occur due to delete_metric_definition_for_builtin_algorithm(), but is left as a failsafe for built-in algorithms where the framework name doesn't match the repository name
+        # Example of framework = repository name - image_uri_config/semantic-segmentation.json
+        # Example of framework != repository name - image_uri_config/xgboost.json OR image_uri_config/huggingface.json
         if "You can't override the metric definitions for Amazon SageMaker algorithms" in error.response["Error"]["Message"]:
             del training_job_definition["AlgorithmSpecification"]["MetricDefinitions"]
             response = sagemaker.create_training_job(**training_job_definition)
-            response["DeletedMetricsDefinitions"] = True
+            deleted_metric_definitions = True
         else:
             raise error
+
+    # If the metric definitions were deleted due to the job being submited as a BYOM, but the algorithm was a built-in, add a response showing the metrics definitions were removed
+    if deleted_metric_definitions:
+        response["DeletedMetricsDefinitions"] = True
 
     # Creates the initial metadata record
     resource_metadata_dao.upsert_record(
