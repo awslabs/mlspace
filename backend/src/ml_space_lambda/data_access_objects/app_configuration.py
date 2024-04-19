@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Optional
+from typing import List, Optional
 from venv import logger
 
 from dynamodb_json import json_util as dynamodb_json
@@ -25,7 +25,6 @@ from dynamodb_json import json_util as dynamodb_json
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
-
 
 class AppConfigurationModel:
     def __init__(
@@ -56,7 +55,7 @@ class AppConfigurationModel:
         return AppConfigurationModel(
             dict_object["configScope"],
             dict_object["versionId"],
-            dict_object["configuration"],
+            SettingsModel.from_dict(dict_object["configuration"]),
             dict_object["changedBy"],
             dict_object["changeReason"],
         )
@@ -227,7 +226,12 @@ class ClusterSize:
     def to_dict(cluster_size_list: list):
         list_of_dicts = []
         for size in cluster_size_list:
-            list_of_dicts.append({size.name, size.size, size.master_type, size.core_type})
+            list_of_dicts.append({
+                "name": size.name, 
+                "size": size.size, 
+                "master-type": size.master_type, 
+                "core-type": size.core_type
+            })
         return list_of_dicts
 
     @staticmethod
