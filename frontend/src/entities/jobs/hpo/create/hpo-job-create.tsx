@@ -379,11 +379,6 @@ export function HPOJobCreate () {
                         onNavigate={(event) => {
                             switch (event.detail.reason) {
                                 case 'step':
-                                    setState({
-                                        type: 'updateState',
-                                        payload: { activeStepIndex: event.detail.requestedStepIndex },
-                                    });
-                                    break;
                                 case 'previous':
                                     setState({
                                         type: 'updateState',
