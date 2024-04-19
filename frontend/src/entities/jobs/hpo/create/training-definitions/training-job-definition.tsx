@@ -312,7 +312,7 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
     }
 
     const stepValidator = [
-        ['DefinitionName', 'TuningObjective.MetricName', 'TuningObjective.Type', 'hyperparameters'],
+        ['DefinitionName', 'TuningObjective.MetricName', 'TuningObjective.Type', 'hyperparameters', 'AlgorithmSpecification'],
         ['InputDataConfig', 'OutputDataConfig'],
         ['ResourceConfig'],
     ];
