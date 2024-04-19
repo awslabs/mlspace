@@ -25,6 +25,7 @@ export const PROJECT_USERS_TABLE_NAME = 'mlspace-project-users';
 export const USERS_TABLE_NAME = 'mlspace-users';
 export const RESOURCE_SCHEDULE_TABLE_NAME = 'mlspace-resource-schedule';
 export const RESOURCE_METADATA_TABLE_NAME = 'mlspace-resource-metadata';
+export const APP_CONFIGURATION_TABLE_NAME = 'mlspace-app-configuration'
 export const CONFIG_BUCKET_NAME = 'mlspace-config';
 export const DATA_BUCKET_NAME = 'mlspace-data';
 export const LOGS_BUCKET_NAME = 'mlspace-logs';

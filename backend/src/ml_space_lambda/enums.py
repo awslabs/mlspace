@@ -27,6 +27,7 @@ class DatasetType(Enum):
 # corresponding enum in the FrontEnd code (src/shared/model/resource-metadata-model.ts)
 class ResourceType(str, Enum):
     BATCH_TRANSLATE_JOB = "batch-translate-job"
+    REALTIME_TRANSLATE = "real-time-translate"
     EMR_CLUSTER = "cluster"
     ENDPOINT = "endpoint"
     ENDPOINT_CONFIG = "endpoint-config"

@@ -39,6 +39,8 @@ import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
 import { MLSpaceConfig } from '../../utils/configTypes';
+import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { generateAppConfig } from '../../utils/initialAppConfig';
 
 export type CoreStackProps = {
     readonly lambdaSourcePath: string;
@@ -409,6 +411,29 @@ export class CoreStack extends Stack {
             sortKey: userAttribute,
             projectionType: ProjectionType.ALL,
         });
+
+        // App Configuration Table
+        const appConfigTable = new Table(this, 'mlspace-ddb-app-configuration', {
+            tableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
+            partitionKey: { name: 'configScope', type: AttributeType.STRING },
+            sortKey: { name: 'versionId', type: AttributeType.NUMBER },
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        // Populate the App Config table with default config
+        new AwsCustomResource(this, 'mlspace-init-ddb-app-config', {
+            onCreate: {
+              service: 'DynamoDB',
+              action: 'putItem',
+              parameters: {
+                TableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
+                Item: generateAppConfig(props.mlspaceConfig),
+              },
+              physicalResourceId: PhysicalResourceId.of('initAppConfigData'),
+            },
+            policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: [appConfigTable.tableArn] }),
+          });
 
         // EMR Security Configuration
         new CfnSecurityConfiguration(this, 'mlspace-emr-security-config', {
