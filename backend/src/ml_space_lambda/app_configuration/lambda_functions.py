@@ -16,6 +16,7 @@
 
 import json
 import logging
+import time
 
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
 from ml_space_lambda.utils.common_functions import api_wrapper
@@ -38,6 +39,7 @@ def update_configuration(event, context):
         configuration=new_configuration,
         changed_by=event["requestContext"]["authorizer"]["principalId"],
         change_reason=request["changeReason"],
+        created_at=time.time()
     )
 
     try:

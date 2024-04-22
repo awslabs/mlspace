@@ -15,6 +15,7 @@
 #
 
 import json
+import time
 from unittest import TestCase, mock
 
 import boto3
@@ -48,7 +49,7 @@ mock.patch.TEST_PREFIX = (
     "tearDown",
 )
 
-MOCK_PROJECT_NAME = "fake-project"
+mock_time = int(time.time())
 
 
 def generate_test_config(config_scope: str, version_id: int, is_project: bool) -> dict:
@@ -57,6 +58,7 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
         "versionId": version_id,
         "changeReason": "Testing",
         "changedBy": "Tester",
+        "createdAt": mock_time,
         "configuration": {
             "DisabledInstanceTypes": {
                 "notebook-instance": ["ml.t3.medium", "ml.r5.large"],

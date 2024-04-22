@@ -15,6 +15,7 @@
 #
 
 import json
+import time
 from unittest import mock
 
 import pytest
@@ -30,6 +31,7 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.app_configuration.lambda_functions import update_configuration as lambda_handler
 
 
+mock_time = int(time.time())
 def generate_event(config_scope: str, version_id: int):
     return {
         "body": json.dumps(
@@ -37,6 +39,7 @@ def generate_event(config_scope: str, version_id: int):
                 "configScope": config_scope,
                 "versionId": version_id,
                 "changeReason": "Testing",
+                "createdAt": mock_time, 
                 "configuration": {
                     "DisabledInstanceTypes": {
                         "notebook-instance": ["ml.t3.medium", "ml.r5.large"],

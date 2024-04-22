@@ -34,12 +34,14 @@ class AppConfigurationModel:
         configuration: SettingsModel,
         changed_by: str,
         change_reason: str,
+        created_at: int
     ):
         self.configScope = configScope
         self.version_id = version_id
         self.configuration = configuration
         self.changed_by = changed_by
         self.change_reason = change_reason
+        self.created_at = created_at
 
     def to_dict(self) -> dict:
         return {
@@ -48,6 +50,7 @@ class AppConfigurationModel:
             "configuration": self.configuration.to_dict(),
             "changedBy": self.changed_by,
             "changeReason": self.change_reason,
+            "createdAt": self.created_at
         }
 
     @staticmethod
@@ -58,6 +61,7 @@ class AppConfigurationModel:
             SettingsModel.from_dict(dict_object["configuration"]),
             dict_object["changedBy"],
             dict_object["changeReason"],
+            dict_object["createdAt"]
         )
 
 

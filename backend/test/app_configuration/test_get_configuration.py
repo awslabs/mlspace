@@ -15,6 +15,7 @@
 #
 
 import json
+import time
 from unittest import mock
 
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationModel
@@ -23,6 +24,7 @@ from ml_space_lambda.utils.common_functions import generate_html_response
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1"}
 
 mock_context = mock.Mock()
+mock_time = int(time.time())
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.app_configuration.lambda_functions import get_configuration as lambda_handler
@@ -40,7 +42,7 @@ def generate_event(config_scope: str):
 
 
 def generate_app_config_model(config_scope: str):
-    return AppConfigurationModel(config_scope, 1, None, "tester", "testing")
+    return AppConfigurationModel(config_scope, 1, None, "tester", "testing", mock_time)
 
 
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
