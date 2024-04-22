@@ -16,6 +16,7 @@
 
 import copy
 import json
+import urllib
 from datetime import datetime, timedelta, timezone
 from typing import Dict
 from unittest import mock
@@ -2221,3 +2222,63 @@ def test_emr_cluster_missing_metadata_entry(mock_user_dao, mock_resource_metadat
 
     mock_user_dao.get.assert_called_with(MOCK_OWNER_USER.username)
     mock_resource_metadata_dao.get.assert_called_with(mock_cluster_id, ResourceType.EMR_CLUSTER)
+
+
+@pytest.mark.parametrize(
+    "user,method,allow",
+    [
+        (
+            UserModel(
+                "CN=Before\0DAfter,OU=Test,DC=North America,DC=Fabrikam,DC=COM",
+                "dn@amazon.com",
+                "CN=Before\0DAfter,OU=Test,DC=North America,DC=Fabrikam,DC=COM",
+                False,
+                [],
+            ),
+            "DELETE",
+            False,
+        ),
+        (
+            UserModel(
+                "CN=Before\0DAfter,OU=Test,DC=North America,DC=Fabrikam,DC=COM",
+                "dn@amazon.com",
+                "CN=Before\0DAfter,OU=Test,DC=North America,DC=Fabrikam,DC=COM",
+                False,
+                [],
+            ),
+            "PUT",
+            True,
+        ),
+        (UserModel("email@gmail.com", "dn@amazon.com", "email@gmail.com", False, []), "DELETE", False),
+        (UserModel("email@gmail.com", "dn@amazon.com", "email@gmail.com", False, []), "PUT", True),
+    ],
+    ids=[
+        "DN_delete_user",
+        "DN_update_user",
+        "emails_delete_user",
+        "emails_update_user",
+    ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_username_normalization(mock_user_dao, user: UserModel, method: str, allow: bool):
+    mock_user_dao.get.return_value = user
+    response_username = urllib.parse.unquote(user.username).replace(",", "-").replace("=", "-").replace(" ", "-")
+
+    modified_policy_response = policy_response(allow=allow, user=user)
+    modified_policy_response["principalId"] = response_username
+
+    print(f"caca = {response_username}")
+    assert (
+        lambda_handler(
+            mock_event(
+                user=user,
+                resource=f"/user/{urllib.parse.quote(user.username)}",
+                method=method,
+                path_params={"username": user.username},
+            ),
+            {},
+        )
+        == modified_policy_response
+    )
+    mock_user_dao.get.assert_called_with(response_username)

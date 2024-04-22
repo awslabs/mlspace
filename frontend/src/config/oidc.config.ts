@@ -31,6 +31,7 @@ export const oidcConfig: AuthProviderProps = {
             document.title,
             `${window.location.pathname}${window.location.hash}`
         );
+        user!.profile.preferred_username = user!.profile.preferred_username!.replace(/,|=| /gi, '-');
         const mlspaceUser = {
             username: user!.profile.preferred_username,
             email: user!.profile.email,
