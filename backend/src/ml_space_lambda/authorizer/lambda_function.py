@@ -101,13 +101,7 @@ def lambda_handler(event, context):
             "context": response_context,
         }
 
-    username = (
-        urllib.parse.unquote(token_info["preferred_username"])
-        .replace(",", "-")
-        .replace(".", "-")
-        .replace("=", "-")
-        .replace(" ", "-")
-    )
+    username = urllib.parse.unquote(token_info["preferred_username"]).replace(",", "-").replace("=", "-").replace(" ", "-")
     requested_resource = event["resource"]
     path_params = event["pathParameters"]
     request_method = event["httpMethod"]
