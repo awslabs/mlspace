@@ -272,7 +272,7 @@ def lambda_handler(event, context):
                         logging.info("Access Denied. Encountered error while determining resource access policy.")
             elif requested_resource.startswith("/app_configuration"):
                 # All users can get the app-wide configuration
-                if request_method is "GET":
+                if request_method == "GET":
                     policy_statement["Effect"] = "Allow"
                 # Any other operation for app-wide configuration can only be performed by admins
                 elif Permission.ADMIN in user.permissions:
