@@ -97,7 +97,8 @@ export class DatasetsApiStack extends Stack {
                 name: 'delete_file',
                 resource: 'dataset',
                 description: 'Removes a file from a dataset',
-                path: 'dataset/{scope}/{datasetName}/{file}',
+                // use a greedy path here so object keys containing '/' are fully matched
+                path: 'dataset/{scope}/{datasetName}/{file+}',
                 method: 'DELETE',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,
@@ -108,17 +109,6 @@ export class DatasetsApiStack extends Stack {
                 resource: 'dataset',
                 description: 'List all file in a dataset',
                 path: 'dataset/{scope}/{datasetName}/files',
-                method: 'GET',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                name: 'list_locations',
-                resource: 'dataset',
-                description:
-                    'Lists the s3 locations of available datasets based on given access type',
-                path: 'dataset-locations/{type}/{scope}',
                 method: 'GET',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,

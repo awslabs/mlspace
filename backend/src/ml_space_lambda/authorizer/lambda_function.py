@@ -208,27 +208,7 @@ def lambda_handler(event, context):
                         logging.exception(e)
                         logging.info("Access Denied. Encountered error while determining notebook access policy.")
                 elif "scope" in path_params:
-                    if (
-                        requested_resource.startswith("/dataset-locations/")
-                        and "type" in path_params
-                        and request_method == "GET"
-                    ):
-                        # Check if user has access to scope
-                        target_scope = path_params["scope"]
-                        target_type = path_params["type"]
-                        if target_type == "global":
-                            # Everyone can access global
-                            policy_statement["Effect"] = "Allow"
-                        elif target_type == "private" and target_scope == user.username:
-                            # If the scope matches the username it's a private scope
-                            policy_statement["Effect"] = "Allow"
-                        elif target_type == "project":
-                            # If the scope matches the username it's a private scope
-                            project_user = project_user_dao.get(target_scope, user.username)
-                            if project_user:
-                                policy_statement["Effect"] = "Allow"
-
-                    elif "datasetName" in path_params:
+                    if "datasetName" in path_params:
                         try:
                             if _handle_dataset_request(
                                 request_method,

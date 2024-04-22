@@ -37,8 +37,6 @@ import {
     datasetBinding,
     loadingDataset,
 } from '../dataset.reducer';
-import { ExpandableSection } from '@cloudscape-design/components';
-import { ManageFiles } from '../manage/dataset.files';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { z } from 'zod';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
@@ -190,18 +188,6 @@ export function DatasetUpdate () {
                                 </FormField>
                             </SpaceBetween>
                         </Form>
-                    )}
-                </Container>
-                <Container>
-                    {loadingDatasetEditPage ? (
-                        <StatusIndicator type='loading'>Loading files</StatusIndicator>
-                    ) : (
-                        <ExpandableSection
-                            data-cy='dataset-manage-files-expand'
-                            headerText='Manage files'
-                        >
-                            <ManageFiles dataset={dataset} readOnly={false} />
-                        </ExpandableSection>
                     )}
                 </Container>
             </SpaceBetween>

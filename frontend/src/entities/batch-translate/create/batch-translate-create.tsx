@@ -28,10 +28,7 @@ import {
     Select,
     Multiselect,
     Toggle,
-    RadioGroup,
     SelectProps,
-    Autosuggest,
-    Alert,
 } from '@cloudscape-design/components';
 import { useAppDispatch } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -48,22 +45,24 @@ import {
     defaultEncryptionKey,
 } from '../../../shared/model/translate.model';
 import { enumToOptions } from '../../../shared/util/enum-utils';
-import { listDatasetsLocations } from '../../dataset/dataset.reducer';
-import { DatasetType, IDataset } from '../../../shared/model/dataset.model';
 import { useAuth } from 'react-oidc-context';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import {
     getCustomTerminologyList,
     getTranslateLanguagesList,
 } from '../../../shared/util/translate-utils';
-import { determineScope, createDatasetHandleAlreadyExists } from '../../dataset/dataset.service';
-import Condition from '../../../modules/condition';
+import { tryCreateDataset } from '../../dataset/dataset.service';
+import DatasetResourceSelector from '../../../modules/dataset/dataset-selector';
+import '../../../shared/validation/helpers/uri';
+import { datasetFromS3Uri } from '../../../shared/util/dataset-utils';
+import { isFulfilled } from '@reduxjs/toolkit';
+import { AUTO_SOURCE_LANGUAGE_UNSUPPORTED } from '..';
 
 export function BatchTranslateCreate () {
     const [errorText] = useState('');
     const [customTerminologies, setCustomTerminologies] = useState([]);
     const [languages, setLanguages] = useState([]);
-    const [s3OutputUri, setS3OutputUri] = useState('');
+    const sourceLanguages: OptionDefinition[] = [];
     const autoOption: SelectProps.Option = { label: 'Auto (auto)', value: 'auto' };
     const { projectName } = useParams();
     const dispatch = useAppDispatch();
@@ -75,6 +74,12 @@ export function BatchTranslateCreate () {
         'Maximum of 255 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.';
     scrollToPageHeader();
     DocTitle('Create translation job');
+
+    const supportsAutoLanguageDetection = !AUTO_SOURCE_LANGUAGE_UNSUPPORTED.includes(window.env.AWS_REGION);
+    if (supportsAutoLanguageDetection) {
+        sourceLanguages.push(autoOption);
+    }
+    sourceLanguages.push(...languages);
 
     //JobName is prepended with '{projectname}-{username}'
     const formSchema = z.object({
@@ -88,13 +93,13 @@ export function BatchTranslateCreate () {
         InputDataConfig: z.object({
             S3Uri: z
                 .string({ required_error: 'You must select an S3 input URI.' })
-                .startsWith('s3://'),
+                .s3Uri(),
             ContentType: z.string({ required_error: 'A content type must be selected.' }),
         }),
         OutputDataConfig: z.object({
             S3Uri: z
                 .string({ required_error: 'You must select an S3 output URI.' })
-                .startsWith('s3://'),
+                .datasetPrefix(),
             EncryptionKey: z.object({
                 Type: z.string(),
                 Id: z.string(),
@@ -130,14 +135,6 @@ export function BatchTranslateCreate () {
                 S3Uri: '',
                 ContentType: ContentType.TEXT_PLAIN,
             },
-            InputDataset: {
-                Type: DatasetType.GLOBAL,
-                Name: '',
-            },
-            OutputDataset: {
-                Type: DatasetType.GLOBAL,
-                Name: '',
-            },
             OutputDataConfig: {
                 S3Uri: '',
                 EncryptionKey: defaultEncryptionKey,
@@ -150,10 +147,6 @@ export function BatchTranslateCreate () {
                 Formality: FormalityOptions.None,
                 Profanity: ProfanityOptions.NoMask,
             },
-            inputBucket: '',
-            inputDatasets: [] as any[],
-            outputBucket: '',
-            outputDatasets: [] as any[],
         },
         formValid: false,
         formSubmitting: false as boolean,
@@ -191,62 +184,6 @@ export function BatchTranslateCreate () {
         scrollToPageHeader('h1', 'Create translation job');
     }, [dispatch, projectName, userName]);
 
-    useEffect(() => {
-        // set up the input dataset locations based on user-selected scope
-        const scope = determineScope(state.form.InputDataset.Type, projectName, userName!);
-
-        dispatch(listDatasetsLocations({ scope, type: state.form.InputDataset.Type }))
-            .then((response) => response.payload)
-            .then((datasets) => {
-                if (datasets) {
-                    setFields({
-                        inputBucket: datasets.bucket,
-                        inputDatasets: datasets.locations,
-                    });
-                } else {
-                    setFields({
-                        inputBucket: '',
-                        inputDatasets: [],
-                    });
-                }
-            });
-        // This useEffect currently relies on datasets from state which causes a render loop
-        // temporarily disabling rule until it can be reworked
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.form.InputDataset.Type]);
-
-    useEffect(() => {
-        // set up the output dataset locations based on user-selected scope
-        const scope = determineScope(state.form.OutputDataset.Type, projectName, userName!);
-        
-        // Define the full dataset URI, leaving a spot for the dataset name to be appended at the end
-        if (state.form.OutputDataset.Type === DatasetType.GLOBAL) {
-            setS3OutputUri(`s3://${window.env.DATASET_BUCKET}/${state.form.OutputDataset.Type}/datasets/`);
-        } else {
-            setS3OutputUri(`s3://${window.env.DATASET_BUCKET}/${state.form.OutputDataset.Type}/${scope}/datasets/`);
-        }
-        
-
-        dispatch(listDatasetsLocations({ scope, type: state.form.OutputDataset.Type }))
-            .then((response) => response.payload)
-            .then((datasets) => {
-                if (datasets) {
-                    setFields({
-                        outputBucket: datasets.bucket,
-                        outputDatasets: datasets.locations,
-                    });
-                } else {
-                    setFields({
-                        outputBucket: '',
-                        outputDatasets: [],
-                    });
-                }
-            });
-        // This useEffect currently relies on datasets from state which causes a render loop
-        // temporarily disabling rule until it can be reworked
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.form.OutputDataset.Type]);
-
     const handleSubmit = async () => {
         const parseResult = formSchema.safeParse(state.form);
         if (parseResult.success) {
@@ -263,19 +200,18 @@ export function BatchTranslateCreate () {
                 })
             );
 
-            if (response.type.endsWith('/fulfilled')) {
+            if (isFulfilled(response)) {
                 notificationService.generateNotification(
                     `Successfully created translation job ${state.form.JobName}.`,
                     'success'
                 );
-                const newDataset = {
-                    name: state.form.OutputDataset.Name,
-                    description: `Dataset created as part of the Batch Translate job: ${state.form.JobName}`,
-                    type: state.form.OutputDataset.Type,
-                    scope: determineScope(state.form.OutputDataset.Type, projectName, userName!)
-                } as IDataset;
+                
+                const dataset = datasetFromS3Uri(state.form.OutputDataConfig.S3Uri);
+                if (dataset) {
+                    dataset.description = `Dataset created as part of the Batch Translate job: ${state.form.JobName}`;    
+                    tryCreateDataset(dataset);
+                }
 
-                createDatasetHandleAlreadyExists(newDataset);
                 navigate(`/project/${projectName}/batch-translate/${response.payload.JobId}`);
             } else {
                 notificationService.generateNotification(
@@ -349,7 +285,7 @@ export function BatchTranslateCreate () {
                                 />
                             </FormField>
                             <FormField
-                                description="The language code of the input language. Specify the language if all input documents share the same language. If you do not know the language of the source files, or your input documents contains different source languages, select 'auto'."
+                                description={`The language code of the input language. Specify the language if all input documents share the same language. ${supportsAutoLanguageDetection ? 'If you do not know the language of the source files, or your input documents contains different source languages, select \'auto\'.' : ''}`}
                                 errorText={formErrors.SourceLanguageCode}
                                 label='Source Language'
                             >
@@ -360,7 +296,7 @@ export function BatchTranslateCreate () {
                                             SourceLanguageCode: detail.selectedOption.value!,
                                         });
                                     }}
-                                    options={[autoOption, ...languages]}
+                                    options={sourceLanguages}
                                     selectedAriaLabel='Selected input language'
                                     filteringType='auto'
                                     data-cy='source-language-select'
@@ -395,127 +331,40 @@ export function BatchTranslateCreate () {
                         </SpaceBetween>
                     </Container>
                     <Container header={<Header variant='h2'>Input data</Header>}>
-                        <SpaceBetween direction='vertical' size='m'>
-                            <FormField label='Data access type'>
-                                <RadioGroup
-                                    value={state.form.InputDataset!.Type}
-                                    items={enumToOptions(DatasetType, true)}
-                                    onChange={(event) => {
-                                        setFields({
-                                            InputDataset: {
-                                                Type: DatasetType[
-                                                    event.detail.value.toUpperCase() as keyof typeof DatasetType
-                                                ],
-                                            },
-                                        });
-                                    }}
-                                />
-                            </FormField>
-                            <FormField
-                                label='S3 location'
-                                errorText={formErrors?.InputDataset?.Name}
-                            >
-                                <Select
-                                    placeholder='Select an input location'
-                                    empty='No datasets found.'
-                                    selectedOption={
-                                        state.form.InputDataset?.Name
-                                            ? { value: state.form.InputDataset?.Name }
-                                            : null
-                                    }
-                                    options={state.form.inputDatasets.map(
-                                        (location: { name: string; location: string }) => {
-                                            return { value: location.name };
-                                        }
-                                    )}
-                                    onChange={(event) => {
-                                        const dataset = state.form.inputDatasets.find(
-                                            (dataset: { name: string; location: string }) =>
-                                                dataset.name === event.detail.selectedOption.value
-                                        );
-                                        setFields({
-                                            InputDataset: {
-                                                Type: state.form.InputDataset!.Type,
-                                                Name: event.detail.selectedOption.value,
-                                            },
-                                            'InputDataConfig.S3Uri': dataset.location,
-                                        });
-                                    }}
-                                    data-cy='s3-input-location-select'
-                                />
-                            </FormField>
-                            <FormField
-                                description='Describes the format of the data that you submit to AWS Translate as input.'
-                                errorText={formErrors.InputDataConfig?.ContentType}
-                                label='Content Type'
-                            >
-                                <Select
-                                    selectedOption={{
-                                        label: state.form.InputDataConfig.ContentType,
-                                    }}
-                                    onChange={({ detail }) => {
-                                        setFields({
-                                            'InputDataConfig.ContentType':
-                                                detail.selectedOption.label!,
-                                        });
-                                    }}
-                                    options={enumToOptions(ContentType)}
-                                />
-                            </FormField>
-                        </SpaceBetween>
+                        <DatasetResourceSelector
+                            fieldLabel={'S3 Location'}
+                            selectableItemsTypes={['objects']}
+                            onChange={({detail}) => {
+                                setFields({
+                                    'InputDataConfig.S3Uri': detail.resource,
+                                });
+                            }}
+                            inputOnBlur={() => {
+                                touchFields(['InputDataConfig.S3Uri']);
+                            }}
+                            inputInvalid={!!formErrors?.InputDataConfig?.S3Uri}
+                            inputData-cy='s3-output-location-input'
+                            fieldErrorText={formErrors?.InputDataConfig?.S3Uri}
+                            resource={state.form?.InputDataConfig?.S3Uri || ''}
+                        />
                     </Container>
                     <Container header={<Header variant='h2'>Output data</Header>}>
-                        <SpaceBetween direction='vertical' size='m'>
-                            <FormField label='Data access type'>
-                                <RadioGroup
-                                    value={state.form.OutputDataset!.Type}
-                                    items={enumToOptions(DatasetType, true)}
-                                    onChange={(event) => {
-                                        setFields({
-                                            OutputDataset: {
-                                                Type: DatasetType[
-                                                    event.detail.value.toUpperCase() as keyof typeof DatasetType
-                                                ],
-                                            },
-                                        });
-                                    }}
-                                />
-                            </FormField>
-                            <FormField label='S3 location' errorText={formErrors?.Dataset?.Name}>
-                                <SpaceBetween direction='vertical' size='m'>
-                                    <Autosuggest
-                                        onChange={({detail}) => {
-                                            setFields({
-                                                OutputDataset: {
-                                                    Type: state.form.OutputDataset!.Type,
-                                                    Name: detail.value,
-                                                },
-                                                'OutputDataConfig.S3Uri': s3OutputUri + detail.value, 
-                                            });
-                                        }}
-                                        value={
-                                            state.form.OutputDataset?.Name || ''
-                                        }
-                                        options={state.form.outputDatasets.map(
-                                            (location: { name: string; location: string }) => {
-                                                return { value: location.name };
-                                            }
-                                        )}
-                                        ariaLabel='Select an output location'
-                                        placeholder='Select an output location'
-                                        empty='No datasets found.'
-                                        data-cy='s3-output-location-input'
-                                        enteredTextLabel={ (value) => `${state.form.outputDatasets.find((d) => d.name === value) ? 'Use:' : 'Create:'} "${value}"`}
-                                    />
-                                    <Condition condition={!state.form.outputDatasets.find((d) => d.name === state.form.OutputDataset.Name) && state.form.OutputDataset.Name?.length > 0}>
-                                        <Alert
-                                            statusIconAriaLabel='Info'
-                                            header='A new dataset will be created when this job starts successfully.'>
-                                        </Alert>
-                                    </Condition>
-                                </SpaceBetween>
-                            </FormField>
-                        </SpaceBetween>
+                        <DatasetResourceSelector
+                            fieldLabel={'S3 Location'}
+                            selectableItemsTypes={['prefixes']}
+                            showCreateButton={true}
+                            onChange={({detail}) => {
+                                setFields({
+                                    'OutputDataConfig.S3Uri': detail.resource,
+                                });
+                            }}
+                            inputOnBlur={() => {
+                                touchFields(['OutputDataConfig.S3Uri']);
+                            }}
+                            inputInvalid={!!formErrors?.OutputDataConfig?.S3Uri}
+                            fieldErrorText={formErrors?.OutputDataConfig?.S3Uri}
+                            resource={state.form?.OutputDataConfig?.S3Uri || ''}
+                        />
                     </Container>
                     <Container header={<Header variant='h2'>Customization - optional</Header>}>
                         <SpaceBetween direction='vertical' size='m'>

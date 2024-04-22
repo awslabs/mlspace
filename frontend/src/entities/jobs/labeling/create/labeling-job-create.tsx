@@ -37,6 +37,7 @@ import _ from 'lodash';
 import { TASK_TYPE_CONFIG } from './labeling-job-task-config';
 import NotificationService from '../../../../shared/layout/notification/notification.service';
 import { LabelingJobTypes } from '../labeling-job.common';
+import '../../../../shared/validation/helpers/uri';
 
 export type ILabelingJobLabel = {
     label: string;
@@ -75,7 +76,7 @@ export type LabelingJobCreateState = {
 };
 
 export function LabelingJobCreate () {
-    const { projectName } = useParams();
+    const { projectName = '' } = useParams();
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -111,14 +112,14 @@ export function LabelingJobCreate () {
                     S3DataSource: z.object({
                         ManifestS3Uri: z.string().min(1, {
                             message: 'Must enter input manifest file.',
-                        }),
+                        }).s3Resource(),
                     }),
                 }),
             }),
             OutputConfig: z.object({
                 S3OutputPath: z.string().min(1, {
                     message: 'Must enter output dataset.',
-                }),
+                }).datasetUri(),
             }),
             HumanTaskConfig: z.object({
                 NumberOfHumanWorkersPerDataObject: z

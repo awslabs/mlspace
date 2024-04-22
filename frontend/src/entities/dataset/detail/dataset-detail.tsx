@@ -21,24 +21,24 @@ import {
     SpaceBetween,
     Header,
     Button,
-    ExpandableSection,
     StatusIndicator,
 } from '@cloudscape-design/components';
 import {
     datasetBinding,
     getDatasetByScopeAndName,
-    getFileEntities,
     loadingDataset,
 } from '../../../entities/dataset/dataset.reducer';
 import { IDataset } from '../../../shared/model/dataset.model';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ManageFiles } from '../manage/dataset.files';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { showAccessLevel } from '../dataset.utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import DetailsContainer from '../../../modules/details-container';
+import DatasetBrowser from '../../../modules/dataset/dataset-browser';
+import { DatasetBrowserActions } from '../dataset.actions';
+import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-browser.types';
 
 function DatasetDetail () {
     const { projectName, scope, name } = useParams();
@@ -93,16 +93,17 @@ function DatasetDetail () {
                     }
                     loading={datasetLoading}
                 />
-                <Container>
+                <Container header={<Header variant='h2'>Dataset files</Header>}>
                     {datasetLoading ? (
                         <StatusIndicator type='loading'>Loading files</StatusIndicator>
                     ) : (
-                        <ExpandableSection
-                            onChange={() => dispatch(getFileEntities(dataset))}
-                            headerText='View files'
-                        >
-                            <ManageFiles dataset={dataset} readOnly={true} />
-                        </ExpandableSection>
+                        <DatasetBrowser
+                            resource={dataset.location!}
+                            isPinned={true}
+                            actions={DatasetBrowserActions}
+                            selectableItemsTypes={['objects', 'prefixes']}
+                            manageMode={DatasetBrowserManageMode.Edit}
+                        />
                     )}
                 </Container>
             </SpaceBetween>

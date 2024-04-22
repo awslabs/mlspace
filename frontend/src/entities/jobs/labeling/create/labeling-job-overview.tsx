@@ -12,6 +12,7 @@ import { FormProps } from '../../form-props';
 import Condition from '../../../../modules/condition';
 import { ILabelingJobCreateForm } from './labeling-job-create';
 import { ModifyMethod } from '../../../../shared/validation/modify-method';
+import DatasetResourceSelector from '../../../../modules/dataset/dataset-selector';
 
 export type LabelingJobOverviewProps = FormProps<ILabelingJobCreateForm>;
 
@@ -73,41 +74,40 @@ export function LabelingJobOverview(props: LabelingJobOverviewProps) {
                         />
                     </FormField>
                 </Condition>
-                <FormField
-                    label="S3 location for input datasets"
-                    description="Provide a path to the S3 location where your manifest file is stored."
-                    errorText={
-                        formErrors?.job?.InputConfig?.DataSource?.S3DataSource?.ManifestS3Uri
-                    }
-                >
-                    <Input
-                        value={`${item.job.InputConfig.DataSource.S3DataSource.ManifestS3Uri}`}
-                        onChange={(event) => {
-                            setFields({
-                                'job.InputConfig.DataSource.S3DataSource.ManifestS3Uri':
-                                    event.detail.value,
-                            });
-                        }}
-                        onBlur={() =>
-                            touchFields(['job.InputConfig.DataSource.S3DataSource.ManifestS3Uri'])
-                        }
-                        data-cy="manifest-file-input"
-                    />
-                </FormField>
-                <FormField
-                    label="Output dataset location"
-                    description="Provide a path to the S3 location where you want your labeled dataset to be stored."
-                    errorText={formErrors?.job?.OutputConfig?.S3OutputPath}
-                >
-                    <Input
-                        value={`${item.job.OutputConfig.S3OutputPath}`}
-                        onChange={(event) => {
-                            setFields({ 'job.OutputConfig.S3OutputPath': event.detail.value });
-                        }}
-                        onBlur={() => touchFields(['job.OutputConfig.S3OutputPath'])}
-                        data-cy="output-location-input"
-                    />
-                </FormField>
+                <DatasetResourceSelector
+                    selectableItemsTypes={['objects']}
+                    fieldLabel='S3 location for input datasets'
+                    fieldDescription='Provide a path to the S3 location where your manifest file is stored.'
+                    inputPlaceholder='s3://bucket/path/to/manifest'
+                    onChange={({detail}) => {
+                        setFields({
+                            'job.InputConfig.DataSource.S3DataSource.ManifestS3Uri': detail.resource,
+                        });
+                    }}
+                    inputOnBlur={() => {
+                        touchFields(['job.InputConfig.DataSource.S3DataSource.ManifestS3Uri']);
+                    }}
+                    fieldErrorText={formErrors?.job?.InputConfig?.DataSource?.S3DataSource?.ManifestS3Uri}
+                    inputData-cy="manifest-file-input"
+                    resource={item.job.InputConfig.DataSource.S3DataSource.ManifestS3Uri || ''}
+                />
+                <DatasetResourceSelector
+                    selectableItemsTypes={['prefixes']}
+                    fieldLabel='Output dataset location'
+                    fieldDescription='Provide a path to the S3 location where you want your labeled dataset to be stored.'
+                    showCreateButton={true}
+                    onChange={({detail}) => {
+                        setFields({
+                            'job.OutputConfig.S3OutputPath': detail.resource,
+                        });
+                    }}
+                    inputOnBlur={() => {
+                        touchFields(['job.OutputConfig.S3OutputPath']);
+                    }}
+                    fieldErrorText={formErrors?.job?.OutputConfig?.S3OutputPath}
+                    inputData-cy="output-location-input"
+                    resource={item.job.OutputConfig.S3OutputPath || ''}
+                />
             </SpaceBetween>
         </Container>
     );
