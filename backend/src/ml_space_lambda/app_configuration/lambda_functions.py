@@ -39,7 +39,7 @@ def update_configuration(event, context):
         configuration=new_configuration,
         changed_by=event["requestContext"]["authorizer"]["principalId"],
         change_reason=request["changeReason"],
-        created_at=time.time()
+        created_at=time.time(),
     )
 
     try:

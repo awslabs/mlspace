@@ -34,7 +34,7 @@ class AppConfigurationModel:
         configuration: SettingsModel,
         changed_by: str,
         change_reason: str,
-        created_at: int
+        created_at: int,
     ):
         self.configScope = configScope
         self.version_id = version_id
@@ -50,7 +50,7 @@ class AppConfigurationModel:
             "configuration": self.configuration.to_dict(),
             "changedBy": self.changed_by,
             "changeReason": self.change_reason,
-            "createdAt": self.created_at
+            "createdAt": self.created_at,
         }
 
     @staticmethod
@@ -61,7 +61,7 @@ class AppConfigurationModel:
             SettingsModel.from_dict(dict_object["configuration"]),
             dict_object["changedBy"],
             dict_object["changeReason"],
-            dict_object["createdAt"]
+            dict_object["createdAt"],
         )
 
 
