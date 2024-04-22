@@ -165,7 +165,12 @@ def lambda_handler(event, context):
                     if project_user or Permission.ADMIN in user.permissions:
                         # User must be an owner or admin to add/remove users or update the project config
                         if (
-                            (request_method == "POST" and (requested_resource.endswith("/users") or requested_resource.endswith("/app_configuration")))
+                            (
+                                request_method == "POST"
+                                and (
+                                    requested_resource.endswith("/users") or requested_resource.endswith("/app_configuration")
+                                )
+                            )
                             or (request_method in ["PUT", "DELETE"] and len(path_params) == 2 and "username" in path_params)
                         ) and (
                             (project_user and Permission.PROJECT_OWNER not in project_user.permissions)
