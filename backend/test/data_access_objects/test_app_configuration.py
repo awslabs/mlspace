@@ -25,6 +25,11 @@ from ml_space_lambda.data_access_objects.app_configuration import AppConfigurati
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
+    # Fake cred info for MOTO
+    "AWS_ACCESS_KEY_ID": "testing",
+    "AWS_SECRET_ACCESS_KEY": "testing",
+    "AWS_SECURITY_TOKEN": "testing",
+    "AWS_SESSION_TOKEN": "testing",
 }
 
 # DDB Configurations
