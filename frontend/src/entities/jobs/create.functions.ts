@@ -76,6 +76,7 @@ export const createTrainingJob = (): Omit<
         AlgorithmSpecification: {
             TrainingInputMode: TrainingInputMode.File,
             EnableSageMakerMetricsTimeSeries: false,
+            AlgorithmName: ''
         },
         InputDataConfig: [createInputDataConfig()],
         OutputDataConfig: {
