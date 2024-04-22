@@ -17,6 +17,7 @@
 import json
 import logging
 import re
+import urllib
 from collections import Counter
 from typing import List, Optional
 
@@ -202,7 +203,7 @@ def add_users(event, context):
 @api_wrapper
 def remove_user(event, context):
     project_name = event["pathParameters"]["projectName"]
-    username = event["pathParameters"]["username"]
+    username = urllib.parse.unquote(event["pathParameters"]["username"])
 
     env_variables = get_environment_variables()
 
@@ -435,7 +436,7 @@ def delete(event, context):
 @api_wrapper
 def update_project_user(event, context):
     project_name = event["pathParameters"]["projectName"]
-    username = event["pathParameters"]["username"]
+    username = urllib.parse.unquote(event["pathParameters"]["username"])
     updates = json.loads(event["body"])
 
     project_user = project_user_dao.get(project_name, username)
