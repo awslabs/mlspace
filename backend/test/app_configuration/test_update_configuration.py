@@ -18,10 +18,9 @@ import json
 from unittest import mock
 
 import pytest
-
+from botocore.exceptions import ClientError
 
 from ml_space_lambda.utils.common_functions import generate_html_response
-from botocore.exceptions import ClientError
 
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1"}
 
@@ -39,117 +38,55 @@ def generate_event(config_scope: str, version_id: int):
                 "versionId": version_id,
                 "changeReason": "Testing",
                 "configuration": {
-                "DisabledInstanceTypes": {
-                    "notebook-instance": [
-                    "ml.t3.medium",
-                    "ml.r5.large"
-                    ],
-                    "endpoint": [
-                    "ml.t3.large",
-                    "ml.r5.medium"
-                    ],
-                    "training-job": [
-                    "ml.t3.xlarge",
-                    "ml.r5.small"
-                    ],
-                    "transform-job": [
-                    "ml.t3.kindabig",
-                    "ml.r5.kindasmall"
-                    ]
+                    "DisabledInstanceTypes": {
+                        "notebook-instance": ["ml.t3.medium", "ml.r5.large"],
+                        "endpoint": ["ml.t3.large", "ml.r5.medium"],
+                        "training-job": ["ml.t3.xlarge", "ml.r5.small"],
+                        "transform-job": ["ml.t3.kindabig", "ml.r5.kindasmall"],
+                    },
+                    "EnabledServices": {
+                        "real-time-translate": "true",
+                        "batch-translate-job": "false",
+                        "labeling-job": "true",
+                        "cluster": "true",
+                        "endpoint": "true",
+                        "endpoint-config": "false",
+                        "hpo-job": "true",
+                        "model": "true",
+                        "notebook-instance": "false",
+                        "training-job": "true",
+                        "transform-job": "true",
+                    },
+                    "ProjectCreation": {"AdminOnly": "true", "AllowedGroups": ["Justice League", "Avengers", "TMNT"]},
+                    "EMRConfig": {
+                        "cluster-sizes": [
+                            {"name": "Small", "size": 3, "master-type": "m5.xlarge", "core-type": "m5.xlarge"},
+                            {"name": "Medium", "size": 5, "master-type": "m5.xlarge", "core-type": "m5.xlarge"},
+                            {"name": "Large", "size": 7, "master-type": "m5.xlarge", "core-type": "p3.8xlarge"},
+                        ],
+                        "auto-scaling": {
+                            "min-instances": 2,
+                            "max-instances": 15,
+                            "scale-out": {"increment": 1, "percentage-mem-available": 15, "eval-periods": 1, "cooldown": 300},
+                            "scale-in": {"increment": -1, "percentage-mem-available": 75, "eval-periods": 1, "cooldown": 300},
+                        },
+                        "applications": [
+                            {"Name": "Hadoop"},
+                            {"Name": "Spark"},
+                            {"Name": "Ganglia"},
+                            {"Name": "Hive"},
+                            {"Name": "Tez"},
+                            {"Name": "Presto"},
+                            {"Name": "Livy"},
+                        ],
+                    },
+                    "SystemBanner": {"Enabled": "true", "TextColor": "Red", "BackgroundColor": "White", "Text": "Jeff Bezos"},
                 },
-                "EnabledServices": {
-                    "real-time-translate": "true",
-                    "batch-translate-job": "false",
-                    "labeling-job": "true",
-                    "cluster": "true",
-                    "endpoint": "true",
-                    "endpoint-config": "false",
-                    "hpo-job": "true",
-                    "model": "true",
-                    "notebook-instance": "false",
-                    "training-job": "true",
-                    "transform-job": "true"
-                },
-                "ProjectCreation": {
-                    "AdminOnly": "true",
-                    "AllowedGroups": [
-                    "Justice League",
-                    "Avengers",
-                    "TMNT"
-                    ]
-                },
-                "EMRConfig": {
-                    "cluster-sizes": [
-                    {
-                        "name": "Small",
-                        "size": 3,
-                        "master-type": "m5.xlarge",
-                        "core-type": "m5.xlarge"
-                    },
-                    {
-                        "name": "Medium",
-                        "size": 5,
-                        "master-type": "m5.xlarge",
-                        "core-type": "m5.xlarge"
-                    },
-                    {
-                        "name": "Large",
-                        "size": 7,
-                        "master-type": "m5.xlarge",
-                        "core-type": "p3.8xlarge"
-                    }
-                    ],
-                    "auto-scaling": {
-                    "min-instances": 2,
-                    "max-instances": 15,
-                    "scale-out": {
-                        "increment": 1,
-                        "percentage-mem-available": 15,
-                        "eval-periods": 1,
-                        "cooldown": 300
-                    },
-                    "scale-in": {
-                        "increment": -1,
-                        "percentage-mem-available": 75,
-                        "eval-periods": 1,
-                        "cooldown": 300
-                    }
-                    },
-                    "applications": [
-                    {
-                        "Name": "Hadoop"
-                    },
-                    {
-                        "Name": "Spark"
-                    },
-                    {
-                        "Name": "Ganglia"
-                    },
-                    {
-                        "Name": "Hive"
-                    },
-                    {
-                        "Name": "Tez"
-                    },
-                    {
-                        "Name": "Presto"
-                    },
-                    {
-                        "Name": "Livy"
-                    }
-                    ]
-                },
-                "SystemBanner": {
-                    "Enabled": "true",
-                    "TextColor": "Red",
-                    "BackgroundColor": "White",
-                    "Text": "Jeff Bezos"
-                }
-            }
             }
         ),
         "requestContext": {"authorizer": {"principalId": "jdoe"}},
     }
+
 
 @pytest.mark.parametrize(
     "config_scope",
@@ -192,6 +129,7 @@ def test_update_config_outdated(mock_app_config_dao):
 
     mock_app_config_dao.create.side_effect = ClientError(error_msg, "PutItem")
     assert lambda_handler(mock_event, mock_context) == expected_response
+
 
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_unexpected_exception(mock_app_config_dao):

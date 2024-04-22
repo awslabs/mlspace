@@ -21,7 +21,7 @@ import boto3
 import moto
 from dynamodb_json import json_util as dynamodb_json
 
-from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationModel, AppConfigurationDAO
+from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
@@ -45,6 +45,7 @@ mock.patch.TEST_PREFIX = (
 
 MOCK_PROJECT_NAME = "fake-project"
 
+
 def generate_test_config(config_scope: str, version_id: int, is_project: bool) -> dict:
     config = {
         "configScope": config_scope,
@@ -53,22 +54,10 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
         "changedBy": "Tester",
         "configuration": {
             "DisabledInstanceTypes": {
-                "notebook-instance": [
-                "ml.t3.medium",
-                "ml.r5.large"
-                ],
-                "endpoint": [
-                "ml.t3.large",
-                "ml.r5.medium"
-                ],
-                "training-job": [
-                "ml.t3.xlarge",
-                "ml.r5.small"
-                ],
-                "transform-job": [
-                "ml.t3.kindabig",
-                "ml.r5.kindasmall"
-                ]
+                "notebook-instance": ["ml.t3.medium", "ml.r5.large"],
+                "endpoint": ["ml.t3.large", "ml.r5.medium"],
+                "training-job": ["ml.t3.xlarge", "ml.r5.small"],
+                "transform-job": ["ml.t3.kindabig", "ml.r5.kindasmall"],
             },
             "EnabledServices": {
                 "real-time-translate": "true",
@@ -81,88 +70,45 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
                 "model": "true",
                 "notebook-instance": "false",
                 "training-job": "true",
-                "transform-job": "true"
+                "transform-job": "true",
             },
             "EMRConfig": {
                 "cluster-sizes": [
-                {
-                    "name": "Small",
-                    "size": 3,
-                    "master-type": "m5.xlarge",
-                    "core-type": "m5.xlarge"
-                },
-                {
-                    "name": "Medium",
-                    "size": 5,
-                    "master-type": "m5.xlarge",
-                    "core-type": "m5.xlarge"
-                },
-                {
-                    "name": "Large",
-                    "size": 7,
-                    "master-type": "m5.xlarge",
-                    "core-type": "p3.8xlarge"
-                }
+                    {"name": "Small", "size": 3, "master-type": "m5.xlarge", "core-type": "m5.xlarge"},
+                    {"name": "Medium", "size": 5, "master-type": "m5.xlarge", "core-type": "m5.xlarge"},
+                    {"name": "Large", "size": 7, "master-type": "m5.xlarge", "core-type": "p3.8xlarge"},
                 ],
                 "auto-scaling": {
-                "min-instances": 2,
-                "max-instances": 15,
-                "scale-out": {
-                    "increment": 1,
-                    "percentage-mem-available": 15,
-                    "eval-periods": 1,
-                    "cooldown": 300
-                },
-                "scale-in": {
-                    "increment": -1,
-                    "percentage-mem-available": 75,
-                    "eval-periods": 1,
-                    "cooldown": 300
-                }
+                    "min-instances": 2,
+                    "max-instances": 15,
+                    "scale-out": {"increment": 1, "percentage-mem-available": 15, "eval-periods": 1, "cooldown": 300},
+                    "scale-in": {"increment": -1, "percentage-mem-available": 75, "eval-periods": 1, "cooldown": 300},
                 },
                 "applications": [
-                {
-                    "Name": "Hadoop"
-                },
-                {
-                    "Name": "Spark"
-                },
-                {
-                    "Name": "Ganglia"
-                },
-                {
-                    "Name": "Hive"
-                },
-                {
-                    "Name": "Tez"
-                },
-                {
-                    "Name": "Presto"
-                },
-                {
-                    "Name": "Livy"
-                }
-                ]
+                    {"Name": "Hadoop"},
+                    {"Name": "Spark"},
+                    {"Name": "Ganglia"},
+                    {"Name": "Hive"},
+                    {"Name": "Tez"},
+                    {"Name": "Presto"},
+                    {"Name": "Livy"},
+                ],
             },
-        }
+        },
     }
     # If this config is not for a project, add the app-wide specific configurations
     if not is_project:
         config["configuration"]["ProjectCreation"] = {
-                "AdminOnly": "true",
-                "AllowedGroups": [
-                "Justice League",
-                "Avengers",
-                "TMNT"
-                ]
-            }
+            "AdminOnly": "true",
+            "AllowedGroups": ["Justice League", "Avengers", "TMNT"],
+        }
         config["configuration"]["SystemBanner"] = {
-                    "Enabled": "true",
-                    "TextColor": "Red",
-                    "BackgroundColor": "White",
-                    "Text": "Jeff Bezos"
-            }
-    
+            "Enabled": "true",
+            "TextColor": "Red",
+            "BackgroundColor": "White",
+            "Text": "Jeff Bezos",
+        }
+
     return config
 
 
@@ -190,11 +136,11 @@ class TestAppConfigDAO(TestCase):
             BillingMode="PAY_PER_REQUEST",
         )
         self.app_config_dao = AppConfigurationDAO(self.TEST_TABLE, self.ddb)
-        
+
         # Seed a global record and 2 project records
-        self.GLOBAL_RECORD = AppConfigurationModel.from_dict(generate_test_config('global', 0, False))
-        self.PROJECT_RECORD1 = AppConfigurationModel.from_dict(generate_test_config('project1', 0, True))
-        self.PROJECT_RECORD2 = AppConfigurationModel.from_dict(generate_test_config('project1', 1, True))
+        self.GLOBAL_RECORD = AppConfigurationModel.from_dict(generate_test_config("global", 0, False))
+        self.PROJECT_RECORD1 = AppConfigurationModel.from_dict(generate_test_config("project1", 0, True))
+        self.PROJECT_RECORD2 = AppConfigurationModel.from_dict(generate_test_config("project1", 1, True))
 
         self.ddb.put_item(
             TableName=self.TEST_TABLE,
@@ -237,7 +183,7 @@ class TestAppConfigDAO(TestCase):
         assert not self.app_config_dao.get("sample-project", 1)
 
     def test_create_app_config(self):
-        new_record = AppConfigurationModel.from_dict(generate_test_config('project2', 0, True))
+        new_record = AppConfigurationModel.from_dict(generate_test_config("project2", 0, True))
         self.app_config_dao.create(new_record)
         from_ddb = self.app_config_dao.get(new_record.configScope, 1)
         assert len(from_ddb) == 1

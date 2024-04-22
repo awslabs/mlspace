@@ -38,18 +38,14 @@ def generate_event(config_scope: str):
         ),
     }
 
+
 def generate_app_config_model(config_scope: str):
-    return AppConfigurationModel(
-        config_scope,
-        1,
-        None,
-        'tester',
-        'testing'
-    )
+    return AppConfigurationModel(config_scope, 1, None, "tester", "testing")
+
 
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_get_config_success(mock_app_config_dao):
-    config_scope = 'global'
+    config_scope = "global"
     mock_event = generate_event(config_scope)
     mock_app_model = generate_app_config_model(config_scope)
     mock_app_config_dao.get.return_value = mock_app_model
