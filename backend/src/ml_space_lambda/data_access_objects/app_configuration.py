@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import json
 from typing import List, Optional
-from venv import logger
 
 from dynamodb_json import json_util as dynamodb_json
 
