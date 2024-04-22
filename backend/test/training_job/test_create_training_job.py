@@ -31,6 +31,7 @@ TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
     "BUCKET": "example_bucket",
     "S3_KEY": "example_s3_key",
+    "LAMBDA_TASK_ROOT": "./src/",
 }
 
 # Need to mock the region in order to do the import......
@@ -57,7 +58,7 @@ event_body = {
                 "Regex": "validation:custom",
             },
         ],
-        "TrainingImage": "example_training_image",
+        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1",
         "TrainingInputMode": "example_training_input_mode",
     },
     "InputDataConfig": [
@@ -101,7 +102,7 @@ args = {
     "TrainingJobName": training_job_name,
     "HyperParameters": {"batch_size": "100"},
     "AlgorithmSpecification": {
-        "TrainingImage": "example_training_image",
+        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1",
         "TrainingInputMode": "example_training_input_mode",
         "EnableSageMakerMetricsTimeSeries": True,
         "MetricDefinitions": [

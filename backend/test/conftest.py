@@ -15,12 +15,19 @@
 #
 
 import json
+import os
 from unittest import mock
 
 import pytest
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
 from ml_space_lambda.enums import DatasetType
+
+
+# Adds global ENV variables unless they are overwritten by the test
+def pytest_generate_tests(metafunc):
+    # Provides the location of the LAMBDA_TASK_ROOT which is used by the 'retrieve' function to identify built-in training algorithms
+    os.environ["LAMBDA_TASK_ROOT"] = "./src/"
 
 
 @pytest.fixture

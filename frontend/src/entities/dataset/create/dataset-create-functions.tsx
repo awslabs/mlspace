@@ -15,14 +15,14 @@
 */
 
 import { IDataset } from '../../../shared/model/dataset.model';
-import { IDatasetFile } from '../../../shared/model/datasetfile.model';
+import { determineScope } from '../dataset.service';
 
-export const createDatasetFromForm = (form: any, files: IDatasetFile[]) => {
+export const createDatasetFromForm = (form: any, projectName: string, username: string): IDataset & Required<Pick<IDataset, 'name' | 'description' | 'type' | 'format' | 'scope'>> => {
     return {
         name: form.name,
         description: form.description,
         type: form.type,
         format: form.format,
-        files: files,
-    } as IDataset;
+        scope: determineScope(form.type, projectName, username!)
+    };
 };

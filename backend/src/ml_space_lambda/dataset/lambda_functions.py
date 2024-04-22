@@ -24,6 +24,7 @@ from botocore.config import Config
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
 from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
+from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, rename_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -229,55 +230,60 @@ def list_resources(event, context):
 
 
 @api_wrapper
-def list_locations(event, context):
-    scope = event["pathParameters"]["scope"].replace('"', "")
-    type = event["pathParameters"]["type"].replace('"', "")
-    datasets_locations = []
-
-    datasets = dataset_dao.get_all_for_scope(DatasetType[type.upper()], scope)
-
-    for dataset in datasets:
-        datasets_locations.append(
-            {
-                "name": dataset.name,
-                "location": dataset.location,
-            }
-        )
-
-    env_variables = get_environment_variables()
-
-    return {"bucket": f's3://{env_variables["DATA_BUCKET"]}', "locations": datasets_locations}
-
-
-@api_wrapper
 def list_files(event, context):
-    prefix = get_dataset_prefix(event["pathParameters"]["scope"], event["pathParameters"]["datasetName"])
-
     env_variables = get_environment_variables()
-    keys = []
+    query_string_parameters = event.get("queryStringParameters") or {}
 
-    if event["queryStringParameters"]:
-        s3_response = s3.list_objects_v2(
-            Bucket=env_variables["DATA_BUCKET"],
-            Prefix=prefix,
-            ContinuationToken=event["queryStringParameters"].get("nextToken", ""),
-        )
-    else:
-        s3_response = s3.list_objects_v2(Bucket=env_variables["DATA_BUCKET"], Prefix=prefix)
+    # map query parameters keys to api parameter names
+    query_string_parameters = rename_dict_keys(
+        query_string_parameters,
+        {"nextToken": "ContinuationToken", "pageSize": "MaxKeys", "prefix": "Prefix"},
+    )
 
-    for object in s3_response.get("Contents", []):
-        keys.append({"key": object["Key"], "size": object["Size"]})
+    dataset_prefix = get_dataset_prefix(event["pathParameters"]["scope"], event["pathParameters"]["datasetName"])
+    # this joins dataset path with the user supplied prefix
+    # example: "private/aUsername/datasets/aDatasetName/" + "path/to/files/"
+    computed_prefix = "".join([dataset_prefix, query_string_parameters.get("Prefix", "")])
 
-    # Note: For s3_response if there are no files, the path to the dataset is returned
-    # Remove the dataset path to correctly reflect there are no files in the dataset
-    if len(keys) == 1 and keys[0]["key"] == prefix:
-        keys = []
-
-    response = {
-        "Keys": keys,
+    query_parameters = {
+        "Bucket": env_variables["DATA_BUCKET"],
+        "Prefix": computed_prefix,
+        "Delimiter": "/",
     }
+
+    # don't allow arbitrary query string parameters added to the query_parameters dict
+    allowed_query_string_parameters = ["MaxKeys", "ContinuationToken"]
+    for key in filter_dict_by_keys(query_string_parameters, allowed_query_string_parameters):
+        query_parameters[key] = query_string_parameters[key]
+
+    # convert MaxKeys to int if it exists
+    if "MaxKeys" in query_parameters:
+        # make sure MaxKeys is an int
+        query_parameters["MaxKeys"] = int(query_parameters["MaxKeys"])
+
+    s3_response = s3.list_objects_v2(**query_parameters)
+    response = {}
+
+    # copy over values with updated keys to response
+    response["pageSize"] = s3_response["MaxKeys"]
+    response["prefix"] = s3_response["Prefix"]
+    response["bucket"] = env_variables["DATA_BUCKET"]
 
     if "NextContinuationToken" in s3_response:
         response["nextToken"] = s3_response["NextContinuationToken"]
+
+    response["contents"] = []
+
+    # add s3_response["Contents"] to the response
+    if "Contents" in s3_response:
+        response["contents"].extend(
+            map(lambda content: {"key": content["Key"], "size": content["Size"], "type": "object"}, s3_response["Contents"])
+        )
+
+    # add s3_response["CommonPrefixes"] to the response
+    if "CommonPrefixes" in s3_response:
+        response["contents"].extend(
+            map(lambda common_prefix: {"prefix": common_prefix["Prefix"], "type": "prefix"}, s3_response["CommonPrefixes"])
+        )
 
     return response

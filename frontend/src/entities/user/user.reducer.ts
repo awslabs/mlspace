@@ -28,9 +28,9 @@ const initialState = {
 };
 
 // Actions
-export const getPageSizeForUser = (user : IUser, tableName : string) => {
-    const pageSizes : Map<string, number> = new Map(Object.entries(user.preferences.pageSize || {}));
-    if (pageSizes?.has(tableName)) {
+export const getPageSizeForUser = (user : IUser, tableName? : string) => {
+    const pageSizes : Map<string, number> = new Map(Object.entries(user?.preferences?.pageSize || {}));
+    if (tableName && pageSizes?.has(tableName)) {
         return pageSizes.get(tableName);
     } else {
         return DEFAULT_PAGE_SIZE;

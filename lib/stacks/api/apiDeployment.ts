@@ -1,12 +1,12 @@
 import { App, Stack, StackProps } from 'aws-cdk-lib';
-import { Deployment, RestApi, Stage } from 'aws-cdk-lib/aws-apigateway';
+import { Deployment, RestApi } from 'aws-cdk-lib/aws-apigateway';
 
 export type ApiDeploymentStackProps = {
     readonly restApiId: string;
 } & StackProps;
 
 export class ApiDeploymentStack extends Stack {
-    constructor(parent: App, name: string, props: ApiDeploymentStackProps) {
+    constructor (parent: App, name: string, props: ApiDeploymentStackProps) {
         super(parent, name, {
             terminationProtection: false,
             ...props,
@@ -24,4 +24,4 @@ export class ApiDeploymentStack extends Stack {
         // https://github.com/aws/aws-cdk/issues/25582
         (deployment as any).resource.stageName = 'Prod';
     }
-  }
+}

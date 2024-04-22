@@ -125,6 +125,8 @@ export const SYSTEM_BANNER_TEXT = '';   // If this value is not set then no bann
 export const SYSTEM_BANNER_TEXT_COLOR = 'white';
 // Interval (in minutes) to run the resource termination cleanup lambda
 export const RESOURCE_TERMINATION_INTERVAL = 60;
+// Interval (in minutes) to run background resource data updates
+export const BACKGROUND_REFRESH_INTERVAL = 60;
 // The default suspension state for new users. If true, new users are suspended and can't perform actions until validated by a SysAdmin
 export const NEW_USERS_SUSPENDED = false;
 

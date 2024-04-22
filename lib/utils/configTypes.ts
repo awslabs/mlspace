@@ -22,6 +22,7 @@ import {
     APP_ROLE_ARN,
     AWS_ACCOUNT,
     AWS_REGION,
+    BACKGROUND_REFRESH_INTERVAL,
     BUCKET_DEPLOYMENT_ROLE_ARN,
     COMMON_LAYER_ARN_PARAM,
     CONFIG_BUCKET_NAME,
@@ -71,10 +72,10 @@ import {
     USERS_TABLE_NAME,
     WEBSITE_BUCKET_NAME
 } from '../constants';
-import * as fs from "fs";
+import * as fs from 'fs';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 
-export interface MLSpaceConfig {
+export type MLSpaceConfig = {
     //Table names
     DATASETS_TABLE_NAME: string,
     PROJECTS_TABLE_NAME: string,
@@ -137,12 +138,13 @@ export interface MLSpaceConfig {
     SYSTEM_BANNER_BACKGROUND_COLOR: string,
     SYSTEM_BANNER_TEXT: string,
     SYSTEM_BANNER_TEXT_COLOR: string,
-}
+    BACKGROUND_REFRESH_INTERVAL: number,
+};
 
 const validateRequiredProperty = (val: string, name: string) => {
     if (!val) {
         throw new Error(`${name} is a required property. \nPlease run 'npm run config'` +
-        `and select the Basic Configuration option, which will walk you through setting up all required fields`);
+        'and select the Basic Configuration option, which will walk you through setting up all required fields');
     }
 };
 
@@ -152,7 +154,7 @@ const validateRequiredProperty = (val: string, name: string) => {
  * in config.json
  */
 export function generateConfig () {
-    let config: MLSpaceConfig = {
+    const config: MLSpaceConfig = {
         // Table names
         DATASETS_TABLE_NAME: DATASETS_TABLE_NAME,
         PROJECTS_TABLE_NAME: PROJECTS_TABLE_NAME,
@@ -199,7 +201,7 @@ export function generateConfig () {
         //Properties that are prompted for in the config-helper wizard
         AWS_ACCOUNT: AWS_ACCOUNT,
         AWS_REGION: AWS_REGION,
-        OIDC_URL:  OIDC_URL,
+        OIDC_URL: OIDC_URL,
         OIDC_CLIENT_NAME: OIDC_CLIENT_NAME,
         KEY_MANAGER_ROLE_NAME: KEY_MANAGER_ROLE_NAME,
         EXISTING_VPC_NAME: EXISTING_VPC_NAME,
@@ -215,6 +217,7 @@ export function generateConfig () {
         SYSTEM_BANNER_TEXT: SYSTEM_BANNER_TEXT,
         SYSTEM_BANNER_TEXT_COLOR: SYSTEM_BANNER_TEXT_COLOR,
         NEW_USERS_SUSPENDED: NEW_USERS_SUSPENDED,
+        BACKGROUND_REFRESH_INTERVAL: BACKGROUND_REFRESH_INTERVAL
     };
 
 

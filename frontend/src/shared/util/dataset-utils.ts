@@ -14,36 +14,36 @@
   limitations under the License.
 */
 
-import { DatasetType } from '../model';
+import { DatasetType, IDataset } from '../model';
 
-const datasetRegex = new RegExp('s3://(.*?)/(.*)/datasets/(.*?)/(.*)');
+export type DatasetContext = IDataset & Required<Pick<IDataset, 'name' | 'type'>>;
 
-export const datasetFromS3Uri = (s3Uri: string): {
-    Type: DatasetType;
-    Name?: string;
-    Location?: string;
-} | undefined => {
+export const datasetFromS3Uri = (s3Uri: string): DatasetContext | undefined => {
     // Example: s3://mlspace-data-<acc-id>/<type(/subtype - optional)>/datasets/<ds-name>/train/
     if (s3Uri) {
-        // matches[0] will be the entire string matched by the regex and the rest are the captures
-        const matches = s3Uri.match(datasetRegex);
-        if (matches?.length === 5) {
-            let type = '';
-            // Match 2 will either be "global", "private/<username>", or "project/<projectname>"
-            const slashIndex = matches[2].indexOf('/');
-            // For private and project just return the type
-            if (slashIndex > 0) {
-                type = matches[2].slice(0, slashIndex);
-            } else {
-                type = matches[2];
-            }
-            const dataset = {
-                Type: type as DatasetType,
-                Name: matches[3],
-                Location: matches[4],
+        const matches = datasetComponents(s3Uri);
+
+        if (matches.type && matches.name) {
+            return {
+                location: matches?.location,
+                name: matches.name,
+                type: matches.type as DatasetType,
+                scope: matches?.scope
             };
-            return dataset;
         }
     }
-    return undefined;
+};
+
+export type DatasetComponentsMatch = {
+    bucket?: string,
+    location?: string,
+    name?: string,
+    object?: string
+    prefix?: string,
+    scope?: string,
+    type?: string,
+};
+
+export const datasetComponents = (path?: string): DatasetComponentsMatch => {
+    return path?.match(/^s3:\/\/(?<bucket>.+?)\/(?<type>global|private|project)(\/(?<scope>.+))?\/datasets\/(?<name>.+?)\/(?<location>(?<prefix>(.+?\/)+)?(?<object>.+)?)$/)?.groups || {};
 };

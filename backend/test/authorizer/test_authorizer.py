@@ -1198,13 +1198,6 @@ def test_list_project_resources(
         ("/metadata/compute-types", None, MOCK_USER),
         ("/metadata/notebook-options", None, MOCK_USER),
         ("/metadata/subnets", None, MOCK_USER),
-        ("/dataset-locations/global/global", {"scope": "global", "type": "global"}, MOCK_USER),
-        ("/dataset-locations/project/test123", {"scope": "test123", "type": "project"}, MOCK_USER),
-        (
-            f"/dataset-locations/private/{MOCK_USER}",
-            {"scope": MOCK_USER.username, "type": "private"},
-            MOCK_USER,
-        ),
     ],
     ids=[
         "get_emr",
@@ -1216,9 +1209,6 @@ def test_list_project_resources(
         "get_compute_types",
         "get_notebook_options",
         "get_subnets",
-        "get_dataset_locations_global",
-        "get_dataset_locations_project",
-        "get_dataset_locations_private",
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
@@ -1261,78 +1251,6 @@ def test_unauthenticated_endpoint_post(mock_user_dao, resource: str, path_params
         {},
     ) == policy_response(user=user)
     mock_user_dao.get.assert_called_with(user.username)
-
-
-@pytest.mark.parametrize(
-    "resource,path_params,user,project_user,allow",
-    [
-        (
-            "/dataset-locations/global/global",
-            {"scope": "global", "type": "global"},
-            MOCK_USER,
-            None,
-            True,
-        ),
-        (
-            "/dataset-locations/project/test123",
-            {"scope": "test123", "type": "project"},
-            MOCK_USER,
-            MOCK_REGULAR_PROJECT_USER,
-            True,
-        ),
-        (
-            f"/dataset-locations/private/{MOCK_USER}",
-            {"scope": MOCK_USER.username, "type": "private"},
-            MOCK_USER,
-            None,
-            True,
-        ),
-        (
-            "/dataset-locations/project/test123",
-            {"scope": "test123", "type": "project"},
-            MOCK_USER,
-            None,
-            False,
-        ),
-        (
-            f"/dataset-locations/private/{MOCK_USER}",
-            {"scope": MOCK_USERNAME, "type": "private"},
-            MOCK_USER,
-            None,
-            False,
-        ),
-    ],
-    ids=[
-        "get_dataset_locations_global",
-        "get_dataset_locations_project",
-        "get_dataset_locations_private",
-        "get_dataset_locations_project_non_member",
-        "get_dataset_locations_private_other_user",
-    ],
-)
-@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_get_dataset_locations(
-    mock_user_dao,
-    mock_project_user_dao,
-    resource: str,
-    path_params: Dict[str, str],
-    user: UserModel,
-    project_user: ProjectUserModel,
-    allow: bool,
-):
-    mock_user_dao.get.return_value = user
-    mock_project_user_dao.get.return_value = project_user
-    assert lambda_handler(
-        mock_event(user=user, resource=resource, method="GET", path_params=path_params),
-        {},
-    ) == policy_response(allow=allow, user=user)
-    mock_user_dao.get.assert_called_with(user.username)
-    if path_params and "type" in path_params and path_params["type"] == "project":
-        mock_project_user_dao.get.assert_called_with(path_params["scope"], user.username)
-    else:
-        mock_project_user_dao.get.assert_not_called()
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)

@@ -41,6 +41,7 @@ import z from 'zod';
 import { ML_ALGORITHMS } from '../../../algorithms';
 import NotificationService from '../../../../../shared/layout/notification/notification.service';
 import { useAppDispatch } from '../../../../../config/store';
+import '../../../../../shared/validation/helpers/uri';
 
 export type TrainingJobDefinitionProps = FormProps<ITrainingJobDefinition> & {
     onSubmit(): void;
@@ -96,25 +97,14 @@ const formSchema = z.object({
                     }),
                 DataSource: z.object({
                     S3DataSource: z.object({
-                        S3Uri: z.string().startsWith('s3://'),
-                    }),
-                }),
-                Dataset: z.object({
-                    Name: z.string({
-                        required_error:
-                            'S3 location is required',
+                        S3Uri: z.string().s3Uri()
                     }),
                 }),
             })
         )
         .superRefine(duplicateAttributeRefinement('ChannelName')),
     OutputDataConfig: z.object({
-        S3OutputPath: z.string().startsWith('s3://'),
-        Dataset: z.object({
-            Name: z.string({
-                required_error: 'S3 location is required',
-            }),
-        }),
+        S3OutputPath: z.string().datasetUri(),
     }),
 });
 
@@ -322,7 +312,7 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
     }
 
     const stepValidator = [
-        ['DefinitionName', 'TuningObjective.MetricName', 'TuningObjective.Type', 'hyperparameters'],
+        ['DefinitionName', 'TuningObjective.MetricName', 'TuningObjective.Type', 'hyperparameters', 'AlgorithmSpecification'],
         ['InputDataConfig', 'OutputDataConfig'],
         ['ResourceConfig'],
     ];

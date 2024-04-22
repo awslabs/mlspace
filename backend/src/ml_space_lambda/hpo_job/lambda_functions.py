@@ -24,6 +24,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
+from ml_space_lambda.utils.image_uri_utils import delete_metric_definition_for_builtin_algorithms
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ def _normalize_job_definition(definition, iam_role, param_file):
         del definition["subnetIds"]
     else:
         definition["VpcConfig"]["Subnets"] = random.sample(param_file["pSMSSubnetIds"].split(","), 1)
+    delete_metric_definition_for_builtin_algorithms(definition["AlgorithmSpecification"])
     return definition
 
 

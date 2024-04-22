@@ -29,6 +29,7 @@ from ml_space_lambda.utils.common_functions import generate_html_response, gener
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
     "BUCKET": "mlspace-data-bucket",
+    "LAMBDA_TASK_ROOT": "./src/",
     "S3_KEY": "example_s3_key",
 }
 
@@ -46,9 +47,19 @@ mock_arn_from_dynamo = "mock_iam_role_from_dynamo"
 mock_context = mock.Mock()
 mock_tags = generate_tags(user_name, project_name, "MLSpace")
 
+default_os_environ = {
+    "LAMBDA_TASK_ROOT": "./src/",
+    "MANAGE_IAM_ROLES": "",
+}
 
-def _mock_job_definition(subnets: List[str], enable_isolation: Optional[bool] = True):
+
+def _mock_job_definition(
+    subnets: List[str],
+    enable_isolation: Optional[bool] = True,
+    image_uri: str = "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1",
+):
     return {
+        "AlgorithmSpecification": {"TrainingImage": image_uri},
         "OutputDataConfig": {
             "KmsKeyId": "example_key_id",
             "S3OutputPath": "s3://example_s3_bucket",
@@ -99,6 +110,9 @@ def test_create_hpo_job_single_job_success(
                 "ResourceConfig": {"InstanceType": "ml.m4.xlarge"},
                 "EnableNetworkIsolation": False,
                 "subnetIds": "example_subnet1",
+                "AlgorithmSpecification": {
+                    "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1"
+                },
             },
             "WarmStartConfig": {
                 "ParentHyperParameterTuningJobs": [{"HyperParameterTuningJobName": tuning_job_name}],
@@ -140,7 +154,7 @@ def test_create_hpo_job_single_job_success(
     )
 
     # use default of pulling iam_roles from s3 config
-    with mock.patch.dict(os.environ, {"MANAGE_IAM_ROLES": ""}):
+    with mock.patch.dict(os.environ, default_os_environ):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_sagemaker.create_hyper_parameter_tuning_job.assert_called_with(**args)
@@ -157,7 +171,7 @@ def test_create_hpo_job_single_job_success(
     args["TrainingJobDefinition"]["VpcConfig"]["Subnets"] = ["example_subnet2"]
 
     # patch variable to test pulling config from dynamo
-    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "fakeFunctionName"}):
+    with mock.patch.dict("os.environ", {**default_os_environ, "MANAGE_IAM_ROLES": "fakeFunctionName"}):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_sagemaker.create_hyper_parameter_tuning_job.assert_called_with(**args)
@@ -208,6 +222,9 @@ def test_create_hpo_job_multiple_jobs_success(
                     },
                     "ResourceConfig": {"InstanceType": "ml.m4.xlarge"},
                     "subnetIds": "example_subnet1,example_subnet3",
+                    "AlgorithmSpecification": {
+                        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1"
+                    },
                 },
                 {
                     "OutputDataConfig": {
@@ -216,6 +233,9 @@ def test_create_hpo_job_multiple_jobs_success(
                     },
                     "ResourceConfig": {"InstanceType": "ml.m4.xlarge"},
                     "EnableNetworkIsolation": False,
+                    "AlgorithmSpecification": {
+                        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1"
+                    },
                 },
                 {
                     "OutputDataConfig": {
@@ -224,6 +244,9 @@ def test_create_hpo_job_multiple_jobs_success(
                     },
                     "ResourceConfig": {"InstanceType": "ml.m4.xlarge"},
                     "subnetIds": "example_subnet2",
+                    "AlgorithmSpecification": {
+                        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1"
+                    },
                 },
             ],
             "WarmStartConfig": {
@@ -272,7 +295,7 @@ def test_create_hpo_job_multiple_jobs_success(
 
     mock_pull_config.assert_called_once()
 
-    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": ""}):
+    with mock.patch.dict("os.environ", default_os_environ):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_sagemaker.create_hyper_parameter_tuning_job.assert_called_with(**args)
@@ -342,7 +365,7 @@ def test_create_hpo_job_no_jobs_success(
 
     mock_pull_config.assert_called_once()
 
-    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": ""}):
+    with mock.patch.dict("os.environ", default_os_environ):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_sagemaker.create_hyper_parameter_tuning_job.assert_called_with(**args)
@@ -395,6 +418,9 @@ def test_create_hpo_job_client_error(
                     },
                     "ResourceConfig": {"InstanceType": "ml.m4.xlarge"},
                     "subnetIds": "example_subnet1",
+                    "AlgorithmSpecification": {
+                        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1"
+                    },
                 },
                 {
                     "OutputDataConfig": {
@@ -403,6 +429,9 @@ def test_create_hpo_job_client_error(
                     },
                     "ResourceConfig": {"InstanceType": "ml.m4.xlarge"},
                     "subnetIds": "example_subnet1",
+                    "AlgorithmSpecification": {
+                        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1"
+                    },
                 },
                 {
                     "OutputDataConfig": {
@@ -411,6 +440,9 @@ def test_create_hpo_job_client_error(
                     },
                     "ResourceConfig": {"InstanceType": "ml.m4.xlarge"},
                     "subnetIds": "example_subnet1",
+                    "AlgorithmSpecification": {
+                        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1"
+                    },
                 },
             ],
             "WarmStartConfig": {
@@ -450,7 +482,7 @@ def test_create_hpo_job_client_error(
     mock_sagemaker.create_hyper_parameter_tuning_job.side_effect = ClientError(error_msg, "CreateHyperParameterTuningJob")
     mock_pull_config.return_value = mock_s3_param_json
 
-    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": ""}):
+    with mock.patch.dict("os.environ", default_os_environ):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_sagemaker.create_hyper_parameter_tuning_job.assert_called_with(**args)
@@ -480,6 +512,9 @@ def test_create_hpo_mismatched_header(mock_project_user_dao, mock_sagemaker, moc
                         "KmsKeyId": "old_kms_key",
                         "S3OutputPath": "s3://example_s3_bucket",
                     },
+                    "AlgorithmSpecification": {
+                        "TrainingImage": "123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1"
+                    },
                 }
             ],
             "WarmStartConfig": {
@@ -503,7 +538,7 @@ def test_create_hpo_mismatched_header(mock_project_user_dao, mock_sagemaker, moc
         f"Bad Request: Project header, {fake_project}, does not match the project name associated with the HPO job, {project_name}.",
     )
 
-    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": ""}):
+    with mock.patch.dict("os.environ", default_os_environ):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_sagemaker.create_hyper_parameter_tuning_job.assert_not_called()
