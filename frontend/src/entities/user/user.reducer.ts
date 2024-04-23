@@ -65,7 +65,7 @@ export const addUsersToProject = createAsyncThunk(
 export const removeUserFromProject = createAsyncThunk(
     'user/remove_user_from_project',
     async (data: IProjectUser) => {
-        const requestUrl = `/project/${data.project}/users/${data.user}`;
+        const requestUrl = `/project/${data.project}/users/${encodeURIComponent(data.user || '')}`;
         return axios.delete(requestUrl);
     }
 );
@@ -73,7 +73,7 @@ export const removeUserFromProject = createAsyncThunk(
 export const updateUsersInProject = createAsyncThunk(
     'user/update_user_role',
     async (projectUser: IProjectUser) => {
-        const requestUrl = `/project/${projectUser.project}/users/${projectUser.user}`;
+        const requestUrl = `/project/${projectUser.project}/users/${encodeURIComponent(projectUser.user || '')}`;
         return axios.put<IProjectUser>(requestUrl, projectUser);
     }
 );
@@ -81,7 +81,7 @@ export const updateUsersInProject = createAsyncThunk(
 export const updateUser = createAsyncThunk(
     'user/update_user',
     async (user: IUser) => {
-        const requestUrl = `/user/${user.username}`;
+        const requestUrl = `/user/${encodeURIComponent(user.username || '')}`;
         return await axios.put<IUser>(requestUrl, user);
     }
 );
