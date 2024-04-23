@@ -48,9 +48,7 @@ def update_configuration(event, context):
     except Exception as e:
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
             e.response["ResponseMetadata"]["HTTPStatusCode"] = 429
-            raise e
-        else:
-            raise e
+        raise e
 
     return f"Successfully updated configuration for {configScope}, version {version_id}."
 
