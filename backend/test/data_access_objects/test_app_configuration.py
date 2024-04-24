@@ -189,7 +189,6 @@ class TestAppConfigDAO(TestCase):
 
     def test_get_app_config_not_found(self):
         assert not self.app_config_dao.get("sample-project", 1)
-        
 
     def test_create_app_config(self):
         new_record = AppConfigurationModel.from_dict(generate_test_config("project2", 0, True))
@@ -198,8 +197,7 @@ class TestAppConfigDAO(TestCase):
         assert len(from_ddb) == 1
         assert from_ddb[0].to_dict() == new_record.to_dict()
 
-
     def test_create_app_config_outdated(self):
-        new_record = AppConfigurationModel.from_dict(generate_test_config("project1", 1, True)) # versionId 1 already exists
+        new_record = AppConfigurationModel.from_dict(generate_test_config("project1", 1, True))  # versionId 1 already exists
         with pytest.raises(self.ddb.exceptions.ConditionalCheckFailedException):
             self.app_config_dao.create(new_record)

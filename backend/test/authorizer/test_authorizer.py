@@ -1680,6 +1680,7 @@ def test_app_config_routes(
     ) == policy_response(allow=allow, user=user)
     mock_user_dao.get.assert_called_with(user.username)
 
+
 @pytest.mark.parametrize(
     "user,method,allow",
     [
