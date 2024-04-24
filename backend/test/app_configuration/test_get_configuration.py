@@ -18,6 +18,8 @@ import json
 import time
 from unittest import mock
 
+from botocore.exceptions import ClientError
+
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationModel
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -55,4 +57,23 @@ def test_get_config_success(mock_app_config_dao):
     success_response = mock_app_model
     expected_response = generate_html_response(200, success_response)
 
+    assert lambda_handler(mock_event, mock_context) == expected_response
+
+
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
+def test_update_config_unexpected_exception(mock_app_config_dao):
+    config_scope = "global"
+    mock_event = generate_event(config_scope)
+
+    error_msg = {
+        "Error": {"Code": "UnexpectedException", "Message": "Some unexpected exception occurred."},
+        "ResponseMetadata": {"HTTPStatusCode": 400},
+    }
+
+    expected_response = generate_html_response(
+        400,
+        "An error occurred (UnexpectedException) when calling the Query operation: Some unexpected exception occurred.",
+    )
+
+    mock_app_config_dao.get.side_effect = ClientError(error_msg, "Query")
     assert lambda_handler(mock_event, mock_context) == expected_response

@@ -20,6 +20,7 @@ from unittest import TestCase, mock
 
 import boto3
 import moto
+import pytest
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
@@ -188,6 +189,7 @@ class TestAppConfigDAO(TestCase):
 
     def test_get_app_config_not_found(self):
         assert not self.app_config_dao.get("sample-project", 1)
+        
 
     def test_create_app_config(self):
         new_record = AppConfigurationModel.from_dict(generate_test_config("project2", 0, True))
@@ -195,3 +197,9 @@ class TestAppConfigDAO(TestCase):
         from_ddb = self.app_config_dao.get(new_record.configScope, 1)
         assert len(from_ddb) == 1
         assert from_ddb[0].to_dict() == new_record.to_dict()
+
+
+    def test_create_app_config_outdated(self):
+        new_record = AppConfigurationModel.from_dict(generate_test_config("project1", 1, True)) # versionId 1 already exists
+        with pytest.raises(self.ddb.exceptions.ConditionalCheckFailedException):
+            self.app_config_dao.create(new_record)

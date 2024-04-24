@@ -67,8 +67,8 @@ class DynamoDBObjectStore:
         index_name: Optional[str] = None,
         limit: Optional[int] = None,
         page_response: bool = False,
-        scan_index_forward: bool = True,
         next_token: str = None,
+        scan_index_forward: bool = True,
     ) -> PagedResults:
         kwargs = {
             "TableName": self.table_name,

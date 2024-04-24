@@ -117,10 +117,21 @@ def test_update_config_success(mock_app_config_dao, config_scope: str):
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
+@pytest.mark.parametrize(
+    "config_scope",
+    [
+        ("global"),
+        ("project_name"),
+    ],
+    ids=[
+        "update_config_app_outdated",
+        "update_config_project_outdated",
+    ],
+)
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_outdated(mock_app_config_dao):
+def test_update_config_outdated(mock_app_config_dao, config_scope: str):
     version_id = 1
-    mock_event = generate_event("global", version_id)
+    mock_event = generate_event(config_scope, version_id)
 
     error_msg = {
         "Error": {"Code": "ConditionalCheckFailedException", "Message": "The conditional request failed."},

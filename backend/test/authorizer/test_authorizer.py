@@ -1679,10 +1679,6 @@ def test_app_config_routes(
         {},
     ) == policy_response(allow=allow, user=user)
     mock_user_dao.get.assert_called_with(user.username)
-    #  test/authorizer/test_authorizer.py::test_app_config_routes[user_get_project_config] - AttributeError: 'ProjectUserModel' object has no attribute 'username'
-    #  test/authorizer/test_authorizer.py::test_app_config_routes[user_update_project_config] - AttributeError: 'ProjectUserModel' object has no attribute 'username'
-    #  test/authorizer/test_authorizer.py::test_app_config_routes[project_owner_update_project_config] - AttributeError: 'ProjectUserModel' object has no attribute 'username'
-
 
 @pytest.mark.parametrize(
     "user,method,allow",

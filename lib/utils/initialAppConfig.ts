@@ -2,11 +2,13 @@ import { MLSpaceConfig } from "./configTypes";
 
 
 export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
+    const date = new Date();
     return {
         'versionId': {'N': '0'}, 
         'changedBy': {'S': 'InitialConfig'}, 
         'configScope': {'S': 'global'}, 
         'changeReason': {'S': 'Initial deployment default config'},
+        'changedAt': {'S': Math.round(date.getTime() / 1000).toString()},
         'configuration': {'M': {
             'EnabledServices': {'M': {
                 'cluster': {'BOOL': 'True'}, 
@@ -22,7 +24,7 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                 'endpoint-config': {'BOOL': 'True'}
             }}, 
             'ProjectCreation': {'M': {
-                'AdminOnly': {'BOOL': 'True'}, 
+                'AdminOnly': {'BOOL': 'False'}, 
                 'AllowedGroups': {'L': 
                 [
 
