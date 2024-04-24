@@ -49,24 +49,26 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                         'eval-periods': {'N': '1'}, 
                         'percentage-mem-available': {'N': '75'}}}, 
                         'max-instances': {'N': '15'}}}, 
-                    'cluster-sizes': {'L': 
-                    [
-                        {'L': [
-                            {'N': '3'}, 
-                            {'S': 'Small'}, 
-                            {'S': 'm5.xlarge'}
-                        ]}, 
-                        {'L': [
-                            {'S': 'Medium'}, 
-                            {'N': '5'}, 
-                            {'S': 'm5.xlarge'}]}, 
-                        {'L': [
-                            {'S': 'm5.xlarge'}, 
-                            {'S': 'p3.8xlarge'}, 
-                            {'S': 'Large'}, 
-                            {'N': '7'}]
-                        }]
-                    }, 
+                    'cluster-sizes': {'L': [
+                        {'M': {
+                            'name': {'S': 'Small'},
+                            'size': {'N': '3'},
+                            'master-type': {'S': 'm5.xlarge'},
+                            'core-type': {'S': 'm5.xlarge'},
+                        }},
+                        {'M': {
+                            'name': {'S': 'Medium'},
+                            'size': {'N': '5'},
+                            'master-type': {'S': 'm5.xlarge'},
+                            'core-type': {'S': 'm5.xlarge'},
+                        }},
+                        {'M': {
+                            'name': {'S': 'Large'},
+                            'size': {'N': '7'},
+                            'master-type': {'S': 'm5.xlarge'},
+                            'core-type': {'S': 'p3.8xlarge'},
+                        }}
+                    ]},
                     'applications': {'L': [
                         {'M': {'Name': {'S': 'Hadoop'}}}, 
                         {'M': {'Name': {'S': 'Spark'}}}, 
