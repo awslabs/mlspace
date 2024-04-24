@@ -19,7 +19,7 @@ import { IDataset } from '../../shared/model';
 import { DatasetResource } from './dataset-browser.reducer';
 import { PrefixedType } from '../../shared/util/types';
 
-type DatasetResourceSelectorSelectableItems = 'prefixes' | 'objects';
+export type DatasetResourceSelectorSelectableItems = 'prefixes' | 'objects';
 
 type DatasetResourceSelectorChangeDetail = {
     resource: string;
@@ -61,4 +61,8 @@ export type DatasetResourceSelectorProps = {
      * Should the create button be shown.
      */
     showCreateButton?: boolean;
+    /**
+     * Should an alet be displayed if the file does not exist or prefix is empty.
+     */
+    alertOnEmpty?: boolean;
 } & PrefixedType<Omit<InputProps, 'onChange' | 'selectableItemsTypes' | 'viewHref' | 'value'>, 'input'> & PrefixedType<FormFieldProps, 'field'>;

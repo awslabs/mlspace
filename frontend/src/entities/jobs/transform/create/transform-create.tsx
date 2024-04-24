@@ -61,6 +61,7 @@ import {
 import { tryCreateDataset } from '../../../dataset/dataset.service';
 import DatasetResourceSelector from '../../../../modules/dataset/dataset-selector';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
+import { DatasetResourceSelectorSelectableItems } from '../../../../modules/dataset/dataset-selector.types';
 
 export function TransformCreate () {
     const [s3DataTypes, setS3DataTypes] = useState([] as SelectProps.Option[]);
@@ -145,6 +146,13 @@ export function TransformCreate () {
         touched: {},
         formSubmitting: false as boolean,
     });
+
+    let selectableItemsTypes: DatasetResourceSelectorSelectableItems[] = ['prefixes', 'objects'];
+    if (state.form.TransformInput.DataSource.S3DataSource.S3DataType === 'S3Prefix') {
+        selectableItemsTypes = ['prefixes'];
+    } else if (state.form.TransformInput.DataSource.S3DataSource.S3DataType === 'ManifestFile') {
+        selectableItemsTypes = ['objects'];
+    }
 
     useEffect(() => {
         dispatch(
@@ -636,7 +644,7 @@ export function TransformCreate () {
                             </Grid>
                             <DatasetResourceSelector
                                 fieldLabel={'S3 Location'}
-                                selectableItemsTypes={['objects']}
+                                selectableItemsTypes={selectableItemsTypes}
                                 onChange={({detail}) => {
                                     setFields({
                                         'TransformInput.DataSource.S3DataSource.S3Uri': detail.resource,
@@ -648,6 +656,7 @@ export function TransformCreate () {
                                 inputInvalid={!!errors?.TransformInput?.DataSource?.S3DataSource?.S3Uri}
                                 fieldErrorText={errors?.TransformInput?.DataSource?.S3DataSource?.S3Uri}
                                 resource={state.form?.TransformInput?.DataSource?.S3DataSource?.S3Uri || ''}
+                                alertOnEmpty={true}
                             />
                         </SpaceBetween>
                     </Container>

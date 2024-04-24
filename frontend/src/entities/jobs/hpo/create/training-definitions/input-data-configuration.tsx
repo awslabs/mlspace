@@ -42,6 +42,7 @@ import { enumToOptions } from '../../../../../shared/util/enum-utils';
 import { createInputDataConfig } from '../../../create.functions';
 import DatasetResourceSelector from '../../../../../modules/dataset/dataset-selector';
 import { datasetFromS3Uri } from '../../../../../shared/util/dataset-utils';
+import { DatasetResourceSelectorSelectableItems } from '../../../../../modules/dataset/dataset-selector.types';
 
 export type InputDataConfigurationProps = FormProps<(InputDataConfig & DatasetExtension)[]>;
 
@@ -150,6 +151,13 @@ export function Channel (props: ChannelProps) {
      *   .Dataset.Location
      *   .DataSource.S3DataSource.S3Uri
      */
+
+    let selectableItemsTypes: DatasetResourceSelectorSelectableItems[] = ['prefixes', 'objects'];
+    if (item.DataSource.S3DataSource?.S3DataType === S3DataType.S3Prefix) {
+        selectableItemsTypes = ['prefixes'];
+    } else if ([S3DataType.AugmentedManifestFile, S3DataType.ManifestFile].map(String).includes(item.DataSource.S3DataSource?.S3DataType ?? '')) {
+        selectableItemsTypes = ['objects'];
+    }
 
     return (
         <SpaceBetween direction='vertical' size='m'>
@@ -261,7 +269,7 @@ export function Channel (props: ChannelProps) {
             </Grid>
             <DatasetResourceSelector
                 fieldLabel={'S3 Location'}
-                selectableItemsTypes={['objects']}
+                selectableItemsTypes={selectableItemsTypes}
                 onChange={({detail}) => {
                     setFields({
                         'DataSource.S3DataSource.S3Uri': detail.resource,
@@ -272,7 +280,8 @@ export function Channel (props: ChannelProps) {
                 }}
                 inputInvalid={!!formErrors?.DataSource?.S3DataSource?.S3Uri}
                 fieldErrorText={formErrors?.DataSource?.S3DataSource?.S3Uri}
-                resource={item.DataSource.S3DataSource?.S3Uri || ''}
+                resource={item.DataSource.S3DataSource?.S3Uri ?? ''}
+                alertOnEmpty={true}
             />
         </SpaceBetween>
     );
