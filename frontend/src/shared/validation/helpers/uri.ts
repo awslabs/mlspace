@@ -17,7 +17,6 @@ import { z, ZodString } from 'zod';
 import { errorUtil } from 'zod/lib/helpers/errorUtil';
 
 declare module 'zod' {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     interface ZodString {
         s3Uri(message?: errorUtil.ErrMessage): ZodString;
         s3Prefix(message?: errorUtil.ErrMessage): ZodString;
