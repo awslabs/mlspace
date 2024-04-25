@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
     ColumnLayout,
     FormField,
@@ -21,7 +21,6 @@ import {
     SpaceBetween,
     Textarea,
 } from '@cloudscape-design/components';
-import _, { debounce } from 'lodash';
 import { AdditionalSettings, LanguageSelects } from './translate-realtime.common';
 import { z } from 'zod';
 import axios from '../../shared/util/axios-utils';
@@ -29,6 +28,7 @@ import { defaultRealtimeTextTranslateRequest } from '../../shared/model/translat
 import Condition from '../../modules/condition';
 import Table from '../../modules/table';
 import { scrollToInvalid } from '../../shared/validation';
+import { useDebounce } from '../../shared/util/hooks';
 
 /**
  * The React component that populates the 'Text' tab for Translate real-time
@@ -90,24 +90,10 @@ export const TranslateRealtimeText = () => {
         }
     };
 
-    // Debounce is used to handle the delayed update of the form text until the user has finished typing
-    const useDebounce = (callback: () => void, debounceTimeInMs = 400) => {
-        const ref = useRef<any>();
-        ref.current = callback;
-
-        const debouncedCallback = useMemo(() => {
-            return debounce(() => {
-                ref.current?.();
-            }, debounceTimeInMs);
-        }, [debounceTimeInMs]);
-
-        return debouncedCallback;
-    };
-
     // Once the delay has concluded update the primary form Text. This will trigger a form submission
     const debounceFormTextUpdate = useDebounce(() => {
         handleSubmit({ Text: textToTranslate });
-    });
+    }, 400, [textToTranslate]);
 
     /**
      * The contents of the 'Text' tab for Translate real-time
