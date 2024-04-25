@@ -59,19 +59,19 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                 datasetContext,
                 delimiter: ''
             })).then((response) => {
-                let scope = String(datasetContext.type);
+                let scope = '';
                 switch (datasetContext.type) {
                     case DatasetType.PRIVATE:
-                        scope += `/${username}`;
+                        scope = `${username}`;
                         break;
                     case DatasetType.PROJECT:
-                        scope += `/${projectName}`;
+                        scope = `${projectName}`;
                         break;
                 }
     
                 let isEmpty = true;
                 if (isFulfilled(response)) {
-                    const location = [scope, 'datasets', datasetContext.name, `${datasetContext.location}`].filter(Boolean).join('/');
+                    const location = [datasetContext.type, scope, 'datasets', datasetContext.name, datasetContext.location].filter(Boolean).join('/');
                     // check if any resource is an exact match or has a matching prefix
                     isEmpty = !response.payload.data.contents.find((resource) => {
                         if (resource.type !== 'object') {
@@ -117,6 +117,14 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
         }
     };
 
+    const notFoundTypes: string[] = [];
+    if (isSelectingObject) {
+        notFoundTypes.push('name');
+    }
+    if (isSelectingPrefixes) {
+        notFoundTypes.push('prefix');
+    }
+
     return (
         <>
             <FormField {...fieldProps}>
@@ -125,14 +133,8 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                         <Input placeholder={s3UriPlaceholder} {...inputProps} type='search'></Input>
                         <Condition condition={!!props.alertOnEmpty && state.isEmpty}>
                             <Alert statusIconAriaLabel='Warning' type='warning'>
-                                <Condition condition={isSelectingObject && isSelectingPrefixes}>
-                                        No file found with this name and no files found with this prefix.
-                                </Condition>
-                                <Condition condition={isSelectingObject && !isSelectingPrefixes}>
-                                        No file found with this name.
-                                </Condition>
-                                <Condition condition={!isSelectingObject && isSelectingPrefixes}>
-                                        No files found with this prefix.
+                                <Condition condition={notFoundTypes.length > 0}>
+                                        No file(s) found with this {notFoundTypes.join(' or ')}.
                                 </Condition>
                             </Alert>
                         </Condition>

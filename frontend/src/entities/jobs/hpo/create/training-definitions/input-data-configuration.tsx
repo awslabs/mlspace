@@ -153,10 +153,13 @@ export function Channel (props: ChannelProps) {
      */
 
     let selectableItemsTypes: DatasetResourceSelectorSelectableItems[] = ['prefixes', 'objects'];
-    if (item.DataSource.S3DataSource?.S3DataType === S3DataType.S3Prefix) {
-        selectableItemsTypes = ['prefixes'];
-    } else if ([S3DataType.AugmentedManifestFile, S3DataType.ManifestFile].map(String).includes(item.DataSource.S3DataSource?.S3DataType ?? '')) {
-        selectableItemsTypes = ['objects'];
+    switch (item.DataSource.S3DataSource?.S3DataType) {
+        case S3DataType.S3Prefix:
+            selectableItemsTypes = ['prefixes'];
+            break;
+        case S3DataType.ManifestFile:
+        case S3DataType.AugmentedManifestFile:
+            selectableItemsTypes = ['objects'];    
     }
 
     return (
