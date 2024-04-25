@@ -34,12 +34,11 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 
 def generate_event(config_scope: str):
     return {
-        "body": json.dumps(
-            {
-                "configScope": config_scope,
-                "numVersions": 5,
-            }
-        ),
+        "queryStringParameters": 
+        {
+            "configScope": config_scope,
+            "numVersions": 5,
+        }
     }
 
 
