@@ -36,7 +36,7 @@ import { selectCurrentUser } from '../user/user.reducer';
 import { hasPermission } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
 import { DatasetActionType, DatasetBrowserAction, DatasetBrowserState, DatasetResourceObject } from '../../modules/dataset/dataset-browser.reducer';
-import { DatasetBrowserManageMode } from '../../modules/dataset/dataset-browser.types';
+import { DatasetBrowserManageMode, UpdateDatasetContextFunction } from '../../modules/dataset/dataset-browser.types';
 import { useUsername } from '../../shared/util/auth-utils';
 import { prefixForPath, stripDatasetPrefix } from '../../modules/dataset/dataset-browser.utils';
 import { Dispatch as ReduxDispatch } from '@reduxjs/toolkit';
@@ -64,7 +64,7 @@ function DatasetActions (props?: any) {
     );
 }
 
-export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filter'>, setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>): React.ReactNode => {
+export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filteringText'>, setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>, updateDatasetContext: UpdateDatasetContextFunction): React.ReactNode => {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const username = useUsername();
@@ -152,23 +152,8 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                             );
                                         },
                                         postConfirm: () => {
-                                            if (state.datasetContext) {
-                                                const filteringTextPrefix = prefixForPath(state.filter.filteringText);
-                                                // if the filter contains a prefix append that to the Location
-                                                const effectiveContext = {...state.datasetContext, Location: [state.datasetContext.location, filteringTextPrefix].join('')};
-                                        
-                                                setState({
-                                                    type: DatasetActionType.State,
-                                                    payload: {
-                                                        datasetContext: effectiveContext,
-                                                        filter: {
-                                                            filteringText: '',
-                                                            filteredItems: []
-                                                        },
-                                                        refresh: Math.random()
-                                                    }
-                                                });
-                                            }
+                                            const effectiveContext = {...state.datasetContext, location: [state.datasetContext?.location, prefixForPath(state.filteringText)].join('')};
+                                            updateDatasetContext(effectiveContext, '', false);
                                         },
                                         description: deletionDescription('Dataset file(s)'),
                                     })
@@ -218,7 +203,7 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                 break;
                             case DatasetBrowserManageMode.Edit:
                                 if (state.datasetContext) {
-                                    const filteringTextPrefix = prefixForPath(state.filter.filteringText);
+                                    const filteringTextPrefix = prefixForPath(state.filteringText);
                                     if (filteringTextPrefix) {
                                         filesToUpload.forEach((file) => {
                                             file.key = [filteringTextPrefix, file.key].join('');
@@ -233,19 +218,8 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                     setDisableUpload(false);
 
                                     // if the filter contains a prefix append that to the Location
-                                    const effectiveContext = {...state.datasetContext, Location: [state.datasetContext.location, filteringTextPrefix].join('')};
-
-                                    setState({
-                                        type: DatasetActionType.State,
-                                        payload: {
-                                            datasetContext: effectiveContext,
-                                            filter: {
-                                                filteringText: '',
-                                                filteredItems: []
-                                            },
-                                            refresh: Math.random()
-                                        }
-                                    });
+                                    const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
+                                    updateDatasetContext(effectiveContext, '', false);
                                 }
                                 break;
                         }

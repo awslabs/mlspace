@@ -261,7 +261,7 @@ export function Channel (props: ChannelProps) {
             </Grid>
             <DatasetResourceSelector
                 fieldLabel={'S3 Location'}
-                selectableItemsTypes={['objects']}
+                selectableItemsTypes={['objects','prefixes']}
                 onChange={({detail}) => {
                     setFields({
                         'DataSource.S3DataSource.S3Uri': detail.resource,

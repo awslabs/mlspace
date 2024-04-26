@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { Button, FormField, Grid, Input, SpaceBetween} from '@cloudscape-design/components';
 import Condition from '../condition';
 import { DatasetResourceSelectorProps } from './dataset-selector.types';
@@ -37,15 +37,6 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
         resource: props.resource,
         selected: undefined,
     });
-
-    // if resource changes reset to defaults
-    useEffect(() => {
-        setState({
-            mode: DatasetResourceSelectorMode.None,
-            resource: props.resource,
-            selected: undefined
-        });
-    }, [props.resource]);
 
     const fieldProps = extractPrefixedType(props, 'field');
     const inputProps = {

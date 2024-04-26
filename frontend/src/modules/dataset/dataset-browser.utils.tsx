@@ -17,12 +17,11 @@ import * as React from 'react';
 import { BreadcrumbGroupProps, Link, TableProps } from '@cloudscape-design/components';
 import { upperFirst } from 'lodash';
 import { DatasetType, IDataset } from '../../shared/model';
-import { Dispatch } from 'react';
 import { DatasetContext } from '../../shared/util/dataset-utils';
-import { DatasetActionType, DatasetBrowserAction, DatasetBrowserState, DatasetResource } from './dataset-browser.reducer';
+import { DatasetBrowserState, DatasetResource } from './dataset-browser.reducer';
 import { formatDisplayNumber } from '../../shared/util/form-utils';
 import { convertBytesToHumanReadable } from '../../entities/dataset/create/dataset-upload.utils';
-import { DatasetBrowserDisplayMode, DatasetBrowserManageMode, DatasetBrowserSelectableItems } from './dataset-browser.types';
+import { DatasetBrowserDisplayMode, DatasetBrowserManageMode, DatasetBrowserSelectableItems, UpdateDatasetContextFunction } from './dataset-browser.types';
 
 /**
  * Returns the prefix for the provided path or an empty string if no prefix
@@ -88,18 +87,18 @@ export const modeForDatasetContext = (datasetContext?: Partial<DatasetContext>):
  * @param {ThunkDispatch<any, undefined, AnyAction> & Dispatch<AnyAction>} dispatch function for dispatching actions to update the application state
  * @returns 
  */
-export function tablePropertiesForDisplayMode (displayMode: DatasetBrowserDisplayMode, state: DatasetBrowserState, setState: Dispatch<DatasetBrowserAction>): Partial<TableProps> & Pick<TableProps, 'columnDefinitions'> {
+export function tablePropertiesForDisplayMode (displayMode: DatasetBrowserDisplayMode, state: DatasetBrowserState, updateDatasetContext: UpdateDatasetContextFunction): Partial<TableProps> & Pick<TableProps, 'columnDefinitions'> {
     switch (displayMode) {
         case DatasetBrowserDisplayMode.Resource:
-            return tablePropertiesForDatasetResources(state, setState);
+            return tablePropertiesForDatasetResources(state, updateDatasetContext);
         case DatasetBrowserDisplayMode.Dataset:
-            return tablePropertiesForDatasets(state, setState);
+            return tablePropertiesForDatasets(state, updateDatasetContext);
         case DatasetBrowserDisplayMode.Scope:
-            return tablePropertiesForScopes(state, setState);
+            return tablePropertiesForScopes(state, updateDatasetContext);
     }
 }
 
-function tablePropertiesForDatasetResources (state: DatasetBrowserState, setState: Dispatch<DatasetBrowserAction>): Partial<TableProps<DatasetResource>> & Pick<TableProps, 'columnDefinitions'> {
+function tablePropertiesForDatasetResources (state: DatasetBrowserState, updateDatasetContext: UpdateDatasetContextFunction): Partial<TableProps<DatasetResource>> & Pick<TableProps, 'columnDefinitions'> {
     return {
         trackBy: 'name',
         columnDefinitions: [{
@@ -110,10 +109,7 @@ function tablePropertiesForDatasetResources (state: DatasetBrowserState, setStat
                     case 'prefix':                       
                         return (
                             <Link data-cy={item.name} onFollow={() => {
-                                setState({
-                                    type: DatasetActionType.DatasetContext,
-                                    payload: { ...state.datasetContext!, location: stripDatasetPrefix(item.prefix) }
-                                });
+                                updateDatasetContext({ ...state.datasetContext!, location: stripDatasetPrefix(item.prefix) }, '', false);
                             } }>{item.name}</Link>
                         );
                     case 'object':
@@ -136,7 +132,7 @@ function tablePropertiesForDatasetResources (state: DatasetBrowserState, setStat
     };
 }
 
-function tablePropertiesForDatasets (state: DatasetBrowserState, setState: Dispatch<DatasetBrowserAction>): Partial<TableProps<IDataset>> & Pick<TableProps, 'columnDefinitions'> {
+function tablePropertiesForDatasets (state: DatasetBrowserState, updateDatasetContext: UpdateDatasetContextFunction): Partial<TableProps<IDataset>> & Pick<TableProps, 'columnDefinitions'> {
     return {
         trackBy: 'name',
         columnDefinitions: [{
@@ -145,10 +141,7 @@ function tablePropertiesForDatasets (state: DatasetBrowserState, setState: Dispa
             cell (item) {
                 return (
                     <Link data-cy={item.name} onFollow={() => {
-                        setState({
-                            type: DatasetActionType.DatasetContext,
-                            payload: { ...state.datasetContext!, name: item.name }
-                        });
+                        updateDatasetContext({ ...state.datasetContext, name: item.name }, '', false);
                     } }>{item.name}</Link>
                 );
             },
@@ -156,7 +149,7 @@ function tablePropertiesForDatasets (state: DatasetBrowserState, setState: Dispa
     };    
 }
 
-function tablePropertiesForScopes (state: DatasetBrowserState, setState: Dispatch<DatasetBrowserAction>): Partial<TableProps<{key: string, type: DatasetType}>> & Pick<TableProps, 'columnDefinitions'> {
+function tablePropertiesForScopes (state: DatasetBrowserState, updateDatasetContext: UpdateDatasetContextFunction): Partial<TableProps<{key: string, type: DatasetType}>> & Pick<TableProps, 'columnDefinitions'> {
     return {
         trackBy: 'type',
         isItemDisabled () {
@@ -168,16 +161,7 @@ function tablePropertiesForScopes (state: DatasetBrowserState, setState: Dispatc
             cell (item) {
                 return (
                     <Link data-cy={item.name} onFollow={() => {
-                        setState({
-                            type: DatasetActionType.State,
-                            payload: {
-                                datasetContext: { type: item.type },
-                                filter: {
-                                    filteredItems: [],
-                                    filteringText: '',
-                                }
-                            }
-                        });
+                        updateDatasetContext({ type: item.type }, '', false);
                     } }>{item.name}</Link>
                 );
             },
@@ -200,7 +184,7 @@ export function breadcrumbFromDataset (datasetContext?: Partial<DatasetContext>,
     if (datasetContext) {
         breadcrumbs.push({
             text: upperFirst(datasetContext.type),
-            href: JSON.stringify({ Type: datasetContext.type })
+            href: JSON.stringify({ type: datasetContext.type })
         });
 
         if (datasetContext.name) {
