@@ -1672,7 +1672,7 @@ def test_app_config_routes(
     assert lambda_handler(
         mock_event(
             user=user,
-            resource="/app_configuration",
+            resource="/app-config",
             method=method,
             path_params=path_params,
         ),

@@ -21,6 +21,7 @@ from unittest import mock
 import pytest
 from botocore.exceptions import ClientError
 
+from ml_space_lambda.enums import ServiceType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1"}
@@ -44,48 +45,53 @@ def generate_event(config_scope: str, version_id: int):
                 "createdAt": mock_time,
                 "configuration": {
                     "DisabledInstanceTypes": {
-                        "notebook-instance": ["ml.t3.medium", "ml.r5.large"],
-                        "endpoint": ["ml.t3.large", "ml.r5.medium"],
-                        "training-job": ["ml.t3.xlarge", "ml.r5.small"],
-                        "transform-job": ["ml.t3.kindabig", "ml.r5.kindasmall"],
+                        ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
+                        ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
+                        ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
+                        ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig", "ml.r5.kindasmall"],
                     },
                     "EnabledServices": {
-                        "real-time-translate": "true",
-                        "batch-translate-job": "false",
-                        "labeling-job": "true",
-                        "cluster": "true",
-                        "endpoint": "true",
-                        "endpoint-config": "false",
-                        "hpo-job": "true",
-                        "model": "true",
-                        "notebook-instance": "false",
-                        "training-job": "true",
-                        "transform-job": "true",
+                        ServiceType.REALTIME_TRANSLATE.value: "true",
+                        ServiceType.BATCH_TRANSLATE.value: "false",
+                        ServiceType.LABELING_JOB.value: "true",
+                        ServiceType.EMR_CLUSTER.value: "true",
+                        ServiceType.ENDPOINT.value: "true",
+                        ServiceType.ENDPOINT_CONFIG.value: "false",
+                        ServiceType.HPO_JOB.value: "true",
+                        ServiceType.MODEL.value: "true",
+                        ServiceType.NOTEBOOK.value: "false",
+                        ServiceType.TRAINING_JOB.value: "true",
+                        ServiceType.TRANSFORM_JOB.value: "true",
                     },
-                    "ProjectCreation": {"AdminOnly": "true", "AllowedGroups": ["Justice League", "Avengers", "TMNT"]},
+                    "ProjectCreation": {"isAdminOnly": "true", "allowedGroups": ["Justice League", "Avengers", "TMNT"]},
                     "EMRConfig": {
-                        "cluster-sizes": [
-                            {"name": "Small", "size": 3, "master-type": "m5.xlarge", "core-type": "m5.xlarge"},
-                            {"name": "Medium", "size": 5, "master-type": "m5.xlarge", "core-type": "m5.xlarge"},
-                            {"name": "Large", "size": 7, "master-type": "m5.xlarge", "core-type": "p3.8xlarge"},
+                        "clusterSizes": [
+                            {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
+                            {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
+                            {"name": "Large", "size": 7, "masterType": "m5.xlarge", "coreType": "p3.8xlarge"},
                         ],
-                        "auto-scaling": {
-                            "min-instances": 2,
-                            "max-instances": 15,
-                            "scale-out": {"increment": 1, "percentage-mem-available": 15, "eval-periods": 1, "cooldown": 300},
-                            "scale-in": {"increment": -1, "percentage-mem-available": 75, "eval-periods": 1, "cooldown": 300},
+                        "autoScaling": {
+                            "minInstances": 2,
+                            "maxInstances": 15,
+                            "scaleOut": {"increment": 1, "percentageMemAvailable": 15, "evalPeriods": 1, "cooldown": 300},
+                            "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
                         },
                         "applications": [
-                            {"Name": "Hadoop"},
-                            {"Name": "Spark"},
-                            {"Name": "Ganglia"},
-                            {"Name": "Hive"},
-                            {"Name": "Tez"},
-                            {"Name": "Presto"},
-                            {"Name": "Livy"},
+                            {"name": "Hadoop"},
+                            {"name": "Spark"},
+                            {"name": "Ganglia"},
+                            {"name": "Hive"},
+                            {"name": "Tez"},
+                            {"name": "Presto"},
+                            {"name": "Livy"},
                         ],
                     },
-                    "SystemBanner": {"Enabled": "true", "TextColor": "Red", "BackgroundColor": "White", "Text": "Jeff Bezos"},
+                    "SystemBanner": {
+                        "isEnabled": "true",
+                        "textColor": "Red",
+                        "backgroundColor": "White",
+                        "text": "Jeff Bezos",
+                    },
                 },
             }
         ),

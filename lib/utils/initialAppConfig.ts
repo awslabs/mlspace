@@ -11,77 +11,79 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
         'changedAt': {'S': Math.round(date.getTime() / 1000).toString()},
         'configuration': {'M': {
             'EnabledServices': {'M': {
-                'cluster': {'BOOL': 'True'}, 
+                'realtimeTranslate': {'BOOL': mlspaceConfig.ENABLE_TRANSLATE ? 'True' : 'False'}, 
+                'batchTranslate': {'BOOL': mlspaceConfig.ENABLE_TRANSLATE ? 'True' : 'False'}, 
+                'emrCluster': {'BOOL': 'True'}, 
                 'endpoint': {'BOOL': 'True'}, 
-                'labeling-job': {'BOOL': mlspaceConfig.ENABLE_GROUNDTRUTH ? 'True' : 'False'}, 
-                'transform-job': {'BOOL': 'True'}, 
-                'notebook-instance': {'BOOL': 'True'}, 
-                'real-time-translate': {'BOOL': mlspaceConfig.ENABLE_TRANSLATE ? 'True' : 'False'}, 
-                'training-job': {'BOOL': 'True'}, 
-                'batch-translate-job': {'BOOL': mlspaceConfig.ENABLE_TRANSLATE ? 'True' : 'False'}, 
+                'endpointConfig': {'BOOL': 'True'},
+                'labelingJob': {'BOOL': mlspaceConfig.ENABLE_GROUNDTRUTH ? 'True' : 'False'}, 
+                'transformJob': {'BOOL': 'True'}, 
+                'notebook': {'BOOL': 'True'}, 
+                'trainingJob': {'BOOL': 'True'}, 
                 'model': {'BOOL': 'True'}, 
-                'hpo-job': {'BOOL': 'True'}, 
-                'endpoint-config': {'BOOL': 'True'}
+                'hpoJob': {'BOOL': 'True'},
             }}, 
             'ProjectCreation': {'M': {
-                'AdminOnly': {'BOOL': 'False'}, 
-                'AllowedGroups': {'L': 
+                'isAdminOnly': {'BOOL': 'False'}, 
+                'allowedGroups': {'L': 
                 [
 
                 ]}
             }}, 
             'SystemBanner': {'M': {
-                'Enabled': {'BOOL': 'False'}, 
-                'Text': {'S': 'CHANGEME'}, 
-                'TextColor': {'S': 'Red'}, 
-                'BackgroundColor': {'S': 'White'}}}, 
+                'isEnabled': {'BOOL': 'False'}, 
+                'text': {'S': 'CHANGEME'}, 
+                'textColor': {'S': 'Red'}, 
+                'backgroundColor': {'S': 'White'}
+            }}, 
             'EMRConfig': {'M': {
-                'auto-scaling': {'M': {
-                    'min-instances': {'N': '2'}, 
-                    'scale-out': {'M': {
+                'autoScaling': {'M': {
+                    'minInstances': {'N': '2'}, 
+                    'maxInstances': {'N': '15'},
+                    'scaleOut': {'M': {
                         'cooldown': {'N': '300'}, 
                         'increment': {'N': '1'}, 
-                        'eval-periods': {'N': '1'},
-                        'percentage-mem-available': {'N': '15'}}}, 
-                    'scale-in': {'M': {
+                        'evalPeriods': {'N': '1'},
+                        'percentageMemAvailable': {'N': '15'}}}, 
+                    'scaleIn': {'M': {
                         'cooldown': {'N': '300'}, 
                         'increment': {'N': '-1'}, 
-                        'eval-periods': {'N': '1'}, 
-                        'percentage-mem-available': {'N': '75'}}}, 
-                        'max-instances': {'N': '15'}}}, 
+                        'evalPeriods': {'N': '1'}, 
+                        'percentageMemAvailable': {'N': '75'}}}, 
+                }}, 
                     'cluster-sizes': {'L': [
                         {'M': {
                             'name': {'S': 'Small'},
                             'size': {'N': '3'},
-                            'master-type': {'S': 'm5.xlarge'},
-                            'core-type': {'S': 'm5.xlarge'},
+                            'masterType': {'S': 'm5.xlarge'},
+                            'coreType': {'S': 'm5.xlarge'},
                         }},
                         {'M': {
                             'name': {'S': 'Medium'},
                             'size': {'N': '5'},
-                            'master-type': {'S': 'm5.xlarge'},
-                            'core-type': {'S': 'm5.xlarge'},
+                            'masterType': {'S': 'm5.xlarge'},
+                            'coreType': {'S': 'm5.xlarge'},
                         }},
                         {'M': {
                             'name': {'S': 'Large'},
                             'size': {'N': '7'},
-                            'master-type': {'S': 'm5.xlarge'},
-                            'core-type': {'S': 'p3.8xlarge'},
+                            'masterType': {'S': 'm5.xlarge'},
+                            'coreType': {'S': 'p3.8xlarge'},
                         }}
                     ]},
                     'applications': {'L': [
-                        {'M': {'Name': {'S': 'Hadoop'}}}, 
-                        {'M': {'Name': {'S': 'Spark'}}}, 
-                        {'M': {'Name': {'S': 'Ganglia'}}}, 
-                        {'M': {'Name': {'S': 'Hive'}}}, 
-                        {'M': {'Name': {'S': 'Tez'}}}, 
-                        {'M': {'Name': {'S': 'Presto'}}}, 
-                        {'M': {'Name': {'S': 'Livy'}}}
+                        {'M': {'name': {'S': 'Hadoop'}}}, 
+                        {'M': {'name': {'S': 'Spark'}}}, 
+                        {'M': {'name': {'S': 'Ganglia'}}}, 
+                        {'M': {'name': {'S': 'Hive'}}}, 
+                        {'M': {'name': {'S': 'Tez'}}}, 
+                        {'M': {'name': {'S': 'Presto'}}}, 
+                        {'M': {'name': {'S': 'Livy'}}}
                     ]}
                 }
             }, 
             'DisabledInstanceTypes': {'M': {
-                'training-job': {'L': 
+                'trainingJob': {'L': 
                 [
 
                 ]}, 
@@ -89,11 +91,11 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                 [
 
                 ]}, 
-                'transform-job': {'L': 
+                'transformJob': {'L': 
                 [
 
                 ]}, 
-                'notebook-instance': {'L': 
+                'notebook': {'L': 
                 [
 
                 ]}

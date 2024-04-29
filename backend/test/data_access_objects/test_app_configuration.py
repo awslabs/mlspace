@@ -24,6 +24,7 @@ import pytest
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
+from ml_space_lambda.enums import ServiceType
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
@@ -62,44 +63,44 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
         "createdAt": mock_time,
         "configuration": {
             "DisabledInstanceTypes": {
-                "notebook-instance": ["ml.t3.medium", "ml.r5.large"],
-                "endpoint": ["ml.t3.large", "ml.r5.medium"],
-                "training-job": ["ml.t3.xlarge", "ml.r5.small"],
-                "transform-job": ["ml.t3.kindabig", "ml.r5.kindasmall"],
+                ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
+                ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
+                ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
+                ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig", "ml.r5.kindasmall"],
             },
             "EnabledServices": {
-                "real-time-translate": "true",
-                "batch-translate-job": "false",
-                "labeling-job": "true",
-                "cluster": "true",
-                "endpoint": "true",
-                "endpoint-config": "false",
-                "hpo-job": "true",
-                "model": "true",
-                "notebook-instance": "false",
-                "training-job": "true",
-                "transform-job": "true",
+                ServiceType.REALTIME_TRANSLATE.value: "true",
+                ServiceType.BATCH_TRANSLATE.value: "false",
+                ServiceType.LABELING_JOB.value: "true",
+                ServiceType.EMR_CLUSTER.value: "true",
+                ServiceType.ENDPOINT.value: "true",
+                ServiceType.ENDPOINT_CONFIG.value: "false",
+                ServiceType.HPO_JOB.value: "true",
+                ServiceType.MODEL.value: "true",
+                ServiceType.NOTEBOOK.value: "false",
+                ServiceType.TRAINING_JOB.value: "true",
+                ServiceType.TRANSFORM_JOB.value: "true",
             },
             "EMRConfig": {
-                "cluster-sizes": [
-                    {"name": "Small", "size": 3, "master-type": "m5.xlarge", "core-type": "m5.xlarge"},
-                    {"name": "Medium", "size": 5, "master-type": "m5.xlarge", "core-type": "m5.xlarge"},
-                    {"name": "Large", "size": 7, "master-type": "m5.xlarge", "core-type": "p3.8xlarge"},
+                "clusterSizes": [
+                    {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
+                    {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
+                    {"name": "Large", "size": 7, "masterType": "m5.xlarge", "coreType": "p3.8xlarge"},
                 ],
-                "auto-scaling": {
-                    "min-instances": 2,
-                    "max-instances": 15,
-                    "scale-out": {"increment": 1, "percentage-mem-available": 15, "eval-periods": 1, "cooldown": 300},
-                    "scale-in": {"increment": -1, "percentage-mem-available": 75, "eval-periods": 1, "cooldown": 300},
+                "autoScaling": {
+                    "minInstances": 2,
+                    "maxInstances": 15,
+                    "scaleOut": {"increment": 1, "percentageMemAvailable": 15, "evalPeriods": 1, "cooldown": 300},
+                    "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
                 },
                 "applications": [
-                    {"Name": "Hadoop"},
-                    {"Name": "Spark"},
-                    {"Name": "Ganglia"},
-                    {"Name": "Hive"},
-                    {"Name": "Tez"},
-                    {"Name": "Presto"},
-                    {"Name": "Livy"},
+                    {"name": "Hadoop"},
+                    {"name": "Spark"},
+                    {"name": "Ganglia"},
+                    {"name": "Hive"},
+                    {"name": "Tez"},
+                    {"name": "Presto"},
+                    {"name": "Livy"},
                 ],
             },
         },
@@ -107,14 +108,14 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
     # If this config is not for a project, add the app-wide specific configurations
     if not is_project:
         config["configuration"]["ProjectCreation"] = {
-            "AdminOnly": "true",
-            "AllowedGroups": ["Justice League", "Avengers", "TMNT"],
+            "isAdminOnly": "true",
+            "allowedGroups": ["Justice League", "Avengers", "TMNT"],
         }
         config["configuration"]["SystemBanner"] = {
-            "Enabled": "true",
-            "TextColor": "Red",
-            "BackgroundColor": "White",
-            "Text": "Jeff Bezos",
+            "isEnabled": "true",
+            "textColor": "Red",
+            "backgroundColor": "White",
+            "text": "Jeff Bezos",
         }
 
     return config
@@ -177,15 +178,15 @@ class TestAppConfigDAO(TestCase):
         from_ddb = self.app_config_dao.get(self.GLOBAL_RECORD.configScope, 2)
         # num_versions is set to 2, but there's only 1 record so we expect a list of len 1
         assert len(from_ddb) == 1
-        assert from_ddb[0].to_dict() == self.GLOBAL_RECORD.to_dict()
+        assert from_ddb[0] == self.GLOBAL_RECORD.to_dict()
 
     def test_get_app_config_project(self):
         from_ddb = self.app_config_dao.get(self.PROJECT_RECORD1.configScope, 2)
         assert len(from_ddb) == 2
         # The project configs should be returned in descending order based on version ID
         # PROJECT_RECORD2 has a versionId of 2, so it should come first
-        assert from_ddb[0].to_dict() == self.PROJECT_RECORD2.to_dict()
-        assert from_ddb[1].to_dict() == self.PROJECT_RECORD1.to_dict()
+        assert from_ddb[0] == self.PROJECT_RECORD2.to_dict()
+        assert from_ddb[1] == self.PROJECT_RECORD1.to_dict()
 
     def test_get_app_config_not_found(self):
         assert not self.app_config_dao.get("sample-project", 1)
@@ -195,7 +196,7 @@ class TestAppConfigDAO(TestCase):
         self.app_config_dao.create(new_record)
         from_ddb = self.app_config_dao.get(new_record.configScope, 1)
         assert len(from_ddb) == 1
-        assert from_ddb[0].to_dict() == new_record.to_dict()
+        assert from_ddb[0] == new_record.to_dict()
 
     def test_create_app_config_outdated(self):
         new_record = AppConfigurationModel.from_dict(generate_test_config("project1", 1, True))  # versionId 1 already exists

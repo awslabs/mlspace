@@ -27,7 +27,6 @@ class DatasetType(Enum):
 # corresponding enum in the FrontEnd code (src/shared/model/resource-metadata-model.ts)
 class ResourceType(str, Enum):
     BATCH_TRANSLATE_JOB = "batch-translate-job"
-    REALTIME_TRANSLATE = "real-time-translate"
     EMR_CLUSTER = "cluster"
     ENDPOINT = "endpoint"
     ENDPOINT_CONFIG = "endpoint-config"
@@ -37,6 +36,22 @@ class ResourceType(str, Enum):
     NOTEBOOK = "notebook-instance"
     TRAINING_JOB = "training-job"
     TRANSFORM_JOB = "transform-job"
+
+
+# This is specifically used for app configuration.
+# These are service names without dashes so they can be used as properties of a model in the frontend
+class ServiceType(str, Enum):
+    REALTIME_TRANSLATE = "realtimeTranslate"
+    BATCH_TRANSLATE = "batchTranslate"
+    EMR_CLUSTER = "emrCluster"
+    ENDPOINT = "endpoint"
+    ENDPOINT_CONFIG = "endpointConfig"
+    HPO_JOB = "hpoJob"
+    LABELING_JOB = "labelingJob"
+    MODEL = "model"
+    NOTEBOOK = "notebook"
+    TRAINING_JOB = "trainingJob"
+    TRANSFORM_JOB = "transformJob"
 
 
 class Permission(Enum):

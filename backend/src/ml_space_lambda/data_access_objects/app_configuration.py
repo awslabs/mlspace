@@ -22,7 +22,7 @@ from typing import List, Optional
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import ServiceType
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
@@ -122,19 +122,19 @@ class ServiceInstanceTypes:
 
     def to_dict(self) -> dict:
         return {
-            ResourceType.NOTEBOOK.value: self.notebook_instance_types,
-            ResourceType.ENDPOINT.value: self.endpoint_instance_types,
-            ResourceType.TRAINING_JOB.value: self.training_job_instance_types,
-            ResourceType.TRANSFORM_JOB.value: self.transform_jobs_instance_types,
+            ServiceType.NOTEBOOK.value: self.notebook_instance_types,
+            ServiceType.ENDPOINT.value: self.endpoint_instance_types,
+            ServiceType.TRAINING_JOB.value: self.training_job_instance_types,
+            ServiceType.TRANSFORM_JOB.value: self.transform_jobs_instance_types,
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> ServiceInstanceTypes:
         return ServiceInstanceTypes(
-            dict_object[ResourceType.NOTEBOOK.value],
-            dict_object[ResourceType.ENDPOINT.value],
-            dict_object[ResourceType.TRAINING_JOB.value],
-            dict_object[ResourceType.TRANSFORM_JOB.value],
+            dict_object[ServiceType.NOTEBOOK.value],
+            dict_object[ServiceType.ENDPOINT.value],
+            dict_object[ServiceType.TRAINING_JOB.value],
+            dict_object[ServiceType.TRANSFORM_JOB.value],
         )
 
 
@@ -167,33 +167,33 @@ class EnabledServices:
 
     def to_dict(self) -> dict:
         return {
-            ResourceType.REALTIME_TRANSLATE.value: self.realtime_translate,
-            ResourceType.BATCH_TRANSLATE_JOB.value: self.batch_translate,
-            ResourceType.LABELING_JOB.value: self.labeling_job,
-            ResourceType.EMR_CLUSTER.value: self.emr,
-            ResourceType.TRAINING_JOB.value: self.training_job,
-            ResourceType.TRANSFORM_JOB.value: self.transform_job,
-            ResourceType.HPO_JOB.value: self.hpo_job,
-            ResourceType.ENDPOINT.value: self.endpoint,
-            ResourceType.ENDPOINT_CONFIG.value: self.endpoint_congig,
-            ResourceType.NOTEBOOK.value: self.notebook,
-            ResourceType.MODEL.value: self.model,
+            ServiceType.REALTIME_TRANSLATE.value: self.realtime_translate,
+            ServiceType.BATCH_TRANSLATE.value: self.batch_translate,
+            ServiceType.LABELING_JOB.value: self.labeling_job,
+            ServiceType.EMR_CLUSTER.value: self.emr,
+            ServiceType.TRAINING_JOB.value: self.training_job,
+            ServiceType.TRANSFORM_JOB.value: self.transform_job,
+            ServiceType.HPO_JOB.value: self.hpo_job,
+            ServiceType.ENDPOINT.value: self.endpoint,
+            ServiceType.ENDPOINT_CONFIG.value: self.endpoint_congig,
+            ServiceType.NOTEBOOK.value: self.notebook,
+            ServiceType.MODEL.value: self.model,
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> EnabledServices:
         return EnabledServices(
-            dict_object[ResourceType.REALTIME_TRANSLATE.value],
-            dict_object[ResourceType.BATCH_TRANSLATE_JOB.value],
-            dict_object[ResourceType.LABELING_JOB.value],
-            dict_object[ResourceType.EMR_CLUSTER.value],
-            dict_object[ResourceType.TRAINING_JOB.value],
-            dict_object[ResourceType.TRANSFORM_JOB.value],
-            dict_object[ResourceType.HPO_JOB.value],
-            dict_object[ResourceType.ENDPOINT.value],
-            dict_object[ResourceType.ENDPOINT_CONFIG.value],
-            dict_object[ResourceType.NOTEBOOK.value],
-            dict_object[ResourceType.MODEL.value],
+            dict_object[ServiceType.REALTIME_TRANSLATE.value],
+            dict_object[ServiceType.BATCH_TRANSLATE.value],
+            dict_object[ServiceType.LABELING_JOB.value],
+            dict_object[ServiceType.EMR_CLUSTER.value],
+            dict_object[ServiceType.TRAINING_JOB.value],
+            dict_object[ServiceType.TRANSFORM_JOB.value],
+            dict_object[ServiceType.HPO_JOB.value],
+            dict_object[ServiceType.ENDPOINT.value],
+            dict_object[ServiceType.ENDPOINT_CONFIG.value],
+            dict_object[ServiceType.NOTEBOOK.value],
+            dict_object[ServiceType.MODEL.value],
         )
 
 
@@ -205,16 +205,16 @@ class EMRConfig:
 
     def to_dict(self) -> dict:
         return {
-            "cluster-sizes": ClusterSize.to_dict(self.cluster_sizes),
-            "auto-scaling": self.auto_scaling.to_dict(),
+            "clusterSizes": ClusterSize.to_dict(self.cluster_sizes),
+            "autoScaling": self.auto_scaling.to_dict(),
             "applications": EMRApplications.to_dict(self.applications),
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> EMRConfig:
         return EMRConfig(
-            ClusterSize.extract_cluster_sizes(dict_object["cluster-sizes"]),
-            EMRAutoScaling.from_dict(dict_object["auto-scaling"]),
+            ClusterSize.extract_cluster_sizes(dict_object["clusterSizes"]),
+            EMRAutoScaling.from_dict(dict_object["autoScaling"]),
             EMRApplications.extract_applications(dict_object["applications"]),
         )
 
@@ -231,7 +231,7 @@ class ClusterSize:
         list_of_dicts = []
         for size in cluster_size_list:
             list_of_dicts.append(
-                {"name": size.name, "size": size.size, "master-type": size.master_type, "core-type": size.core_type}
+                {"name": size.name, "size": size.size, "masterType": size.master_type, "coreType": size.core_type}
             )
         return list_of_dicts
 
@@ -240,7 +240,7 @@ class ClusterSize:
         # Given a list of cluster sizes, parse them into a list of ClusterSize objects
         cluster_object_list = []
         for size in cluster_size_list:
-            cluster_object_list.append(ClusterSize(size["name"], size["size"], size["master-type"], size["core-type"]))
+            cluster_object_list.append(ClusterSize(size["name"], size["size"], size["masterType"], size["coreType"]))
         return cluster_object_list
 
 
@@ -259,19 +259,19 @@ class EMRAutoScaling:
 
     def to_dict(self):
         return {
-            "min-instances": self.min_instances,
-            "max-instances": self.max_instances,
-            "scale-out": self.scale_out.to_dict(),
-            "scale-in": self.scale_in.to_dict(),
+            "minInstances": self.min_instances,
+            "maxInstances": self.max_instances,
+            "scaleOut": self.scale_out.to_dict(),
+            "scaleIn": self.scale_in.to_dict(),
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> EMRAutoScaling:
         return EMRAutoScaling(
-            dict_object["min-instances"],
-            dict_object["max-instances"],
-            ScalingModel.from_dict(dict_object["scale-out"]),
-            ScalingModel.from_dict(dict_object["scale-in"]),
+            dict_object["minInstances"],
+            dict_object["maxInstances"],
+            ScalingModel.from_dict(dict_object["scaleOut"]),
+            ScalingModel.from_dict(dict_object["scaleIn"]),
         )
 
 
@@ -285,8 +285,8 @@ class ScalingModel:
     def to_dict(self):
         return {
             "increment": self.increment,
-            "percentage-mem-available": self.percentage_mem_available,
-            "eval-periods": self.eval_periods,
+            "percentageMemAvailable": self.percentage_mem_available,
+            "evalPeriods": self.eval_periods,
             "cooldown": self.cooldown,
         }
 
@@ -294,8 +294,8 @@ class ScalingModel:
     def from_dict(dict_object: dict) -> ScalingModel:
         return ScalingModel(
             dict_object["increment"],
-            dict_object["percentage-mem-available"],
-            dict_object["eval-periods"],
+            dict_object["percentageMemAvailable"],
+            dict_object["evalPeriods"],
             dict_object["cooldown"],
         )
 
@@ -308,7 +308,7 @@ class EMRApplications:
     def to_dict(application_list: list):
         list_of_dicts = []
         for application in application_list:
-            list_of_dicts.append({"Name": application.name})
+            list_of_dicts.append({"name": application.name})
         return list_of_dicts
 
     @staticmethod
@@ -316,7 +316,7 @@ class EMRApplications:
         # Given a list of cluster sizes, parse them into a list of ClusterSize objects
         application_object_list = []
         for application in application_list:
-            application_object_list.append(EMRApplications(application["Name"]))
+            application_object_list.append(EMRApplications(application["name"]))
         return application_object_list
 
 
@@ -327,15 +327,15 @@ class ProjectCreation:
 
     def to_dict(self) -> dict:
         return {
-            "AdminOnly": self.admin_only,
-            "AllowedGroups": self.allowed_groups,
+            "isAdminOnly": self.admin_only,
+            "allowedGroups": self.allowed_groups,
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> ProjectCreation:
         return ProjectCreation(
-            dict_object["AdminOnly"],
-            dict_object["AllowedGroups"],
+            dict_object["isAdminOnly"],
+            dict_object["allowedGroups"],
         )
 
 
@@ -348,19 +348,19 @@ class SystemBanner:
 
     def to_dict(self) -> dict:
         return {
-            "Enabled": self.enabled,
-            "TextColor": self.text_color,
-            "BackgroundColor": self.background_color,
-            "Text": self.text,
+            "isEnabled": self.enabled,
+            "textColor": self.text_color,
+            "backgroundColor": self.background_color,
+            "text": self.text,
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> SystemBanner:
         return SystemBanner(
-            dict_object["Enabled"],
-            dict_object["TextColor"],
-            dict_object["BackgroundColor"],
-            dict_object["Text"],
+            dict_object["isEnabled"],
+            dict_object["textColor"],
+            dict_object["backgroundColor"],
+            dict_object["text"],
         )
 
 
@@ -376,7 +376,7 @@ class AppConfigurationDAO(DynamoDBObjectStore):
             config.to_dict(), condition_expression="attribute_not_exists(configScope) AND attribute_not_exists(versionId)"
         )
 
-    def get(self, configScope: str, num_versions: int) -> List[AppConfigurationModel]:
+    def get(self, configScope: str, num_versions: int) -> List[dict]:
         json_response = self._query(
             key_condition_expression="#s = :configScope",
             expression_names={"#s": "configScope"},
@@ -384,4 +384,4 @@ class AppConfigurationDAO(DynamoDBObjectStore):
             limit=num_versions,
             scan_index_forward=False,
         ).records
-        return [AppConfigurationModel.from_dict(entry) for entry in json_response]
+        return json_response
