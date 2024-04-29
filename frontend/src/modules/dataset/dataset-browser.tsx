@@ -69,7 +69,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     }, [dispatch]);
 
     const fetchDatasetResources = useCallback((datasetContext: Partial<DatasetContext>, nextToken?: string, existingItems?: (DatasetResource | IDataset)[]) => {
-        if (manageMode !== DatasetBrowserManageMode.Create) {
+        if (!isCreating) {
             return dispatch(getDatasetContents({datasetContext, projectName, username, nextToken})).then((response) => {
                 if (isFulfilled(response)) {
                     // if nextToken is provided we're appending to existing items
@@ -105,7 +105,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             type: DatasetActionType.State,
             payload: {isLoading: false}
         });
-    }, [dispatch, manageMode, notificationService, projectName, username]);
+    }, [dispatch, isCreating, notificationService, projectName, username]);
 
     const fetchDatasets = useCallback((type: DatasetType) => {
         dispatch(getDatasetsList(projectName)).then((response) => {
@@ -140,7 +140,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             filteringText
         };
 
-        if (manageMode !== DatasetBrowserManageMode.Create) {
+        if (!isCreating) {
             switch (displayMode) {
                 case DatasetBrowserDisplayMode.Resource:
                     if (shouldFetch && datasetContext) {
@@ -167,7 +167,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             type: DatasetActionType.State,
             payload
         });
-    }, [fetchDatasetResources, fetchDatasets, manageMode, state.datasetContext, state.filteringText, state.items, state.nextToken]);
+    }, [fetchDatasetResources, fetchDatasets, isCreating, state.datasetContext, state.filteringText, state.items, state.nextToken]);
 
     const [firstLoad, setFirstLoad] = useState(true);
     useEffect(() => {
@@ -228,7 +228,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                             ? `(${state.selectedItems.length}/${state.items.length})`
                             : `(${state.items.length})`
                     }>{displayMode}s</Header>}
-                    empty={manageMode === DatasetBrowserManageMode.Create ? EmptyState('No files uploaded') : EmptyState('No Entries exist')}
+                    empty={isCreating ? EmptyState('No files uploaded') : EmptyState('No Entries exist')}
                     filter={
                         <MLSTextFilter
                             filteringText={state.filteringText}
