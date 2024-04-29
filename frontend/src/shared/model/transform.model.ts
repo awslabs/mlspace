@@ -16,9 +16,36 @@
 
 import { JobStatus } from '../../entities/jobs/job.model';
 
+export enum CompressionType {
+    None = 'None',
+    Gzip = 'Gzip',
+}
+
+export enum S3DataType {
+    ManifestFile = 'ManifestFile',
+    S3Prefix = 'S3Prefix',
+}
+
+export enum SplitType {
+    None = 'None',
+    Line = 'Line',
+    RecordIO = 'RecordIO',
+    TFRecord = 'TFRecord',
+}
+
+export enum AssembleWith {
+    None = 'None',
+    Line = 'Line',
+}
+
+export enum BatchStrategy {
+    MultiRecord = 'MultiRecord',
+    SingleRecord = 'SingleRecord',
+}
+
 export type ITransform = {
     AutoMLJobArn?: string;
-    BatchStrategy?: string;
+    BatchStrategy?: BatchStrategy;
     CreationTime?: string;
     DataCaptureConfig?: {
         DestinationS3Uri?: string;
@@ -47,22 +74,22 @@ export type ITransform = {
     ModelName?: string;
     TransformEndTime?: string;
     TransformInput: {
-        CompressionType?: string;
+        CompressionType?: CompressionType;
         ContentType?: string;
         DataSource: {
             S3DataSource: {
-                S3DataType?: string;
+                S3DataType?: S3DataType;
                 S3Uri: string;
             };
         };
-        SplitType?: string;
+        SplitType?: SplitType;
     };
     TransformJobArn?: string;
     TransformJobName?: string;
     TransformJobStatus?: JobStatus;
     TransformOutput?: {
         Accept?: string;
-        AssembleWith?: string;
+        AssembleWith?: AssembleWith;
         KmsKeyId?: string;
         S3OutputPath?: string;
     };

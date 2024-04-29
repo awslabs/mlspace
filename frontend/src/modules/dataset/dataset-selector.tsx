@@ -14,7 +14,7 @@
   limitations under the License.
 */
 import React, { useCallback, useEffect } from 'react';
-import { Button, FormField, Grid, Input, SpaceBetween} from '@cloudscape-design/components';
+import { Alert, Button, FormField, FormFieldProps, Grid, Input, SpaceBetween} from '@cloudscape-design/components';
 import Condition from '../condition';
 import { DatasetResourceSelectorProps } from './dataset-selector.types';
 import { DatasetResourceSelectorMode, datasetResourceSelectorReducer } from './dataset-selector.reducer';
@@ -25,18 +25,70 @@ import { useUsername } from '../../shared/util/auth-utils';
 import { modalPropertiesForBrowse, modalPropertiesForCreate } from './dataset-selector.utils';
 import { DatasetInlineCreate } from './dataset-inline-create';
 import { extractPrefixedType } from '../../shared/util/types';
+import { useAppDispatch } from '../../config/store';
+import { getDatasetContents } from './dataset-browser.reducer';
+import { datasetFromS3Uri } from '../../shared/util/dataset-utils';
+import { isFulfilled } from '@reduxjs/toolkit';
+import { debounce } from 'lodash';
+import { DatasetType } from '../../shared/model';
 
 export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
     const username = useUsername();
     const { projectName = '' } = useParams();
     const isSelectingObject = (props.selectableItemsTypes || []).includes('objects');
+    const isSelectingPrefixes = (props.selectableItemsTypes || []).includes('prefixes');
     const s3UriPlaceholder = isSelectingObject ? 's3://bucket/prefix/object' : 's3://bucket/prefix/';
+    const dispatch = useAppDispatch();
 
     const [state, setState] = React.useReducer(datasetResourceSelectorReducer, {
         mode: DatasetResourceSelectorMode.None,
         resource: props.resource,
         selected: undefined,
+        isEmpty: false,
     });
+
+    // disable since debounce() interferes with the linter tracking dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const updateIsEmpty = useCallback(debounce((s3Uri: string) => {
+        const datasetContext = datasetFromS3Uri(s3Uri);
+
+        if (datasetContext?.name) {
+            dispatch(getDatasetContents({
+                username,
+                projectName,
+                datasetContext,
+                delimiter: ''
+            })).then((response) => {
+                let scope = '';
+                switch (datasetContext.type) {
+                    case DatasetType.PRIVATE:
+                        scope = `${username}`;
+                        break;
+                    case DatasetType.PROJECT:
+                        scope = `${projectName}`;
+                        break;
+                }
+    
+                let isEmpty = true;
+                if (isFulfilled(response)) {
+                    const location = [datasetContext.type, scope, 'datasets', datasetContext.name, datasetContext.location].filter(Boolean).join('/');
+                    // check if any resource is an exact match or has a matching prefix
+                    isEmpty = !response.payload.data.contents.find((resource) => {
+                        if (resource.type !== 'object') {
+                            return false;
+                        }
+
+                        return (isSelectingObject && resource.key === location) ||
+                            (isSelectingPrefixes && resource.key.startsWith(`${location}/`.replace(/\/+$/, '/')));
+                    });
+                }
+
+                setState({
+                    isEmpty
+                });
+            });                
+        }
+    }, 300), [dispatch, username, projectName, isSelectingObject, isSelectingPrefixes]);
 
     // if resource changes reset to defaults
     useEffect(() => {
@@ -45,9 +97,13 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
             resource: props.resource,
             selected: undefined
         });
-    }, [props.resource]);
 
-    const fieldProps = extractPrefixedType(props, 'field');
+        if (props.alertOnEmpty && props.resource) {
+            updateIsEmpty(props.resource);
+        }
+    }, [props.resource, props.alertOnEmpty, updateIsEmpty, props.selectableItemsTypes]);
+
+    const fieldProps: FormFieldProps = extractPrefixedType(props, 'field');
     const inputProps = {
         ...extractPrefixedType(props, 'input'),
         value: props.resource,
@@ -61,11 +117,28 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
         }
     };
 
+    const notFoundTypes: string[] = [];
+    if (isSelectingObject) {
+        notFoundTypes.push('name');
+    }
+    if (isSelectingPrefixes) {
+        notFoundTypes.push('prefix');
+    }
+
     return (
         <>
             <FormField {...fieldProps}>
                 <Grid gridDefinition={[{colspan: 6}, {colspan: 6}]}>
-                    <Input placeholder={s3UriPlaceholder} {...inputProps} type='search'></Input>
+                    <SpaceBetween direction='vertical' size='xs'>
+                        <Input placeholder={s3UriPlaceholder} {...inputProps} type='search'></Input>
+                        <Condition condition={!!props.alertOnEmpty && state.isEmpty}>
+                            <Alert statusIconAriaLabel='Warning' type='warning'>
+                                <Condition condition={notFoundTypes.length > 0}>
+                                        No file(s) found with this {notFoundTypes.join(' or ')}.
+                                </Condition>
+                            </Alert>
+                        </Condition>
+                    </SpaceBetween>
                     <SpaceBetween direction='horizontal' size='m'>
                         <Button onClick={() => {
                             setState({

@@ -18,6 +18,7 @@ export type DatasetResourceSelectorState = {
     resource?: string;
     selected?: string;
     newDatasetUri?: string;
+    isEmpty: boolean;
 };
 
 export enum DatasetResourceSelectorMode {
