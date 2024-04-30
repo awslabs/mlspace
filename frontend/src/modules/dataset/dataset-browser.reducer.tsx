@@ -29,7 +29,8 @@ import { DatasetBrowserManageMode } from './dataset-browser.types';
  */
 export type DatasetServerRequestProps = ServerRequestProps & {
     datasetContext: Partial<DatasetContext>,
-    username?: string
+    username?: string,
+    delimiter?: string
 };
 
 /**
@@ -159,16 +160,11 @@ export const getDatasetContents = createAsyncThunk(
 
         const searchParams = new URLSearchParams();
 
-        if (props.nextToken) {
-            searchParams.set('nextToken', props.nextToken);
-        }
-
-        if (props.pageSize) {
-            searchParams.set('pageSize', String(props.pageSize));
-        }
-
-        if (props.projectName) {
-            searchParams.set('projectName', props.projectName);
+        const queryStringParameters = ['nextToken', 'pageSize', 'projectName', 'delimiter'];
+        for (const key of queryStringParameters) {
+            if (props[key] !== undefined) {
+                searchParams.set(key, String(props[key]));    
+            }
         }
 
         if (datasetContext?.location) {
