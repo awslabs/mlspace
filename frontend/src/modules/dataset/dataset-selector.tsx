@@ -104,6 +104,7 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
     }, [props.resource, props.alertOnEmpty, updateIsEmpty, props.selectableItemsTypes]);
 
     const fieldProps: FormFieldProps = extractPrefixedType(props, 'field');
+
     const inputProps = {
         ...extractPrefixedType(props, 'input'),
         value: props.resource,
