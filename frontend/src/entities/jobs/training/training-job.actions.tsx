@@ -31,7 +31,7 @@ export const createModelFromTrainingJob = (trainingJob : ITrainingJob, navigate:
     presetModel.Image =
         trainingJob.AlgorithmSpecification?.TrainingImage;
     presetModel.ModelDataUrl =
-        trainingJob.OutputDataConfig?.S3OutputPath;
+        trainingJob.ModelArtifacts?.S3ModelArtifacts;
     navigate(`/project/${projectName}/model/create`, {
         state: {
             presetModel: presetModel,
