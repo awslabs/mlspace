@@ -107,6 +107,8 @@ export class LambdaLayer extends Construct {
             throw 'Unable to create directory';
         }
 
+        console.log('layerDir', layerDir);
+        console.log('buildDir', buildDir);
         // seed the buildDir with layerDir contents
         cpSync(layerDir, buildDir, { recursive: true });
 
