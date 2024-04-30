@@ -1,0 +1,70 @@
+name: Deploy Demo
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  CheckPendingWorkflow:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: ahmadnassri/action-workflow-queue@v1
+      with:
+        delay: 300000
+        timeout: 7200000
+  DeployMLSpace:
+    needs: CheckPendingWorkflow
+    environment: demo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/GithubAction-AssumeRoleWithAction
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          role-duration-seconds: 7200
+
+      - uses: actions/checkout@v4
+
+      - name: create-json
+        id: create-json
+        uses: jsdaniell/create-json@v1.2.3
+        with:
+          name: "config.json"
+          json: |
+            {
+              "AWS_ACCOUNT": "${{ secrets.AWS_ACCOUNT }}"
+              "AWS_REGION": "${{ secrets.AWS_REGION }}"
+              "OIDC_URL": "${{ secrets.OIDC_URL }}"
+              "OIDC_CLIENT_NAME": "${{ secrets.OIDC_CLIENT_NAME }}"
+              "KEY_MANAGER_ROLE_NAME": "${{ secrets.KEY_MANAGER_ROLE_NAME }}"
+            }
+          dir: 'lib/'
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: |
+          npm install
+
+      - name: Install CDK dependencies
+        run: |
+          npm install
+
+      - name: Bootstrap CDK
+        run: |
+          npm install -g aws-cdk
+          cdk bootstrap ${{ secrets.AWS_ACCOUNT }}/${{ secrets.AWS_REGION }}
+
+      - name: Deploy CDK
+        run: |
+          cdk deploy --all
