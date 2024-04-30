@@ -53,7 +53,8 @@ def delete_metric_definition_for_builtin_algorithms(algorithm_specifications) ->
         retrieve(
             image_components["framework"], image_components["region"], version=image_components["version"], image_scope=None
         )
-        del algorithm_specifications["MetricDefinitions"]
+        if "MetricDefinitions" in algorithm_specifications:
+            del algorithm_specifications["MetricDefinitions"]
         return True
     except IOError:
         # An exception occurs if the image/framework is not a detected built-in
