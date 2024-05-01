@@ -16,17 +16,21 @@
 
 from unittest import mock
 
+import pytest
+
 from ml_space_lambda.utils.image_uri_utils import delete_metric_definition_for_builtin_algorithms
 
 TEST_ENV_CONFIG = {"LAMBDA_TASK_ROOT": "./src/"}
 
 
-def _get_test_algorithm_specification(image_uri: str):
-    return {
+def _get_test_algorithm_specification(image_uri: str, include_metrics_def: bool = True):
+    base_specification = {
         "TrainingImage": image_uri,
         "TrainingInputMode": "example_training_input_mode",
         "EnableSageMakerMetricsTimeSeries": True,
-        "MetricDefinitions": [
+    }
+    if include_metrics_def:
+        base_specification["MetricDefinitions"] = [
             {
                 "Name": "custom_metric",
                 "Regex": "test:custom",
@@ -35,22 +39,28 @@ def _get_test_algorithm_specification(image_uri: str):
                 "Name": "custom_metric_2",
                 "Regex": "validation:custom",
             },
-        ],
-    }
+        ]
+    return base_specification
 
 
+@pytest.mark.parametrize(
+    "image_uri,include_metrics_def,is_builtin",
+    [
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1", True, False),
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/xgboost:1", True, True),
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1", False, False),
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/xgboost:1", False, True),
+    ],
+    ids=[
+        "not_builtin_included_metrics",
+        "builtin_included_metrics",
+        "not_builtin_no_included_metrics",
+        "builtin_no_included_metrics",
+    ],
+)
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-def test_check_algorithm_specification_for_builtin_not_builtin():
+def test_check_algorithm_specification_for_builtin(image_uri: str, include_metrics_def: bool, is_builtin: bool):
     assert (
-        delete_metric_definition_for_builtin_algorithms(
-            _get_test_algorithm_specification("123456789012.dkr.ecr.us-east-1.amazonaws.com/example_training_image:1")
-        )
-        is False
-    )
-
-
-@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-def test_check_algorithm_specification_for_builtin_is_builtin():
-    assert delete_metric_definition_for_builtin_algorithms(
-        _get_test_algorithm_specification("123456789012.dkr.ecr.us-east-1.amazonaws.com/xgboost:1")
+        delete_metric_definition_for_builtin_algorithms(_get_test_algorithm_specification(image_uri, include_metrics_def))
+        is is_builtin
     )

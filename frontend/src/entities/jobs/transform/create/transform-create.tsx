@@ -30,7 +30,7 @@ import {
     SelectProps,
     ContentLayout,
 } from '@cloudscape-design/components';
-import { ITransform, defaultValue } from '../../../../shared/model/transform.model';
+import { AssembleWith, BatchStrategy, CompressionType, ITransform, S3DataType, SplitType, defaultValue } from '../../../../shared/model/transform.model';
 import { useAppDispatch, useAppSelector } from '../../../../config/store';
 import { setBreadcrumbs } from '../../../../shared/layout/navigation/navigation.reducer';
 import NotificationService from '../../../../shared/layout/notification/notification.service';
@@ -61,6 +61,7 @@ import {
 import { tryCreateDataset } from '../../../dataset/dataset.service';
 import DatasetResourceSelector from '../../../../modules/dataset/dataset-selector';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
+import { DatasetResourceSelectorSelectableItems } from '../../../../modules/dataset/dataset-selector.types';
 
 export function TransformCreate () {
     const [s3DataTypes, setS3DataTypes] = useState([] as SelectProps.Option[]);
@@ -146,6 +147,13 @@ export function TransformCreate () {
         formSubmitting: false as boolean,
     });
 
+    let selectableItemsTypes: DatasetResourceSelectorSelectableItems[] = ['prefixes', 'objects'];
+    if (state.form.TransformInput.DataSource.S3DataSource.S3DataType === S3DataType.S3Prefix) {
+        selectableItemsTypes = ['prefixes'];
+    } else if (state.form.TransformInput.DataSource.S3DataSource.S3DataType === S3DataType.ManifestFile) {
+        selectableItemsTypes = ['objects'];
+    }
+
     useEffect(() => {
         dispatch(
             setBreadcrumbs([
@@ -155,18 +163,18 @@ export function TransformCreate () {
             ])
         );
         setS3DataTypes([
-            { value: 'S3Prefix', label: 'S3Prefix' },
-            { value: 'ManifestFile', label: 'ManifestFile' },
+            { value: S3DataType.S3Prefix, label: S3DataType.S3Prefix },
+            { value: S3DataType.ManifestFile, label: S3DataType.ManifestFile },
         ]);
         setSplitTypes([
-            { value: 'None', label: 'None' },
-            { value: 'Line', label: 'Line' },
-            { value: 'RecordIO', label: 'RecordIO' },
-            { value: 'TFRecord', label: 'TFRecord' },
+            { value: SplitType.None, label: SplitType.None },
+            { value: SplitType.Line, label: SplitType.Line },
+            { value: SplitType.RecordIO, label: SplitType.RecordIO },
+            { value: SplitType.TFRecord, label: SplitType.TFRecord },
         ]);
         setCompressionTypes([
-            { value: 'None', label: 'None' },
-            { value: 'Gzip', label: 'Gzip' },
+            { value: CompressionType.None, label: CompressionType.None },
+            { value: CompressionType.Gzip, label: CompressionType.Gzip },
         ]);
         setContentTypes([
             { value: 'application/x-image', label: 'application/x-image' },
@@ -174,13 +182,13 @@ export function TransformCreate () {
             { value: 'text/csv', label: 'text/csv' },
         ]);
         setAssembleWithTypes([
-            { value: 'None', label: 'None' },
-            { value: 'Line', label: 'Line' },
+            { value: AssembleWith.None, label: AssembleWith.None },
+            { value: AssembleWith.Line, label: AssembleWith.Line },
         ]);
         setBatchStrategies([
             { value: '', label: '' },
-            { value: 'SingleRecord', label: 'SingleRecord' },
-            { value: 'MultiRecord', label: 'MultiRecord' },
+            { value: BatchStrategy.SingleRecord, label: BatchStrategy.SingleRecord },
+            { value: BatchStrategy.MultiRecord, label: BatchStrategy.MultiRecord },
         ]);
         setJoinSources([
             { value: 'None', label: 'None - Use output job only' },
@@ -636,7 +644,7 @@ export function TransformCreate () {
                             </Grid>
                             <DatasetResourceSelector
                                 fieldLabel={'S3 Location'}
-                                selectableItemsTypes={['objects']}
+                                selectableItemsTypes={selectableItemsTypes}
                                 onChange={({detail}) => {
                                     setFields({
                                         'TransformInput.DataSource.S3DataSource.S3Uri': detail.resource,
@@ -648,6 +656,7 @@ export function TransformCreate () {
                                 inputInvalid={!!errors?.TransformInput?.DataSource?.S3DataSource?.S3Uri}
                                 fieldErrorText={errors?.TransformInput?.DataSource?.S3DataSource?.S3Uri}
                                 resource={state.form?.TransformInput?.DataSource?.S3DataSource?.S3Uri || ''}
+                                alertOnEmpty={true}
                             />
                         </SpaceBetween>
                     </Container>

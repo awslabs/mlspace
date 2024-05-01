@@ -14,13 +14,13 @@
   limitations under the License.
 */
 import { Reducer } from 'react';
-import { breadcrumbFromDataset, lastComponent } from './dataset-browser.utils';
 import { ServerRequestProps } from '../../shared/util/table-utils';
 import { DatasetContext } from '../../shared/util/dataset-utils';
 import { PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 import axios from '../../shared/util/axios-utils';
-import { BreadcrumbGroupProps, PaginationProps } from '@cloudscape-design/components';
+import { PaginationProps } from '@cloudscape-design/components';
+import { lastComponent } from './dataset-browser.utils';
 import { DatasetBrowserManageMode } from './dataset-browser.types';
 
 /**
@@ -29,7 +29,8 @@ import { DatasetBrowserManageMode } from './dataset-browser.types';
  */
 export type DatasetServerRequestProps = ServerRequestProps & {
     datasetContext: Partial<DatasetContext>,
-    username?: string
+    username?: string,
+    delimiter?: string
 };
 
 /**
@@ -105,15 +106,7 @@ export type PaginationAction = PayloadAction<Partial<DatasetBrowserState['pagina
     type: DatasetActionType.Pagination;
 };
 
-/**
- * Action to update {@link DatasetBrowserState#filter}. Properties not provided
- * will be inherited from the existing pagination state.
- */
-export type FilterAction = PayloadAction<Partial<DatasetBrowserState['filter']>> & {
-    type: DatasetActionType.Filter;
-};
-
-export type DatasetBrowserAction = StateAction | ContextAction | PaginationAction | FilterAction;
+export type DatasetBrowserAction = StateAction | ContextAction | PaginationAction;
 
 /**
  * Component state for {@link DatasetBrowser}
@@ -123,10 +116,6 @@ export type DatasetBrowserState = {
      * The current {@link DatasetContext} to display
      */
     datasetContext?: Partial<DatasetContext>;
-    /**
-     * List of {@link BreadcrumbGroupProps.Item} showing the ancestor contexts
-     */
-    breadcrumbs: BreadcrumbGroupProps.Item[];
     /**
      * List of items fetched for {@link DatasetBrowserState#datasetContext}
      */
@@ -148,12 +137,8 @@ export type DatasetBrowserState = {
     isLoading: boolean;
     username: string;
     projectName: string;
-    filter: {
-        filteringText: string;
-        filteredItems: (DatasetResource | IDataset)[];
-    },
+    filteringText: string;
     pagination: Pick<PaginationProps, 'currentPageIndex' | 'disabled' | 'openEnd' | 'pagesCount'>,
-    refresh: any;
 };
 
 /**
@@ -175,16 +160,11 @@ export const getDatasetContents = createAsyncThunk(
 
         const searchParams = new URLSearchParams();
 
-        if (props.nextToken) {
-            searchParams.set('nextToken', props.nextToken);
-        }
-
-        if (props.pageSize) {
-            searchParams.set('pageSize', String(props.pageSize));
-        }
-
-        if (props.projectName) {
-            searchParams.set('projectName', props.projectName);
+        const queryStringParameters = ['nextToken', 'pageSize', 'projectName', 'delimiter'];
+        for (const key of queryStringParameters) {
+            if (props[key] !== undefined) {
+                searchParams.set(key, String(props[key]));    
+            }
         }
 
         if (datasetContext?.location) {
@@ -225,7 +205,6 @@ export const datasetBrowserReducer: Reducer<DatasetBrowserState, DatasetBrowserA
             return {
                 ...state,
                 datasetContext: action.payload,
-                breadcrumbs: breadcrumbFromDataset(action.payload, !!state.manageMode),
                 items: [],
                 nextToken: undefined,
                 filter: {
@@ -238,14 +217,6 @@ export const datasetBrowserReducer: Reducer<DatasetBrowserState, DatasetBrowserA
                 ...state,
                 pagination: {
                     ...state.pagination,
-                    ...action.payload
-                }
-            };
-        case DatasetActionType.Filter:
-            return {
-                ...state,
-                filter: {
-                    ...state.filter,
                     ...action.payload
                 }
             };

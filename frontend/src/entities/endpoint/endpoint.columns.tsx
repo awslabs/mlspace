@@ -44,7 +44,7 @@ const defaultColumns: TableProps.ColumnDefinition<EndpointResourceMetadata>[] = 
         header: 'Status',
         sortingComparator: sortStringValue('metadata.EndpointStatus'),
         minWidth: 140,
-        cell: (item) => prettyStatus(item.metadata.EndpointStatus, item.metadata.FailureReason),
+        cell: (item) => prettyStatus(item.metadata.EndpointStatus, item.metadata.FailureReason, true),
     },
     {
         id: 'lastUpdated',

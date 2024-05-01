@@ -237,7 +237,7 @@ def list_files(event, context):
     # map query parameters keys to api parameter names
     query_string_parameters = rename_dict_keys(
         query_string_parameters,
-        {"nextToken": "ContinuationToken", "pageSize": "MaxKeys", "prefix": "Prefix"},
+        {"nextToken": "ContinuationToken", "pageSize": "MaxKeys", "prefix": "Prefix", "delimiter": "Delimiter"},
     )
 
     dataset_prefix = get_dataset_prefix(event["pathParameters"]["scope"], event["pathParameters"]["datasetName"])
@@ -252,7 +252,7 @@ def list_files(event, context):
     }
 
     # don't allow arbitrary query string parameters added to the query_parameters dict
-    allowed_query_string_parameters = ["MaxKeys", "ContinuationToken"]
+    allowed_query_string_parameters = ["MaxKeys", "ContinuationToken", "Delimiter"]
     for key in filter_dict_by_keys(query_string_parameters, allowed_query_string_parameters):
         query_parameters[key] = query_string_parameters[key]
 

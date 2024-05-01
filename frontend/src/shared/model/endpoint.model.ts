@@ -14,6 +14,39 @@
   limitations under the License.
 */
 
+/**
+ * Normalizes resource metadata endpoint status from a cloudwatch event status to an
+ * EndpointStatus that matches the values returned from the SageMaker list/details API calls
+ * for endpoints.
+ *
+ * @param endpointStatus Resource metadata endpoint status based on CloudWatch event data
+ * @returns string
+ */
+export const normalizeEndpointMetadataStatus = (endpointStatus: string): string => {
+    switch (endpointStatus) {
+        case 'IN_SERVICE':
+            return 'InService';
+        case 'CREATING':
+            return 'Creating';
+        case 'UPDATING':
+            return 'Updating';
+        case 'DELETING':
+            return 'Deleting';
+        case 'FAILED':
+            return 'Failed';
+    }
+    return endpointStatus;
+};
+
+export type IEndpointStatus = 'OutOfService'
+| 'Creating'
+| 'Updating'
+| 'SystemUpdating'
+| 'RollingBack'
+| 'InService'
+| 'Deleting'
+| 'Failed';
+
 export type IEndpointDataCaptureConfig = {
     EnableCapture: boolean;
     CaptureStatus: 'Started' | 'Stopped';
@@ -50,15 +83,7 @@ export type IEndpoint = {
     EndpointConfigName?: string;
     ProductionVariants?: IEndpointProductionVariant[];
     DataCaptureConfig: IEndpointDataCaptureConfig;
-    EndpointStatus:
-        | 'OutOfService'
-        | 'Creating'
-        | 'Updating'
-        | 'SystemUpdating'
-        | 'RollingBack'
-        | 'InService'
-        | 'Deleting'
-        | 'Failed';
+    EndpointStatus: IEndpointStatus;
     FailureReason?: string;
     CreationTime?: string;
     LastModifiedTime?: string;

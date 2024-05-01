@@ -97,8 +97,8 @@ function ResourceScheduleModal ({
         existingTerminationTimestamp
             ? [
                 existingTerminationTimestamp.getFullYear(),
-                existingTerminationTimestamp.getMonth() + 1,
-                existingTerminationTimestamp.getDate(),
+                String(existingTerminationTimestamp.getMonth() + 1).padStart(2, '0'),
+                String(existingTerminationTimestamp.getDate()).padStart(2, '0'),
             ].join('-')
             : ''
     );
