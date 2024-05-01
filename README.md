@@ -153,6 +153,7 @@ If the config-helper doesn't provide the level of customization you need for you
 | PROJECTS_TABLE_NAME |  Dynamo DB table to hold project related metadata | `mlspace-projects` |
 | PROJECT_USERS_TABLE_NAME |  Dynamo DB table to hold project membership related metadata. Including permissions and project/user specific IAM role data. | `mlspace-project-users` |
 | USERS_TABLE_NAME |  Dynamo DB table to hold user related metadata | `mlspace-users` |
+| APP_CONFIGURATION_TABLE_NAME |  Dynamo DB table to hold dynamic configuration settings. These are settings than can be modified after the app has been deployed. | `mlspace-app-configuration` |
 | CONFIG_BUCKET_NAME |  S3 bucket used to store MLSpace configuration files (notebook lifecycle configs, notebook params, etc) | `mlspace-config` |
 | DATA_BUCKET_NAME |  S3 bucket used to store user uploaded dataset files | `mlspace-datasets` |
 | LOGS_BUCKET_NAME |  S3 bucket used to store logs from EMR clusters launched in MLSpace and, if configured, MLSpace cloudtrail events  | `mlspace-logs` |

@@ -36,6 +36,7 @@ import { VPCStack } from '../lib/stacks/vpc';
 import { ADCLambdaCABundleAspect } from '../lib/utils/adcCertBundleAspect';
 import { ApiDeploymentStack } from '../lib/stacks/api/apiDeployment';
 import { MLSpaceConfig, generateConfig } from '../lib/utils/configTypes';
+import { AppConfigurationApiStack } from '../lib/stacks/api/appConfiguration';
 
 
 const config: MLSpaceConfig = generateConfig();
@@ -183,6 +184,7 @@ const apiStacks = [
     new NotebooksApiStack(app, 'mlspace-notebook-apis', apiStackProperties),
     new ProjectsApiStack(app, 'mlspace-project-apis', apiStackProperties),
     new EmrApiStack(app, 'mlspace-emr-apis', apiStackProperties),
+    new AppConfigurationApiStack(app, 'mlspace-app-config-apis', apiStackProperties),
 ];
 
 if (config.ENABLE_TRANSLATE) {

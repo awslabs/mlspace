@@ -69,6 +69,7 @@ export function registerAPIEndpoint (
             USERS_TABLE: mlspaceConfig.USERS_TABLE_NAME,
             RESOURCE_SCHEDULE_TABLE: mlspaceConfig.RESOURCE_SCHEDULE_TABLE_NAME,
             RESOURCE_METADATA_TABLE: mlspaceConfig.RESOURCE_METADATA_TABLE_NAME,
+            APP_CONFIGURATION_TABLE: mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
             SYSTEM_TAG: mlspaceConfig.SYSTEM_TAG,
             MANAGE_IAM_ROLES: mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
             NOTEBOOK_ROLE_NAME: notebookRoleName,

@@ -164,9 +164,12 @@ def lambda_handler(event, context):
                     project_user = project_user_dao.get(project_name, username)
                     # User must belong to the project for any project specific resources
                     if project_user or Permission.ADMIN in user.permissions:
-                        # User must be an owner or admin to add/remove users
+                        # User must be an owner or admin to add/remove users or update the project config
                         if (
-                            (request_method == "POST" and requested_resource.endswith("/users"))
+                            (
+                                request_method == "POST"
+                                and (requested_resource.endswith("/users") or requested_resource.endswith("/app-config"))
+                            )
                             or (request_method in ["PUT", "DELETE"] and len(path_params) == 2 and "username" in path_params)
                         ) and (
                             (project_user and Permission.PROJECT_OWNER not in project_user.permissions)
@@ -266,7 +269,13 @@ def lambda_handler(event, context):
                     except Exception as e:
                         logging.exception(e)
                         logging.info("Access Denied. Encountered error while determining resource access policy.")
-
+            elif requested_resource.startswith("/app-config"):
+                # All users can get the app-wide configuration
+                if request_method == "GET":
+                    policy_statement["Effect"] = "Allow"
+                # Any other operation for app-wide configuration can only be performed by admins
+                elif Permission.ADMIN in user.permissions:
+                    policy_statement["Effect"] = "Allow"
             elif requested_resource == "/login" and request_method == "PUT":
                 policy_statement["Effect"] = "Allow"
             elif (

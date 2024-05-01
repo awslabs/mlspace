@@ -38,6 +38,22 @@ class ResourceType(str, Enum):
     TRANSFORM_JOB = "transform-job"
 
 
+# This is specifically used for app configuration.
+# These are service names without dashes so they can be used as properties of a model in the frontend
+class ServiceType(str, Enum):
+    REALTIME_TRANSLATE = "realtimeTranslate"
+    BATCH_TRANSLATE = "batchTranslate"
+    EMR_CLUSTER = "emrCluster"
+    ENDPOINT = "endpoint"
+    ENDPOINT_CONFIG = "endpointConfig"
+    HPO_JOB = "hpoJob"
+    LABELING_JOB = "labelingJob"
+    MODEL = "model"
+    NOTEBOOK = "notebook"
+    TRAINING_JOB = "trainingJob"
+    TRANSFORM_JOB = "transformJob"
+
+
 class Permission(Enum):
     COLLABORATOR = "CO"
     PROJECT_OWNER = "MO"
