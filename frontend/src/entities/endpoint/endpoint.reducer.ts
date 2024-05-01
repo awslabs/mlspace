@@ -15,7 +15,7 @@
 */
 
 import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/toolkit';
-import { defaultValue, IEndpoint } from '../../shared/model/endpoint.model';
+import { defaultValue, IEndpoint, normalizeEndpointMetadataStatus } from '../../shared/model/endpoint.model';
 import { defaultEndpointConfig, IEndpointConfig } from '../../shared/model/endpoint-config.model';
 import axios, { setProjectHeader } from '../../shared/util/axios-utils';
 import { ServerRequestProps, PagedResponsePayload } from '../../shared/util/table-utils';
@@ -98,6 +98,7 @@ export const EndpointSlice = createSlice({
                 const { data } = action.payload;
                 const allEndpoints = cloneDeep(state.entities);
                 data.records.forEach((endpoint: EndpointResourceMetadata) => {
+                    endpoint.metadata.EndpointStatus = normalizeEndpointMetadataStatus(endpoint.metadata.EndpointStatus);
                     const existingIndex = allEndpoints.findIndex(
                         (e) => e.metadata.EndpointArn === endpoint.metadata.EndpointArn
                     );
