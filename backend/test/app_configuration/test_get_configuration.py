@@ -36,7 +36,7 @@ def generate_event(config_scope: str):
     return {
         "queryStringParameters": {
             "configScope": config_scope,
-            "numVersions": 5,
+            "numVersions": "5", # axios sends this as a string, so simulate that here
         }
     }
 

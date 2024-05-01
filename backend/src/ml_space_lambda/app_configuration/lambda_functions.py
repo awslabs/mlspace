@@ -56,6 +56,6 @@ def update_configuration(event, context):
 @api_wrapper
 def get_configuration(event, context):
     configScope = event["queryStringParameters"]["configScope"]
-    num_versions = event["queryStringParameters"].get("numVersions", 1)
+    num_versions = int(event["queryStringParameters"].get("numVersions", 1))
 
     return app_configuration_dao.get(configScope=configScope, num_versions=num_versions)
