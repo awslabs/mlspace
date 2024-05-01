@@ -20,9 +20,9 @@ import AppRoutes from './routes';
 import ErrorBoundary from './shared/error/error-boundary';
 import SideNavigation from './shared/layout/navigation/side-navigation';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { useAppSelector } from './config/store';
+import { useAppDispatch, useAppSelector } from './config/store';
 import DeleteModal, { DeleteModalProps } from './modules/modal/delete-modal';
 import ResourceScheduleModal, {
     ResourceScheduleModalProps,
@@ -32,6 +32,7 @@ import SystemBanner from './modules/system-banner';
 import Header from './shared/layout/header/header';
 import NotificationBanner from './shared/layout/notification/notification';
 import { applyTheme } from '@cloudscape-design/components/theming';
+import { getConfiguration } from './entities/configuration/configuration-reducer';
 
 const baseHref = document?.querySelector('base')?.getAttribute('href')?.replace(/\/$/, '');
 
@@ -48,6 +49,11 @@ export default function App () {
 
     // Applies custom theming from public/theming.js
     applyTheme(window.custom_theme);
+
+    const dispatch = useAppDispatch();
+    useEffect(() => {
+        dispatch(getConfiguration({configScope: 'global', clearCache: false}));
+    }, [dispatch]);
 
     return (
         <HashRouter basename={baseHref}>

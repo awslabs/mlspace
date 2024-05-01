@@ -39,12 +39,15 @@ import { selectCurrentUser } from '../../user/user.reducer';
 import { Timezone } from '../../../shared/model/user.model';
 import _ from 'lodash';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import { IAppConfiguration } from '../../../shared/model/app.configuration.model';
+import { appConfig } from '../../configuration/configuration-reducer';
 
 function ProjectDetail () {
     const { projectName } = useParams();
     const project: IProject = useAppSelector((state) => state.project.project);
     const loadingProjectDetails = useAppSelector((state) => state.project.loading);
     const currentUser = useAppSelector(selectCurrentUser);
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
@@ -213,7 +216,7 @@ function ProjectDetail () {
                                     <ProjectResourceCount iconName='add-plus' variantStyle='subtle' resourceKey={`${ResourceType.MODEL}.Total`} resourceLabel='Total' />
                                 </ProjectResourceRow>
 
-                                {window.env.ENABLE_TRANSLATE && <ProjectResourceRow label='Batch translate job' path='batch-translate'>
+                                {applicationConfig.configuration.EnabledServices.batchTranslate && <ProjectResourceRow label='Batch translate job' path='batch-translate'>
                                     <ProjectResourceCount iconName='add-plus' variantStyle='subtle' resourceKey={`${ResourceType.BATCH_TRANSLATE_JOB}.Total`} resourceLabel='Total' />
                                     <ProjectResourceCount iconName='status-in-progress' variantStyle='success' resourceKey={`${ResourceType.BATCH_TRANSLATE_JOB}.Inprogress`} resourceLabel='Running' />
                                     <ProjectResourceCount iconName='status-negative' variantStyle='error' resourceKey={`${ResourceType.BATCH_TRANSLATE_JOB}.Failed`} resourceLabel='Failed' />
@@ -227,7 +230,7 @@ function ProjectDetail () {
                                     <ProjectResourceCount iconName='status-positive' variantStyle='success' resourceKey={`${ResourceType.HPO_JOB}.Completed`} resourceLabel='Completed' />
                                 </ProjectResourceRow>
 
-                                {window.env.ENABLE_GROUNDTRUTH && <ProjectResourceRow label='Labeling job' path='jobs/labeling'>
+                                {applicationConfig.configuration.EnabledServices.labelingJob && <ProjectResourceRow label='Labeling job' path='jobs/labeling'>
                                     <ProjectResourceCount iconName='add-plus' variantStyle='subtle' resourceKey={`${ResourceType.LABELING_JOB}.Total`} resourceLabel='Total' />
                                     <ProjectResourceCount iconName='status-in-progress' variantStyle='success' resourceKey={`${ResourceType.LABELING_JOB}.Inprogress`} resourceLabel='Running' />
                                     <ProjectResourceCount iconName='status-negative' variantStyle='error' resourceKey={`${ResourceType.LABELING_JOB}.Failed`} resourceLabel='Failed' />

@@ -24,8 +24,10 @@ export const setProjectHeader = (projectName: string): AxiosRequestConfig => {
     };
 };
 class AxiosHelper {
-    public static get<T = any, R = AxiosResponse<T>>(apiUrl: string): Promise<R> {
-        return Axios.get(apiUrl, config());
+    public static get<T = any, R = AxiosResponse<T>>(
+        apiUrl: string, 
+        requestConfig?: AxiosRequestConfig): Promise<R> {
+        return Axios.get(apiUrl, config(requestConfig));
     }
 
     public static post<T = any, R = AxiosResponse<T>, D = any>(
