@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   backend_build:
-    name: Backend Lint and Tests
+    name: Backend Tests
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -28,16 +28,6 @@ jobs:
         pip install black isort flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f test/requirements.txt ]; then pip install -r test/requirements.txt; fi
-    - name: Lint with flake8
-      working-directory: ./backend
-      run: |
-        # Run black and isort to check fomatting
-        black --line-length=127 --check .
-        isort --profile black --check-only .
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-line-length=127 --statistics
     - name: Test with pytest
       working-directory: ./backend
       run: |
@@ -57,7 +47,7 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 20.x
-    - name: Install dependencies and lint
+    - name: Install dependencies
       working-directory: ./frontend
       run: |
         npm install
@@ -77,9 +67,6 @@ jobs:
     - name: Install dependencies
       run: |
         npm install
-    - name: Lint
-      run: |
-        npm run lint:fix
   cypress_build:
     name: Cypress
     runs-on: ubuntu-latest
@@ -121,5 +108,4 @@ jobs:
         pip install black isort flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f test/requirements.txt ]; then pip install -r test/requirements.txt; fi
-        pre-commit install
     - uses: pre-commit/action@v3.0.1
