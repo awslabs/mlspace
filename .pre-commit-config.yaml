@@ -30,3 +30,25 @@ repos:
     - id: eslint
       files: \.[jt]sx?$  # *.js, *.jsx, *.ts and *.tsx
       types: [file]
+
+- repo: https://github.com/Lucas-C/pre-commit-hooks
+  rev: v1.5.5
+  hooks:
+    - id: insert-license
+      files: \.[jt]sx?$  # *.js, *.jsx, *.ts and *.tsx
+      args:
+        - --license-filepath
+        - .precommit-license-header.txt        # defaults to: LICENSE.txt
+        - --comment-style
+        - /**| |*/        # defaults to:  #
+
+- repo: https://github.com/Lucas-C/pre-commit-hooks
+  rev: v1.5.5
+  hooks:
+    - id: insert-license
+      files: \.py$  # *.js, *.jsx, *.ts and *.tsx
+      args:
+        - --license-filepath
+        - .precommit-license-header.txt        # defaults to: LICENSE.txt
+        - --comment-style
+        - "#  "        # defaults to:  #
