@@ -172,7 +172,7 @@ function NotebookDetail () {
                 <Header
                     variant='h1'
                     actions={
-                        <>
+                        <SpaceBetween direction='horizontal' size='xs'>
                             <Button
                                 data-cy='notebook-delete'
                                 disabled={!ownerOrPrivileged || !notebookStopped}
@@ -284,7 +284,7 @@ function NotebookDetail () {
                             >
                                 Open JupyterLab
                             </Button>
-                        </>
+                        </SpaceBetween>
                     }
                 >
                     {notebook.NotebookInstanceName}
