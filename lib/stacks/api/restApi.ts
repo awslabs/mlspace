@@ -102,10 +102,10 @@ export class RestApiStack extends Stack {
             throttlingBurstLimit: 100,
             methodOptions: {
                 '/app-config/GET': {  // path is {resource_path}/{http_method}
-                  cachingEnabled: true,
-                  cacheTtl: Duration.seconds(3600) // max TTL
+                    cachingEnabled: true,
+                    cacheTtl: Duration.seconds(3600) // max TTL
                 }
-              }
+            }
         };
         if (props.mlspaceConfig.ENABLE_ACCESS_LOGGING) {
             const apiAccessLogGroup = new LogGroup(this, 'mlspace-APIGWLogGroup', {
