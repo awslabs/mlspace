@@ -96,3 +96,32 @@ jobs:
       working-directory: ./cypress
       run: |
         npm run lint:fix
+  pre-commit:
+    name: Run All Pre-Commit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+    - name: Install dependencies Frontend
+      working-directory: ./frontend
+      run: |
+        npm install
+    - name: Install dependencies Backend
+      working-directory: ./backend
+      run: |
+        npm install
+        python -m pip install --upgrade pip
+        pip install black isort flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f test/requirements.txt ]; then pip install -r test/requirements.txt; fi
+    - name: Run Pre-Commit
+      working-directory: ./
+      run: |
+        pre-commit run --all-files
