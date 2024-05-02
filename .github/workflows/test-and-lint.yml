@@ -39,7 +39,7 @@ jobs:
           --cov-report xml:build/coverage/coverage.xml \
           --cov-fail-under 98
   frontend_build:
-    name: FrontEnd Lint and Tests
+    name: FrontEnd Tests
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
