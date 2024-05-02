@@ -16,7 +16,7 @@
 
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { ContentLayout, SpaceBetween, Header, Button } from '@cloudscape-design/components';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
@@ -44,12 +44,14 @@ function EMRDetail () {
     const cluster: EMRCluster = useAppSelector(selectedEMRCluster);
     const clusterLoading = useAppSelector(loadingCluster);
 
+    const [initialLoaded, setInitialLoaded] = useState(false);
+
     scrollToPageHeader();
     DocTitle('EMR Details: ', clusterId);
 
     useEffect(() => {
         if (clusterId) {
-            dispatch(getEMRCluster(clusterId));
+            dispatch(getEMRCluster(clusterId)).then(() => setInitialLoaded(true));
 
             dispatch(
                 setBreadcrumbs([
@@ -65,7 +67,7 @@ function EMRDetail () {
     }, [dispatch, basePath, projectName, clusterId, clusterName]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+    useBackgroundRefresh(() => {
         dispatch(getEMRCluster(clusterId!));
     }, [dispatch]);
 
@@ -73,7 +75,7 @@ function EMRDetail () {
 
     clusterSummary.set('Cluster ID', cluster?.Id);
     clusterSummary.set('Master DNS name', cluster?.MasterPublicDnsName);
-    clusterSummary.set('State', prettyStatus(cluster?.Status?.State));
+    clusterSummary.set('State', prettyStatus(clusterLoading && initialLoaded ? 'loading' : cluster?.Status?.State));
     clusterSummary.set('Creation time', formatDate(cluster?.Status?.Timeline?.CreationDateTime));
     clusterSummary.set('Ready time', formatDate(cluster?.Status?.Timeline?.ReadyDateTime));
     clusterSummary.set('Release label', cluster?.ReleaseLabel);
@@ -129,7 +131,7 @@ function EMRDetail () {
             >
                 <SpaceBetween size='xxl'>
                     <DetailsContainer
-                        loading={clusterLoading && !isBackgroundRefreshing}
+                        loading={clusterLoading && !initialLoaded}
                         columns={4}
                         header='Summary'
                         info={clusterSummary}

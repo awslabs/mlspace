@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import React, { ReactNode, useEffect } from 'react';
-import { ContentLayout, SpaceBetween, Header, Container, ColumnLayout, StatusIndicator, Grid, Box, Link, Icon} from '@cloudscape-design/components';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { ContentLayout, SpaceBetween, Header, Container, ColumnLayout, StatusIndicator, Grid, Box, Link, Icon, Button} from '@cloudscape-design/components';
 import { IProject } from '../../../shared/model/project.model';
 import { ResourceType } from '../../../shared/model/resource-metadata.model';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
@@ -44,6 +44,7 @@ function ProjectDetail () {
     const { projectName } = useParams();
     const project: IProject = useAppSelector((state) => state.project.project);
     const loadingProjectDetails = useAppSelector((state) => state.project.loading);
+    const [initialLoaded, setInitialLoaded] = useState(false);
     const currentUser = useAppSelector(selectCurrentUser);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -54,6 +55,7 @@ function ProjectDetail () {
     useEffect(() => {
         dispatch(getProject({projectName: projectName!, includeResourceCounts: true}))
             .unwrap()
+            .then(() => setInitialLoaded(true))
             .catch(() => {
                 navigate('/404');
             });
@@ -63,7 +65,7 @@ function ProjectDetail () {
     }, [dispatch, navigate, projectName, project.name]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+    useBackgroundRefresh(() => {
         dispatch(getProject({projectName: projectName!, includeResourceCounts: true}));
     }, [dispatch]);
 
@@ -170,18 +172,29 @@ function ProjectDetail () {
                     header='Project details'
                     actions={ProjectHomeActions()}
                     info={projectDetails}
-                    loading={loadingProjectDetails && !isBackgroundRefreshing}
+                    loading={loadingProjectDetails && !initialLoaded}
                 />
                 <DetailsContainer
                     columns={3}
                     header='Default resource scheduling'
                     info={resourceScheduleSummary}
-                    loading={loadingProjectDetails && !isBackgroundRefreshing}
+                    loading={loadingProjectDetails && !initialLoaded}
                 />
                 <Container>
                     <SpaceBetween size='l'>
-                        <Header variant='h2'>Project resources</Header>
-                        {loadingProjectDetails && !isBackgroundRefreshing ? (
+                        <Header variant='h2' actions={
+                            <Button
+                                key='refreshButton'
+                                variant='normal'
+                                iconName='refresh'
+                                loading={loadingProjectDetails}
+                                onClick={() =>
+                                    dispatch(getProject({projectName: projectName!, includeResourceCounts: true}))
+                                }
+                                ariaLabel={'Refresh table contents'}
+                            />
+                        }>Project resources</Header>
+                        {loadingProjectDetails && !initialLoaded ? (
                             <StatusIndicator type='loading'>Loading project resources</StatusIndicator>
                         ) : (projectResourceCounts?.[ResourceType.NOTEBOOK] &&
                             <ColumnLayout borders='horizontal' columns={1}>

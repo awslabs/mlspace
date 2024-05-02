@@ -16,7 +16,7 @@
 
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import {
     ContentLayout,
     SpaceBetween,
@@ -49,12 +49,14 @@ function BatchTranslateDetail () {
     const jobLoading = useAppSelector(loadingBatchTranslateJob);
     const notificationService = NotificationService(dispatch);
 
+    const [initialLoaded, setInitialLoaded] = useState(false);
+
     scrollToPageHeader();
     DocTitle('Batch Translate Job Details: ', jobId);
 
     useEffect(() => {
         if (jobId) {
-            dispatch(describeBatchTranslateJob(jobId));
+            dispatch(describeBatchTranslateJob(jobId)).then(() => setInitialLoaded(true));
 
             dispatch(
                 setBreadcrumbs([
@@ -73,7 +75,7 @@ function BatchTranslateDetail () {
     }, [dispatch, projectName, jobId, batchTranslateJob.JobName]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
+    useBackgroundRefresh(() => {
         dispatch(describeBatchTranslateJob(jobId!));
     }, [dispatch], (batchTranslateJob?.JobStatus !== TranslateJobStatus.Failed && batchTranslateJob?.JobStatus !== TranslateJobStatus.Completed && batchTranslateJob?.JobStatus !== TranslateJobStatus.CompletedWithError));
 
@@ -81,7 +83,7 @@ function BatchTranslateDetail () {
 
     batchJobSummary.set(
         'Status',
-        prettyStatus(batchTranslateJob.JobStatus, batchTranslateJob.Error?.ErrorMessage)
+        prettyStatus(jobLoading && initialLoaded ? 'loading' : batchTranslateJob.JobStatus, batchTranslateJob.Error?.ErrorMessage)
     );
     batchJobSummary.set('Encryption key', batchTranslateJob?.OutputDataConfig?.EncryptionKey?.Id);
     batchJobSummary.set(
@@ -144,7 +146,7 @@ function BatchTranslateDetail () {
             <ContentLayout header={<Header variant='h1'>{batchTranslateJob.JobName}</Header>}>
                 <SpaceBetween size='xxl'>
                     <DetailsContainer
-                        loading={jobLoading && !isBackgroundRefreshing}
+                        loading={jobLoading && !initialLoaded}
                         columns={3}
                         header='Summary'
                         info={batchJobSummary}
