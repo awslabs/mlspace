@@ -37,13 +37,17 @@ class DynamoDBObjectStore:
         self.table_name = table_name
         self.client = client if client else boto3.client("dynamodb", config=retry_config)
 
-    def _create(self, json_object: dict):
+    def _create(self, json_object: dict, condition_expression: Optional[str] = None):
         dynamodb_input = json.loads(dynamodb_json.dumps(json_object))
+        kwargs = {
+            "TableName": self.table_name,
+            "Item": dynamodb_input,
+        }
+        if condition_expression:
+            kwargs["ConditionExpression"] = condition_expression
+
         # Add new item to the table
-        self.client.put_item(
-            TableName=self.table_name,
-            Item=dynamodb_input,
-        )
+        self.client.put_item(**kwargs)
 
     def _retrieve(self, json_key: dict):
         dynamodb_key = json.loads(dynamodb_json.dumps(json_key))
@@ -64,8 +68,13 @@ class DynamoDBObjectStore:
         limit: Optional[int] = None,
         page_response: bool = False,
         next_token: str = None,
+        scan_index_forward: bool = True,
     ) -> PagedResults:
-        kwargs = {"TableName": self.table_name, "KeyConditionExpression": key_condition_expression}
+        kwargs = {
+            "TableName": self.table_name,
+            "KeyConditionExpression": key_condition_expression,
+            "ScanIndexForward": scan_index_forward,
+        }
         if filter_expression:
             kwargs["FilterExpression"] = filter_expression
         if expression_names:

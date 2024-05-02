@@ -55,6 +55,11 @@ function DatasetDetail () {
     datasetDetails.set('Access level', showAccessLevel(dataset));
     datasetDetails.set('Location', dataset.location);
 
+    // Make sure the existing Dataset matches the Dataset we're trying to view. If a Dataset was previously
+    // loaded then datasetLoading will be false even though we haven't fetched the new Dataset. That would
+    // cause the DatasetBrowser to momentarily render with the old Dataset.
+    const isLoading = datasetLoading || (dataset.name !== name || dataset.scope !== scope);
+
     scrollToPageHeader();
     DocTitle('Dataset Details: ', dataset.name);
 
@@ -91,14 +96,15 @@ function DatasetDetail () {
                             Edit
                         </Button>
                     }
-                    loading={datasetLoading}
+                    loading={isLoading}
                 />
                 <Container header={<Header variant='h2'>Dataset files</Header>}>
-                    {datasetLoading ? (
+                    {isLoading ? (
                         <StatusIndicator type='loading'>Loading files</StatusIndicator>
                     ) : (
                         <DatasetBrowser
-                            resource={dataset.location!}
+                            resource={dataset.location || ''}
+                            key={dataset.location}
                             isPinned={true}
                             actions={DatasetBrowserActions}
                             selectableItemsTypes={['objects', 'prefixes']}

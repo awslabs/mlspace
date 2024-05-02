@@ -215,7 +215,7 @@ function ProjectDetail () {
 
                                 <ProjectResourceRow label='Endpoints' path='endpoint'>
                                     <ProjectResourceCount iconName='add-plus' variantStyle='subtle' resourceKey={`${ResourceType.ENDPOINT}.Total`} resourceLabel='Total' />
-                                    <ProjectResourceCount iconName='status-in-progress' variantStyle='success' resourceKey={`${ResourceType.ENDPOINT}.Inservice`} resourceLabel='Running' />
+                                    <ProjectResourceCount iconName='status-in-progress' variantStyle='success' resourceKey={`${ResourceType.ENDPOINT}.In_Service`} resourceLabel='Running' />
                                 </ProjectResourceRow>
 
                                 <ProjectResourceRow label='Endpoint configurations' path='endpoint-config'>

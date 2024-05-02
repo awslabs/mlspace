@@ -42,7 +42,7 @@ export function ConfigureTuningJobResources (props: ConfigureTuningJobResourcesP
                 <SpaceBetween direction='vertical' size='xxs'>
                     <FormField
                         label='Maximum parallel training jobs'
-                        description='The maximum number of concurrent training jobs that the hyperparameter tuning job can run.'
+                        description='The maximum concurrent training jobs that the hyperparameter tuning job can run.'
                         errorText={
                             formErrors?.HyperParameterTuningJobConfig?.ResourceLimits
                                 .MaxParallelTrainingJobs

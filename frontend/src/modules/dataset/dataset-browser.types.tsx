@@ -20,6 +20,7 @@ import { DatasetBrowserAction, DatasetBrowserState, DatasetResource } from './da
 import { Optional } from '../../shared/util/types';
 import { Dispatch as ReduxDispatch } from '@reduxjs/toolkit';
 import { Dispatch as ReactDispatch } from 'react';
+import { DatasetContext } from '../../shared/util/dataset-utils';
 
 /**
  * Represents the different modes that {@link DatasetBrowser} can be in depending on
@@ -37,11 +38,13 @@ type DatasetBrowserItemsChangeDetail = {
 
 export type DatasetBrowserSelectableItems = 'prefixes' | 'objects';
 
+export type UpdateDatasetContextFunction = (datasetContext: Partial<DatasetContext>, filteringText: string, keepContext: boolean, keepItems?: boolean) => void;
+
 export type DatasetBrowserProps = {
     /**
      * Actions for the container.
      */
-    actions?: (state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filter'>, setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>) => React.ReactNode;
+    actions?: (state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filteringText'>, setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>, updateDatasetContext: UpdateDatasetContextFunction) => React.ReactNode;
 
     /**
      * S3 path for a resource.
@@ -53,7 +56,11 @@ export type DatasetBrowserProps = {
      * will be presented.
      */
     isPinned?: boolean;
-
+    /**
+     * Defines how the browser functions.
+     * - {@link DatasetBrowserManageMode#Create} will not fetch any data from the server and expects {@link DatasetBrowserState#items)} to be populated another way.
+     * - {@link DatasetBrowserManageMode#Edit} will not fetch any data from the server and expects {@link DatasetBrowserState#items)} to be populated another way.
+     */
     manageMode?: DatasetBrowserManageMode,
 
     /**

@@ -1637,6 +1637,51 @@ def test_config_routes(mock_user_dao, user: UserModel, method: str, allow: bool)
 
 
 @pytest.mark.parametrize(
+    "user,project_user,method,path_params,allow",
+    [
+        (MOCK_USER, None, "POST", None, False),
+        (MOCK_ADMIN_USER, None, "POST", None, True),
+        (MOCK_USER, None, "GET", None, True),
+        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "GET", {"projectName": MOCK_PROJECT_NAME}, True),
+        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, False),
+        (MOCK_OWNER_USER, MOCK_OWNER_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, True),
+    ],
+    ids=[
+        "user_update_app_config",
+        "admin_update_app_config",
+        "user_get_app_config",
+        "user_get_project_config",
+        "user_update_project_config",
+        "project_owner_update_project_config",
+    ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_app_config_routes(
+    mock_user_dao,
+    mock_project_user_dao,
+    user: UserModel,
+    project_user: ProjectUserModel,
+    method: str,
+    path_params: dict,
+    allow: bool,
+):
+    mock_user_dao.get.return_value = user
+    mock_project_user_dao.get.return_value = project_user
+    assert lambda_handler(
+        mock_event(
+            user=user,
+            resource="/app-config",
+            method=method,
+            path_params=path_params,
+        ),
+        {},
+    ) == policy_response(allow=allow, user=user)
+    mock_user_dao.get.assert_called_with(user.username)
+
+
+@pytest.mark.parametrize(
     "user,method,allow",
     [
         (MOCK_USER, "POST", False),

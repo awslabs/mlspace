@@ -56,7 +56,7 @@ MOCK_PROJECT_NAME = "fake-project"
 
 @moto.mock_dynamodb
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-class TestDatasetDAO(TestCase):
+class TestProjectUserDAO(TestCase):
     def setUp(self):
         """
         Set up virtual DDB resources/tables

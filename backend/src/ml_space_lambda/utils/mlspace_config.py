@@ -53,6 +53,7 @@ def get_environment_variables() -> dict:
             "USERS_TABLE": os.getenv("USERS_TABLE", "mlspace-users"),
             "RESOURCE_SCHEDULE_TABLE": os.getenv("RESOURCE_SCHEDULE_TABLE", "mlspace-resource-schedule"),
             "RESOURCE_METADATA_TABLE": os.getenv("RESOURCE_METADATA_TABLE", "mlspace-resource-metadata"),
+            "APP_CONFIGURATION_TABLE": os.getenv("APP_CONFIGURATION_TABLE", "mlspace-app-configuration"),
             "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION", "us-iso-east-1"),
             "DATA_BUCKET": os.getenv("DATA_BUCKET", "mlspace-data-bucket"),
             "EMR_CONFIG_BUCKET": os.getenv("EMR_CONFIG_BUCKET", "mlspace-emr-config-bucket"),

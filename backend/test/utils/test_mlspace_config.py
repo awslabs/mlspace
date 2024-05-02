@@ -58,6 +58,7 @@ def test_environment_variables():
             "PROJECT_USERS_TABLE": "mlspace-project-users",
             "RESOURCE_SCHEDULE_TABLE": "mlspace-resource-schedule",
             "RESOURCE_METADATA_TABLE": "mlspace-resource-metadata",
+            "APP_CONFIGURATION_TABLE": "mlspace-app-configuration",
             "AWS_DEFAULT_REGION": "us-iso-east-1",
             "DATA_BUCKET": "mlspace-data-bucket",
             "EMR_CONFIG_BUCKET": "mlspace-emr-config-bucket",

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 import { Box, BreadcrumbGroup, Header, Pagination, SpaceBetween, Table } from '@cloudscape-design/components';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DatasetContext, datasetFromS3Uri } from '../../shared/util/dataset-utils';
 import { getDatasetsList } from '../../entities/dataset/dataset.reducer';
 import { useAppDispatch } from '../../config/store';
@@ -23,7 +23,7 @@ import { modeForDatasetContext as displayModeForDatasetContext, getSelectionType
 import { breadcrumbFromDataset } from './dataset-browser.utils';
 import { DatasetActionType, DatasetBrowserState, DatasetResource, datasetBrowserReducer, getDatasetContents } from './dataset-browser.reducer';
 import Condition from '../condition';
-import { DatasetBrowserDisplayMode, DatasetBrowserManageMode } from './dataset-browser.types';
+import { DatasetBrowserDisplayMode, DatasetBrowserManageMode, UpdateDatasetContextFunction } from './dataset-browser.types';
 import { DatasetType, IDataset } from '../../shared/model';
 import { isFulfilled } from '@reduxjs/toolkit';
 import { MLSTextFilter } from '../textfilter/textfilter';
@@ -41,9 +41,10 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     const { actions, resource, header, selectableItemsTypes = [], manageMode, onItemsChange, onSelectionChange } = props;
     const isSelectingObject = selectableItemsTypes.indexOf('objects') > -1;
     const isSelectingPrefix = selectableItemsTypes.indexOf('prefixes') > -1;
+    const isCreating = manageMode === DatasetBrowserManageMode.Create;
+    const newDataset = {type: DatasetType.PRIVATE, name: 'New Dataset'};
     const [state, setState] = React.useReducer(datasetBrowserReducer, {
-        datasetContext: undefined,
-        breadcrumbs: [],
+        datasetContext: isCreating ? newDataset : datasetFromS3Uri(resource),
         items: [],
         selectedItems: [],
         manageMode,
@@ -51,21 +52,16 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
         nextToken: undefined,
         username: username!,
         projectName: projectName!,
-        filter: {
-            filteringText: '',
-            filteredItems: []
-        },
+        filteringText: '',
         pagination: {
             currentPageIndex: 1,
             pagesCount: 1,
             openEnd: false,
             disabled: false,
-        },
-        refresh: false
+        }
     });
-
+    const breadcrumbItems = useMemo(() => breadcrumbFromDataset(state.datasetContext, !!manageMode), [state.datasetContext, manageMode]);
     const displayMode = displayModeForDatasetContext(state.datasetContext);
-    const isCreating = state.manageMode === DatasetBrowserManageMode.Create;
 
     // memoize notification service so it doesn't cause infinite loops when used in react hooks for fetchDatasetResources & fetchDatasets
     const notificationService = useMemo(() => {
@@ -73,7 +69,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     }, [dispatch]);
 
     const fetchDatasetResources = useCallback((datasetContext: Partial<DatasetContext>, nextToken?: string, existingItems?: (DatasetResource | IDataset)[]) => {
-        if (state.manageMode !== DatasetBrowserManageMode.Create) {
+        if (!isCreating) {
             return dispatch(getDatasetContents({datasetContext, projectName, username, nextToken})).then((response) => {
                 if (isFulfilled(response)) {
                     // if nextToken is provided we're appending to existing items
@@ -109,15 +105,15 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             type: DatasetActionType.State,
             payload: {isLoading: false}
         });
-    }, [state.manageMode, dispatch, projectName, username, notificationService]);
+    }, [dispatch, isCreating, notificationService, projectName, username]);
 
-    const fetchDatasets = useMemo(() => () => {
+    const fetchDatasets = useCallback((type: DatasetType) => {
         dispatch(getDatasetsList(projectName)).then((response) => {
             if (isFulfilled(response)) {
                 setState({
                     type: DatasetActionType.State,
                     payload: {
-                        items: response.payload.data.filter((dataset) => dataset.type === state.datasetContext?.type),
+                        items: response.payload.data.filter((dataset) => dataset.type === type),
                         isLoading: false
                     }
                 });
@@ -129,52 +125,41 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                 });
             }
         });
-    }, [dispatch, projectName, state.datasetContext?.type, notificationService]);
+    }, [dispatch, notificationService, projectName]);
 
-    // The resource is expected to be empty on most first loads, but if it is an S3 URI try and create the datasetContext
-    // based on that URI.
-    useEffect(() => {
-        const datasetContext = datasetFromS3Uri(resource);
-        const payload: Partial<Pick<DatasetBrowserState, 'datasetContext' | 'filter' | 'items'>> = {
-            datasetContext,
-            items: []
-        };
+    const updateDatasetContext: UpdateDatasetContextFunction = useCallback((datasetContext: Partial<DatasetContext>, filteringText: string, keepContext: boolean, keepItems = false) => {
+        const filteringTextPrefix = prefixForPath(filteringText);
+        const filteringTextDisplayPrefix = prefixForPath(state.filteringText);
+        const shouldFetch = !keepContext || filteringTextPrefix !== filteringTextDisplayPrefix;
+        const displayMode = displayModeForDatasetContext(datasetContext);
 
-        if (state.manageMode === DatasetBrowserManageMode.Create) {
-            payload.datasetContext = {type: DatasetType.PRIVATE, name: 'NoName'};
-        }
-
-        setState({
-            type: DatasetActionType.State,
-            payload
-        });
-    }, [resource, state.manageMode]);
-
-    // Update the component if the datasetContext changes. This is expected to occur whenever the browser is going to display
-    // a different scope, dataset, or prefix.
-    useEffect(() => {
         const payload: Partial<DatasetBrowserState> = {
-            breadcrumbs: breadcrumbFromDataset(state.datasetContext, !!state.manageMode),
+            datasetContext: keepContext ? state.datasetContext : datasetContext,
             selectedItems: [],
-            isLoading: true
+            isLoading: false,
+            filteringText
         };
 
-        if (state.manageMode === DatasetBrowserManageMode.Create) {
-            payload.isLoading = false;
-        } else {
+        if (!isCreating) {
             switch (displayMode) {
                 case DatasetBrowserDisplayMode.Resource:
-                    // DatasetBrowser invariant requires state.datasetContext can never be undefined with this displayMode
-                    if (state.datasetContext) {
-                        fetchDatasetResources(state.datasetContext);
+                    if (shouldFetch && datasetContext) {
+                        payload.isLoading = true;
+                        if (keepItems) {
+                            fetchDatasetResources(datasetContext, state.nextToken, state.items);
+                        } else {
+                            fetchDatasetResources(datasetContext);
+                        }
                     }
                     break;
                 case DatasetBrowserDisplayMode.Dataset:
-                    fetchDatasets();
+                    if (shouldFetch && datasetContext.type) {
+                        payload.isLoading = true;
+                        fetchDatasets(datasetContext.type);
+                    }
                     break;
                 default:
                     payload.items = Object.keys(DatasetType).map((key) => ({ name: upperFirst(DatasetType[key]), type: DatasetType[key] }));
-                    payload.isLoading = false;
             }
         }
 
@@ -182,41 +167,28 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
             type: DatasetActionType.State,
             payload
         });
-    }, [state.datasetContext, state.manageMode, fetchDatasetResources, fetchDatasets, displayMode, state.refresh]);
+    }, [fetchDatasetResources, fetchDatasets, isCreating, state.datasetContext, state.filteringText, state.items, state.nextToken]);
+
+    const [firstLoad, setFirstLoad] = useState(true);
+    useEffect(() => {
+        if (firstLoad) {
+            setFirstLoad(false);
+            updateDatasetContext(state.datasetContext || {}, '', false);
+        }
+    }, [firstLoad, state.datasetContext, updateDatasetContext]);
+
+    const filteredItems = useMemo(() => state.items.filter((item) => {
+        return !!item.name?.includes(isCreating ? state.filteringText : resourceForPath(state.filteringText));
+    }), [state.items, state.filteringText, isCreating]);
 
     const pageSize = 10;
-    // recalculate pages if filteredItems or pageSize changes
-    useEffect(() => {
+    const pagesCount = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+    if (state.pagination.currentPageIndex > pagesCount) {
         setState({
             type: DatasetActionType.Pagination,
-            payload: {
-                pagesCount: Math.max(1, Math.ceil(state.filter.filteredItems.length / pageSize)),
-            }
+            payload: { currentPageIndex: pagesCount }
         });
-    }, [state.filter.filteredItems, pageSize]);
-
-    // if pagination changes make sure currentPageIndex isn't greater than pageCount
-    useEffect(() => {
-        if (state.pagination.currentPageIndex > state.pagination.pagesCount) {
-            setState({
-                type: DatasetActionType.Pagination,
-                payload: { currentPageIndex: state.pagination.pagesCount }
-            });
-        }
-    }, [state.pagination]);
-
-    // if items or filteringText changes recompute filteredItems
-    useEffect(() => {
-        setState({
-            type: DatasetActionType.Filter,
-            payload: {
-                filteringText: state.filter.filteringText,
-                filteredItems: state.items.filter((item) => {
-                    return !!item.name?.includes(resourceForPath(state.filter.filteringText));
-                })
-            }
-        });
-    }, [state.items, state.filter.filteringText]);
+    }
 
     useEffect(() => {
         onItemsChange?.(new CustomEvent('itemsChange', {detail: {items: state.items}}));
@@ -227,7 +199,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     }, [onSelectionChange, state.selectedItems]);
 
     // create the appropriate table properties for the current viewing context (scopes, listing datasets, listing a dataset resources)
-    const displayModeTableProperties = tablePropertiesForDisplayMode(displayMode, state, setState);
+    const displayModeTableProperties = tablePropertiesForDisplayMode(displayMode, state, updateDatasetContext);
 
     return (
         <Box>
@@ -236,14 +208,10 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     { header }
                 </Condition>
                 
-                <Condition condition={state.manageMode !== DatasetBrowserManageMode.Create}>
-                    <BreadcrumbGroup items={state.breadcrumbs} onClick={(event) => {
+                <Condition condition={manageMode !== DatasetBrowserManageMode.Create}>
+                    <BreadcrumbGroup items={breadcrumbItems} onClick={(event) => {
                         event.preventDefault();
-                        
-                        setState({
-                            type: DatasetActionType.DatasetContext,
-                            payload: event.detail.href.length > 0 ? JSON.parse(event.detail.href) : undefined
-                        });
+                        updateDatasetContext(event.detail.href.length > 0 ? JSON.parse(event.detail.href) : undefined, '', false);
                     }} />
                 </Condition>
 
@@ -251,60 +219,38 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     // add common properties shared by every display mode
                     header={<Header actions={actions?.({
                         items: state.items,
-                        manageMode: state.manageMode,
+                        manageMode: manageMode,
                         selectedItems: state.selectedItems,
                         datasetContext: state.datasetContext,
-                        filter: state.filter,
-                    }, setState)} counter={
+                        filteringText: state.filteringText,
+                    }, setState, updateDatasetContext)} counter={
                         state.selectedItems?.length > 0
                             ? `(${state.selectedItems.length}/${state.items.length})`
                             : `(${state.items.length})`
                     }>{displayMode}s</Header>}
-                    empty={state.manageMode === DatasetBrowserManageMode.Create ? EmptyState('No files uploaded') : EmptyState('No Entries exist')}
+                    empty={isCreating ? EmptyState('No files uploaded') : EmptyState('No Entries exist')}
                     filter={
                         <MLSTextFilter
-                            filteringText={state.filter.filteringText}
+                            filteringText={state.filteringText}
                             requireEnter={true}
-                            countText={getMatchesCountText(state.filter.filteredItems.length)}
+                            countText={getMatchesCountText(filteredItems.length)}
                             onChange={({detail: {filteringText}}) => {
-                                // if creating a dataset there is no fetching from the server so just update the filter text and bail out early
-                                if (isCreating) {
-                                    return setState({
-                                        type: DatasetActionType.State,
-                                        payload: {
-                                            isLoading: false,
-                                            filter: {
-                                                ...state.filter,
-                                                filteringText: filteringText,
-                                            }
-                                        }
-                                    });
-                                }
-
-                                const filteringTextPrefix = prefixForPath(filteringText);
-                                const filteringTextDisplayPrefix = prefixForPath(state.filter.filteringText);
-                                const shouldFetch = filteringTextPrefix !== filteringTextDisplayPrefix;
-
                                 if (state.datasetContext) {
-                                    const payload: Partial<DatasetBrowserState> = {
-                                        isLoading: shouldFetch,
-                                        selectedItems: shouldFetch ? [] : state.selectedItems,
-                                        filter: {
-                                            ...state.filter,
-                                            filteringText
-                                        }
-                                    };
-
-                                    setState({
-                                        type: DatasetActionType.State,
-                                        payload
-                                    });
-
-                                    if (shouldFetch) {
-                                        // if the filter contains a prefix append that to the Location
-                                        const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
-                                        fetchDatasetResources(effectiveContext);
+                                    // if this is creating a new dataset there can't be fetching from the sever
+                                    if (isCreating) {
+                                        return updateDatasetContext(state.datasetContext, filteringText, true);
                                     }
+
+                                    const effectiveContext = {...state.datasetContext};
+                                    const filteringTextPrefix = prefixForPath(filteringText);
+                                    const filteringTextDisplayPrefix = prefixForPath(state.filteringText);
+
+                                    // if the prefixes don't match update the location that we should display
+                                    if (filteringTextPrefix !== filteringTextDisplayPrefix) {
+                                        effectiveContext.location = [state.datasetContext.location, filteringTextPrefix].join('');
+                                    }
+
+                                    updateDatasetContext(effectiveContext, filteringText, true);
                                 }
                             }}
                             onKeyDown={(event) => {
@@ -324,7 +270,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                                 return true;
                         }
                     }}
-                    items={state.filter.filteredItems.slice((state.pagination.currentPageIndex - 1) * pageSize, (state.pagination.currentPageIndex) * pageSize)}
+                    items={filteredItems.slice((state.pagination.currentPageIndex - 1) * pageSize, (state.pagination.currentPageIndex) * pageSize)}
                     loading={state.isLoading}
                     loadingText={`Loading ${displayMode}s`}
                     onSelectionChange={(event) => {
@@ -338,6 +284,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     pagination={
                         <Pagination
                             {...state.pagination}
+                            pagesCount={pagesCount}
                             openEnd={!!state.nextToken}
                             onChange={(event) => {
                                 setState({
@@ -352,15 +299,13 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                             }}
                             onNextPageClick={({detail}) => {
                                 if (!detail.requestedPageAvailable && state.datasetContext) {
-                                    const filteringTextPrefix = prefixForPath(state.filter.filteringText);
-                                    // if the filter contains a prefix append that to the Location
-                                    const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
+                                    const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, prefixForPath(state.filteringText)].join('')};
                                     fetchDatasetResources(effectiveContext, state.nextToken, state.items);
                                 }
                             }}
                         />
                     }
-                    selectionType={getSelectionType(state.manageMode, selectableItemsTypes)}
+                    selectionType={getSelectionType(manageMode, selectableItemsTypes)}
                     selectedItems={state.selectedItems}
                     variant={'borderless'}
 
