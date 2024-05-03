@@ -13,9 +13,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-import fs from 'fs';
-import figlet from 'figlet';
-import { prompt } from 'enquirer';
+import fs from 'fs';  
+import figlet from 'figlet';  
+import enquirer from 'enquirer';  
+
+const prompt = enquirer.prompt;  
 
 
 const BASIC = 'basic';

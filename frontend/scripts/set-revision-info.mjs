@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 /**
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  
@@ -14,9 +13,10 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-const getRepoInfo = require('git-repo-info');
-const fs = require('fs');
-const packageFile = require('../package.json');
+import getRepoInfo from 'git-repo-info';
+import fs from 'fs';  
+import packageFile from '../package.json' assert { type: 'json' };
+
 
 const info = getRepoInfo();
 console.log('Git Revision Info:');
