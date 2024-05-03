@@ -15,7 +15,7 @@
 */
 
 import { DebouncedFunc, debounce } from 'lodash';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /**
  * A custom hook that runs an action periodically in the background to refresh data.
@@ -46,16 +46,19 @@ export function useBackgroundRefresh (action: () => void, deps: readonly unknown
 }
 
 /**
- * Creates a memoized and debounced function that delays invoking func until after {@link wait} milliseconds have elapsed since
+ * Creates a debounced function that delays invoking {@link callback} until after {@link delay} milliseconds have elapsed since
  * the last time the debounced function was invoked.
  * 
+ * NOTE: The returned function has {@link callback} as a dependency so it is up to the caller to ensure {@link callback} doesn't
+ * change or is memoized.
+ * 
  * @param {Function} callback The function to debounce.
- * @param {number} wait The number of milliseconds to delay.
- * @param {Array} deps - The dependencies that will create a new memoized and debounced function.
+ * @param {number} delay The number of milliseconds to delay.
  * @returns {Function} The memoized and debounced function.
  */
-export function useDebounce<T extends (...args: any[]) => void> (callback: T, delay = 300, deps: readonly unknown[] = []): DebouncedFunc<T> {
-    // static linting can't track deps so we have to ignore this rule
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    return useCallback(debounce(callback, delay), [callback, ...deps]);
+export function useDebounce<T extends (...args: any[]) => void> (callback: T, delay = 300): DebouncedFunc<T> {
+    // useMemo is necessary because useCallback doesn't understand the dependencies for the debounced function
+    const debounced = useMemo(() => debounce(callback, delay), [callback, delay]);
+    
+    return useCallback(debounced, [debounced]);
 }

@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     ColumnLayout,
     FormField,
@@ -29,6 +29,7 @@ import Condition from '../../modules/condition';
 import Table from '../../modules/table';
 import { scrollToInvalid } from '../../shared/validation';
 import { useDebounce } from '../../shared/util/hooks';
+import _ from 'lodash';
 
 /**
  * The React component that populates the 'Text' tab for Translate real-time
@@ -41,19 +42,19 @@ export const TranslateRealtimeText = () => {
     const [terminologyMatches, setTerminologyMatches] = useState<
         { SourceText: string; TargetText: string }[]
     >([]);
-    // The only customer controlled input that needs validation is the text to be translated, which must be under 10KB
-    const textFormSchema = z.object({
-        Text: z
-            .string()
-            // The size can't be over 10KB
-            .refine((str) => new Blob([str]).size < 10000),
-    });
-    const translateRequest = defaultRealtimeTextTranslateRequest;
-
     /**
      * Handle the submission of realtime translation requests for both text and document translation
      */
-    const handleSubmit = async (updates?: Record<string, any>) => {
+    const handleSubmit = useCallback(async (updates?: Record<string, any>) => {
+        // The only customer controlled input that needs validation is the text to be translated, which must be under 10KB
+        const textFormSchema = z.object({
+            Text: z
+                .string()
+                // The size can't be over 10KB
+                .refine((str) => new Blob([str]).size < 10000),
+        });
+        const translateRequest = defaultRealtimeTextTranslateRequest;
+
         _.mergeWith(translateRequest, updates);
         // We could also update the lambda to handle this instead but for now strip out values if
         // profanity is null or formality is None
@@ -88,12 +89,12 @@ export const TranslateRealtimeText = () => {
                 scrollToInvalid();
             }
         }
-    };
+    }, []);
 
     // Once the delay has concluded update the primary form Text. This will trigger a form submission
-    const debounceFormTextUpdate = useDebounce(() => {
+    const debounceFormTextUpdate = useDebounce(useCallback((textToTranslate: string) => {
         handleSubmit({ Text: textToTranslate });
-    }, 400, [textToTranslate]);
+    }, [handleSubmit]), 400);
 
     /**
      * The contents of the 'Text' tab for Translate real-time
@@ -102,7 +103,6 @@ export const TranslateRealtimeText = () => {
         <SpaceBetween direction='vertical' size='xxl'>
             <SpaceBetween direction='vertical' size='l'>
                 <LanguageSelects
-                    translateRequest={translateRequest}
                     changeCallback={handleSubmit}
                 />
                 <ColumnLayout columns={2}>
@@ -111,7 +111,7 @@ export const TranslateRealtimeText = () => {
                             value={textToTranslate}
                             onChange={(event) => {
                                 setTextToTranslate(event.detail.value!);
-                                debounceFormTextUpdate();
+                                debounceFormTextUpdate(event.detail.value);
                             }}
                             placeholder='Enter text'
                         />
@@ -121,7 +121,6 @@ export const TranslateRealtimeText = () => {
                     </FormField>
                 </ColumnLayout>
                 <AdditionalSettings
-                    translateRequest={translateRequest}
                     changeCallback={handleSubmit}
                 />
             </SpaceBetween>
