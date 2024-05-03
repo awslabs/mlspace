@@ -233,6 +233,7 @@
                     "matchers",
                     "mem",
                     "memoize",
+                    "memoized",
                     "merror",
                     "mlogloss",
                     "mlp",
