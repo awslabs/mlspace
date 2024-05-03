@@ -27,7 +27,7 @@ import {
     SelectProps,
     Button,
 } from '@cloudscape-design/components';
-import { defaultEnvConfig, envConfig } from '../../shared/model/configuration.model';
+import { defaultEnvConfig } from '../../shared/model/configuration.model';
 import React, { useEffect, useState } from 'react';
 import { getEnvironmentConfig } from './configuration.service';
 import { getBase } from '../../shared/util/breadcrumb-utils';
@@ -37,7 +37,7 @@ import axios from '../../shared/util/axios-utils';
 import NotificationService from '../../shared/layout/notification/notification.service';
 
 export function DeploymentConfiguration () {
-    const [config, setEnvConfig] = useState(defaultEnvConfig as envConfig);
+    const [config, setEnvConfig] = useState(defaultEnvConfig);
     const [selectedResources, setSelectedResources] = useState([] as readonly SelectProps.Option[]);
     const dispatch = useAppDispatch();
     const { projectName } = useParams();
@@ -112,13 +112,16 @@ export function DeploymentConfiguration () {
     }, [dispatch, projectName]);
 
     return (
-        <Container>
-            <Header
-                variant='h2'
-                description={`The current configuration set up during deployment of ${window.env.APPLICATION_NAME}`}
-            >
-                {window.env.APPLICATION_NAME} Deployment Configuration
-            </Header>
+        <Container
+            header={
+                <Header
+                    variant='h2'
+                    description={`The current configuration set up during deployment of ${window.env.APPLICATION_NAME}`}
+                >
+                    {window.env.APPLICATION_NAME} Deployment Configuration
+                </Header>
+            }
+        >
             <SpaceBetween direction='vertical' size='xl'>
                 <ExpandableSection headerText='Environment Variables' variant='default'>
                     {<pre>{JSON.stringify(config?.environmentVariables, null, 2) || ''}</pre>}

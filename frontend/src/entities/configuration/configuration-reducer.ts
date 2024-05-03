@@ -19,30 +19,22 @@ import {
     createSlice,
     isFulfilled,
     isPending,
+    isRejected,
     PayloadAction,
 } from '@reduxjs/toolkit';
 import axios from '../../shared/util/axios-utils';
 import { defaultConfiguration, IAppConfiguration } from '../../shared/model/app.configuration.model';
 
 const initialState = {
-    loadingAppConfigUpdate: false,
-    loadingAppConfigList: false,
-    loadingAppConfig: false,
     appConfigList: [],
     appConfig: defaultConfiguration,
+    failedToLoadConfig: false,
 };
 
 // Actions
-export const getConfiguration = createAsyncThunk(
-    'app_config/get_configuration',
-    async (props: GetAppConfigurationProps) => {
-        const searchParams = new URLSearchParams();
-        searchParams.set('configScope', props.configScope);
-        const requestUrl = `/app-config?${searchParams.toString()}`;
-        
-        return await axios.get<IAppConfiguration[]>(requestUrl);
-    }
-);
+export const getConfiguration = (configScope: string) => {
+    return listConfigurations({ configScope, numVersions: 1});
+};
 
 export const listConfigurations = createAsyncThunk(
     'app_config/list_configurations',
@@ -52,18 +44,21 @@ export const listConfigurations = createAsyncThunk(
         if (props.numVersions) {
             searchParams.set('numVersions', props.numVersions.toString());
         }
-        const requestUrl = `/app-config?${searchParams.toString()}`;
+        const requestUrl = `/app-config?${searchParams}`;
         
         return await axios.get<IAppConfiguration[]>(requestUrl);
     }
 );
 
-
-export const updateConfiguration = createAsyncThunk('app_config/update_app_config', async (newConfiguration: AppConfigurationProps) => {
-    const requestUrl = '/app-config';
-
-    return axios.post<IAppConfiguration>(requestUrl, newConfiguration.appConfiguration);
-});
+export const updateConfiguration = createAsyncThunk('app_config/update_app_config', 
+    async (newConfiguration: AppConfigurationProps, { rejectWithValue }) => {
+        const requestUrl = '/app-config';
+        try {
+            return await axios.post<IAppConfiguration>(requestUrl, newConfiguration.appConfiguration);
+        } catch (err) {
+            return rejectWithValue(err.response);
+        }
+    });
 
 // slice
 export const AppConfigSlice = createSlice({
@@ -76,44 +71,41 @@ export const AppConfigSlice = createSlice({
     },
     extraReducers (builder) {
         builder
-            .addMatcher(isFulfilled(getConfiguration), (state, action: any) => {
-                const { data } = action.payload;
-                return {
-                    ...state,
-                    loadingAppConfig: false,
-                    appConfig: data[0],
-                };
-            })
             .addMatcher(isFulfilled(listConfigurations), (state, action: any) => {
                 const { data } = action.payload;
                 return {
                     ...state,
-                    loadingAppConfigList: false,
+                    appConfig: data[0],
                     appConfigList: data,
+                    failedToLoadConfig: false,
                 };
             })
-            .addMatcher(isFulfilled(updateConfiguration), (state) => {
+            .addMatcher(isRejected(listConfigurations), (state) => {
+                console.log('Get rejected');
                 return {
                     ...state,
-                    loadingAppConfigUpdate: false,
-                };
-            })
-            .addMatcher(isPending(updateConfiguration), (state) => {
-                return {
-                    ...state,
-                    loadingAppConfigUpdate: true,
-                };
-            })
-            .addMatcher(isPending(getConfiguration), (state) => {
-                return {
-                    ...state,
-                    loadingAppConfig: true,
+                    failedToLoadConfig: true,
                 };
             })
             .addMatcher(isPending(listConfigurations), (state) => {
                 return {
                     ...state,
-                    loadingAppConfigList: true,
+                    failedToLoadConfig: false,
+                };
+            })
+            .addMatcher(isFulfilled(updateConfiguration), (state) => {
+                return {
+                    ...state,
+                };
+            })
+            .addMatcher(isRejected(updateConfiguration), (state) => {
+                return {
+                    ...state,
+                };
+            })
+            .addMatcher(isPending(updateConfiguration), (state) => {
+                return {
+                    ...state,
                 };
             });
             
@@ -128,15 +120,11 @@ type ListAppConfigurationProps = {
     configScope: string;
     numVersions: number;
 };
-type GetAppConfigurationProps = {
-    configScope: string;
-};
+
 
 // Reducer
 export default AppConfigSlice.reducer;
 export const { updateEntity } = AppConfigSlice.actions;
-export const loadingAppConfigList = (state: any) => state.appConfig.loadingAppConfigList;
-export const loadingAppConfig = (state: any) => state.loadingAppConfig;
-export const loadingAppConfigUpdate = (state: any): boolean => state.appConfig.loadingAppConfigUpdate;
 export const appConfigList = (state: any): IAppConfiguration[] => state.appConfig.appConfigList;
 export const appConfig = (state: any): IAppConfiguration => state.appConfig.appConfig;
+export const failedToLoadConfig = (state: any): boolean => state.appConfig.failedToLoadConfig;

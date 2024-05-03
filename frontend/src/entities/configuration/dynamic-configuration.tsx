@@ -20,29 +20,29 @@ import {
     Container,
     Button,
     Input,
+    FileUpload,
 } from '@cloudscape-design/components';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { appConfig, appConfigList, getConfiguration, listConfigurations, updateConfiguration } from './configuration-reducer';
 import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { useValidationReducer } from '../../shared/validation';
 import { z } from 'zod';
+import NotificationService from '../../shared/layout/notification/notification.service';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const configList: IAppConfiguration[] = useAppSelector(appConfigList);
+    const dispatch = useAppDispatch();
+    const notificationService = NotificationService(dispatch);
+    const [selectedFile, setSelectedFile] = useState<File[]>([]);
 
-    const formSchema = z.object({//configuration.EMRConfig.clusterSizes[0].name
+    const formSchema = z.object({
         configuration: z.object({
-            EMRConfig: z.object({
-                clusterSizes: z.object({
-                    name: z.string({ required_error: 'A cluster name must be provided.' })
-                })
-            })
         }),
     });
 
-    const { state, setState, setFields, touchFields } = useValidationReducer(formSchema, {
+    const { state, setState, isValid, setFields, touchFields } = useValidationReducer(formSchema, {
         validateAll: false as boolean,
         needsValidation: false,
         touched: {},
@@ -53,30 +53,79 @@ export function DynamicConfiguration () {
         formSubmitting: false as boolean,
     });
 
-    const dispatch = useAppDispatch();
     useEffect(() => {
         dispatch(listConfigurations({configScope: 'global', numVersions: 5}));
     }, [dispatch]);
 
+
     const handleSubmit = async () => {
-        setState({ formSubmitting: true });
-        dispatch(updateConfiguration({
-            appConfiguration: state.form
-        })).then(() => {
-            dispatch(getConfiguration({configScope: 'global'}));
-            setState({ formSubmitting: false });
+        if (isValid) {
+            setState({ formSubmitting: true });
+            const resp = await dispatch(updateConfiguration({appConfiguration: state.form}));
+            const responseStatus = resp.payload.status;
+            if (responseStatus >= 400) {
+                if (responseStatus === 429) {
+                    notificationService.generateNotification(
+                        'Outdated configuration - please refresh to get the latest configuration, then try again.',
+                        'error'
+                    );
+                } else {
+                    notificationService.generateNotification(
+                        'Something went wrong while uploading the configuration. Please try again or check system logs.',
+                        'error'
+                    );
+                }
+            } else {
+                dispatch(getConfiguration('global'));
+                notificationService.generateNotification(
+                    'Successfully updated configuration.',
+                    'success'
+                );
+            }
+        }
+        setState({ formSubmitting: false });
+    };
+
+
+    const JSONToFile = () => {
+        const blob = new Blob([JSON.stringify(applicationConfig.configuration, null, 2)], {
+            type: 'application/json',
         });
-        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${window.env.APPLICATION_NAME}_configuration.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleFileUpload = async () => {
+        const file: File = selectedFile[0];
+        if (file.type !== 'application/json') {
+            notificationService.generateNotification(
+                'Invalid file type. File must be a JSON file.',
+                'error'
+            );
+        } else {
+            const fileText = await file.text();
+            const parsedJSON = JSON.parse(fileText);
+            state.form.configuration = parsedJSON;
+            state.form.changeReason = 'Imported configuration file.';
+            handleSubmit();
+        }
     };
 
     return (
-        <Container>
-            <Header
-                variant='h2'
-                description={`The current dynamic configuration of ${window.env.APPLICATION_NAME}. These settings can be modified without redeploying the application`}
-            >
-                {window.env.APPLICATION_NAME} Dynamic Configuration
-            </Header>
+        <Container
+            header={
+                <Header
+                    variant='h2'
+                    description={`The current dynamic configuration of ${window.env.APPLICATION_NAME}. These settings can be modified without redeploying the application.`}
+                >
+                    {window.env.APPLICATION_NAME} Dynamic Configuration
+                </Header>
+            }
+        >
             <SpaceBetween direction='vertical' size='xl'>
                 <ExpandableSection headerText='Allowed Instance Types' variant='default' defaultExpanded>
                     {<pre>TODO</pre>}
@@ -107,15 +156,74 @@ export function DynamicConfiguration () {
                     onClick={handleSubmit}
                     loading={state.formSubmitting}
                     data-cy='dynamic-configuration-submit'
+                    disabled={!isValid}
                 >
                     Save Changes
                 </Button>
+                <Container
+                    header={
+                        <Header
+                            variant='h3'
+                            description={`Export the latest dynamic configuration of ${window.env.APPLICATION_NAME}. This will download a JSON file to your machine with the current configuration. This JSON file can be used for a new ${window.env.APPLICATION_NAME} to ensure it has the same settings.`}
+
+                        >
+                            Export Configuration
+                        </Header>
+                    }
+                >
+                    <Button
+                        iconAlt='Export dynamic configuration'
+                        variant='primary'
+                        onClick={JSONToFile}
+                        loading={state.formSubmitting}
+                        data-cy='export-configuration-submit'
+                        iconName='download'
+                    >
+                        Export Configuration as JSON File
+                    </Button>
+                </Container>
+                <Container
+                    header={
+                        <Header
+                            variant='h3'
+                            description={`Upload a JSON configuration for ${window.env.APPLICATION_NAME}. This will be parsed for validity and then uploaded as the active configuraion. The import will fail if the provided configuration doesn't have the required values.`}
+                        >
+                            Import Configuration
+                        </Header>
+                    }
+                >
+                    <SpaceBetween direction='vertical' size='s'>
+                        <FileUpload
+                            onChange={({ detail }) => { 
+                                setSelectedFile([]); // ensure there's never more than one file
+                                setSelectedFile(detail.value);
+                            }}
+                            value={selectedFile}
+                            i18nStrings={{
+                                uploadButtonText: (e) =>
+                                    e ? 'Choose files' : 'Choose file',
+                                dropzoneText: (e) =>
+                                    e ? 'Drop files to upload' : 'Drop file to upload',
+                                removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
+                                limitShowFewer: 'Show fewer files',
+                                limitShowMore: 'Show more files',
+                                errorIconAriaLabel: 'Error uploading file'
+                            }}
+                        />
+                        <Button
+                            onClick={async () => handleFileUpload()}
+                            disabled={selectedFile.length === 0}
+                            variant='primary'
+                        >
+                            Upload Configuration
+                        </Button>
+                    </SpaceBetween>
+                </Container>
                 <ExpandableSection headerText='Configuration History' variant='default' defaultExpanded>
                     {<pre>View the configuration history and rollback to prior versions.</pre>}
                     {configList.length}
                 </ExpandableSection>
             </SpaceBetween>
-            
         </Container>
     );
 }

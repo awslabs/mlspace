@@ -32,13 +32,17 @@ import SystemBanner from './modules/system-banner';
 import Header from './shared/layout/header/header';
 import NotificationBanner from './shared/layout/notification/notification';
 import { applyTheme } from '@cloudscape-design/components/theming';
-import { getConfiguration } from './entities/configuration/configuration-reducer';
+import { failedToLoadConfig, getConfiguration } from './entities/configuration/configuration-reducer';
+import NotificationService from './shared/layout/notification/notification.service';
 
 const baseHref = document?.querySelector('base')?.getAttribute('href')?.replace(/\/$/, '');
 
 export default function App () {
     const modal: DeleteModalProps = useAppSelector((state) => state.modal.deleteModal);
     const updateModal: UpdateModalProps = useAppSelector((state) => state.modal.updateModal);
+    const configLoadError: boolean = useAppSelector(failedToLoadConfig);
+    const dispatch = useAppDispatch();
+    const notificationService = NotificationService(dispatch);
     const resourceScheduleModal: ResourceScheduleModalProps = useAppSelector(
         (state) => state.modal.resourceScheduleModal
     );
@@ -50,10 +54,20 @@ export default function App () {
     // Applies custom theming from public/theming.js
     applyTheme(window.custom_theme);
 
-    const dispatch = useAppDispatch();
+    
     useEffect(() => {
-        dispatch(getConfiguration({configScope: 'global', clearCache: false}));
+        dispatch(getConfiguration('global'));
     }, [dispatch]);
+
+    useEffect(() => {
+        if (configLoadError) {
+            notificationService.generateNotification(
+                'Error loading app configuration. Restrictive default policy has been applied in its place. Consult with system admin to resolve issue.',
+                'error'
+            );
+        }
+        
+    }, [configLoadError, notificationService]);
 
     return (
         <HashRouter basename={baseHref}>
