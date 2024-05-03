@@ -46,7 +46,7 @@ repos:
   rev: v1.5.5
   hooks:
     - id: insert-license
-      files: \.py$  # *.js, *.jsx, *.ts and *.tsx
+      files: \.py$
       args:
         - --license-filepath
         - .precommit-license-header.txt        # defaults to: LICENSE.txt
