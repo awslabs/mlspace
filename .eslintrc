@@ -245,6 +245,7 @@
                     "mult",
                     "multiclass",
                     "multilayer",
+                    "namespace",
                     "ndcg",
                     "nlists",
                     "ngrams",
