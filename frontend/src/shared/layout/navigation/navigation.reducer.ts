@@ -25,7 +25,6 @@ const initialState = {
 };
 
 // slice
-
 const navigationSlice = createSlice({
     name: 'navigation',
     initialState,

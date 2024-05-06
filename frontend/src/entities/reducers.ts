@@ -27,6 +27,7 @@ import modal from '../modules/modal/modal.reducer';
 import emr from './emr/emr.reducer';
 import logs from '../shared/logs/logs.reducer';
 import batchTranslateJob from './batch-translate/batch-translate.reducer';
+import appConfig from './configuration/configuration-reducer';
 
 const entitiesReducers = {
     user,
@@ -42,6 +43,7 @@ const entitiesReducers = {
     emr,
     logs,
     batchTranslateJob,
+    appConfig
 };
 
 export default entitiesReducers;

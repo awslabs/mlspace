@@ -18,6 +18,7 @@
         "@tiptap/pm": "^2.2.4",
         "@tiptap/react": "^2.2.4",
         "@tiptap/starter-kit": "^2.2.4",
+        "ace-builds": "^1.33.1",
         "axios": "^0.28.0",
         "git-repo-info": "^2.1.1",
         "jest-mock-axios": "^4.7.3",
