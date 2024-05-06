@@ -95,7 +95,6 @@ stacks.push(iamStack);
 const mlSpaceNotebookRole = iamStack.mlSpaceNotebookRole;
 const mlSpaceAppRole = iamStack.mlSpaceAppRole;
 const websiteS3ReaderRole = iamStack.s3ReaderRole;
-const permissionsBoundaryArn = iamStack.mlSpacePermissionsBoundary?.managedPolicyArn;
 
 const lambdaSourcePath = './backend/src/';
 const frontEndAssetsPath = './frontend/build/';

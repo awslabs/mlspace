@@ -33,7 +33,7 @@
     },
     "scripts": {
         "start": "PORT=3000 react-scripts start",
-        "build": "node ./scripts/set-revision-info.ts && react-scripts build && npm run docs:build",
+        "build": "node ./scripts/set-revision-info.mjs && react-scripts build && npm run docs:build",
         "prepare": "npm run-script build",
         "test": "CI=true react-scripts test --coverage",
         "eject": "react-scripts eject",

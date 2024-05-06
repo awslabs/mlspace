@@ -14,24 +14,24 @@
   limitations under the License.
 */
 
-import { defineConfig } from "cypress";
-import { AuthType } from "./cypress/support/test-initializer/types";
+import { defineConfig } from 'cypress';
+import { AuthType } from './cypress/support/test-initializer/types';
 
 module.exports = defineConfig({
-  e2e: {
-    supportFile: "cypress/support/e2e.ts",
-    experimentalStudio: true,
-    setupNodeEvents(on: any, config: any) {
-      // implement node event listeners here
+    e2e: {
+        supportFile: 'cypress/support/e2e.ts',
+        experimentalStudio: true,
+        setupNodeEvents () {
+            // implement node event listeners here
+        },
     },
-  },
 
-  env: {
-    auth_type: AuthType.Cognito,
-    base_url: "",
-    // lambda_endpoint is only needed if base_url targets a localhost implementation
-    lambda_endpoint: "",
-    username: "",
-    password: "",
-  },
+    env: {
+        auth_type: AuthType.Cognito,
+        base_url: '',
+        // lambda_endpoint is only needed if base_url targets a localhost implementation
+        lambda_endpoint: '',
+        username: '',
+        password: '',
+    },
 });
