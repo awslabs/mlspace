@@ -81,7 +81,6 @@ export const AppConfigSlice = createSlice({
                 };
             })
             .addMatcher(isRejected(listConfigurations), (state) => {
-                console.log('Get rejected');
                 return {
                     ...state,
                     failedToLoadConfig: true,
@@ -92,27 +91,12 @@ export const AppConfigSlice = createSlice({
                     ...state,
                     failedToLoadConfig: false,
                 };
-            })
-            .addMatcher(isFulfilled(updateConfiguration), (state) => {
-                return {
-                    ...state,
-                };
-            })
-            .addMatcher(isRejected(updateConfiguration), (state) => {
-                return {
-                    ...state,
-                };
-            })
-            .addMatcher(isPending(updateConfiguration), (state) => {
-                return {
-                    ...state,
-                };
             });
             
     },
 });
 
-// Interfaces
+// Types
 type AppConfigurationProps = {
     appConfiguration: IAppConfiguration;
 };

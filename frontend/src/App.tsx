@@ -20,9 +20,9 @@ import AppRoutes from './routes';
 import ErrorBoundary from './shared/error/error-boundary';
 import SideNavigation from './shared/layout/navigation/side-navigation';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAuth } from 'react-oidc-context';
-import { useAppDispatch, useAppSelector } from './config/store';
+import { useAppSelector } from './config/store';
 import DeleteModal, { DeleteModalProps } from './modules/modal/delete-modal';
 import ResourceScheduleModal, {
     ResourceScheduleModalProps,
@@ -32,17 +32,12 @@ import SystemBanner from './modules/system-banner';
 import Header from './shared/layout/header/header';
 import NotificationBanner from './shared/layout/notification/notification';
 import { applyTheme } from '@cloudscape-design/components/theming';
-import { failedToLoadConfig, getConfiguration } from './entities/configuration/configuration-reducer';
-import NotificationService from './shared/layout/notification/notification.service';
 
 const baseHref = document?.querySelector('base')?.getAttribute('href')?.replace(/\/$/, '');
 
 export default function App () {
     const modal: DeleteModalProps = useAppSelector((state) => state.modal.deleteModal);
     const updateModal: UpdateModalProps = useAppSelector((state) => state.modal.updateModal);
-    const configLoadError: boolean = useAppSelector(failedToLoadConfig);
-    const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
     const resourceScheduleModal: ResourceScheduleModalProps = useAppSelector(
         (state) => state.modal.resourceScheduleModal
     );
@@ -53,21 +48,6 @@ export default function App () {
 
     // Applies custom theming from public/theming.js
     applyTheme(window.custom_theme);
-
-    
-    useEffect(() => {
-        dispatch(getConfiguration('global'));
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (configLoadError) {
-            notificationService.generateNotification(
-                'Error loading app configuration. Restrictive default policy has been applied in its place. Consult with system admin to resolve issue.',
-                'error'
-            );
-        }
-        
-    }, [configLoadError, notificationService]);
 
     return (
         <HashRouter basename={baseHref}>
