@@ -1,4 +1,19 @@
-/* eslint-disable */
+/**
+  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License").
+  You may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+      http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
 import React from 'react';
 import {
     Checkbox,
@@ -16,15 +31,15 @@ import DatasetResourceSelector from '../../../../modules/dataset/dataset-selecto
 
 export type LabelingJobOverviewProps = FormProps<ILabelingJobCreateForm>;
 
-export function LabelingJobOverview(props: LabelingJobOverviewProps) {
+export function LabelingJobOverview (props: LabelingJobOverviewProps) {
     const { item, setFields, touchFields, formErrors } = props;
 
     return (
         <Container header={<Header>Job overview</Header>}>
-            <SpaceBetween direction="vertical" size="m">
+            <SpaceBetween direction='vertical' size='m'>
                 <FormField
-                    label="Job name"
-                    constraintText={`The name must be from 1 to 63 characters and must be unique in your AWS account and AWS Region. Valid characters are a-z, A-Z, 0-9, and hyphen (-).`}
+                    label='Job name'
+                    constraintText={'The name must be from 1 to 63 characters and must be unique in your AWS account and AWS Region. Valid characters are a-z, A-Z, 0-9, and hyphen (-).'}
                     errorText={formErrors?.job?.LabelingJobName}
                 >
                     <Input
@@ -33,7 +48,7 @@ export function LabelingJobOverview(props: LabelingJobOverviewProps) {
                             setFields({ 'job.LabelingJobName': detail.value });
                         }}
                         onBlur={() => touchFields(['job.LabelingJobName'])}
-                        data-cy="name-input"
+                        data-cy='name-input'
                     />
                 </FormField>
 
@@ -61,8 +76,8 @@ export function LabelingJobOverview(props: LabelingJobOverviewProps) {
 
                 <Condition condition={item.specifyAttribute}>
                     <FormField
-                        label="Label attribute name"
-                        constraintText={`Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces or reserved suffixes "-ref" and "-metadata".`}
+                        label='Label attribute name'
+                        constraintText={'Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces or reserved suffixes "-ref" and "-metadata".'}
                         errorText={formErrors?.job?.LabelAttributeName}
                     >
                         <Input
@@ -88,7 +103,7 @@ export function LabelingJobOverview(props: LabelingJobOverviewProps) {
                         touchFields(['job.InputConfig.DataSource.S3DataSource.ManifestS3Uri']);
                     }}
                     fieldErrorText={formErrors?.job?.InputConfig?.DataSource?.S3DataSource?.ManifestS3Uri}
-                    inputData-cy="manifest-file-input"
+                    inputData-cy='manifest-file-input'
                     resource={item.job.InputConfig.DataSource.S3DataSource.ManifestS3Uri || ''}
                 />
                 <DatasetResourceSelector
@@ -105,7 +120,7 @@ export function LabelingJobOverview(props: LabelingJobOverviewProps) {
                         touchFields(['job.OutputConfig.S3OutputPath']);
                     }}
                     fieldErrorText={formErrors?.job?.OutputConfig?.S3OutputPath}
-                    inputData-cy="output-location-input"
+                    inputData-cy='output-location-input'
                     resource={item.job.OutputConfig.S3OutputPath || ''}
                 />
             </SpaceBetween>
