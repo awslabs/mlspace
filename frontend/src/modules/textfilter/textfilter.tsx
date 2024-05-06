@@ -15,9 +15,9 @@
 */
 import { FormField, Grid, Input, TextContent, TextFilterProps } from '@cloudscape-design/components';
 import { BaseKeyDetail, CancelableEventHandler } from '@cloudscape-design/components/internal/events';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import Condition from '../condition';
-import { debounce } from 'lodash';
+import { useDebounce } from '../../shared/util/hooks';
 
 export type MLSTextFilterProps = TextFilterProps & {
     onKeyDown?: CancelableEventHandler<BaseKeyDetail>,
@@ -51,9 +51,7 @@ export function MLSTextFilter (props: MLSTextFilterProps) {
     }, [onDelayedChange]);
 
     // memoize the debounce call with useMemo
-    const debouncedOnDelayedChange = useMemo(() => {
-        return debounce(memoizeOnDelayedChange, delay);
-    }, [memoizeOnDelayedChange, delay]);
+    const debouncedOnDelayedChange = useDebounce(memoizeOnDelayedChange, delay);
 
     let constraintText = '';
     if (requireEnter && state.dirty) {
