@@ -59,6 +59,17 @@ import { IAppConfiguration } from '../shared/model/app.configuration.model';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+
+    function DetermineIfAdminRequired () {
+        const currentUser = useAppSelector(selectCurrentUser);
+        if (applicationConfig.configuration.ProjectCreation!.isAdminOnly) {
+            return hasPermission(Permission.ADMIN, currentUser.permissions);
+        } else {
+            return true;
+        }
+    }
+
+
     return (
         <div>
             <ErrorBoundaryRoutes>
@@ -81,7 +92,9 @@ const EntityRoutes = () => {
                 {applicationConfig.configuration.EnabledServices.realtimeTranslate ? (
                     <Route path='personal/translate/realtime' element={<TranslateRealtime />} />
                 ) : undefined}
-                <Route path='project/create' element={<ProjectCreate />} />
+                {DetermineIfAdminRequired() ? (
+                    <Route path='project/create' element={<ProjectCreate />} />
+                ) : undefined}
                 <Route path='project/:projectName' element={<ProjectDetail />} />
                 <Route path='project/:projectName/edit' element={<ProjectCreate isEdit={true} />} />
                 <Route path='project/:projectName/user' element={<ProjectUser />} />
@@ -163,7 +176,6 @@ const EntityRoutes = () => {
 
 function RequireAdmin () {
     const currentUser = useAppSelector(selectCurrentUser);
-
     return hasPermission(Permission.ADMIN, currentUser.permissions) ? (
         <Outlet />
     ) : (

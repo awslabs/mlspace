@@ -77,6 +77,7 @@ export default function AppRoutes () {
     ]);
 
     useEffect(() => {
+        console.log(`CurrentUser: ${JSON.stringify(currentUser)}`);
         if (Object.keys(currentUser).length !== 0) {
             dispatch(getConfiguration('global'));
             if (configLoadError) {

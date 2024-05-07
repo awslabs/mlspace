@@ -17,6 +17,13 @@
 import React, { RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@cloudscape-design/components';
+import { IAppConfiguration } from '../../shared/model/app.configuration.model';
+import { useAppSelector } from '../../config/store';
+import { appConfig } from '../configuration/configuration-reducer';
+import Condition from '../../modules/condition';
+import { hasPermission } from '../../shared/util/permission-utils';
+import { Permission } from '../../shared/model/user.model';
+import { selectCurrentUser } from '../user/user.reducer';
 
 export type ActionItem = {
     text: string;
@@ -25,15 +32,28 @@ export type ActionItem = {
 
 function ProjectCreateButton (createButtonHref: RefObject<HTMLInputElement>) {
     const navigate = useNavigate();
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const currentUser = useAppSelector(selectCurrentUser);
+
+    function DetermineIfAdminRequired () {
+        if (applicationConfig.configuration.ProjectCreation!.isAdminOnly) {
+            return hasPermission(Permission.ADMIN, currentUser.permissions);
+        } else {
+            return true;
+        }
+    }
+    
 
     return (
-        <Button
-            variant='primary'
-            onClick={() => navigate('/project/create')}
-            ref={createButtonHref}
-        >
-            Create Project
-        </Button>
+        <Condition condition={DetermineIfAdminRequired()}>
+            <Button
+                variant='primary'
+                onClick={() => navigate('/project/create')}
+                ref={createButtonHref}
+            >
+                Create Project
+            </Button>
+        </Condition>
     );
 }
 
