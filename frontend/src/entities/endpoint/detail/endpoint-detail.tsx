@@ -90,13 +90,13 @@ function EndpointDetail () {
     }, [dispatch, navigate, name, projectName]);
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
-        dispatch(getEndpoint(name!));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(getEndpoint(name!));
     }, [dispatch]);
 
     const endpointSettings = new Map<string, ReactNode>();
     endpointSettings.set('Name', endpoint.EndpointName!);
-    endpointSettings.set('Status', prettyStatus(endpointDetailsLoading && initialLoaded ? 'loading' : endpoint.EndpointStatus, endpoint.FailureReason));
+    endpointSettings.set('Status', prettyStatus(isBackgroundRefreshing ? 'loading' : endpoint.EndpointStatus, endpoint.FailureReason));
     endpointSettings.set('Type', 'Real-time');
     endpointSettings.set('ARN', endpoint.EndpointArn!);
     endpointSettings.set('Creation time', formatDate(endpoint.CreationTime!));

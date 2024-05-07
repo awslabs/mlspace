@@ -65,8 +65,8 @@ function ProjectDetail () {
     }, [dispatch, navigate, projectName, project.name]);
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
-        dispatch(getProject({projectName: projectName!, includeResourceCounts: true}));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(getProject({projectName: projectName!, includeResourceCounts: true}));
     }, [dispatch]);
 
     const allowOverrideText = (
@@ -187,7 +187,7 @@ function ProjectDetail () {
                                 key='refreshButton'
                                 variant='normal'
                                 iconName='refresh'
-                                loading={loadingProjectDetails}
+                                loading={loadingProjectDetails || isBackgroundRefreshing}
                                 onClick={() =>
                                     dispatch(getProject({projectName: projectName!, includeResourceCounts: true}))
                                 }

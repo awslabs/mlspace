@@ -78,15 +78,15 @@ export function LabelingJobDetail () {
     }, [dispatch, projectName, jobName]);
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
-        dispatch(describeLabelingJob(String(jobName)));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeLabelingJob(String(jobName)));
     }, [dispatch], (labelingJob.LabelingJobStatus !== JobStatus.Failed && labelingJob.LabelingJobStatus !== JobStatus.Completed));
 
     const labelingJobSettings = new Map<string, ReactNode>();
     labelingJobSettings.set('Job name', labelingJob.LabelingJobName);
     labelingJobSettings.set(
         'Status',
-        prettyStatus(loadingJobDetails && initialLoaded ? 'loading' : labelingJob.LabelingJobStatus, labelingJob.FailureReason)
+        prettyStatus(isBackgroundRefreshing ? 'loading' : labelingJob.LabelingJobStatus, labelingJob.FailureReason)
     );
     labelingJobSettings.set('Creation time', formatDate(labelingJob.CreationTime));
     labelingJobSettings.set(

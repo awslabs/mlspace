@@ -75,15 +75,15 @@ function BatchTranslateDetail () {
     }, [dispatch, projectName, jobId, batchTranslateJob.JobName]);
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
-        dispatch(describeBatchTranslateJob(jobId!));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeBatchTranslateJob(jobId!));
     }, [dispatch], (batchTranslateJob?.JobStatus !== TranslateJobStatus.Failed && batchTranslateJob?.JobStatus !== TranslateJobStatus.Completed && batchTranslateJob?.JobStatus !== TranslateJobStatus.CompletedWithError));
 
     const batchJobSummary = new Map<string, ReactNode>();
 
     batchJobSummary.set(
         'Status',
-        prettyStatus(jobLoading && initialLoaded ? 'loading' : batchTranslateJob.JobStatus, batchTranslateJob.Error?.ErrorMessage)
+        prettyStatus(isBackgroundRefreshing ? 'loading' : batchTranslateJob.JobStatus, batchTranslateJob.Error?.ErrorMessage)
     );
     batchJobSummary.set('Encryption key', batchTranslateJob?.OutputDataConfig?.EncryptionKey?.Id);
     batchJobSummary.set(

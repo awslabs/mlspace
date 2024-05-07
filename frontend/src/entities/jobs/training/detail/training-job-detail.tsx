@@ -84,8 +84,8 @@ export function TrainingJobDetail () {
     }, [dispatch, projectName, trainingJobName]);
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
-        dispatch(describeTrainingJob(String(trainingJobName)));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeTrainingJob(String(trainingJobName)));
     }, [dispatch], (trainingJob.TrainingJobStatus !== JobStatus.Failed && trainingJob.TrainingJobStatus !== JobStatus.Completed));
 
     return (
@@ -161,7 +161,7 @@ export function TrainingJobDetail () {
                                         <Box key={1} color='text-status-inactive'>
                                             Status
                                         </Box>
-                                        {prettyStatus(loadingJobDetails && initialLoaded ? 'loading' :
+                                        {prettyStatus(isBackgroundRefreshing ? 'loading' :
                                             trainingJob.TrainingJobStatus,
                                         trainingJob.FailureReason
                                         )}

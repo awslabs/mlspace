@@ -120,8 +120,8 @@ export function HPOJobDetail () {
     }
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
-        loadAll();
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await loadAll();
     }, [dispatch], (state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Failed && state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Completed));
 
     return (
@@ -246,7 +246,7 @@ export function HPOJobDetail () {
                                 <SpaceBetween direction='vertical' size='l'>
                                     <div>
                                         <Box color='text-status-inactive'>Status</Box>
-                                        {prettyStatus(HPOJobDetailsLoading && initialLoaded ? 'loading' :
+                                        {prettyStatus(isBackgroundRefreshing ? 'loading' :
                                             state.hpoTrainingJob?.HyperParameterTuningJobStatus,
                                         state.hpoTrainingJob?.FailureReason
                                         )}

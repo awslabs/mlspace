@@ -67,15 +67,15 @@ function EMRDetail () {
     }, [dispatch, basePath, projectName, clusterId, clusterName]);
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
-        dispatch(getEMRCluster(clusterId!));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(getEMRCluster(clusterId!));
     }, [dispatch]);
 
     const clusterSummary = new Map<string, ReactNode>();
 
     clusterSummary.set('Cluster ID', cluster?.Id);
     clusterSummary.set('Master DNS name', cluster?.MasterPublicDnsName);
-    clusterSummary.set('State', prettyStatus(clusterLoading && initialLoaded ? 'loading' : cluster?.Status?.State));
+    clusterSummary.set('State', prettyStatus(isBackgroundRefreshing ? 'loading' : cluster?.Status?.State));
     clusterSummary.set('Creation time', formatDate(cluster?.Status?.Timeline?.CreationDateTime));
     clusterSummary.set('Ready time', formatDate(cluster?.Status?.Timeline?.ReadyDateTime));
     clusterSummary.set('Release label', cluster?.ReleaseLabel);

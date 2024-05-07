@@ -14,27 +14,38 @@
   limitations under the License.
 */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 /**
  * A custom hook that runs an action periodically in the background to refresh data.
+ * It sets a minimum delay of 2 seconds before setting the `isBackgroundRefreshing` 
+ * state back to `false`, providing a better user experience by avoiding rapid changes in the UI state.
  * 
  * @param {Function} action - The function to run periodically to refresh data 
  * @param {Array} deps - The dependencies of the action function
  * @param {boolean} condition - A condition that must be true for the action to run
 */
-export function useBackgroundRefresh (action: () => void, deps: readonly unknown[] = [], condition = true): void {
+export function useBackgroundRefresh (action: () => void, deps: readonly unknown[] = [], condition = true): boolean {
     const callbackAction = useCallback(action, [action, ...deps]);
+    const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false);
     
     useEffect(() => {
         if (condition) {
-            const timerId = setInterval(() => {
-                callbackAction();
+            const timerId = setInterval(async () => {
+                setIsBackgroundRefreshing(true);
+                const now = new Date().valueOf();
+                await callbackAction();
+                const waitTime = Math.max(0, -(new Date().valueOf() - now) + 2000);
+                setTimeout(() => {
+                    setIsBackgroundRefreshing(false);
+                }, waitTime);
             }, (window.env.BACKGROUND_REFRESH_INTERVAL || 60) * 1000);
+
             
             return () => {
                 clearInterval(timerId);
             };
         }
-    }, [action, callbackAction, condition]);
+    }, [action, callbackAction, condition, isBackgroundRefreshing]);
+    return isBackgroundRefreshing;
 }

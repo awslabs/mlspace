@@ -74,13 +74,13 @@ function TransformDetail () {
     }, [dispatch, navigate, basePath, name, projectName]);
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
-        dispatch(describeBatchTransformJob(name));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeBatchTransformJob(name));
     }, [dispatch], (transform.TransformJobStatus !== JobStatus.Failed && transform.TransformJobStatus !== JobStatus.Completed));
 
     const jobSummary = new Map<string, ReactNode>();
     jobSummary.set('Job name', transform.TransformJobName!);
-    jobSummary.set('Status', prettyStatus(loadingTransformDetails && initialLoaded ? 'loading' : transform.TransformJobStatus, transform.FailureReason));
+    jobSummary.set('Status', prettyStatus(isBackgroundRefreshing ? 'loading' : transform.TransformJobStatus, transform.FailureReason));
     jobSummary.set('Approx. batch transform duration', transform.duration);
     jobSummary.set('ARN', transform.TransformJobArn!);
     jobSummary.set('Creation time', formatDate(transform.CreationTime!));
