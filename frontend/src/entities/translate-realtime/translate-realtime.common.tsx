@@ -29,7 +29,6 @@ import {
     getCustomTerminologyList,
     getTranslateLanguagesList,
 } from '../../shared/util/translate-utils';
-import { IRealtimeTranslate } from '../../shared/model/translate.model';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import Condition from '../../modules/condition';
 
@@ -43,7 +42,6 @@ const formalityOptions: OptionDefinition[] = [
 ];
 
 export type RealtimeTranslateProps = {
-    translateRequest: IRealtimeTranslate;
     changeCallback?: CallbackFunction;
 };
 

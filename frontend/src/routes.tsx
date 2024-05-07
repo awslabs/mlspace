@@ -36,6 +36,7 @@ import groupLogo  from './shared/media/group.png';
 import docsLogo  from './shared/media/docs.png';
 import './routes.css';
 import NotificationService from './shared/layout/notification/notification.service';
+import { failedToLoadConfig, getConfiguration } from './entities/configuration/configuration-reducer';
 
 export default function AppRoutes () {
     const auth = useAuth();
@@ -43,6 +44,7 @@ export default function AppRoutes () {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const notifiedError = useRef(false);
+    const configLoadError: boolean = useAppSelector(failedToLoadConfig);
 
     useEffect(() => {
         if (hasAuthParams() || auth.isAuthenticated || auth.activeNavigator || auth.isLoading) {
@@ -72,6 +74,23 @@ export default function AppRoutes () {
         auth.activeNavigator,
         auth.isLoading,
         auth.signinRedirect,
+    ]);
+
+    useEffect(() => {
+        if (Object.keys(currentUser).length !== 0) {
+            dispatch(getConfiguration('global'));
+            if (configLoadError) {
+                notificationService.generateNotification(
+                    'Error loading app configuration. Restrictive default policy has been applied in its place. Consult with system admin to resolve issue.',
+                    'error'
+                );
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        currentUser,
+        configLoadError,
+        dispatch,
     ]);
 
     /**

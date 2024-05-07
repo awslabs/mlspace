@@ -13,17 +13,20 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+import getRepoInfo from 'git-repo-info';
+import fs from 'fs';  
+import packageFile from '../package.json' assert { type: 'json' };
 
-// This theming is applied in App.tsx using applyTheme() and uses Cloudscape theming design tokens
-// Cloudscape theming: https://cloudscape.design/foundation/visual-foundation/theming/
-window.custom_theme = {
-    theme: {
-        tokens: {
-            // Example that turns all links red
-            // colorTextLinkDefault: {
-            //     light: '#9e2820',
-            //     dark: '#db867d',
-            // }
-        }
-    }
+
+const info = getRepoInfo();
+console.log('Git Revision Info:');
+console.log('Version:', packageFile.version);
+console.log('Latest hash:', info.abbreviatedSha);
+
+const revInfo = `window.gitInfo = {
+    revisionTag: '${packageFile.version}',
+    gitHash: '${info.abbreviatedSha}',
 };
+`;
+
+fs.writeFileSync('./public/git-info.js', revInfo);

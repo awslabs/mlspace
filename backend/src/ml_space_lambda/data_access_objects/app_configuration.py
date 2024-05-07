@@ -382,6 +382,7 @@ class AppConfigurationDAO(DynamoDBObjectStore):
             expression_names={"#s": "configScope"},
             expression_values=json.loads(dynamodb_json.dumps({":configScope": configScope})),
             limit=num_versions,
+            page_response=True,
             scan_index_forward=False,
         ).records
         return json_response
