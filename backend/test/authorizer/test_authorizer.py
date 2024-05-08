@@ -25,7 +25,6 @@ import jwt
 import pytest
 from botocore.exceptions import ClientError
 
-from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationModel, ProjectCreation, SettingsModel
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
 from ml_space_lambda.data_access_objects.project import ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
