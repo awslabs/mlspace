@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AppLayout, BreadcrumbGroup, BreadcrumbGroupProps } from '@cloudscape-design/components';
+import { AppLayout   } from '@cloudscape-design/components';
 import { HashRouter } from 'react-router-dom';
 import AppRoutes from './routes';
 import ErrorBoundary from './shared/error/error-boundary';
@@ -32,6 +32,7 @@ import SystemBanner from './modules/system-banner';
 import Header from './shared/layout/header/header';
 import NotificationBanner from './shared/layout/notification/notification';
 import { applyTheme } from '@cloudscape-design/components/theming';
+import BreadcrumbsProvider from './shared/layout/navigation/breadcrumbs';
 
 const baseHref = document?.querySelector('base')?.getAttribute('href')?.replace(/\/$/, '');
 
@@ -41,9 +42,7 @@ export default function App () {
     const resourceScheduleModal: ResourceScheduleModalProps = useAppSelector(
         (state) => state.modal.resourceScheduleModal
     );
-    const breadcrumbs: BreadcrumbGroupProps.Item[] = useAppSelector(
-        (state) => state.navigation.breadcrumbs
-    );
+    
     const auth = useAuth();
 
     // Applies custom theming from public/theming.js
@@ -72,7 +71,7 @@ export default function App () {
                     notifications={<NotificationBanner />}
                     stickyNotifications={true}
                     toolsHide={true}
-                    breadcrumbs={<BreadcrumbGroup items={breadcrumbs} ariaLabel='Breadcrumbs' />}
+                    breadcrumbs={<BreadcrumbsProvider/>}
                 />
                 { window.env.SYSTEM_BANNER?.text && <SystemBanner position='BOTTOM' /> }
                 {modal && <DeleteModal {...modal} />}
