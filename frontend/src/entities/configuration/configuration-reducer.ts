@@ -18,7 +18,6 @@ import {
     createAsyncThunk,
     createSlice,
     isFulfilled,
-    isPending,
     isRejected,
     PayloadAction,
 } from '@reduxjs/toolkit';
@@ -84,12 +83,6 @@ export const AppConfigSlice = createSlice({
                 return {
                     ...state,
                     failedToLoadConfig: true,
-                };
-            })
-            .addMatcher(isPending(listConfigurations), (state) => {
-                return {
-                    ...state,
-                    failedToLoadConfig: false,
                 };
             });
             

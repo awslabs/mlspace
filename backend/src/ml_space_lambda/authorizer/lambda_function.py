@@ -24,11 +24,11 @@ from typing import Any, Dict, Optional, Tuple
 import jwt
 import urllib3
 
+from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
 from ml_space_lambda.utils.common_functions import authorization_wrapper
@@ -118,8 +118,6 @@ def lambda_handler(event, context):
     if token_info["exp"] > time.time():
         # Look up user record
         user = user_dao.get(username)
-        # Get the latest app config
-        app_config = AppConfigurationModel.from_dict(app_configuration_dao.get(configScope='global', num_versions=1)[0])
 
         if requested_resource == "/user" and request_method == "POST":
             logger.info("Attempting to create new user account...")
@@ -287,8 +285,14 @@ def lambda_handler(event, context):
             ) and Permission.ADMIN in user.permissions:
                 policy_statement["Effect"] = "Allow"
             elif requested_resource == "/project" and request_method == "POST":
+                # Get the latest app config
+                app_config = AppConfigurationModel.from_dict(
+                    app_configuration_dao.get(configScope="global", num_versions=1)[0]
+                )
                 # Check if project creation is admin only; if not, anyone can create a project
-                if (app_config.configuration.project_creation.admin_only and Permission.ADMIN in user.permissions) or not app_config.configuration.project_creation.admin_only:
+                if (
+                    app_config.configuration.project_creation.admin_only and Permission.ADMIN in user.permissions
+                ) or not app_config.configuration.project_creation.admin_only:
                     policy_statement["Effect"] = "Allow"
             elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
                 # If this is a request for a dataset related presigned url or for
