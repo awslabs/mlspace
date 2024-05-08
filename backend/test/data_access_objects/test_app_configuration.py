@@ -63,10 +63,10 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
         "createdAt": mock_time,
         "configuration": {
             "DisabledInstanceTypes": {
-                ServiceType.NOTEBOOK.value: [],
-                ServiceType.ENDPOINT.value: [],
-                ServiceType.TRAINING_JOB.value: [],
-                ServiceType.TRANSFORM_JOB.value: [],
+                ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
+                ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
+                ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
+                ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig", "ml.r5.kindasmall"],
             },
             "EnabledServices": {
                 ServiceType.REALTIME_TRANSLATE.value: "true",

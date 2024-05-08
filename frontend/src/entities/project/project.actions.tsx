@@ -21,7 +21,7 @@ import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { useAppSelector } from '../../config/store';
 import { appConfig } from '../configuration/configuration-reducer';
 import Condition from '../../modules/condition';
-import { hasPermission } from '../../shared/util/permission-utils';
+import { hasPermission, projectCreationAdminRequired } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
 import { selectCurrentUser } from '../user/user.reducer';
 
@@ -34,18 +34,10 @@ function ProjectCreateButton (createButtonHref: RefObject<HTMLInputElement>) {
     const navigate = useNavigate();
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const currentUser = useAppSelector(selectCurrentUser);
-
-    function DetermineIfAdminRequired () {
-        if (applicationConfig.configuration.ProjectCreation!.isAdminOnly) {
-            return hasPermission(Permission.ADMIN, currentUser.permissions);
-        } else {
-            return true;
-        }
-    }
     
 
     return (
-        <Condition condition={DetermineIfAdminRequired()}>
+        <Condition condition={projectCreationAdminRequired(applicationConfig.configuration.ProjectCreation!.isAdminOnly, currentUser)}>
             <Button
                 variant='primary'
                 onClick={() => navigate('/project/create')}
