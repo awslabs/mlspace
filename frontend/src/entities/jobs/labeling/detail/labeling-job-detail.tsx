@@ -23,7 +23,7 @@ import {
     ContentLayout,
     StatusIndicator,
 } from '@cloudscape-design/components';
-import React, { useEffect, ReactNode } from 'react';
+import React, { useEffect, ReactNode, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../../config/store';
 import {
     describeLabelingJob,
@@ -47,6 +47,7 @@ export function LabelingJobDetail () {
     const { projectName, jobName } = useParams();
     const labelingJob: ILabelingJob = useAppSelector(selectLabelingJob);
     const loadingJobDetails = useAppSelector(loadingLabelingJobDetails);
+    const [initialLoaded, setInitialLoaded] = useState(false);
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -57,6 +58,7 @@ export function LabelingJobDetail () {
     useEffect(() => {
         dispatch(describeLabelingJob(String(jobName)))
             .unwrap()
+            .then(() => setInitialLoaded(true))
             .catch(() => {
                 navigate('/404');
             });
@@ -76,15 +78,15 @@ export function LabelingJobDetail () {
     }, [dispatch, projectName, jobName]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
-        dispatch(describeLabelingJob(String(jobName)));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeLabelingJob(String(jobName)));
     }, [dispatch, labelingJob.LabelingJobStatus], (labelingJob.LabelingJobStatus !== JobStatus.Failed && labelingJob.LabelingJobStatus !== JobStatus.Completed));
 
     const labelingJobSettings = new Map<string, ReactNode>();
     labelingJobSettings.set('Job name', labelingJob.LabelingJobName);
     labelingJobSettings.set(
         'Status',
-        prettyStatus(labelingJob.LabelingJobStatus, labelingJob.FailureReason)
+        prettyStatus(isBackgroundRefreshing ? 'Loading' : labelingJob.LabelingJobStatus, labelingJob.FailureReason)
     );
     labelingJobSettings.set('Creation time', formatDate(labelingJob.CreationTime));
     labelingJobSettings.set(
@@ -103,7 +105,7 @@ export function LabelingJobDetail () {
 
     return (
         <ContentLayout header={<Header variant='h1'>{jobName}</Header>}>
-            {loadingJobDetails && !isBackgroundRefreshing ? (
+            {loadingJobDetails && !initialLoaded ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
                 </Container>
