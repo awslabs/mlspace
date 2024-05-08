@@ -96,7 +96,7 @@ function EndpointDetail () {
 
     const endpointSettings = new Map<string, ReactNode>();
     endpointSettings.set('Name', endpoint.EndpointName!);
-    endpointSettings.set('Status', prettyStatus(isBackgroundRefreshing ? 'loading' : endpoint.EndpointStatus, endpoint.FailureReason));
+    endpointSettings.set('Status', prettyStatus(isBackgroundRefreshing ? 'Loading' : endpoint.EndpointStatus, endpoint.FailureReason));
     endpointSettings.set('Type', 'Real-time');
     endpointSettings.set('ARN', endpoint.EndpointArn!);
     endpointSettings.set('Creation time', formatDate(endpoint.CreationTime!));

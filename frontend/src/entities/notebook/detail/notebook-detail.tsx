@@ -104,7 +104,7 @@ function NotebookDetail () {
 
     const notebookDetails = new Map<string, ReactNode>();
     notebookDetails.set('Name', notebook.NotebookInstanceName);
-    notebookDetails.set('Status', prettyStatus(isBackgroundRefreshing ? 'loading' : notebook.NotebookInstanceStatus));
+    notebookDetails.set('Status', prettyStatus(isBackgroundRefreshing ? 'Loading' : notebook.NotebookInstanceStatus));
     notebookDetails.set('Notebook instance type', notebook.InstanceType);
     notebookDetails.set('Platform identifier', notebook.PlatformIdentifier);
     notebookDetails.set('ARN', notebook.NotebookInstanceArn);

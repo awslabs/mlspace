@@ -80,7 +80,7 @@ function TransformDetail () {
 
     const jobSummary = new Map<string, ReactNode>();
     jobSummary.set('Job name', transform.TransformJobName!);
-    jobSummary.set('Status', prettyStatus(isBackgroundRefreshing ? 'loading' : transform.TransformJobStatus, transform.FailureReason));
+    jobSummary.set('Status', prettyStatus(isBackgroundRefreshing ? 'Loading' : transform.TransformJobStatus, transform.FailureReason));
     jobSummary.set('Approx. batch transform duration', transform.duration);
     jobSummary.set('ARN', transform.TransformJobArn!);
     jobSummary.set('Creation time', formatDate(transform.CreationTime!));

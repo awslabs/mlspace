@@ -246,7 +246,7 @@ export function HPOJobDetail () {
                                 <SpaceBetween direction='vertical' size='l'>
                                     <div>
                                         <Box color='text-status-inactive'>Status</Box>
-                                        {prettyStatus(isBackgroundRefreshing ? 'loading' :
+                                        {prettyStatus(isBackgroundRefreshing ? 'Loading' :
                                             state.hpoTrainingJob?.HyperParameterTuningJobStatus,
                                         state.hpoTrainingJob?.FailureReason
                                         )}

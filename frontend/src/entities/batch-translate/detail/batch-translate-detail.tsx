@@ -83,7 +83,7 @@ function BatchTranslateDetail () {
 
     batchJobSummary.set(
         'Status',
-        prettyStatus(isBackgroundRefreshing ? 'loading' : batchTranslateJob.JobStatus, batchTranslateJob.Error?.ErrorMessage)
+        prettyStatus(isBackgroundRefreshing ? 'Loading' : batchTranslateJob.JobStatus, batchTranslateJob.Error?.ErrorMessage)
     );
     batchJobSummary.set('Encryption key', batchTranslateJob?.OutputDataConfig?.EncryptionKey?.Id);
     batchJobSummary.set(

@@ -161,7 +161,7 @@ export function TrainingJobDetail () {
                                         <Box key={1} color='text-status-inactive'>
                                             Status
                                         </Box>
-                                        {prettyStatus(isBackgroundRefreshing ? 'loading' :
+                                        {prettyStatus(isBackgroundRefreshing ? 'Loading' :
                                             trainingJob.TrainingJobStatus,
                                         trainingJob.FailureReason
                                         )}

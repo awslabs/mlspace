@@ -75,7 +75,7 @@ function EMRDetail () {
 
     clusterSummary.set('Cluster ID', cluster?.Id);
     clusterSummary.set('Master DNS name', cluster?.MasterPublicDnsName);
-    clusterSummary.set('State', prettyStatus(isBackgroundRefreshing ? 'loading' : cluster?.Status?.State));
+    clusterSummary.set('State', prettyStatus(isBackgroundRefreshing ? 'Loading' : cluster?.Status?.State));
     clusterSummary.set('Creation time', formatDate(cluster?.Status?.Timeline?.CreationDateTime));
     clusterSummary.set('Ready time', formatDate(cluster?.Status?.Timeline?.ReadyDateTime));
     clusterSummary.set('Release label', cluster?.ReleaseLabel);

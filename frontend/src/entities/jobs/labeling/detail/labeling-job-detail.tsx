@@ -86,7 +86,7 @@ export function LabelingJobDetail () {
     labelingJobSettings.set('Job name', labelingJob.LabelingJobName);
     labelingJobSettings.set(
         'Status',
-        prettyStatus(isBackgroundRefreshing ? 'loading' : labelingJob.LabelingJobStatus, labelingJob.FailureReason)
+        prettyStatus(isBackgroundRefreshing ? 'Loading' : labelingJob.LabelingJobStatus, labelingJob.FailureReason)
     );
     labelingJobSettings.set('Creation time', formatDate(labelingJob.CreationTime));
     labelingJobSettings.set(
