@@ -21,6 +21,7 @@ import {
     Button,
     Input,
     FileUpload,
+    Toggle,
 } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -145,7 +146,14 @@ export function DynamicConfiguration () {
                     />
                 </ExpandableSection>
                 <ExpandableSection headerText='Project Creation' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
+                    <Toggle
+                        onChange={({ detail }) => {
+                            setFields({ 'configuration.ProjectCreation.isAdminOnly': detail.checked });
+                        }}
+                        checked={state.form.configuration.ProjectCreation?.isAdminOnly || false}
+                    >
+                        Admin Only - when enabled, only admins will be able to create new projects.
+                    </Toggle>
                 </ExpandableSection>
                 <ExpandableSection headerText='System Banner' variant='default' defaultExpanded>
                     {<pre>TODO</pre>}
