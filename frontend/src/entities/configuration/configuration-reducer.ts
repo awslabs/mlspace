@@ -85,7 +85,6 @@ export const AppConfigSlice = createSlice({
                     failedToLoadConfig: true,
                 };
             });
-            
     },
 });
 

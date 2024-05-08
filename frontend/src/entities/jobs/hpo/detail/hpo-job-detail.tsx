@@ -120,7 +120,7 @@ export function HPOJobDetail () {
     // Refresh data in the background to keep state fresh
     const isBackgroundRefreshing = useBackgroundRefresh(() => {
         loadAll();
-    }, [dispatch], (state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Failed && state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Completed));
+    }, [dispatch, state.hpoTrainingJob?.HyperParameterTuningJobStatus], (state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Failed && state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Completed));
 
     return (
         <ContentLayout header={<Header variant='h1'>{jobName}</Header>}>
