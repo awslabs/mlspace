@@ -67,7 +67,7 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                         'evalPeriods': {'N': '1'}, 
                         'percentageMemAvailable': {'N': '75'}}}, 
                 }}, 
-                'cluster-sizes': {'L': [
+                'clusterSizes': {'L': [
                     {'M': {
                         'name': {'S': 'Small'},
                         'size': {'N': '3'},

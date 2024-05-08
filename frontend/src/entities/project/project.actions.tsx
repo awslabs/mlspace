@@ -21,8 +21,7 @@ import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { useAppSelector } from '../../config/store';
 import { appConfig } from '../configuration/configuration-reducer';
 import Condition from '../../modules/condition';
-import { hasPermission, projectCreationAdminRequired } from '../../shared/util/permission-utils';
-import { Permission } from '../../shared/model/user.model';
+import { projectCreationAdminRequired } from '../../shared/util/permission-utils';
 import { selectCurrentUser } from '../user/user.reducer';
 
 export type ActionItem = {

@@ -41,4 +41,4 @@ export const projectCreationAdminRequired = (isAdminOnly: boolean, user: IUser) 
     } else {
         return true;
     }
-}
+};
