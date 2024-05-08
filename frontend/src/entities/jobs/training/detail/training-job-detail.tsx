@@ -86,7 +86,7 @@ export function TrainingJobDetail () {
     // Refresh data in the background to keep state fresh
     const isBackgroundRefreshing = useBackgroundRefresh(async () => {
         await dispatch(describeTrainingJob(String(trainingJobName)));
-    }, [dispatch], (trainingJob.TrainingJobStatus !== JobStatus.Failed && trainingJob.TrainingJobStatus !== JobStatus.Completed));
+    }, [dispatch, trainingJob.TrainingJobStatus], (trainingJob.TrainingJobStatus !== JobStatus.Failed && trainingJob.TrainingJobStatus !== JobStatus.Completed));
 
     return (
         <ContentLayout header={<Header variant='h1'>{trainingJobName}</Header>}>

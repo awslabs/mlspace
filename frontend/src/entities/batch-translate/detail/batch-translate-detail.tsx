@@ -77,7 +77,7 @@ function BatchTranslateDetail () {
     // Refresh data in the background to keep state fresh
     const isBackgroundRefreshing = useBackgroundRefresh(async () => {
         await dispatch(describeBatchTranslateJob(jobId!));
-    }, [dispatch], (batchTranslateJob?.JobStatus !== TranslateJobStatus.Failed && batchTranslateJob?.JobStatus !== TranslateJobStatus.Completed && batchTranslateJob?.JobStatus !== TranslateJobStatus.CompletedWithError));
+    }, [dispatch, batchTranslateJob?.JobStatus], (batchTranslateJob?.JobStatus !== TranslateJobStatus.Failed && batchTranslateJob?.JobStatus !== TranslateJobStatus.Completed && batchTranslateJob?.JobStatus !== TranslateJobStatus.CompletedWithError));
 
     const batchJobSummary = new Map<string, ReactNode>();
 

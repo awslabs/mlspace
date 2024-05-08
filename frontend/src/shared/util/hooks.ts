@@ -29,10 +29,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 export function useBackgroundRefresh (action: () => void, deps: readonly unknown[] = [], condition = true): boolean {
     const callbackAction = useCallback(action, [action, ...deps]);
     const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false);
-    
+
     useEffect(() => {
+        // Only start a periodic refresh if the condition is met
         if (condition) {
             const timerId = setInterval(async () => {
+                // Once the condition is no longer met we can stop refreshing
+                if (!condition) {
+                    clearInterval(timerId);
+                    return;
+                }
                 setIsBackgroundRefreshing(true);
                 const now = new Date().valueOf();
                 await callbackAction();
@@ -47,7 +53,9 @@ export function useBackgroundRefresh (action: () => void, deps: readonly unknown
                 clearInterval(timerId);
             };
         }
-    }, [action, callbackAction, condition, isBackgroundRefreshing]);
+        // We only want to recreate the interval if the condition changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [condition]);
     return isBackgroundRefreshing;
 }
 

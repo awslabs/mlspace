@@ -76,7 +76,7 @@ function TransformDetail () {
     // Refresh data in the background to keep state fresh
     const isBackgroundRefreshing = useBackgroundRefresh(async () => {
         await dispatch(describeBatchTransformJob(name));
-    }, [dispatch], (transform.TransformJobStatus !== JobStatus.Failed && transform.TransformJobStatus !== JobStatus.Completed));
+    }, [dispatch, transform.TransformJobStatus], (transform.TransformJobStatus !== JobStatus.Failed && transform.TransformJobStatus !== JobStatus.Completed));
 
     const jobSummary = new Map<string, ReactNode>();
     jobSummary.set('Job name', transform.TransformJobName!);

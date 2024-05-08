@@ -80,7 +80,7 @@ export function LabelingJobDetail () {
     // Refresh data in the background to keep state fresh
     const isBackgroundRefreshing = useBackgroundRefresh(async () => {
         await dispatch(describeLabelingJob(String(jobName)));
-    }, [dispatch], (labelingJob.LabelingJobStatus !== JobStatus.Failed && labelingJob.LabelingJobStatus !== JobStatus.Completed));
+    }, [dispatch, labelingJob.LabelingJobStatus], (labelingJob.LabelingJobStatus !== JobStatus.Failed && labelingJob.LabelingJobStatus !== JobStatus.Completed));
 
     const labelingJobSettings = new Map<string, ReactNode>();
     labelingJobSettings.set('Job name', labelingJob.LabelingJobName);
