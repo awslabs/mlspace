@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import {
     ContentLayout,
     SpaceBetween,
@@ -62,12 +62,15 @@ function EndpointDetail () {
     const currentUser = useAppSelector(selectCurrentUser);
     const projectPermissions = useAppSelector((state) => state.project.permissions);
 
+    const [initialLoaded, setInitialLoaded] = useState(false);
+
     scrollToPageHeader();
     DocTitle('Endpoint Details: ', endpoint.EndpointName);
 
     useEffect(() => {
         dispatch(getEndpoint(name!))
             .unwrap()
+            .then(() => setInitialLoaded(true))
             .catch(() => {
                 navigate('/404');
             });
@@ -87,13 +90,13 @@ function EndpointDetail () {
     }, [dispatch, navigate, name, projectName]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
-        dispatch(getEndpoint(name!));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(getEndpoint(name!));
     }, [dispatch]);
 
     const endpointSettings = new Map<string, ReactNode>();
     endpointSettings.set('Name', endpoint.EndpointName!);
-    endpointSettings.set('Status', prettyStatus(endpoint.EndpointStatus, endpoint.FailureReason));
+    endpointSettings.set('Status', prettyStatus(isBackgroundRefreshing ? 'Loading' : endpoint.EndpointStatus, endpoint.FailureReason));
     endpointSettings.set('Type', 'Real-time');
     endpointSettings.set('ARN', endpoint.EndpointArn!);
     endpointSettings.set('Creation time', formatDate(endpoint.CreationTime!));
@@ -142,7 +145,7 @@ function EndpointDetail () {
     return (
         <Condition condition={endpoint !== undefined}>
             <ContentLayout header={<Header variant='h1'>{name}</Header>}>
-                {endpointDetailsLoading && !isBackgroundRefreshing ? (
+                {endpointDetailsLoading && !initialLoaded ? (
                     <Container>
                         <StatusIndicator type='loading'>Loading details</StatusIndicator>
                     </Container>
