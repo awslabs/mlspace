@@ -152,7 +152,7 @@ export function DynamicConfiguration () {
                         }}
                         checked={state.form.configuration.ProjectCreation?.isAdminOnly || false}
                     >
-                        Admin Only - when enabled, only admins will be able to create new projects.
+                        Admin Only - restrict creation of projects to users with Admin permissions
                     </Toggle>
                 </ExpandableSection>
                 <ExpandableSection headerText='System Banner' variant='default' defaultExpanded>

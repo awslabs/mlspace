@@ -23,6 +23,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import jwt
 import urllib3
+from cachetools import TTLCache, cached
 
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
@@ -285,15 +286,15 @@ def lambda_handler(event, context):
             ) and Permission.ADMIN in user.permissions:
                 policy_statement["Effect"] = "Allow"
             elif requested_resource == "/project" and request_method == "POST":
-                # Get the latest app config
-                app_config = AppConfigurationModel.from_dict(
-                    app_configuration_dao.get(configScope="global", num_versions=1)[0]
-                )
-                # Check if project creation is admin only; if not, anyone can create a project
-                if (
-                    app_config.configuration.project_creation.admin_only and Permission.ADMIN in user.permissions
-                ) or not app_config.configuration.project_creation.admin_only:
+                if Permission.ADMIN in user.permissions:
                     policy_statement["Effect"] = "Allow"
+                else:
+                    # Get the latest app config
+                    app_config = _get_app_config()
+                    logger.info(f"Admin only: {app_config.configuration.project_creation.admin_only}")
+                    # Check if project creation is admin only; if not, anyone can create a project
+                    if not app_config.configuration.project_creation.admin_only:
+                        policy_statement["Effect"] = "Allow"
             elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
                 # If this is a request for a dataset related presigned url or for
                 # creating a new dataset, we need to determine the underlying dataset
@@ -609,3 +610,8 @@ def _get_oidc_props(key_id: str) -> Tuple[Optional[str], Optional[str]]:
         raise ValueError("Missing OIDC configuration parameters.")
 
     return (oidc_keys[key_id], oidc_client_name)
+
+
+@cached(cache=TTLCache(maxsize=1, ttl=10))
+def _get_app_config() -> AppConfigurationModel:
+    return AppConfigurationModel.from_dict(app_configuration_dao.get(configScope="global", num_versions=1)[0])

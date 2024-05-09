@@ -46,7 +46,7 @@ import Configuration from './configuration/configuration';
 import Report from './report/report';
 import { selectCurrentUser } from './user/user.reducer';
 import { useAppSelector } from '../config/store';
-import { hasPermission, projectCreationAdminRequired } from '../shared/util/permission-utils';
+import { hasPermission, enableProjectCreation } from '../shared/util/permission-utils';
 import { Permission } from '../shared/model/user.model';
 import ResourceNotFound from '../modules/resource-not-found';
 import EMRDetail from './emr/detail/emr-clusters-detail';
@@ -84,7 +84,7 @@ const EntityRoutes = () => {
                 {applicationConfig.configuration.EnabledServices.realtimeTranslate ? (
                     <Route path='personal/translate/realtime' element={<TranslateRealtime />} />
                 ) : undefined}
-                {projectCreationAdminRequired(applicationConfig.configuration.ProjectCreation!.isAdminOnly, currentUser) ? (
+                {enableProjectCreation(applicationConfig.configuration.ProjectCreation!.isAdminOnly, currentUser) ? (
                     <Route path='project/create' element={<ProjectCreate />} />
                 ) : undefined}
                 <Route path='project/:projectName' element={<ProjectDetail />} />

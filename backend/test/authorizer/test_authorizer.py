@@ -43,7 +43,7 @@ MOCK_OIDC_ENV = {
 
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.authorizer.lambda_function import lambda_handler
+    from ml_space_lambda.authorizer.lambda_function import _get_app_config, lambda_handler
 
 MOCK_USERNAME = "test@amazon.com"
 
@@ -1970,58 +1970,35 @@ def test_logs_routes(
         mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
 
+@pytest.mark.parametrize(
+    "user,admin_only,allow",
+    [
+        (MOCK_ADMIN_USER, True, True),
+        (MOCK_USER, True, False),
+        (MOCK_USER, False, True),
+    ],
+    ids=["admin_user_admin_only", "normal_user_admin_only", "normal_user_not_admin_only"],
+)
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.app_configuration_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_create_project_normal_user_allowed(mock_user_dao, mock_app_configuration_dao):
-    mock_user_dao.get.return_value = MOCK_USER
-    mock_app_configuration_dao.get.return_value = [generate_test_config()]
+def test_create_project(mock_user_dao, mock_app_configuration_dao, user: UserModel, admin_only: bool, allow: bool):
+    mock_user_dao.get.return_value = user
+    mock_app_configuration_dao.get.return_value = [generate_test_config(admin_only=admin_only)]
+    _get_app_config.cache_clear()
     assert lambda_handler(
         mock_event(
-            user=MOCK_USER,
+            user=user,
             resource="/project",
             method="POST",
         ),
         {},
-    ) == policy_response(allow=True, user=MOCK_USER)
-    mock_user_dao.get.assert_called_with(MOCK_USER.username)
-    mock_app_configuration_dao.get.assert_called_with(configScope="global", num_versions=1)
-
-
-@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.app_configuration_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_create_project_normal_user_admin_only(mock_user_dao, mock_app_configuration_dao):
-    mock_user_dao.get.return_value = MOCK_USER
-    mock_app_configuration_dao.get.return_value = [generate_test_config(admin_only=True)]
-    assert lambda_handler(
-        mock_event(
-            user=MOCK_USER,
-            resource="/project",
-            method="POST",
-        ),
-        {},
-    ) == policy_response(allow=False, user=MOCK_USER)
-    mock_user_dao.get.assert_called_with(MOCK_USER.username)
-    mock_app_configuration_dao.get.assert_called_with(configScope="global", num_versions=1)
-
-
-@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.app_configuration_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_create_project_admin_user_admin_only(mock_user_dao, mock_app_configuration_dao):
-    mock_user_dao.get.return_value = MOCK_ADMIN_USER
-    mock_app_configuration_dao.get.return_value = [generate_test_config(admin_only=True)]
-    assert lambda_handler(
-        mock_event(
-            user=MOCK_ADMIN_USER,
-            resource="/project",
-            method="POST",
-        ),
-        {},
-    ) == policy_response(allow=True, user=MOCK_ADMIN_USER)
-    mock_user_dao.get.assert_called_with(MOCK_ADMIN_USER.username)
-    mock_app_configuration_dao.get.assert_called_with(configScope="global", num_versions=1)
+    ) == policy_response(allow=allow, user=user)
+    mock_user_dao.get.assert_called_with(user.username)
+    if Permission.ADMIN in user.permissions:
+        mock_app_configuration_dao.get.assert_not_called()
+    else:
+        mock_app_configuration_dao.get.assert_called_with(configScope="global", num_versions=1)
 
 
 @pytest.mark.parametrize(
@@ -2134,6 +2111,7 @@ def test_verified_token(mock_http, mock_user_dao, mock_app_config, mock_well_kno
     ]
     mock_user_dao.get.return_value = MOCK_USER
     mock_app_config.get.return_value = [generate_test_config()]
+    _get_app_config.cache_clear()
     assert lambda_handler(mock_event(user=MOCK_USER, resource="/project", method="POST"), {}) == policy_response(
         allow=True, user=MOCK_USER
     )
