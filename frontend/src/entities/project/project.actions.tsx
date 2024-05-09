@@ -21,7 +21,7 @@ import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { useAppSelector } from '../../config/store';
 import { appConfig } from '../configuration/configuration-reducer';
 import Condition from '../../modules/condition';
-import { projectCreationAdminRequired } from '../../shared/util/permission-utils';
+import { enableProjectCreation } from '../../shared/util/permission-utils';
 import { selectCurrentUser } from '../user/user.reducer';
 
 export type ActionItem = {
@@ -36,7 +36,7 @@ function ProjectCreateButton (createButtonHref: RefObject<HTMLInputElement>) {
     
 
     return (
-        <Condition condition={projectCreationAdminRequired(applicationConfig.configuration.ProjectCreation!.isAdminOnly, currentUser)}>
+        <Condition condition={enableProjectCreation(applicationConfig.configuration.ProjectCreation!.isAdminOnly, currentUser)}>
             <Button
                 variant='primary'
                 onClick={() => navigate('/project/create')}
