@@ -56,6 +56,8 @@ function NotebookDetail () {
     const projectPermissions = useAppSelector((state) => state.project.permissions);
     const [notebookInstanceURL, setNotebookInstanceUrl] = useState('' as string);
 
+    const [initialLoaded, setInitialLoaded] = useState(false);
+
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const navigate = useNavigate();
@@ -72,6 +74,7 @@ function NotebookDetail () {
                     if (!projectName && resp.data.Project) {
                         dispatch(getProject({projectName: resp.data.Project}));
                     }
+                    setInitialLoaded(true);
                 })
                 .catch(() => {
                     navigate('/404');
@@ -95,13 +98,13 @@ function NotebookDetail () {
     }, [name, notebook.NotebookInstanceStatus]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
-        dispatch(describeNotebookInstance(name!));
-    }, [dispatch]);
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeNotebookInstance(name!));
+    }, [dispatch], (notebook.NotebookInstanceStatus !== 'InService' && notebook.NotebookInstanceStatus !== 'Stopped' && notebook.NotebookInstanceStatus !== 'Failed'));
 
     const notebookDetails = new Map<string, ReactNode>();
     notebookDetails.set('Name', notebook.NotebookInstanceName);
-    notebookDetails.set('Status', prettyStatus(notebook.NotebookInstanceStatus));
+    notebookDetails.set('Status', prettyStatus(isBackgroundRefreshing ? 'Loading' : notebook.NotebookInstanceStatus));
     notebookDetails.set('Notebook instance type', notebook.InstanceType);
     notebookDetails.set('Platform identifier', notebook.PlatformIdentifier);
     notebookDetails.set('ARN', notebook.NotebookInstanceArn);
@@ -309,13 +312,13 @@ function NotebookDetail () {
                             Edit
                         </Button>
                     }
-                    loading={loadingNotebook && !isBackgroundRefreshing}
+                    loading={loadingNotebook && !initialLoaded}
                 />
                 <DetailsContainer
                     header='Permissions and encryption'
                     columns={3}
                     info={permissionsInfo}
-                    loading={loadingNotebook && !isBackgroundRefreshing}
+                    loading={loadingNotebook && !initialLoaded}
                 />
                 <LogsComponent
                     resourceType='NotebookInstances'
