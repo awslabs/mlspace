@@ -77,21 +77,27 @@ export type ISystemBanner = {
     text: string;
 };
 
-export type Settings = {
+export type BaseSettings = {
     DisabledInstanceTypes: IServiceInstanceTypes;
     EnabledServices: IEnabledServices;
     EMRConfig: IEMRConfig;
-    ProjectCreation?: IProjectCreation;
-    SystemBanner?: ISystemBanner;
 };
 
-export type IAppConfiguration = {
+export type AppSettings = BaseSettings & {
+    ProjectCreation: IProjectCreation;
+    SystemBanner: ISystemBanner;
+};
+
+export type BaseConfiguration = {
     configScope: string;
     versionId: number;
     createdAt: number;
     changedBy: string;
     changeReason: string;
-    configuration: Settings;
+};
+
+export type IAppConfiguration = BaseConfiguration & {
+    configuration: AppSettings;
 };
 
 export const defaultConfiguration: IAppConfiguration = {

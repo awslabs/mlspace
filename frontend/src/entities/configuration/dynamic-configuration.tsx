@@ -150,7 +150,7 @@ export function DynamicConfiguration () {
                         onChange={({ detail }) => {
                             setFields({ 'configuration.ProjectCreation.isAdminOnly': detail.checked });
                         }}
-                        checked={state.form.configuration.ProjectCreation?.isAdminOnly || false}
+                        checked={state.form.configuration.ProjectCreation.isAdminOnly}
                     >
                         Admin Only - restrict creation of projects to users with Admin permissions
                     </Toggle>

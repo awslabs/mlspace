@@ -31,6 +31,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataModel
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType, ServiceType
+from ml_space_lambda.utils.app_config_utils import get_app_config
 
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "OIDC_VERIFY_SIGNATURE": "False"}
 MOCK_OIDC_ENV = {
@@ -43,7 +44,7 @@ MOCK_OIDC_ENV = {
 
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.authorizer.lambda_function import _get_app_config, lambda_handler
+    from ml_space_lambda.authorizer.lambda_function import lambda_handler
 
 MOCK_USERNAME = "test@amazon.com"
 
@@ -1980,12 +1981,12 @@ def test_logs_routes(
     ids=["admin_user_admin_only", "normal_user_admin_only", "normal_user_not_admin_only"],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.app_configuration_dao")
+@mock.patch("ml_space_lambda.utils.app_config_utils.app_configuration_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_create_project(mock_user_dao, mock_app_configuration_dao, user: UserModel, admin_only: bool, allow: bool):
     mock_user_dao.get.return_value = user
     mock_app_configuration_dao.get.return_value = [generate_test_config(admin_only=admin_only)]
-    _get_app_config.cache_clear()
+    get_app_config.cache_clear()
     assert lambda_handler(
         mock_event(
             user=user,
@@ -2101,7 +2102,7 @@ def test_stop_batch_translate_job(
 
 
 @mock.patch.dict("os.environ", MOCK_OIDC_ENV, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.app_configuration_dao")
+@mock.patch("ml_space_lambda.utils.app_config_utils.app_configuration_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.http")
 def test_verified_token(mock_http, mock_user_dao, mock_app_config, mock_well_known_config, mock_oidc_jwks_keys):
@@ -2111,7 +2112,7 @@ def test_verified_token(mock_http, mock_user_dao, mock_app_config, mock_well_kno
     ]
     mock_user_dao.get.return_value = MOCK_USER
     mock_app_config.get.return_value = [generate_test_config()]
-    _get_app_config.cache_clear()
+    get_app_config.cache_clear()
     assert lambda_handler(mock_event(user=MOCK_USER, resource="/project", method="POST"), {}) == policy_response(
         allow=True, user=MOCK_USER
     )

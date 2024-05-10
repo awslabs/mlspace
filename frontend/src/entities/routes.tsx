@@ -84,7 +84,7 @@ const EntityRoutes = () => {
                 {applicationConfig.configuration.EnabledServices.realtimeTranslate ? (
                     <Route path='personal/translate/realtime' element={<TranslateRealtime />} />
                 ) : undefined}
-                {enableProjectCreation(applicationConfig.configuration.ProjectCreation!.isAdminOnly, currentUser) ? (
+                {enableProjectCreation(applicationConfig.configuration.ProjectCreation.isAdminOnly, currentUser) ? (
                     <Route path='project/create' element={<ProjectCreate />} />
                 ) : undefined}
                 <Route path='project/:projectName' element={<ProjectDetail />} />

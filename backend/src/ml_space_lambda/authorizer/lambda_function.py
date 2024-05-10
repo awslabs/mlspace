@@ -23,15 +23,14 @@ from typing import Any, Dict, Optional, Tuple
 
 import jwt
 import urllib3
-from cachetools import TTLCache, cached
 
-from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
+from ml_space_lambda.utils.app_config_utils import get_app_config
 from ml_space_lambda.utils.common_functions import authorization_wrapper
 
 logger = logging.getLogger(__name__)
@@ -41,7 +40,6 @@ project_dao = ProjectDAO()
 user_dao = UserDAO()
 dataset_dao = DatasetDAO()
 resource_metadata_dao = ResourceMetadataDAO()
-app_configuration_dao = AppConfigurationDAO()
 
 oidc_keys: Dict[str, str] = {}
 # If using self signed certs on the OIDC endpoint we need to skip ssl verification
@@ -290,8 +288,7 @@ def lambda_handler(event, context):
                     policy_statement["Effect"] = "Allow"
                 else:
                     # Get the latest app config
-                    app_config = _get_app_config()
-                    logger.info(f"Admin only: {app_config.configuration.project_creation.admin_only}")
+                    app_config = get_app_config()
                     # Check if project creation is admin only; if not, anyone can create a project
                     if not app_config.configuration.project_creation.admin_only:
                         policy_statement["Effect"] = "Allow"
@@ -610,8 +607,3 @@ def _get_oidc_props(key_id: str) -> Tuple[Optional[str], Optional[str]]:
         raise ValueError("Missing OIDC configuration parameters.")
 
     return (oidc_keys[key_id], oidc_client_name)
-
-
-@cached(cache=TTLCache(maxsize=1, ttl=10))
-def _get_app_config() -> AppConfigurationModel:
-    return AppConfigurationModel.from_dict(app_configuration_dao.get(configScope="global", num_versions=1)[0])

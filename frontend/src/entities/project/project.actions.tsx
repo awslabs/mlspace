@@ -36,7 +36,7 @@ function ProjectCreateButton (createButtonHref: RefObject<HTMLInputElement>) {
     
 
     return (
-        <Condition condition={enableProjectCreation(applicationConfig.configuration.ProjectCreation!.isAdminOnly, currentUser)}>
+        <Condition condition={enableProjectCreation(applicationConfig.configuration.ProjectCreation.isAdminOnly, currentUser)}>
             <Button
                 variant='primary'
                 onClick={() => navigate('/project/create')}
