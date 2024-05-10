@@ -16,7 +16,7 @@
 
 import React, { RefObject, useEffect, useRef } from 'react';
 import { defaultColumns, visibleColumns, visibleContentPreference } from './dataset.columns';
-import { getDatasetsList, loadingDatasetsList, loadingDatasetAction } from './dataset.reducer';
+import { getDatasetsList, loadingDatasetsList, loadingDatasetAction, clearDatasetList } from './dataset.reducer';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import Table from '../../modules/table';
 import { IDataset } from '../../shared/model/dataset.model';
@@ -73,6 +73,8 @@ export const Dataset = () => {
                     itemNameProperty='name'
                     loadingItems={loadingDatasets}
                     loadingAction={loadingAction}
+                    serverFetch={getDatasetsList}
+                    storeClear={clearDatasetList}
                 />
             </div>
         )

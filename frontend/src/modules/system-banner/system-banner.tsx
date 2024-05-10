@@ -15,21 +15,30 @@
 */
 
 import { TextContent } from '@cloudscape-design/components';
+import { appConfig } from '../../entities/configuration/configuration-reducer';
+import { useAppSelector } from '../../config/store';
 import React from 'react';
+import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 
 type BannerOptions = {
     position: 'TOP' | 'BOTTOM';
 };
 
 export const SystemBanner = ({ position }: BannerOptions) => {
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+
+    if (applicationConfig.configuration.SystemBanner.isEnabled) {
+        document.getElementById('root')!.style.paddingTop = '1.5em';
+    }
+    
     const bannerStyle: React.CSSProperties = {
         width: '100%',
         position: 'fixed',
         zIndex: 4999,
         textAlign: 'center',
         padding: '2px 0px',
-        backgroundColor: window.env.SYSTEM_BANNER.backgroundColor,
-        color: window.env.SYSTEM_BANNER.fontColor,
+        backgroundColor: applicationConfig.configuration.SystemBanner.backgroundColor,
+        color: applicationConfig.configuration.SystemBanner.textColor,
     };
 
     if (position === 'TOP') {
@@ -41,7 +50,7 @@ export const SystemBanner = ({ position }: BannerOptions) => {
     return (
         <TextContent>
             <div style={bannerStyle} id={position === 'TOP' ? 'topBanner' : 'bottomBanner'}>
-                <span>{window.env.SYSTEM_BANNER.text}</span>
+                <span>{applicationConfig.configuration.SystemBanner.text}</span>
             </div>
         </TextContent>
     );

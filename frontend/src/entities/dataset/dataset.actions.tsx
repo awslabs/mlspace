@@ -24,7 +24,7 @@ import {
     deleteFileFromDataset,
 } from '../../entities/dataset/dataset.reducer';
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
-import { Button, ButtonDropdown, Icon, SpaceBetween } from '@cloudscape-design/components';
+import { Button, ButtonDropdown, SpaceBetween } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { copyButtonAriaLabel, deleteButtonAriaLabel, downloadButtonAriaLabel } from './dataset.utils';
 import Condition from '../../modules/condition';
@@ -52,12 +52,6 @@ function DatasetActions (props?: any) {
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
-            <Button
-                onClick={() => dispatch(getDatasetsList(projectName))}
-                ariaLabel={'Refresh dataset list'}
-            >
-                <Icon name='refresh' />
-            </Button>
             {DatasetActionButton(nav, dispatch, props)}
             {DatasetCreateButton(projectName, createDatasetRef)}
         </SpaceBetween>
