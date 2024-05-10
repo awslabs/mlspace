@@ -58,6 +58,20 @@ def lambda_handler(event, context):
         "Resource": event["methodArn"],
     }
 
+    requested_resource = event["resource"]
+    path_params = event["pathParameters"]
+    request_method = event["httpMethod"]
+
+    logger.info(
+        f"Determining access for Resource: {requested_resource} "
+        f"- PathParams: {json.dumps(path_params) if path_params else 'N/A'} "
+        f"- Method: {request_method}"
+    )
+
+    if requested_resource == "/app-config" and request_method == "GET":
+        # Anyone can get the app config
+        policy_statement["Effect"] = "Allow"
+
     client_token = None
     token_failure = False
     auth_header = None
@@ -103,15 +117,6 @@ def lambda_handler(event, context):
         }
 
     username = urllib.parse.unquote(token_info["preferred_username"]).replace(",", "-").replace("=", "-").replace(" ", "-")
-    requested_resource = event["resource"]
-    path_params = event["pathParameters"]
-    request_method = event["httpMethod"]
-
-    logger.info(
-        f"Determining access for Resource: {requested_resource} "
-        f"- PathParams: {json.dumps(path_params) if path_params else 'N/A'} "
-        f"- Method: {request_method}"
-    )
 
     # Only run through the auth logic if the token has not yet expired
     if token_info["exp"] > time.time():
@@ -270,13 +275,9 @@ def lambda_handler(event, context):
                     except Exception as e:
                         logging.exception(e)
                         logging.info("Access Denied. Encountered error while determining resource access policy.")
-            elif requested_resource.startswith("/app-config"):
-                # All users can get the app-wide configuration
-                if request_method == "GET":
-                    policy_statement["Effect"] = "Allow"
-                # Any other operation for app-wide configuration can only be performed by admins
-                elif Permission.ADMIN in user.permissions:
-                    policy_statement["Effect"] = "Allow"
+            elif requested_resource == "/app-config" and request_method == "POST" and Permission.ADMIN in user.permissions:
+                # Operations for app-wide configuration can only be performed by admins
+                policy_statement["Effect"] = "Allow"
             elif requested_resource == "/login" and request_method == "PUT":
                 policy_statement["Effect"] = "Allow"
             elif (

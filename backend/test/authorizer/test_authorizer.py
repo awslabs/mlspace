@@ -1706,6 +1706,8 @@ def test_config_routes(mock_user_dao, user: UserModel, method: str, allow: bool)
         (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "GET", {"projectName": MOCK_PROJECT_NAME}, True),
         (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, False),
         (MOCK_OWNER_USER, MOCK_OWNER_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, True),
+        (None, None, "GET", None, True),
+        (None, None, "POST", None, False),
     ],
     ids=[
         "user_update_app_config",
@@ -1714,6 +1716,8 @@ def test_config_routes(mock_user_dao, user: UserModel, method: str, allow: bool)
         "user_get_project_config",
         "user_update_project_config",
         "project_owner_update_project_config",
+        "non_user_get_app_config",
+        "non_user_update_app_config",
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
@@ -1739,7 +1743,8 @@ def test_app_config_routes(
         ),
         {},
     ) == policy_response(allow=allow, user=user)
-    mock_user_dao.get.assert_called_with(user.username)
+    if user:
+        mock_user_dao.get.assert_called_with(user.username)
 
 
 @pytest.mark.parametrize(
