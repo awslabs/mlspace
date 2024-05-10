@@ -58,16 +58,97 @@ function DatasetActions (props?: any) {
     );
 }
 
-export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filteringText'>, setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>, updateDatasetContext: UpdateDatasetContextFunction): React.ReactNode => {
+type UploadButtonProperties = {
+    isFileUpload: boolean;
+    children: string;
+    state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filteringText'>;
+    setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>;
+    updateDatasetContext: UpdateDatasetContextFunction;
+};
+
+const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, children}: UploadButtonProperties): React.ReactNode => {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
+    const {manageMode} = state;
+    const uploadFile: RefObject<HTMLInputElement> = useRef(null);
+    const [disableUpload, setDisableUpload] = useState(false);
+
+    return <>
+        <Button
+            data-cy={`dataset-upload-button-${children}`}
+            iconName='upload'
+            variant='normal'
+            formAction='none'
+            onClick={() => uploadFile?.current?.click()}
+            loading={disableUpload}
+        >
+            {children}
+        </Button>
+        <input
+            data-cy={`dataset-file-upload-input-${children}`}
+            type='file'
+            {...(isFileUpload ? {directory: '', webkitdirectory: ''} : {})}
+            ref={uploadFile}
+            style={{ display: 'none' }}
+            onChange={async (event) => {
+                const filesToUpload = Array.from(event.target?.files || []).map((file: File): DatasetResourceObject => ({
+                    bucket: '',
+                    type: 'object',
+                    key: `${state.datasetContext?.location || ''}${isFileUpload ? file.webkitRelativePath : file.name}`,
+                    size: file.size,
+                    file,
+                    name: isFileUpload ? file.webkitRelativePath : file.name,
+                }));
+
+                switch (manageMode) {
+                    case DatasetBrowserManageMode.Create:
+                        setState({
+                            type: DatasetActionType.State,
+                            payload: {
+                                items: [...state.items, ...filesToUpload]
+                            }
+                        });
+                        break;
+                    case DatasetBrowserManageMode.Edit:
+                        if (state.datasetContext) {
+                            const filteringTextPrefix = prefixForPath(state.filteringText);
+                            if (filteringTextPrefix) {
+                                filesToUpload.forEach((file) => {
+                                    file.key = [filteringTextPrefix, file.key].join('');
+                                });
+                            }
+                                
+                            setDisableUpload(true);
+                            // ensure cast to DatasetContext is valid
+                            if (state.datasetContext.name && state.datasetContext.type) {
+                                await uploadResources(state.datasetContext as DatasetContext, filesToUpload, notificationService);
+                            }
+                            setDisableUpload(false);
+
+                            // if the filter contains a prefix append that to the Location
+                            const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
+                            updateDatasetContext(effectiveContext, '', false);
+                        }
+                        break;
+                }
+            }}
+            onBlur={() => {
+                //This remains empty to regain keyboard focus
+                //to the button after user closes the input window
+                //for accessibility purposes
+            }}
+            multiple
+        />
+    </>;
+};
+
+export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filteringText'>, setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>, updateDatasetContext: UpdateDatasetContextFunction): React.ReactNode => {
+    const dispatch = useAppDispatch();
     const username = useUsername();
     const { projectName } = useParams();
     const {selectedItems, manageMode} = state;
     const showDeleteButton = manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false;
     const showUploadButton = manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false;
-    const uploadFile: RefObject<HTMLInputElement> = useRef(null);
-    const [disableUpload, setDisableUpload] = useState(false);
 
     return (
         <SpaceBetween size='xs' direction='horizontal'>
@@ -161,70 +242,14 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
             </Condition>
 
             <Condition condition={showUploadButton}>
-                <Button
-                    data-cy='dataset-file-upload-button'
-                    iconName='upload'
-                    variant='normal'
-                    formAction='none'
-                    onClick={() => uploadFile?.current?.click()}
-                    loading={disableUpload}
-                >
-                    Upload
-                </Button>
-                <input
-                    data-cy='dataset-file-upload-input'
-                    type='file'
-                    ref={uploadFile}
-                    style={{ display: 'none' }}
-                    onChange={async (event) => {
-                        const filesToUpload = Array.from(event.target?.files || []).map((file: File): DatasetResourceObject => ({
-                            bucket: '',
-                            type: 'object',
-                            key: `${state.datasetContext?.location || ''}${file.name}`,
-                            size: file.size,
-                            file,
-                            name: file.name,
-                        }));
-
-                        switch (manageMode) {
-                            case DatasetBrowserManageMode.Create:
-                                setState({
-                                    type: DatasetActionType.State,
-                                    payload: {
-                                        items: [...state.items, ...filesToUpload]
-                                    }
-                                });
-                                break;
-                            case DatasetBrowserManageMode.Edit:
-                                if (state.datasetContext) {
-                                    const filteringTextPrefix = prefixForPath(state.filteringText);
-                                    if (filteringTextPrefix) {
-                                        filesToUpload.forEach((file) => {
-                                            file.key = [filteringTextPrefix, file.key].join('');
-                                        });
-                                    }
-                                    
-                                    setDisableUpload(true);
-                                    // ensure cast to DatasetContext is valid
-                                    if (state.datasetContext.name && state.datasetContext.type) {
-                                        await uploadResources(state.datasetContext as DatasetContext, filesToUpload, notificationService);
-                                    }
-                                    setDisableUpload(false);
-
-                                    // if the filter contains a prefix append that to the Location
-                                    const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
-                                    updateDatasetContext(effectiveContext, '', false);
-                                }
-                                break;
-                        }
-                    }}
-                    onBlur={() => {
-                        //This remains empty to regain keyboard focus
-                        //to the button after user closes the input window
-                        //for accessibility purposes
-                    }}
-                    multiple
-                />
+                <SpaceBetween size='xs' direction='horizontal'>
+                    <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} isFileUpload={false}>
+                        Upload Files
+                    </UploadButton>
+                    <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} isFileUpload={true}>
+                        Upload Folder
+                    </UploadButton>
+                </SpaceBetween>
             </Condition>
         </SpaceBetween>
     );
