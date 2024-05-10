@@ -34,3 +34,11 @@ export const isAdminOrProjectOwner = (user: IUser, projectPermissions: Permissio
         hasPermission(Permission.ADMIN, user.permissions)
     );
 };
+
+export const enableProjectCreation = (isAdminOnly: boolean, user: IUser) => {
+    if (isAdminOnly) {
+        return hasPermission(Permission.ADMIN, user.permissions);
+    } else {
+        return true;
+    }
+};

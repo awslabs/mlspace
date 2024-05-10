@@ -30,6 +30,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
+from ml_space_lambda.utils.app_config_utils import get_app_config
 from ml_space_lambda.utils.common_functions import authorization_wrapper
 
 logger = logging.getLogger(__name__)
@@ -283,8 +284,14 @@ def lambda_handler(event, context):
             ) and Permission.ADMIN in user.permissions:
                 policy_statement["Effect"] = "Allow"
             elif requested_resource == "/project" and request_method == "POST":
-                # Anyone can create a project
-                policy_statement["Effect"] = "Allow"
+                if Permission.ADMIN in user.permissions:
+                    policy_statement["Effect"] = "Allow"
+                else:
+                    # Get the latest app config
+                    app_config = get_app_config()
+                    # Check if project creation is admin only; if not, anyone can create a project
+                    if not app_config.configuration.project_creation.admin_only:
+                        policy_statement["Effect"] = "Allow"
             elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
                 # If this is a request for a dataset related presigned url or for
                 # creating a new dataset, we need to determine the underlying dataset
