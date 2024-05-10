@@ -31,7 +31,6 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataModel
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType, ServiceType
-from ml_space_lambda.utils.app_config_utils import get_app_config
 
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "OIDC_VERIFY_SIGNATURE": "False"}
 MOCK_OIDC_ENV = {
@@ -45,6 +44,7 @@ MOCK_OIDC_ENV = {
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.authorizer.lambda_function import lambda_handler
+    from ml_space_lambda.utils.app_config_utils import get_app_config
 
 MOCK_USERNAME = "test@amazon.com"
 
