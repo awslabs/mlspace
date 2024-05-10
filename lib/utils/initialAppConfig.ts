@@ -47,10 +47,10 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                 ]}
             }}, 
             'SystemBanner': {'M': {
-                'isEnabled': {'BOOL': 'False'}, 
-                'text': {'S': 'CHANGEME'}, 
-                'textColor': {'S': 'Red'}, 
-                'backgroundColor': {'S': 'White'}
+                'isEnabled': {'BOOL': mlspaceConfig.SYSTEM_BANNER_TEXT !== ''}, 
+                'text': {'S': mlspaceConfig.SYSTEM_BANNER_TEXT}, 
+                'textColor': {'S': mlspaceConfig.SYSTEM_BANNER_TEXT_COLOR}, 
+                'backgroundColor': {'S': mlspaceConfig.SYSTEM_BANNER_BACKGROUND_COLOR}
             }}, 
             'EMRConfig': {'M': {
                 'autoScaling': {'M': {

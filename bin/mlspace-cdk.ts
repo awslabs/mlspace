@@ -140,11 +140,6 @@ const restStack = new RestApiStack(app, 'mlspace-web-tier', {
     lambdaSecurityGroups: [vpcStack.vpcSecurityGroup],
     isIso,
     enableTranslate: config.ENABLE_TRANSLATE,
-    systemBannerConfiguration: {
-        text: config.SYSTEM_BANNER_TEXT,
-        backgroundColor: config.SYSTEM_BANNER_BACKGROUND_COLOR,
-        fontColor: config.SYSTEM_BANNER_TEXT_COLOR
-    },
     mlspaceConfig: config
 });
 
