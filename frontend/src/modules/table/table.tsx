@@ -227,6 +227,7 @@ export default function Table ({
                                                 key='refreshButton'
                                                 variant='normal'
                                                 iconName='refresh'
+                                                loading={serverSideLoading.loadingInBackground}
                                                 disabled={
                                                     serverSideLoading.loadingEmpty ||
                                                     serverSideLoading.loadingAdditional
