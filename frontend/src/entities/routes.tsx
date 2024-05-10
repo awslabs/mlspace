@@ -46,7 +46,7 @@ import Configuration from './configuration/configuration';
 import Report from './report/report';
 import { selectCurrentUser } from './user/user.reducer';
 import { useAppSelector } from '../config/store';
-import { hasPermission } from '../shared/util/permission-utils';
+import { hasPermission, enableProjectCreation } from '../shared/util/permission-utils';
 import { Permission } from '../shared/model/user.model';
 import ResourceNotFound from '../modules/resource-not-found';
 import EMRDetail from './emr/detail/emr-clusters-detail';
@@ -59,6 +59,9 @@ import { IAppConfiguration } from '../shared/model/app.configuration.model';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const currentUser = useAppSelector(selectCurrentUser);
+
+
     return (
         <div>
             <ErrorBoundaryRoutes>
@@ -81,7 +84,9 @@ const EntityRoutes = () => {
                 {applicationConfig.configuration.EnabledServices.realtimeTranslate ? (
                     <Route path='personal/translate/realtime' element={<TranslateRealtime />} />
                 ) : undefined}
-                <Route path='project/create' element={<ProjectCreate />} />
+                {enableProjectCreation(applicationConfig.configuration.ProjectCreation.isAdminOnly, currentUser) ? (
+                    <Route path='project/create' element={<ProjectCreate />} />
+                ) : undefined}
                 <Route path='project/:projectName' element={<ProjectDetail />} />
                 <Route path='project/:projectName/edit' element={<ProjectCreate isEdit={true} />} />
                 <Route path='project/:projectName/user' element={<ProjectUser />} />
@@ -163,7 +168,6 @@ const EntityRoutes = () => {
 
 function RequireAdmin () {
     const currentUser = useAppSelector(selectCurrentUser);
-
     return hasPermission(Permission.ADMIN, currentUser.permissions) ? (
         <Outlet />
     ) : (

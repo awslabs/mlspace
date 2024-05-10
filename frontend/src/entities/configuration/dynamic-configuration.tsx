@@ -147,7 +147,14 @@ export function DynamicConfiguration () {
                     />
                 </ExpandableSection>
                 <ExpandableSection headerText='Project Creation' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
+                    <Toggle
+                        onChange={({ detail }) => {
+                            setFields({ 'configuration.ProjectCreation.isAdminOnly': detail.checked });
+                        }}
+                        checked={state.form.configuration.ProjectCreation.isAdminOnly}
+                    >
+                        Admin Only - restrict creation of projects to users with Admin permissions
+                    </Toggle>
                 </ExpandableSection>
                 <ExpandableSection headerText='System Banner' variant='default' defaultExpanded>
                     <SpaceBetween direction='vertical' size='l'>

@@ -17,6 +17,12 @@
 import React, { RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@cloudscape-design/components';
+import { IAppConfiguration } from '../../shared/model/app.configuration.model';
+import { useAppSelector } from '../../config/store';
+import { appConfig } from '../configuration/configuration-reducer';
+import Condition from '../../modules/condition';
+import { enableProjectCreation } from '../../shared/util/permission-utils';
+import { selectCurrentUser } from '../user/user.reducer';
 
 export type ActionItem = {
     text: string;
@@ -25,15 +31,20 @@ export type ActionItem = {
 
 function ProjectCreateButton (createButtonHref: RefObject<HTMLInputElement>) {
     const navigate = useNavigate();
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const currentUser = useAppSelector(selectCurrentUser);
+    
 
     return (
-        <Button
-            variant='primary'
-            onClick={() => navigate('/project/create')}
-            ref={createButtonHref}
-        >
-            Create Project
-        </Button>
+        <Condition condition={enableProjectCreation(applicationConfig.configuration.ProjectCreation.isAdminOnly, currentUser)}>
+            <Button
+                variant='primary'
+                onClick={() => navigate('/project/create')}
+                ref={createButtonHref}
+            >
+                Create Project
+            </Button>
+        </Condition>
     );
 }
 
