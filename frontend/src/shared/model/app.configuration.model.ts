@@ -82,7 +82,7 @@ export type Settings = {
     EnabledServices: IEnabledServices;
     EMRConfig: IEMRConfig;
     ProjectCreation?: IProjectCreation;
-    SystemBanner?: ISystemBanner;
+    SystemBanner: ISystemBanner;
 };
 
 export type IAppConfiguration = {

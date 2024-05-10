@@ -155,7 +155,7 @@ export function DynamicConfiguration () {
                             onChange={({ detail }) => {
                                 setFields({ 'configuration.SystemBanner.isEnabled': detail.checked });
                             }}
-                            checked={state.form.configuration.SystemBanner!.isEnabled!}
+                            checked={state.form.configuration.SystemBanner.isEnabled!}
                         >
                             Enable System Banner
                         </Toggle>
@@ -167,9 +167,9 @@ export function DynamicConfiguration () {
                                     setFields({ 'configuration.SystemBanner.text': detail.value });
                                 }}
                                 onBlur={() => touchFields(['configuration.SystemBanner.text'])}
-                                value={state.form.configuration.SystemBanner!.text}
+                                value={state.form.configuration.SystemBanner.text}
                                 placeholder='Enter system banner text'
-                                disabled={!state.form.configuration.SystemBanner!.isEnabled}
+                                disabled={!state.form.configuration.SystemBanner.isEnabled}
                             />
                         </FormField>
                         <SpaceBetween direction='horizontal' size='l'>
@@ -181,8 +181,8 @@ export function DynamicConfiguration () {
                                     onInput={(event) =>
                                         setFields({ 'configuration.SystemBanner.textColor': event.target.value })
                                     }
-                                    value={state.form.configuration.SystemBanner!.textColor}
-                                    disabled={!state.form.configuration.SystemBanner!.isEnabled}
+                                    value={state.form.configuration.SystemBanner.textColor}
+                                    disabled={!state.form.configuration.SystemBanner.isEnabled}
                                     style={{border: '2px solid #7F8897', borderRadius: '6px', padding: '3px'}}
                                 />
                             </FormField>
@@ -194,8 +194,8 @@ export function DynamicConfiguration () {
                                     onInput={(event) =>
                                         setFields({ 'configuration.SystemBanner.backgroundColor': event.target.value })
                                     }
-                                    value={state.form.configuration.SystemBanner!.backgroundColor}
-                                    disabled={!state.form.configuration.SystemBanner!.isEnabled}
+                                    value={state.form.configuration.SystemBanner.backgroundColor}
+                                    disabled={!state.form.configuration.SystemBanner.isEnabled}
                                     style={{border: '2px solid #7F8897', borderRadius: '6px', padding: '3px'}}
                                 />
                             </FormField>

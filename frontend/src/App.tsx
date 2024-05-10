@@ -54,7 +54,7 @@ export default function App () {
     return (
         <HashRouter basename={baseHref}>
             <ErrorBoundary>
-                { applicationConfig.configuration.SystemBanner!.isEnabled && <SystemBanner position='TOP' /> }
+                { applicationConfig.configuration.SystemBanner.isEnabled && <SystemBanner position='TOP' /> }
                 <AppLayout
                     ariaLabels={{
                         navigation: 'Console',
@@ -76,7 +76,7 @@ export default function App () {
                     toolsHide={true}
                     breadcrumbs={<BreadcrumbsProvider/>}
                 />
-                { applicationConfig.configuration.SystemBanner!.isEnabled && <SystemBanner position='BOTTOM' /> }
+                { applicationConfig.configuration.SystemBanner.isEnabled && <SystemBanner position='BOTTOM' /> }
                 {modal && <DeleteModal {...modal} />}
                 {updateModal && <UpdateModal {...updateModal} />}
                 {resourceScheduleModal && <ResourceScheduleModal {...resourceScheduleModal} />}

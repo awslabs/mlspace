@@ -27,7 +27,7 @@ type BannerOptions = {
 export const SystemBanner = ({ position }: BannerOptions) => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
 
-    if (applicationConfig.configuration.SystemBanner!.isEnabled) {
+    if (applicationConfig.configuration.SystemBanner.isEnabled) {
         document.getElementById('root')!.style.paddingTop = '1.5em';
     }
     
@@ -37,8 +37,8 @@ export const SystemBanner = ({ position }: BannerOptions) => {
         zIndex: 4999,
         textAlign: 'center',
         padding: '2px 0px',
-        backgroundColor: applicationConfig.configuration.SystemBanner!.backgroundColor,
-        color: applicationConfig.configuration.SystemBanner!.textColor,
+        backgroundColor: applicationConfig.configuration.SystemBanner.backgroundColor,
+        color: applicationConfig.configuration.SystemBanner.textColor,
     };
 
     if (position === 'TOP') {
@@ -50,7 +50,7 @@ export const SystemBanner = ({ position }: BannerOptions) => {
     return (
         <TextContent>
             <div style={bannerStyle} id={position === 'TOP' ? 'topBanner' : 'bottomBanner'}>
-                <span>{applicationConfig.configuration.SystemBanner!.text}</span>
+                <span>{applicationConfig.configuration.SystemBanner.text}</span>
             </div>
         </TextContent>
     );
