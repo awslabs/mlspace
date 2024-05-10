@@ -39,11 +39,6 @@ import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
 import { MLSpaceConfig } from '../../utils/configTypes';
 
-export type SystemBannerConfiguration = {
-    readonly text?: string;
-    readonly backgroundColor?: string;
-    readonly fontColor?: string;
-};
 
 export type ApiStackProperties = {
     readonly restApiId: string;
@@ -78,7 +73,6 @@ export type RestApiStackProperties = {
     readonly isIso?: boolean;
     readonly enableMigrationUI?: boolean;
     readonly enableTranslate: boolean;
-    readonly systemBannerConfiguration: SystemBannerConfiguration;
     readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
 
