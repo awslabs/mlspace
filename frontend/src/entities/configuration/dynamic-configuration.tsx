@@ -22,6 +22,7 @@ import {
     Input,
     FileUpload,
     Toggle,
+    FormField,
 } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -156,7 +157,57 @@ export function DynamicConfiguration () {
                     </Toggle>
                 </ExpandableSection>
                 <ExpandableSection headerText='System Banner' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
+                    <SpaceBetween direction='vertical' size='l'>
+                        <Toggle
+                            onChange={({ detail }) => {
+                                setFields({ 'configuration.SystemBanner.isEnabled': detail.checked });
+                            }}
+                            checked={state.form.configuration.SystemBanner.isEnabled!}
+                        >
+                            Enable System Banner
+                        </Toggle>
+                        <FormField
+                            label='Banner Text'
+                        >
+                            <Input
+                                onChange={({ detail }) => {
+                                    setFields({ 'configuration.SystemBanner.text': detail.value });
+                                }}
+                                onBlur={() => touchFields(['configuration.SystemBanner.text'])}
+                                value={state.form.configuration.SystemBanner.text}
+                                placeholder='Enter system banner text'
+                                disabled={!state.form.configuration.SystemBanner.isEnabled}
+                            />
+                        </FormField>
+                        <SpaceBetween direction='horizontal' size='l'>
+                            <FormField
+                                label='Text Color'
+                            >
+                                <input
+                                    type='color'
+                                    onInput={(event) =>
+                                        setFields({ 'configuration.SystemBanner.textColor': event.target.value })
+                                    }
+                                    value={state.form.configuration.SystemBanner.textColor}
+                                    disabled={!state.form.configuration.SystemBanner.isEnabled}
+                                    style={{border: '2px solid #7F8897', borderRadius: '6px', padding: '3px'}}
+                                />
+                            </FormField>
+                            <FormField
+                                label='Background Color'
+                            >   
+                                <input
+                                    type='color'
+                                    onInput={(event) =>
+                                        setFields({ 'configuration.SystemBanner.backgroundColor': event.target.value })
+                                    }
+                                    value={state.form.configuration.SystemBanner.backgroundColor}
+                                    disabled={!state.form.configuration.SystemBanner.isEnabled}
+                                    style={{border: '2px solid #7F8897', borderRadius: '6px', padding: '3px'}}
+                                />
+                            </FormField>
+                        </SpaceBetween>
+                    </SpaceBetween>
                 </ExpandableSection>
                 <Button
                     iconAlt='Update dynamic configuration'
