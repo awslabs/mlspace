@@ -45,38 +45,6 @@ touch ~/.jupyter/custom/custom.css
 EOF
 
 cat > /home/ec2-user/.jupyter/custom/custom.css <<'EOF'
-#header::before {
-                content: '<BANNER_TEXT>';
-                z-index: 9999 !important;
-                position: fixed !important;
-                left 0 !important;
-                width: 100% !important;
-                height: 1.5em !important;
-                background-color: <BANNER_COLOR> !important;
-                text-align: center;
-                color: <BANNER_TEXT_COLOR>;
-                top: 0 !important;
-}
-
-#site::after {
-                content: '<BANNER_TEXT>';
-                z-index: 9999 !important;
-                position: fixed !important;
-                left 0 !important;
-                width: 100% !important;
-                height: 1.5em !important;
-                background-color: <BANNER_COLOR>  !important;
-                text-align: center;
-                color: <BANNER_TEXT_COLOR>;
-                bottom: 0 !important;
-}
-
-body {
-                padding-top: 1.5em;
-                padding-bottom: 1.5em;
-                overflow-y: scroll;
-}
-
 #terminado-container {
                 height: calc(100% - 2em) !important;
 }

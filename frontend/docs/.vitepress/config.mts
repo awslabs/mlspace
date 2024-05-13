@@ -9,6 +9,7 @@ const docItems = [
             { text: 'Getting Started', link: '/admin-guide/getting-started' },
             { text: 'Setting Initial Admin', link: '/admin-guide/initial-admin' },
             { text: `Configure AWS Cognito for ${APPLICATION_NAME}`, link: '/admin-guide/configure-cognito' },
+            { text: `Create a GroundTruth Workforce using Keycloak`, link: '/admin-guide/gt-workforce-keycloak' },
         ]
       },
       {
