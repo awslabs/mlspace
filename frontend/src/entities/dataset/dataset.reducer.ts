@@ -23,6 +23,7 @@ import {
 } from '@reduxjs/toolkit';
 import { IDataset } from '../../shared/model/dataset.model';
 import axios from '../../shared/util/axios-utils';
+import { ServerRequestProps } from '../../shared/util/table-utils';
 
 const initialState = {
     loadingAction: false,
@@ -39,10 +40,10 @@ const initialState = {
 
 export const getDatasetsList = createAsyncThunk(
     'dataset/fetch_entity_list',
-    async (projectName: string | undefined) => {
+    async (params: ServerRequestProps) => {
         let requestUrl = '/dataset';
-        if (projectName !== undefined) {
-            requestUrl = `/project/${projectName}/datasets`;
+        if (params.projectName !== undefined) {
+            requestUrl = `/project/${params.projectName}/datasets`;
         }
         return axios.get<IDataset[]>(requestUrl);
     }
@@ -92,6 +93,9 @@ export const DatasetSlice = createSlice({
     reducers: {
         updateEntity (state, action: PayloadAction<IDataset>) {
             state.dataset = action.payload;
+        },
+        clearDatasetList (state) {
+            state.datasetsList.length = 0;
         },
     },
     extraReducers (builder) {
@@ -153,7 +157,7 @@ export const DatasetSlice = createSlice({
 
 // Reducer
 export default DatasetSlice.reducer;
-export const { updateEntity } = DatasetSlice.actions;
+export const { updateEntity, clearDatasetList } = DatasetSlice.actions;
 export const loadingDatasetsList = (state: any) => state.dataset.loadingDatasetsList;
 export const loadingDataset = (state: any) => state.dataset.loadingDataset;
 export const loadingFiles = (state: any) => state.dataset.loadingFileEntities;
