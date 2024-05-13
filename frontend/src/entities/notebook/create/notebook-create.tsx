@@ -61,10 +61,11 @@ import { getProject } from '../../project/project.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission, Timezone } from '../../../shared/model/user.model';
 import { selectCurrentUser } from '../../user/user.reducer';
-import { EMRCluster, EMRStatusState } from '../../emr/emr.model';
+import { EMRStatusState } from '../../emr/emr.model';
 import { notebookCluster } from '../notebook.service';
 import { InstanceTypeSelector } from '../../../shared/metadata/instance-type-dropdown';
 import { convertDailyStopTime, timezoneDisplayString } from '../../../shared/util/date-utils';
+import { EMRResourceMetadata } from '../../../shared/model/resource-metadata.model';
 
 export type NotebookCreateProps = {
     update?: boolean;
@@ -79,12 +80,12 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
     const notebook: INotebook = useAppSelector((state) => state.notebook.notebook);
     const lifecycleConfigs = useAppSelector(notebookLifecycleConfigs);
     const loadingOptions = useAppSelector(loadingNotebookOptions);
-    const emrClusters: EMRCluster[] = useAppSelector(selectEMRClusters);
+    const emrClusters: EMRResourceMetadata[] = useAppSelector(selectEMRClusters);
     const selectClusterModalVisible: boolean = useAppSelector(
         (state) => state.emr.selectClusterModalVisible
     );
     const loadingEMRClusters: boolean = useAppSelector(loadingClustersList);
-    const [selectedCluster, setSelectedCluster] = useState({} as EMRCluster);
+    const [selectedCluster, setSelectedCluster] = useState({} as EMRResourceMetadata);
 
     const notificationService = NotificationService(dispatch);
 
@@ -144,6 +145,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                 defaultNotebook.NotebookInstanceLifecycleConfigName,
             VolumeSizeInGB: defaultNotebook.VolumeSizeInGB,
             emrCluster: 'None',
+            clusterId: '',
             NotebookDailyStopTime: defaultStopTime as any,
         },
         formValid: false,
@@ -379,7 +381,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                                                     'NotebookInstanceLifecycleConfigName',
                                                 ]);
                                             }}
-                                            disabled={!state.form.emrCluster}
+                                            disabled={!state.form.clusterId}
                                         >
                                             Clear
                                         </Button>
@@ -465,7 +467,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                                         )}
                                         loadingText='Loading lifecycle configurations'
                                         statusType={loadingOptions ? 'loading' : 'finished'}
-                                        disabled={!!state.form.emrCluster}
+                                        disabled={!!state.form.clusterId}
                                     />
                                 </FormField>
                                 <FormField
@@ -497,10 +499,10 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                     await dispatch(toggleSelectClusterModal(false));
                 }}
                 onConfirm={async () => {
-                    if (selectedCluster.Id) {
+                    if (selectedCluster.resourceId) {
                         setFields({
-                            clusterId: selectedCluster.Id,
-                            emrCluster: selectedCluster.Name,
+                            clusterId: selectedCluster.resourceId,
+                            emrCluster: selectedCluster.metadata.Name,
                             NotebookInstanceLifecycleConfigName: 'No configuration',
                         });
                     }
@@ -518,7 +520,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                         header={<></>}
                         tableName='EMR Cluster'
                         tableType='single'
-                        trackBy='ClusterArn'
+                        trackBy='resourceId'
                         itemNameProperty='Name'
                         allItems={emrClusters}
                         columnDefinitions={defaultColumns}
@@ -529,7 +531,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                         serverFetch={listEMRClusters}
                         storeClear={clearClustersList}
                         serverRequestProps={{ resourceStatus: EMRStatusState.WAITING }}
-                        selectItemsCallback={(clusters: EMRCluster[]) => {
+                        selectItemsCallback={(clusters: EMRResourceMetadata[]) => {
                             if (clusters.length === 1) {
                                 setSelectedCluster(clusters[0]);
                             }

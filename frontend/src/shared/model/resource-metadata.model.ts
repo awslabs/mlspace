@@ -41,7 +41,7 @@ type EndpointConfigMetadata = {
 };
 
 type EMRMetadata = {
-    State: EMRStatusState;
+    Status: EMRStatusState;
     ReleaseLabel: string;
     CreationTime: string;
     Name: string;
