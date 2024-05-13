@@ -34,6 +34,7 @@ export const SystemBanner = ({ position }: BannerOptions) => {
     const bannerStyle: React.CSSProperties = {
         width: '100%',
         position: 'fixed',
+        left: '0px',
         zIndex: 4999,
         textAlign: 'center',
         padding: '2px 0px',

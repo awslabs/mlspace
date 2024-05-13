@@ -14,6 +14,14 @@
         "plugin:@typescript-eslint/recommended",
         "plugin:react-hooks/recommended"
     ],
+    "overrides": [
+        {
+            "files": ["*color-utils.ts"],
+            "rules": {
+                "spellcheck/spell-checker": "off"
+            }
+        }
+    ],
     "rules": {
         "eqeqeq": [
             "error",
@@ -281,6 +289,7 @@
                     "randomcutforest",
                     "readonly",
                     "realtime",
+                    "rect",
                     "redux",
                     "regressor",
                     "relu",
@@ -293,6 +302,7 @@
                     "resnet",
                     "retryable",
                     "revalidate",
+                    "rgb",
                     "rmdir",
                     "rmse",
                     "rmsprop",

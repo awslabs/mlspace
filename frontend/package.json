@@ -44,7 +44,9 @@
         "prepublish": "tsc --project ./tsconfig.json",
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
-        "docs:preview": "vitepress preview docs"
+        "docs:preview": "vitepress preview docs",
+        "cypress:open": "cypress open",
+        "cypress:run": "cypress run"
     },
     "browserslist": {
         "production": [
@@ -59,21 +61,22 @@
         ]
     },
     "devDependencies": {
-        "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
         "@stylistic/eslint-plugin": "^1.7.0",
         "@testing-library/jest-dom": "^5.16.5",
         "@testing-library/react": "^14.2.2",
         "@testing-library/user-event": "^14.5.2",
         "@types/jest": "^27.5.2",
         "@types/lodash": "^4.17.0",
-        "@types/node": "^16.18.23",
-        "@types/react": "^18.2.67",
-        "@types/react-dom": "^18.2.22",
+        "@types/node": "^16.18.97",
+        "@types/react": "^18.3.1",
+        "@types/react-dom": "^18.3.0",
         "@types/redux-mock-store": "^1.0.6",
         "@types/redux-persist": "^4.3.1",
         "@types/sinon": "^10.0.14",
         "@types/uuid": "^9.0.8",
         "aws-cdk-lib": "^2.93.0",
+        "cypress": "^13.7.3",
+        "cypress-file-upload": "^5.0.8",
         "eslint": "^8.57.0",
         "eslint-import-resolver-typescript": "^3.6.1",
         "eslint-plugin-import": "^2.29.1",
