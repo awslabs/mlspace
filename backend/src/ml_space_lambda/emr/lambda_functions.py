@@ -27,17 +27,15 @@ from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.utils.app_config_utils import get_app_config
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
 
-s3 = boto3.client("s3", config=retry_config)
 emr = boto3.client("emr", config=retry_config)
 
 resource_metadata_dao = ResourceMetadataDAO()
-
-cluster_config = {}
 
 resource_scheduler_dao = ResourceSchedulerDAO()
 project_dao = ProjectDAO()
@@ -51,26 +49,11 @@ def create(event, context):
     cluster_name = event_body["clusterName"]
     emr_size = event_body["options"]["emrSize"]
     release_version = event_body["options"]["emrRelease"]
+    app_config = get_app_config()
 
     env_variables = get_environment_variables()
 
     custom_ami_id = event_body["options"]["customAmiId"] if "customAmiId" in event_body["options"] else None
-    applications = []
-
-    global cluster_config
-    if not cluster_config:
-        resp = s3.get_object(Bucket=env_variables["BUCKET"], Key=env_variables["CLUSTER_CONFIG_KEY"])
-        cluster_config = json.loads(resp["Body"].read().decode())
-
-    # get list of applications if provided, otherwise use default from
-    # s3 cluster config
-    if event_body.get("options", {}).get("applications", []):
-        application_list = event_body["options"]["applications"]
-        for app in application_list:
-            app_name = {"Name": app}
-            applications.append(app_name)
-    else:
-        applications = cluster_config["applications"]
 
     # use subnet if provided, otherwise choose a random subnet
     # from s3 config file
@@ -79,20 +62,17 @@ def create(event, context):
         param_file = pull_config_from_s3()
         subnet = random.sample(param_file["pSMSSubnetIds"].split(","), 1)[0]
 
-    # Get Custom EC2 Key Pair
-    ec2_key_name = ""
-    if cluster_config["ec2-key"] != "EC2_KEY":
-        ec2_key_name = cluster_config["ec2-key"]
-
-    master_instance_type = cluster_config[emr_size]["master-type"]
-    core_instance_type = cluster_config[emr_size]["core-type"]
-    instance_count = cluster_config[emr_size]["size"]
+    for size in app_config.configuration.emr_config.cluster_sizes:
+        if size.name == emr_size:
+            master_instance_type = size.master_type
+            core_instance_type = size.core_type
+            instance_count = size.size
 
     args = {}
     args["Name"] = cluster_name
     args["LogUri"] = f"s3://{env_variables['LOG_BUCKET']}"
     args["ReleaseLabel"] = release_version
-    args["Applications"] = applications
+    args["Applications"] = app_config.configuration.emr_config.to_dict()["applications"]
     args["Instances"] = {
         "InstanceGroups": [
             {
@@ -110,8 +90,8 @@ def create(event, context):
                 "InstanceCount": instance_count,
                 "AutoScalingPolicy": {
                     "Constraints": {
-                        "MinCapacity": cluster_config["auto-scaling"]["min-instances"],
-                        "MaxCapacity": cluster_config["auto-scaling"]["max-instances"],
+                        "MinCapacity": app_config.configuration.emr_config.auto_scaling.min_instances,
+                        "MaxCapacity": app_config.configuration.emr_config.auto_scaling.max_instances,
                     },
                     "Rules": [
                         {
@@ -119,17 +99,17 @@ def create(event, context):
                             "Description": "Scaling policy configured in the cluster-config.json",
                             "Action": {
                                 "SimpleScalingPolicyConfiguration": {
-                                    "ScalingAdjustment": cluster_config["auto-scaling"]["scale-out"]["increment"],
-                                    "CoolDown": cluster_config["auto-scaling"]["scale-out"]["cooldown"],
+                                    "ScalingAdjustment": app_config.configuration.emr_config.auto_scaling.scale_out.increment,
+                                    "CoolDown": app_config.configuration.emr_config.auto_scaling.scale_out.cooldown,
                                 }
                             },
                             "Trigger": {
                                 "CloudWatchAlarmDefinition": {
                                     "ComparisonOperator": "LESS_THAN",
-                                    "EvaluationPeriods": cluster_config["auto-scaling"]["scale-out"]["eval-periods"],
+                                    "EvaluationPeriods": app_config.configuration.emr_config.auto_scaling.scale_out.eval_periods,
                                     "MetricName": "YARNMemoryAvailablePercentage",
                                     "Period": 300,
-                                    "Threshold": cluster_config["auto-scaling"]["scale-out"]["percentage-mem-available"],
+                                    "Threshold": app_config.configuration.emr_config.auto_scaling.scale_out.percentage_mem_available,
                                     "Unit": "PERCENT",
                                 }
                             },
@@ -139,17 +119,17 @@ def create(event, context):
                             "Description": "Scaling policy configured in the cluster-config.json",
                             "Action": {
                                 "SimpleScalingPolicyConfiguration": {
-                                    "ScalingAdjustment": cluster_config["auto-scaling"]["scale-in"]["increment"],
-                                    "CoolDown": cluster_config["auto-scaling"]["scale-in"]["cooldown"],
+                                    "ScalingAdjustment": app_config.configuration.emr_config.auto_scaling.scale_in.increment,
+                                    "CoolDown": app_config.configuration.emr_config.auto_scaling.scale_in.cooldown,
                                 }
                             },
                             "Trigger": {
                                 "CloudWatchAlarmDefinition": {
                                     "ComparisonOperator": "GREATER_THAN",
-                                    "EvaluationPeriods": cluster_config["auto-scaling"]["scale-in"]["eval-periods"],
+                                    "EvaluationPeriods": app_config.configuration.emr_config.auto_scaling.scale_in.eval_periods,
                                     "MetricName": "YARNMemoryAvailablePercentage",
                                     "Period": 300,
-                                    "Threshold": cluster_config["auto-scaling"]["scale-in"]["percentage-mem-available"],
+                                    "Threshold": app_config.configuration.emr_config.auto_scaling.scale_in.percentage_mem_available,
                                     "Unit": "PERCENT",
                                 }
                             },
@@ -158,7 +138,7 @@ def create(event, context):
                 },
             },
         ],
-        "Ec2KeyName": ec2_key_name,
+        "Ec2KeyName": "EC2_KEY",
         "KeepJobFlowAliveWhenNoSteps": True,
         "TerminationProtected": False,
         "Ec2SubnetId": subnet,
