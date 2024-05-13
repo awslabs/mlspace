@@ -34,7 +34,7 @@ const defaultColumns: TableProps.ColumnDefinition<EMRResourceMetadata>[] = [
     {
         id: 'status',
         header: 'Status',
-        cell: (item) => prettyStatus(item.metadata.State),
+        cell: (item) => prettyStatus(item.metadata.Status),
     },
     {
         id: 'created',
