@@ -96,7 +96,7 @@ def create(event, context):
                     "Rules": [
                         {
                             "Name": "AutoScalingPolicyUp",
-                            "Description": "Scaling policy configured in the cluster-config.json",
+                            "Description": "Scaling policy configured in the dynamic config",
                             "Action": {
                                 "SimpleScalingPolicyConfiguration": {
                                     "ScalingAdjustment": app_config.configuration.emr_config.auto_scaling.scale_out.increment,
@@ -116,7 +116,7 @@ def create(event, context):
                         },
                         {
                             "Name": "AutoScalingPolicyDown",
-                            "Description": "Scaling policy configured in the cluster-config.json",
+                            "Description": "Scaling policy configured in the dynamic config",
                             "Action": {
                                 "SimpleScalingPolicyConfiguration": {
                                     "ScalingAdjustment": app_config.configuration.emr_config.auto_scaling.scale_in.increment,
@@ -138,7 +138,7 @@ def create(event, context):
                 },
             },
         ],
-        "Ec2KeyName": "EC2_KEY",
+        "Ec2KeyName": "",
         "KeepJobFlowAliveWhenNoSteps": True,
         "TerminationProtected": False,
         "Ec2SubnetId": subnet,

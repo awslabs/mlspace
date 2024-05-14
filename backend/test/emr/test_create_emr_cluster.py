@@ -97,7 +97,7 @@ def _expected_args(custom_ami: Optional[str] = None):
         "Name": "example_cluster_name",
         "LogUri": "s3://mlspace-log-bucket",
         "ReleaseLabel": MOCK_RELEASE_LABEL,
-        "Applications": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["applications"],
+        "Applications": [{"Name": "Hadoop"}, {"Name": "Spark"}],
         "Instances": {
             "InstanceGroups": [
                 {
@@ -121,7 +121,7 @@ def _expected_args(custom_ami: Optional[str] = None):
                         "Rules": [
                             {
                                 "Name": "AutoScalingPolicyUp",
-                                "Description": "Scaling policy configured in the cluster-config.json",
+                                "Description": "Scaling policy configured in the dynamic config",
                                 "Action": {
                                     "SimpleScalingPolicyConfiguration": {
                                         "ScalingAdjustment": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"][
@@ -149,7 +149,7 @@ def _expected_args(custom_ami: Optional[str] = None):
                             },
                             {
                                 "Name": "AutoScalingPolicyDown",
-                                "Description": "Scaling policy configured in the cluster-config.json",
+                                "Description": "Scaling policy configured in the dynamic config",
                                 "Action": {
                                     "SimpleScalingPolicyConfiguration": {
                                         "ScalingAdjustment": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"][
@@ -179,7 +179,7 @@ def _expected_args(custom_ami: Optional[str] = None):
                     },
                 },
             ],
-            "Ec2KeyName": "EC2_KEY",
+            "Ec2KeyName": "",
             "KeepJobFlowAliveWhenNoSteps": True,
             "TerminationProtected": False,
             "Ec2SubnetId": "subnet1",

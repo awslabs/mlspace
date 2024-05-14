@@ -308,7 +308,7 @@ class EMRApplications:
     def to_dict(application_list: list):
         list_of_dicts = []
         for application in application_list:
-            list_of_dicts.append({"name": application.name})
+            list_of_dicts.append({"Name": application.name})
         return list_of_dicts
 
     @staticmethod
