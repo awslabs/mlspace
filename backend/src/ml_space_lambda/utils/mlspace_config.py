@@ -46,7 +46,6 @@ def get_environment_variables() -> dict:
             "BUCKET": os.getenv("BUCKET", "mlspace-data-bucket"),
             "S3_KEY": os.getenv("S3_KEY", "notebook-params.json"),
             "SYSTEM_TAG": os.getenv("SYSTEM_TAG", "MLSpace"),
-            "CLUSTER_CONFIG_KEY": os.getenv("CLUSTER_CONFIG_KEY", "cluster-config.json"),
             "DATASETS_TABLE": os.getenv("DATASETS_TABLE", "mlspace-datasets"),
             "PROJECTS_TABLE": os.getenv("PROJECTS_TABLE", "mlspace-projects"),
             "PROJECT_USERS_TABLE": os.getenv("PROJECT_USERS_TABLE", "mlspace-project-users"),

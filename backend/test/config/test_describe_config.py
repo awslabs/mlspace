@@ -45,7 +45,6 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
             "BUCKET": "mlspace-data-bucket",
             "S3_KEY": "notebook-params.json",
             "SYSTEM_TAG": "MLSpace",
-            "CLUSTER_CONFIG_KEY": "cluster-config.json",
             "DATASETS_TABLE": "mlspace-datasets",
             "PROJECTS_TABLE": "mlspace-projects",
             "PROJECT_USERS_TABLE": "mlspace-project-users",

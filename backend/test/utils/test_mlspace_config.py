@@ -51,7 +51,6 @@ def test_environment_variables():
             "BUCKET": "mlspace-data-bucket",
             "S3_KEY": "notebook-params.json",
             "SYSTEM_TAG": "MLSpace",
-            "CLUSTER_CONFIG_KEY": "cluster-config.json",
             "DATASETS_TABLE": "mlspace-datasets",
             "PROJECTS_TABLE": "mlspace-projects",
             "USERS_TABLE": "mlspace-users",
