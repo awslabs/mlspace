@@ -26,7 +26,7 @@ export const useUsername = (): string => {
     
     const username = auth.user?.profile.preferred_username;
     if (!username) {
-        throw 'No username available.';
+        throw new Error('No username available.');
     }
 
     return username;

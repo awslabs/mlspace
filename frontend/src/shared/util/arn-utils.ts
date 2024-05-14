@@ -22,21 +22,32 @@ export type Arn = {
     service: string,
     region: string,
     accountId: string,
-    resourceType: string,
-    resourceId?: string
+    resourceType?: string,
+    resourceId: string
 };
 
 export const arnStringToObject = (arn: string) : Arn => {
     const matches = arn.match(arnRegex);
-    // Check if there is a resource type
-    const slashIndex = matches[5].indexOf('/');
 
-    return {
-        partition: matches[1],
-        service: matches[2],
-        region: matches[3],
-        accountId: matches[4],
-        resourceType: slashIndex ? matches[5].slice(0, slashIndex) : matches[5],
-        resourceId: slashIndex ? matches[5].slice(slashIndex + 1) : undefined
-    };
+    if (matches?.length >= 6) {
+        // Check if there is a resource type
+        const slashIndex = matches[5].indexOf('/') > 0 ? matches[5].indexOf('/') : matches[5].indexOf(':') > 0 ? matches[5].indexOf(':') : undefined;
+
+        const result = {
+            partition: matches[1],
+            service: matches[2],
+            region: matches[3],
+            accountId: matches[4],
+            resourceId: matches[5]
+        };
+    
+        if (slashIndex > 0){
+            result.resourceType = matches[5].slice(0, slashIndex);
+            result.resourceId = matches[5].slice(slashIndex + 1);
+        }
+    
+        return result;
+    } else {
+        throw new TypeError('Invalid ARN string provided');
+    }
 };
