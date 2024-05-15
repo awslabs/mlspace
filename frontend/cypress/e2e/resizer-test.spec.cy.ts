@@ -14,13 +14,10 @@
   limitations under the License.
 */
 
-import { dataset } from './resources';
 import {
     BASE_URL,
-    DEFAULT_USERNAME,
     login,
 } from '../support/commands';
-import createWrapper from '@cloudscape-design/components/test-utils/selectors';
 import { TestProps } from '../support/test-initializer/types';
 
 describe('Dataset Tests', () => {
@@ -43,7 +40,7 @@ describe('Dataset Tests', () => {
 
     before(() => {
         cy.initializeTest(testProps);
-    })
+    });
 
     beforeEach(() => {
         Cypress.session.clearAllSavedSessions();

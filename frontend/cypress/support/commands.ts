@@ -26,7 +26,7 @@ import './table-commands/table';
 import 'cypress-file-upload';
 import { AuthType } from './test-initializer/types';
 // React 18
-import { mount } from 'cypress/react18'
+import { mount } from 'cypress/react18';
 
 export const AUTH_TYPE = Cypress.env('auth_type');
 export const BASE_URL = Cypress.env('base_url');
@@ -37,10 +37,10 @@ export const DEFAULT_PASSWORD = Cypress.env('password');
 
 
 Cypress.Commands.add('mount', (component, options) => {
-  // Wrap any parent components needed
-  // ie: return mount(<MyProvider>{component}</MyProvider>, options)
-  return mount(component, options)
-})
+    // Wrap any parent components needed
+    // ie: return mount(<MyProvider>{component}</MyProvider>, options)
+    return mount(component, options);
+});
 
 export function login (baseUrl: string = BASE_URL, username: string = DEFAULT_USERNAME, password: string = DEFAULT_PASSWORD) {
     if (AUTH_TYPE === AuthType.Cognito) {
