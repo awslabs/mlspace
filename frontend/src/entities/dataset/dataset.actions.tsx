@@ -77,17 +77,14 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, chil
     function handleDrop (event) {
         // Prevent default behavior (Prevent file from being opened)
         event.preventDefault();
+        document.getElementsByClassName('dropzone')[0].classList.add('display-none');
         console.log('drop');
         console.log(event);
-        //document.getElementsByClassName('dropzone')[0].classList.remove('drag-over');
         fileHandler(event);
-        if (event.target.classList.contains('dropzone')) {
-            event.target.classList.remove('drag-over');
-        }
+        
     }
 
     function dragEnterHandler (event) {
-        console.log('File(s) in drop zone');
         document.getElementsByClassName('dropzone')[0].classList.add('drag-over');
         if (event.target.classList.contains('dropzone')) {
             event.target.classList.add('drag-over');
@@ -97,42 +94,28 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, chil
     function dragOverHandler (event) {
         // Prevent default behavior (Prevent file from being opened)
         event.preventDefault();
-        //document.getElementsByClassName('dropzone')[0].classList.add('drag-over');
     }
 
-    function dragLeaveHandler (event) {
-        console.log('File(s) left drop zone');
+    function dragLeaveHandler () {
         document.getElementsByClassName('dropzone')[0].classList.remove('drag-over');
-        // console.log(document.getElementsByClassName('dropzone')[0]);
-        if (event.target.classList.contains('dropzone')) {
-            event.target.classList.remove('drag-over');
-        }
+        document.getElementsByClassName('dropzone')[0].classList.add('display-none');
+    }
+
+    function dragWindowEnterHandler () {
+        document.getElementsByClassName('dropzone')[0].classList.remove('display-none');
     }
 
     useEffect(() => {
-        // eslint-disable-next-line spellcheck/spell-checker
-        document.addEventListener('dragenter', dragEnterHandler);
-        // eslint-disable-next-line spellcheck/spell-checker
-        document.addEventListener('dragleave', dragLeaveHandler);
-        // eslint-disable-next-line spellcheck/spell-checker
-        document.addEventListener('dragover', dragOverHandler);
-        document.addEventListener('drop', handleDrop);
+        document.addEventListener('dragenter', dragWindowEnterHandler);
+
         return () => {
-            // eslint-disable-next-line spellcheck/spell-checker
-            document.removeEventListener('dragenter', dragEnterHandler);
-            // eslint-disable-next-line spellcheck/spell-checker
-            document.removeEventListener('dragleave', dragLeaveHandler);
-            // eslint-disable-next-line spellcheck/spell-checker
-            document.removeEventListener('dragover', dragOverHandler);
-            document.removeEventListener('drop', handleDrop);
+            document.removeEventListener('dragenter', dragWindowEnterHandler);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     
     
 
     async function fileHandler (event) {
-        console.log(event);
         const filesToUpload = Array.from(event.target?.files || event.dataTransfer?.files || []).map((file: File): DatasetResourceObject => ({
             bucket: '',
             type: 'object',
@@ -176,7 +159,7 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, chil
     }
 
     return <>
-        <div className='dropzone'/>
+        <div className='dropzone display-none' onDrop={handleDrop} onDragOver={dragOverHandler} onDragEnter={dragEnterHandler} onDragLeave={dragLeaveHandler}/>
         <Button
             data-cy={`dataset-upload-button-${children}`}
             iconName='upload'
@@ -305,9 +288,9 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
 
             <Condition condition={showUploadButton}>
                 <SpaceBetween size='xs' direction='horizontal'>
-                    <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} isFileUpload={false}>
+                    {/* <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} isFileUpload={false}>
                         Upload Files
-                    </UploadButton>
+                    </UploadButton> */}
                     <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} isFileUpload={true}>
                         Upload Folder
                     </UploadButton>
