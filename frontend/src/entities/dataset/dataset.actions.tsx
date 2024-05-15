@@ -101,8 +101,10 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, chil
         document.getElementsByClassName('dropzone')[0].classList.add('display-none');
     }
 
-    function dragWindowEnterHandler () {
-        document.getElementsByClassName('dropzone')[0].classList.remove('display-none');
+    function dragWindowEnterHandler (event) {
+        if (event.dataTransfer.types && (event.dataTransfer.types.indexOf ? event.dataTransfer.types.indexOf('Files') !== -1 : event.dataTransfer.types.contains('Files'))) {
+            document.getElementsByClassName('dropzone')[0].classList.remove('display-none');
+        }
     }
 
     useEffect(() => {
