@@ -1,0 +1,60 @@
+{
+	"Small": {
+		"size" : 3,
+		"master-type" : "m5.xlarge",
+		"core-type" : "m5.xlarge"
+	},
+	"Medium": {
+		"size" : 5,
+		"master-type" : "m5.xlarge",
+		"core-type" : "m5.xlarge"
+	},
+	"Large": {
+		"size" : 7,
+		"master-type" : "m5.xlarge",
+		"core-type" : "p3.8xlarge"
+	},
+	"auto-scaling": {
+		"min-instances" : 2,
+		"max-instances": 15,
+		"scale-out": {
+			"increment": 1,
+			"percentage-mem-available": 15.0,
+			"eval-periods": 1,
+			"cooldown": 300
+		},
+		"scale-in": {
+			"increment": -1,
+			"percentage-mem-available": 75.0,
+			"eval-periods": 1,
+			"cooldown": 300
+		}
+	},
+	"ami" : "CUSTOM_AMI",
+	"release" : "emr-6.2.0",
+	"log-location" : "s3://{LOG_BUCKET_NAME}",
+	"ec2-key" : "",
+	"applications" : [
+        {
+           "Name": "Hadoop"
+        },
+				{
+           "Name": "Spark"
+        },
+				{
+           "Name": "Ganglia"
+        },
+				{
+           "Name": "Hive"
+        },
+				{
+           "Name": "Tez"
+        },
+				{
+           "Name": "Presto"
+        },
+				{
+           "Name": "Livy"
+        }
+    ]
+}

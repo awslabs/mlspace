@@ -83,6 +83,9 @@ export const EMR_DEFAULT_ROLE_ARN = '';
 export const EMR_EC2_INSTANCE_ROLE_ARN = '';
 export const EMR_SECURITY_CONFIG_NAME = 'MLSpace-EMR-SecurityConfig';
 
+// The name of the EC2 key pair that can be used to connect to the master node using SSH as the user called “hadoop.”
+export const EMR_EC2_SSH_KEY = '';
+
 // Set this to false to disable access logging on all MLSpace S3 buckets and the APIGW
 export const ENABLE_ACCESS_LOGGING = true;
 // If access logs are enabled API Gateway will use the Cloudwatch role for your account

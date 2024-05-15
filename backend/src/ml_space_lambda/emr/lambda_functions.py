@@ -138,7 +138,7 @@ def create(event, context):
                 },
             },
         ],
-        "Ec2KeyName": "",
+        "Ec2KeyName": env_variables["EMR_EC2_SSH_KEY"],
         "KeepJobFlowAliveWhenNoSteps": True,
         "TerminationProtected": False,
         "Ec2SubnetId": subnet,
@@ -223,6 +223,37 @@ def _list_all_clusters_created_after_date(
 @api_wrapper
 def list_all(event, context):
     return query_resource_metadata(resource_metadata_dao, event, ResourceType.EMR_CLUSTER)
+
+
+@api_wrapper
+def list_applications(event, context):
+    # EMR doesn't seem to have an API for listing the applications available for a specific release label.
+    # If you describe a release label you can get the applications it supports, but we just want to display
+    # a list of all applications supported for every 6.X release labels
+    return [
+        "Python",
+        "Scala",
+        "Delta",
+        "Flink",
+        "Ganglia",
+        "HBase",
+        "HCatalog",
+        "Hadoop",
+        "Hive",
+        "Hudi",
+        "Hue",
+        "JupyterHub",
+        "Livy",
+        "MXNet",
+        "Oozie",
+        "Phoenix",
+        "Presto",
+        "Spark",
+        "Tensorflow",
+        "Tez",
+        "Zeppelin",
+        "Zookeeper",
+    ]
 
 
 @api_wrapper

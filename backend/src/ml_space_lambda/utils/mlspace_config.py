@@ -62,6 +62,7 @@ def get_environment_variables() -> dict:
             "EMR_EC2_ROLE_NAME": os.getenv("EMR_EC2_ROLE_NAME", "EMR_EC2_DefaultRole"),
             "EMR_SERVICE_ROLE_NAME": os.getenv("EMR_SERVICE_ROLE_NAME", "EMR_DefaultRole"),
             "EMR_SECURITY_CONFIGURATION": os.getenv("EMR_SECURITY_CONFIGURATION", "MLSpace-EMR-SecurityConfig"),
+            "EMR_EC2_SSH_KEY": os.getenv("EMR_EC2_SSH_KEY", ""),
             "NEW_USER_SUSPENSION_DEFAULT": os.getenv("NEW_USER_SUSPENSION_DEFAULT", "True"),
             "TRANSLATE_DATE_ROLE_ARN": os.getenv("TRANSLATE_DATE_ROLE_ARN", ""),
         }

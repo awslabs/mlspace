@@ -61,6 +61,7 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
             "EMR_EC2_ROLE_NAME": "EMR_EC2_DefaultRole",
             "EMR_SERVICE_ROLE_NAME": "EMR_DefaultRole",
             "EMR_SECURITY_CONFIGURATION": "MLSpace-EMR-SecurityConfig",
+            "EMR_EC2_SSH_KEY": "",
             "NEW_USER_SUSPENSION_DEFAULT": "True",
             "TRANSLATE_DATE_ROLE_ARN": "",
         },

@@ -63,6 +63,13 @@ export class EmrApiStack extends Stack {
                 method: 'PUT',
                 id: 'resource_scheduler-set-emr-termination',
             },
+            {
+                name: 'list_applications',
+                resource: 'emr',
+                description: 'Describe an EMR Cluster',
+                path: 'emr/applications',
+                method: 'GET',
+            },
         ];
 
         apis.forEach((f) => {

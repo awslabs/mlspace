@@ -205,6 +205,7 @@ export class ProjectsApiStack extends Stack {
                     EMR_SECURITY_CONFIGURATION: props.mlspaceConfig.EMR_SECURITY_CONFIG_NAME,
                     EMR_EC2_ROLE_NAME: props.emrEC2RoleName || '',
                     EMR_SERVICE_ROLE_NAME: props.emrServiceRoleName || '',
+                    EMR_EC2_SSH_KEY: props.mlspaceConfig.EMR_EC2_SSH_KEY,
                     DATA_BUCKET: props.dataBucketName,
                     LOG_BUCKET: props.cwlBucketName,
                 },
