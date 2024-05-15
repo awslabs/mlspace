@@ -257,6 +257,16 @@ def list_applications(event, context):
 
 
 @api_wrapper
+def list_release_labels(event, context):
+    response = emr.list_release_labels(
+        Filters={
+            "Prefix": "emr-6",
+        }
+    )
+    return {"ReleaseLabels": response["ReleaseLabels"]}
+
+
+@api_wrapper
 def get(event, context):
     cluster_id = event["pathParameters"]["clusterId"]
     response = emr.describe_cluster(ClusterId=cluster_id)

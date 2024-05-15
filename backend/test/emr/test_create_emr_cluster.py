@@ -36,8 +36,6 @@ TEST_ENV_CONFIG = {
     "EMR_SECURITY_CONFIGURATION": "Custom-EMR-Security-Config",
     "EMR_EC2_SSH_KEY": "some-key",
     "MANAGE_IAM_ROLES": "",
-    "BUCKET": "example_bucket",
-    "S3_KEY": "example_s3_key",
 }
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
@@ -77,6 +75,7 @@ MOCK_APP_CONFIG = {
         "EMRConfig": {
             "clusterSizes": [
                 {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
+                {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
             ],
             "autoScaling": {
                 "minInstances": 2,

@@ -66,8 +66,15 @@ export class EmrApiStack extends Stack {
             {
                 name: 'list_applications',
                 resource: 'emr',
-                description: 'Describe an EMR Cluster',
+                description: 'List all applications available to install and configure when launching a cluster',
                 path: 'emr/applications',
+                method: 'GET',
+            },
+            {
+                name: 'list_release_labels',
+                resource: 'emr',
+                description: 'List of available EMR release labels',
+                path: 'emr/release',
                 method: 'GET',
             },
         ];
