@@ -16,7 +16,7 @@
 
 import { dismissNotification } from '../cloudscape-utils/utils';
 import { ProjectProps } from '../test-initializer/types';
-import { BASE_URL, LAMBDA_ENDPOINT } from '../commands';
+import { BASE_URL, LAMBDA_ENDPOINT } from '../commands.tsx';
 
 const createProject = ({ name, description }: ProjectProps) => {
     cy.intercept('GET', `**/project/${name}**`).as('getProject');

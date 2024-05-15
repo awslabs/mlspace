@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AUTH_TYPE, BASE_URL, DEFAULT_USERNAME, DEFAULT_PASSWORD } from '../commands';
+import { AUTH_TYPE, BASE_URL, DEFAULT_USERNAME, DEFAULT_PASSWORD } from '../commands.tsx';
 import { AuthType, TestProps } from './types';
 
 let resizerErrorIframeClosed = false;

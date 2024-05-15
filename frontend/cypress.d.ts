@@ -14,7 +14,9 @@
   limitations under the License.
 */
 
-import { mount } from 'cypress/react';
+import { mount } from 'cypress/react18';
+import { MountOptions, MountReturn } from 'cypress/react';
+import { MemoryRouterProps } from 'react-router-dom';
 
 // Augment the Cypress namespace to include type definitions for
 // your custom command.
@@ -22,8 +24,22 @@ import { mount } from 'cypress/react';
 // with a <reference path="./component" /> at the top of your spec.
 declare global {
     namespace Cypress {
-        type Chainable = {
-            mount: typeof mount;
-        };
+        type Chainable {
+            /**
+             * Mounts a React node
+             * @param component React Node to mount
+             * @param options Additional options to pass into mount
+             */
+            mount(
+                component: React.ReactNode,
+                options?: MountOptions & { 
+                    routerProps?: MemoryRouterProps,
+                    viewportProps?: {
+                        height?: number,
+                        width?: number
+                    }
+                }
+            ): Cypress.Chainable<MountReturn>
+        }
     }
-}
+};

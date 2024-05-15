@@ -15,7 +15,7 @@
 */
 
 import createWrapper from '@cloudscape-design/components/test-utils/selectors';
-import { BASE_URL, capitalizeFirstLetter } from '../commands';
+import { BASE_URL, capitalizeFirstLetter } from '../commands.tsx';
 import { DatasetProps } from '../test-initializer/types';
 import { dismissNotification } from '../cloudscape-utils/utils';
 

@@ -27,6 +27,9 @@ import 'cypress-file-upload';
 import { AuthType } from './test-initializer/types';
 // React 18
 import { mount } from 'cypress/react18';
+import { MemoryRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import getStore from '../../src/config/store';
 
 export const AUTH_TYPE = Cypress.env('auth_type');
 export const BASE_URL = Cypress.env('base_url');
@@ -35,11 +38,36 @@ export const LAMBDA_ENDPOINT = Cypress.env('lambda_endpoint');
 export const DEFAULT_USERNAME = Cypress.env('username');
 export const DEFAULT_PASSWORD = Cypress.env('password');
 
+const store = getStore();
 
-Cypress.Commands.add('mount', (component, options) => {
-    // Wrap any parent components needed
-    // ie: return mount(<MyProvider>{component}</MyProvider>, options)
-    return mount(component, options);
+Cypress.Commands.add('mount', (component, options = {}) => {
+    // Create router properties for React
+    const { 
+        routerProps = { 
+            initialEntries: ['/'] 
+        },
+        viewportProps = {},
+        ...mountOptions 
+    } = options;
+
+    // Create a wrapper so that React components can be mounted
+    const wrapped = <MemoryRouter {...routerProps}>
+            <Provider store={store}>
+                {component}
+            </Provider>
+        </MemoryRouter>
+
+    // Sets default window environment variables that are commonly used across the application
+    cy.window().then((win) => {
+        win.env = {
+            APPLICATION_NAME: 'MLSpace'
+        };
+    });
+
+    // Allows for the viewport size to be customized with default sizing of 500x500
+    cy.viewport(viewportProps.width || 500, viewportProps.height || 500);
+
+    return mount(wrapped, mountOptions);
 });
 
 export function login (baseUrl: string = BASE_URL, username: string = DEFAULT_USERNAME, password: string = DEFAULT_PASSWORD) {

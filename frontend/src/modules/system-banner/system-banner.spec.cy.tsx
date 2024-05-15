@@ -25,6 +25,7 @@ it('Mounting the system banner', () => {
     // Set necessary window environment varialbes - don't need to be mocked since this is a simulated browser
     cy.window().then((win) => {
         win.env = {
+            ...win.env,
             SYSTEM_BANNER: {
                 backgroundColor: backgroundColor,
                 fontColor: textColor,
