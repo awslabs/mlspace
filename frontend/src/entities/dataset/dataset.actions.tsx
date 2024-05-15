@@ -15,7 +15,7 @@
 */
 
 import { useNavigate, useParams } from 'react-router-dom';
-import React, { RefObject, useRef, useState } from 'react';
+import React, { RefObject, useEffect, useRef, useState } from 'react';
 import { IDataset } from '../../shared/model/dataset.model';
 import {
     getDatasetsList,
@@ -42,6 +42,7 @@ import { prefixForPath, stripDatasetPrefix } from '../../modules/dataset/dataset
 import { Dispatch as ReduxDispatch } from '@reduxjs/toolkit';
 import { Dispatch as ReactDispatch } from 'react';
 import { DatasetContext } from '../../shared/util/dataset-utils';
+import './dataset.css';
 
 function DatasetActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -73,7 +74,109 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, chil
     const uploadFile: RefObject<HTMLInputElement> = useRef(null);
     const [disableUpload, setDisableUpload] = useState(false);
 
+    function handleDrop (event) {
+        // Prevent default behavior (Prevent file from being opened)
+        event.preventDefault();
+        console.log('drop');
+        console.log(event);
+        //document.getElementsByClassName('dropzone')[0].classList.remove('drag-over');
+        fileHandler(event);
+        if (event.target.classList.contains('dropzone')) {
+            event.target.classList.remove('drag-over');
+        }
+    }
+
+    function dragEnterHandler (event) {
+        console.log('File(s) in drop zone');
+        document.getElementsByClassName('dropzone')[0].classList.add('drag-over');
+        if (event.target.classList.contains('dropzone')) {
+            event.target.classList.add('drag-over');
+        }
+    }
+
+    function dragOverHandler (event) {
+        // Prevent default behavior (Prevent file from being opened)
+        event.preventDefault();
+        //document.getElementsByClassName('dropzone')[0].classList.add('drag-over');
+    }
+
+    function dragLeaveHandler (event) {
+        console.log('File(s) left drop zone');
+        document.getElementsByClassName('dropzone')[0].classList.remove('drag-over');
+        // console.log(document.getElementsByClassName('dropzone')[0]);
+        if (event.target.classList.contains('dropzone')) {
+            event.target.classList.remove('drag-over');
+        }
+    }
+
+    useEffect(() => {
+        // eslint-disable-next-line spellcheck/spell-checker
+        document.addEventListener('dragenter', dragEnterHandler);
+        // eslint-disable-next-line spellcheck/spell-checker
+        document.addEventListener('dragleave', dragLeaveHandler);
+        // eslint-disable-next-line spellcheck/spell-checker
+        document.addEventListener('dragover', dragOverHandler);
+        document.addEventListener('drop', handleDrop);
+        return () => {
+            // eslint-disable-next-line spellcheck/spell-checker
+            document.removeEventListener('dragenter', dragEnterHandler);
+            // eslint-disable-next-line spellcheck/spell-checker
+            document.removeEventListener('dragleave', dragLeaveHandler);
+            // eslint-disable-next-line spellcheck/spell-checker
+            document.removeEventListener('dragover', dragOverHandler);
+            document.removeEventListener('drop', handleDrop);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    
+    
+
+    async function fileHandler (event) {
+        console.log(event);
+        const filesToUpload = Array.from(event.target?.files || event.dataTransfer?.files || []).map((file: File): DatasetResourceObject => ({
+            bucket: '',
+            type: 'object',
+            key: `${state.datasetContext?.location || ''}${isFileUpload ? file.webkitRelativePath : file.name}`,
+            size: file.size,
+            file,
+            name: isFileUpload ? file.webkitRelativePath : file.name,
+        }));
+
+        switch (manageMode) {
+            case DatasetBrowserManageMode.Create:
+                setState({
+                    type: DatasetActionType.State,
+                    payload: {
+                        items: [...state.items, ...filesToUpload]
+                    }
+                });
+                break;
+            case DatasetBrowserManageMode.Edit:
+                if (state.datasetContext) {
+                    const filteringTextPrefix = prefixForPath(state.filteringText);
+                    if (filteringTextPrefix) {
+                        filesToUpload.forEach((file) => {
+                            file.key = [filteringTextPrefix, file.key].join('');
+                        });
+                    }
+                        
+                    setDisableUpload(true);
+                    // ensure cast to DatasetContext is valid
+                    if (state.datasetContext.name && state.datasetContext.type) {
+                        await uploadResources(state.datasetContext as DatasetContext, filesToUpload, notificationService);
+                    }
+                    setDisableUpload(false);
+
+                    // if the filter contains a prefix append that to the Location
+                    const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
+                    updateDatasetContext(effectiveContext, '', false);
+                }
+                break;
+        }
+    }
+
     return <>
+        <div className='dropzone'/>
         <Button
             data-cy={`dataset-upload-button-${children}`}
             iconName='upload'
@@ -90,48 +193,7 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, chil
             {...(isFileUpload ? {directory: '', webkitdirectory: ''} : {})}
             ref={uploadFile}
             style={{ display: 'none' }}
-            onChange={async (event) => {
-                const filesToUpload = Array.from(event.target?.files || []).map((file: File): DatasetResourceObject => ({
-                    bucket: '',
-                    type: 'object',
-                    key: `${state.datasetContext?.location || ''}${isFileUpload ? file.webkitRelativePath : file.name}`,
-                    size: file.size,
-                    file,
-                    name: isFileUpload ? file.webkitRelativePath : file.name,
-                }));
-
-                switch (manageMode) {
-                    case DatasetBrowserManageMode.Create:
-                        setState({
-                            type: DatasetActionType.State,
-                            payload: {
-                                items: [...state.items, ...filesToUpload]
-                            }
-                        });
-                        break;
-                    case DatasetBrowserManageMode.Edit:
-                        if (state.datasetContext) {
-                            const filteringTextPrefix = prefixForPath(state.filteringText);
-                            if (filteringTextPrefix) {
-                                filesToUpload.forEach((file) => {
-                                    file.key = [filteringTextPrefix, file.key].join('');
-                                });
-                            }
-                                
-                            setDisableUpload(true);
-                            // ensure cast to DatasetContext is valid
-                            if (state.datasetContext.name && state.datasetContext.type) {
-                                await uploadResources(state.datasetContext as DatasetContext, filesToUpload, notificationService);
-                            }
-                            setDisableUpload(false);
-
-                            // if the filter contains a prefix append that to the Location
-                            const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
-                            updateDatasetContext(effectiveContext, '', false);
-                        }
-                        break;
-                }
-            }}
+            onChange={fileHandler}
             onBlur={() => {
                 //This remains empty to regain keyboard focus
                 //to the button after user closes the input window
