@@ -31,9 +31,7 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                 applicationList.push({'M': {'name': {'S': application['Name']}}});
             }
         }
-    }
-    // If the cluster config doesn't exist, default to this list
-    if (!clusterConfig) {
+    } else {
         applicationList = [
             {'M': {'name': {'S': 'Hadoop'}}},
             {'M': {'name': {'S': 'Spark'}}},
@@ -44,6 +42,7 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
             {'M': {'name': {'S': 'Livy'}}}
         ];
     }
+
     const date = new Date();
     return {
         'versionId': {'N': '0'},

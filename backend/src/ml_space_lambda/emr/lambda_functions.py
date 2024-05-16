@@ -27,7 +27,7 @@ from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.enums import ResourceType
-from ml_space_lambda.utils.app_config_utils import get_app_config
+from ml_space_lambda.utils.app_config_utils import get_app_config, get_emr_application_list
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
@@ -230,30 +230,7 @@ def list_applications(event, context):
     # EMR doesn't seem to have an API for listing the applications available for a specific release label.
     # If you describe a release label you can get the applications it supports, but we just want to display
     # a list of all applications supported for every 6.X release labels
-    return [
-        "Python",
-        "Scala",
-        "Delta",
-        "Flink",
-        "Ganglia",
-        "HBase",
-        "HCatalog",
-        "Hadoop",
-        "Hive",
-        "Hudi",
-        "Hue",
-        "JupyterHub",
-        "Livy",
-        "MXNet",
-        "Oozie",
-        "Phoenix",
-        "Presto",
-        "Spark",
-        "Tensorflow",
-        "Tez",
-        "Zeppelin",
-        "Zookeeper",
-    ]
+    return get_emr_application_list()
 
 
 @api_wrapper

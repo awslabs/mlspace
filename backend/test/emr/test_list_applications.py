@@ -16,6 +16,7 @@
 
 from unittest import mock
 
+from ml_space_lambda.utils.app_config_utils import get_emr_application_list
 from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
@@ -28,30 +29,7 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.emr import lambda_functions as emr_handler
 
 
-MOCK_APPLICATION_LIST = [
-    "Python",
-    "Scala",
-    "Delta",
-    "Flink",
-    "Ganglia",
-    "HBase",
-    "HCatalog",
-    "Hadoop",
-    "Hive",
-    "Hudi",
-    "Hue",
-    "JupyterHub",
-    "Livy",
-    "MXNet",
-    "Oozie",
-    "Phoenix",
-    "Presto",
-    "Spark",
-    "Tensorflow",
-    "Tez",
-    "Zeppelin",
-    "Zookeeper",
-]
+MOCK_APPLICATION_LIST = get_emr_application_list()
 
 
 def test_list_applications():
