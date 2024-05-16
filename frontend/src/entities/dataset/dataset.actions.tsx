@@ -15,7 +15,7 @@
 */
 
 import { useNavigate, useParams } from 'react-router-dom';
-import React, { RefObject, useEffect, useRef, useState } from 'react';
+import React, { RefObject, useRef, useState } from 'react';
 import { IDataset } from '../../shared/model/dataset.model';
 import {
     getDatasetsList,
@@ -43,6 +43,7 @@ import { Dispatch as ReduxDispatch } from '@reduxjs/toolkit';
 import { Dispatch as ReactDispatch } from 'react';
 import { DatasetContext } from '../../shared/util/dataset-utils';
 import './dataset.css';
+import { FullScreenDragAndDrop } from './dataset-drag-and-drop';
 
 function DatasetActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -65,66 +66,25 @@ type UploadButtonProperties = {
     state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filteringText'>;
     setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>;
     updateDatasetContext: UpdateDatasetContextFunction;
+    disableUpload: boolean;
+    setDisableUpload: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, children}: UploadButtonProperties): React.ReactNode => {
+const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, disableUpload, setDisableUpload, children}: UploadButtonProperties): React.ReactNode => {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const {manageMode} = state;
     const uploadFile: RefObject<HTMLInputElement> = useRef(null);
-    const [disableUpload, setDisableUpload] = useState(false);
-
-    function handleDrop (event) {
-        // Prevent default behavior (Prevent file from being opened)
-        event.preventDefault();
-        document.getElementsByClassName('dropzone')[0].classList.add('display-none');
-        console.log('drop');
-        console.log(event);
-        fileHandler(event);
-        
-    }
-
-    function dragEnterHandler (event) {
-        document.getElementsByClassName('dropzone')[0].classList.add('drag-over');
-        if (event.target.classList.contains('dropzone')) {
-            event.target.classList.add('drag-over');
-        }
-    }
-
-    function dragOverHandler (event) {
-        // Prevent default behavior (Prevent file from being opened)
-        event.preventDefault();
-    }
-
-    function dragLeaveHandler () {
-        document.getElementsByClassName('dropzone')[0].classList.remove('drag-over');
-        document.getElementsByClassName('dropzone')[0].classList.add('display-none');
-    }
-
-    function dragWindowEnterHandler (event) {
-        if (event.dataTransfer.types && (event.dataTransfer.types.indexOf ? event.dataTransfer.types.indexOf('Files') !== -1 : event.dataTransfer.types.contains('Files'))) {
-            document.getElementsByClassName('dropzone')[0].classList.remove('display-none');
-        }
-    }
-
-    useEffect(() => {
-        document.addEventListener('dragenter', dragWindowEnterHandler);
-
-        return () => {
-            document.removeEventListener('dragenter', dragWindowEnterHandler);
-        };
-    }, []);
-    
-    
 
     async function fileHandler (event) {
-        const filesToUpload = Array.from(event.target?.files || event.dataTransfer?.files || []).map((file: File): DatasetResourceObject => ({
+        const arrayOfFiles = Array.from<File>(event.target?.files || event.dataTransfer?.files || []);
+        const filesToUpload = arrayOfFiles.map((file: File): DatasetResourceObject => ({
             bucket: '',
             type: 'object',
-            key: `${state.datasetContext?.location || ''}${isFileUpload ? file.webkitRelativePath : file.name}`,
+            key: `${state.datasetContext?.location || ''}${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
             size: file.size,
             file,
-            name: isFileUpload ? file.webkitRelativePath : file.name,
+            name: `${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
         }));
 
         switch (manageMode) {
@@ -161,7 +121,6 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, chil
     }
 
     return <>
-        <div className='dropzone display-none' onDrop={handleDrop} onDragOver={dragOverHandler} onDragEnter={dragEnterHandler} onDragLeave={dragLeaveHandler}/>
         <Button
             data-cy={`dataset-upload-button-${children}`}
             iconName='upload'
@@ -196,6 +155,7 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
     const {selectedItems, manageMode} = state;
     const showDeleteButton = manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false;
     const showUploadButton = manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false;
+    const [disableUpload, setDisableUpload] = useState(false);
 
     return (
         <SpaceBetween size='xs' direction='horizontal'>
@@ -289,11 +249,12 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
             </Condition>
 
             <Condition condition={showUploadButton}>
+                <FullScreenDragAndDrop state={state} setState={setState} updateDatasetContext={updateDatasetContext} setDisableUpload={setDisableUpload}/>
                 <SpaceBetween size='xs' direction='horizontal'>
-                    {/* <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} isFileUpload={false}>
+                    <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} setDisableUpload={setDisableUpload} isFileUpload={false} disableUpload={disableUpload}>
                         Upload Files
-                    </UploadButton> */}
-                    <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} isFileUpload={true}>
+                    </UploadButton>
+                    <UploadButton state={state} setState={setState} updateDatasetContext={updateDatasetContext} setDisableUpload={setDisableUpload} isFileUpload={true} disableUpload={disableUpload}>
                         Upload Folder
                     </UploadButton>
                 </SpaceBetween>
