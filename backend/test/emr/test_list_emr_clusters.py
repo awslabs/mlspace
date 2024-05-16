@@ -87,6 +87,41 @@ def test_list_emr_clusters_success(mock_resource_metadata_dao):
 
 
 @mock.patch("ml_space_lambda.emr.lambda_functions.resource_metadata_dao")
+def test_list_emr_clusters_filtered_success(mock_resource_metadata_dao):
+    mock_filtered_event = {
+        "pathParameters": {"projectName": MOCK_PROJECT_NAME},
+        "queryStringParameters": {"resourceStatus": "WAITING"},
+    }
+    mock_resource_metadata_dao.get_all_for_project_by_type.return_value = PagedMetadataResults(
+        [
+            _mock_emr_metadata("one"),
+            _mock_emr_metadata("two"),
+        ],
+        "fakeToken",
+    )
+    expected_response = generate_html_response(
+        200,
+        {
+            "records": [
+                _mock_emr_metadata("one").to_dict(),
+                _mock_emr_metadata("two").to_dict(),
+            ],
+            "nextToken": "fakeToken",
+        },
+    )
+    assert list_all(mock_filtered_event, mock_context) == expected_response
+    mock_resource_metadata_dao.get_all_for_project_by_type.assert_called_with(
+        MOCK_PROJECT_NAME,
+        ResourceType.EMR_CLUSTER,
+        limit=100,
+        next_token=None,
+        filter_expression="metadata.#s IN (:s0)",
+        filter_values={":s0": "WAITING"},
+        expression_names={"#s": "Status"},
+    )
+
+
+@mock.patch("ml_space_lambda.emr.lambda_functions.resource_metadata_dao")
 def test_list_emr_clusters_client_error(mock_resource_metadata_dao):
     error_msg = {
         "Error": {"Code": "MissingParameter", "Message": "Dummy error message."},

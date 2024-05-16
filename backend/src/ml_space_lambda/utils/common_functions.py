@@ -283,7 +283,11 @@ def query_resource_metadata(resource_metadata_dao, event, resource_type: Resourc
                 expressions.append(expression_key)
                 filter_values[expression_key] = states[i]
 
-            if resource_type == ResourceType.TRAINING_JOB:
+            if resource_type == ResourceType.EMR_CLUSTER:
+                kwargs["filter_expression"] = f"metadata.#s IN ({', '.join(expressions)})"
+                kwargs["filter_values"] = filter_values
+                kwargs["expression_names"] = {"#s": "Status"}
+            elif resource_type == ResourceType.TRAINING_JOB:
                 kwargs["filter_expression"] = f"metadata.TrainingJobStatus IN ({', '.join(expressions)})"
                 kwargs["filter_values"] = filter_values
 

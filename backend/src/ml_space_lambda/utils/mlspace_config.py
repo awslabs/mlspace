@@ -46,7 +46,6 @@ def get_environment_variables() -> dict:
             "BUCKET": os.getenv("BUCKET", "mlspace-data-bucket"),
             "S3_KEY": os.getenv("S3_KEY", "notebook-params.json"),
             "SYSTEM_TAG": os.getenv("SYSTEM_TAG", "MLSpace"),
-            "CLUSTER_CONFIG_KEY": os.getenv("CLUSTER_CONFIG_KEY", "cluster-config.json"),
             "DATASETS_TABLE": os.getenv("DATASETS_TABLE", "mlspace-datasets"),
             "PROJECTS_TABLE": os.getenv("PROJECTS_TABLE", "mlspace-projects"),
             "PROJECT_USERS_TABLE": os.getenv("PROJECT_USERS_TABLE", "mlspace-project-users"),
@@ -63,6 +62,7 @@ def get_environment_variables() -> dict:
             "EMR_EC2_ROLE_NAME": os.getenv("EMR_EC2_ROLE_NAME", "EMR_EC2_DefaultRole"),
             "EMR_SERVICE_ROLE_NAME": os.getenv("EMR_SERVICE_ROLE_NAME", "EMR_DefaultRole"),
             "EMR_SECURITY_CONFIGURATION": os.getenv("EMR_SECURITY_CONFIGURATION", "MLSpace-EMR-SecurityConfig"),
+            "EMR_EC2_SSH_KEY": os.getenv("EMR_EC2_SSH_KEY", ""),
             "NEW_USER_SUSPENSION_DEFAULT": os.getenv("NEW_USER_SUSPENSION_DEFAULT", "True"),
             "TRANSLATE_DATE_ROLE_ARN": os.getenv("TRANSLATE_DATE_ROLE_ARN", ""),
         }

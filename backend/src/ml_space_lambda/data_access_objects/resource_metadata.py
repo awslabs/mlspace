@@ -112,18 +112,26 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
         fetch_all: Optional[bool] = False,
         filter_expression: Optional[str] = None,
         filter_values: Optional[Dict[str, Any]] = None,
+        expression_names: Optional[str] = None,
     ) -> PagedMetadataResults:
         expression_values: Dict[str, Any] = {":project": project, ":resourceType": type}
         if filter_expression and filter_values:
             if ":project" in filter_values or ":resourceType" in filter_values:
-                raise ValueError("Reserved expression value contained specified in filter_values.")
+                raise ValueError("Reserved expression value specified in filter_values.")
             expression_values.update(filter_values)
+
+        if not expression_names:
+            expression_names = {"#p": "project"}
+        else:
+            if "#p" in expression_names:
+                raise ValueError("Reserved expression name, '#p', specified in expression_names.")
+            expression_names["#p"] = "project"
 
         ddb_response = self._query(
             index_name="ProjectResources",
             key_condition_expression="#p = :project and resourceType = :resourceType",
             expression_values=json.loads(dynamodb_json.dumps(expression_values)),
-            expression_names={"#p": "project"},
+            expression_names=expression_names,
             limit=limit if not fetch_all else None,
             page_response=not fetch_all,
             next_token=next_token,

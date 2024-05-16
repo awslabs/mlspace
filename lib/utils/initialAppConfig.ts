@@ -15,9 +15,34 @@
 */
 
 import { MLSpaceConfig } from './configTypes';
+import * as fs from 'fs';
 
 
 export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
+    //Check for properties set in config.json and default to that value if it exists
+    let clusterConfig = undefined;
+    let applicationList = [];
+    if (fs.existsSync('lib/resources/config/cluster-config.json')) {
+        clusterConfig = JSON.parse(
+            fs.readFileSync('lib/resources/config/cluster-config.json').toString('utf8')
+        );
+        if (clusterConfig['applications']) {
+            for (const application of clusterConfig['applications']) {
+                applicationList.push({'M': {'name': {'S': application['Name']}}});
+            }
+        }
+    } else {
+        applicationList = [
+            {'M': {'name': {'S': 'Hadoop'}}},
+            {'M': {'name': {'S': 'Spark'}}},
+            {'M': {'name': {'S': 'Ganglia'}}},
+            {'M': {'name': {'S': 'Hive'}}},
+            {'M': {'name': {'S': 'Tez'}}},
+            {'M': {'name': {'S': 'Presto'}}},
+            {'M': {'name': {'S': 'Livy'}}}
+        ];
+    }
+
     const date = new Date();
     return {
         'versionId': {'N': '0'},
@@ -54,48 +79,40 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
             }},
             'EMRConfig': {'M': {
                 'autoScaling': {'M': {
-                    'minInstances': {'N': '2'},
-                    'maxInstances': {'N': '15'},
+                    'minInstances': {'N': clusterConfig['auto-scaling']['min-instances'] || '2'},
+                    'maxInstances': {'N': clusterConfig['auto-scaling']['max-instances'] || '15'},
                     'scaleOut': {'M': {
-                        'cooldown': {'N': '300'},
-                        'increment': {'N': '1'},
-                        'evalPeriods': {'N': '1'},
-                        'percentageMemAvailable': {'N': '15'}}},
+                        'cooldown': {'N': clusterConfig['auto-scaling']['scale-out']['cooldown'] || '300'},
+                        'increment': {'N': clusterConfig['auto-scaling']['scale-out']['increment'] || '1'},
+                        'evalPeriods': {'N': clusterConfig['auto-scaling']['scale-out']['eval-periods'] || '1'},
+                        'percentageMemAvailable': {'N': clusterConfig['auto-scaling']['scale-out']['percentage-mem-available'] || '15'}}},
                     'scaleIn': {'M': {
-                        'cooldown': {'N': '300'},
-                        'increment': {'N': '-1'},
-                        'evalPeriods': {'N': '1'},
-                        'percentageMemAvailable': {'N': '75'}}},
+                        'cooldown': {'N': clusterConfig['auto-scaling']['scale-in']['cooldown'] || '300'},
+                        'increment': {'N': clusterConfig['auto-scaling']['scale-in']['increment'] || '-1'},
+                        'evalPeriods': {'N': clusterConfig['auto-scaling']['scale-in']['eval-periods'] || '1'},
+                        'percentageMemAvailable': {'N': clusterConfig['auto-scaling']['scale-in']['percentage-mem-available'] || '75'}}},
                 }},
                 'clusterSizes': {'L': [
                     {'M': {
-                        'name': {'S': 'Small'},
-                        'size': {'N': '3'},
-                        'masterType': {'S': 'm5.xlarge'},
-                        'coreType': {'S': 'm5.xlarge'},
+                        'name': {'S': clusterConfig['Small'] || 'Small'},
+                        'size': {'N': clusterConfig['Small']['size'] || '3'},
+                        'masterType': {'S': clusterConfig['Small']['master-type'] || 'm5.xlarge'},
+                        'coreType': {'S': clusterConfig['Small']['core-type'] || 'm5.xlarge'},
                     }},
                     {'M': {
-                        'name': {'S': 'Medium'},
-                        'size': {'N': '5'},
-                        'masterType': {'S': 'm5.xlarge'},
-                        'coreType': {'S': 'm5.xlarge'},
+                        'name': {'S': clusterConfig['Medium'] || 'Medium'},
+                        'size': {'N': clusterConfig['Medium']['size'] || '5'},
+                        'masterType': {'S': clusterConfig['Medium']['master-type'] || 'm5.xlarge'},
+                        'coreType': {'S': clusterConfig['Medium']['core-type'] || 'm5.xlarge'},
                     }},
                     {'M': {
-                        'name': {'S': 'Large'},
-                        'size': {'N': '7'},
-                        'masterType': {'S': 'm5.xlarge'},
-                        'coreType': {'S': 'p3.8xlarge'},
+                        'name': {'S': clusterConfig['Large'] || 'Large'},
+                        'size': {'N': clusterConfig['Large']['size'] || '7'},
+                        'masterType': {'S': clusterConfig['Large']['master-type'] || 'm5.xlarge'},
+                        'coreType': {'S': clusterConfig['Large']['core-type'] || 'p3.8xlarge'},
                     }}
                 ]},
-                'applications': {'L': [
-                    {'M': {'name': {'S': 'Hadoop'}}},
-                    {'M': {'name': {'S': 'Spark'}}},
-                    {'M': {'name': {'S': 'Ganglia'}}},
-                    {'M': {'name': {'S': 'Hive'}}},
-                    {'M': {'name': {'S': 'Tez'}}},
-                    {'M': {'name': {'S': 'Presto'}}},
-                    {'M': {'name': {'S': 'Livy'}}}
-                ]}
+                'applications': {'L': applicationList}
             }
             },
             'DisabledInstanceTypes': {'M': {
