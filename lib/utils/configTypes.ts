@@ -32,6 +32,7 @@ import {
     EMR_DEFAULT_ROLE_ARN,
     EMR_EC2_INSTANCE_ROLE_ARN,
     EMR_SECURITY_CONFIG_NAME,
+    EMR_EC2_SSH_KEY,
     ENABLE_ACCESS_LOGGING,
     ENABLE_GROUNDTRUTH,
     ENABLE_TRANSLATE,
@@ -95,6 +96,7 @@ export type MLSpaceConfig = {
     NOTEBOOK_PARAMETERS_FILE_NAME: string,
     // EMR settings
     EMR_SECURITY_CONFIG_NAME: string,
+    EMR_EC2_SSH_KEY: string,
     // OIDC settings
     IDP_ENDPOINT_SSM_PARAM: string,
     INTERNAL_OIDC_URL: string,
@@ -174,6 +176,7 @@ export function generateConfig () {
         NOTEBOOK_PARAMETERS_FILE_NAME: NOTEBOOK_PARAMETERS_FILE_NAME,
         // EMR settings
         EMR_SECURITY_CONFIG_NAME: EMR_SECURITY_CONFIG_NAME,
+        EMR_EC2_SSH_KEY: EMR_EC2_SSH_KEY,
         // OIDC settings
         IDP_ENDPOINT_SSM_PARAM: IDP_ENDPOINT_SSM_PARAM,
         INTERNAL_OIDC_URL: INTERNAL_OIDC_URL,
@@ -227,6 +230,16 @@ export function generateConfig () {
             fs.readFileSync('lib/config.json').toString('utf8')
         );
         _.merge(config, fileConfig);
+    }
+    //Check if the cluster-config file exists, and if it does use the ec2-key value
+    if (fs.existsSync('lib/resources/config/cluster-config.json')) {
+        const clusterConfig = JSON.parse(
+            fs.readFileSync('lib/resources/config/cluster-config.json').toString('utf8')
+        );
+        //Skip if ec2-key isn't defined or it's set to EC2_KEY which is the (invalid) default value
+        if (clusterConfig['ec2-key'] && clusterConfig['ec2-key'] !== 'EC2_KEY') {
+            config.EMR_EC2_SSH_KEY = clusterConfig['ec2-key'];
+        }
     }
 
     validateRequiredProperty(config.AWS_ACCOUNT, 'AWS_ACCOUNT');

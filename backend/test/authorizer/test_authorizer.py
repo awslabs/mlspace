@@ -2398,7 +2398,6 @@ def test_username_normalization(mock_user_dao, user: UserModel, method: str, all
     modified_policy_response = policy_response(allow=allow, user=user)
     modified_policy_response["principalId"] = response_username
 
-    print(f"caca = {response_username}")
     assert (
         lambda_handler(
             mock_event(
