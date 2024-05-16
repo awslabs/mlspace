@@ -207,7 +207,15 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                 <Condition condition={header !== undefined}>
                     { header }
                 </Condition>
-                
+
+                <Condition condition={manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false}>
+                    <div style={{border: 'dashed 1px', padding: '15px'}}>
+                        <Box textAlign='center'>
+                            Drag and drop files and folders you want to upload here, or choose Upload Files or Upload Folder.
+                        </Box>
+                    </div>
+                </Condition>
+
                 <Condition condition={manageMode !== DatasetBrowserManageMode.Create}>
                     <BreadcrumbGroup items={breadcrumbItems} onClick={(event) => {
                         event.preventDefault();

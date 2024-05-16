@@ -1,5 +1,5 @@
 .drag-over {
-    background: white !important;
+    background: var(--color-background-container-content-4un1ap)    !important;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -7,7 +7,7 @@
     z-index: 999999;
     outline-offset: -2rem;
     
-}
+}   
 
 .drag-over::after {
     content: "Drag the files and folders you want to upload here"
