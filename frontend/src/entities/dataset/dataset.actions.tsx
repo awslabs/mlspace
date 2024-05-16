@@ -60,6 +60,49 @@ function DatasetActions (props?: any) {
     );
 }
 
+export async function fileHandler (arrayOfFiles: File[], manageMode: DatasetBrowserManageMode | undefined, notificationService: any, {state, setState, updateDatasetContext, setDisableUpload,}: Pick<UploadButtonProperties, 'state' | 'setState' | 'updateDatasetContext' | 'setDisableUpload'>) {
+    const filesToUpload = arrayOfFiles.map((file: File): DatasetResourceObject => ({
+        bucket: '',
+        type: 'object',
+        key: `${state.datasetContext?.location || ''}${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
+        size: file.size,
+        file,
+        name: `${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
+    }));
+
+    switch (manageMode) {
+        case DatasetBrowserManageMode.Create:
+            setState({
+                type: DatasetActionType.State,
+                payload: {
+                    items: [...state.items, ...filesToUpload]
+                }
+            });
+            break;
+        case DatasetBrowserManageMode.Edit:
+            if (state.datasetContext) {
+                const filteringTextPrefix = prefixForPath(state.filteringText);
+                if (filteringTextPrefix) {
+                    filesToUpload.forEach((file) => {
+                        file.key = [filteringTextPrefix, file.key].join('');
+                    });
+                }
+                    
+                setDisableUpload(true);
+                // ensure cast to DatasetContext is valid
+                if (state.datasetContext.name && state.datasetContext.type) {
+                    await uploadResources(state.datasetContext as DatasetContext, filesToUpload, notificationService);
+                }
+                setDisableUpload(false);
+
+                // if the filter contains a prefix append that to the Location
+                const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
+                updateDatasetContext(effectiveContext, '', false);
+            }
+            break;
+    }
+}
+
 type UploadButtonProperties = {
     isFileUpload: boolean;
     children: string;
@@ -76,49 +119,7 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, disa
     const {manageMode} = state;
     const uploadFile: RefObject<HTMLInputElement> = useRef(null);
 
-    async function fileHandler (event) {
-        const arrayOfFiles = Array.from<File>(event.target?.files || event.dataTransfer?.files || []);
-        const filesToUpload = arrayOfFiles.map((file: File): DatasetResourceObject => ({
-            bucket: '',
-            type: 'object',
-            key: `${state.datasetContext?.location || ''}${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
-            size: file.size,
-            file,
-            name: `${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
-        }));
-
-        switch (manageMode) {
-            case DatasetBrowserManageMode.Create:
-                setState({
-                    type: DatasetActionType.State,
-                    payload: {
-                        items: [...state.items, ...filesToUpload]
-                    }
-                });
-                break;
-            case DatasetBrowserManageMode.Edit:
-                if (state.datasetContext) {
-                    const filteringTextPrefix = prefixForPath(state.filteringText);
-                    if (filteringTextPrefix) {
-                        filesToUpload.forEach((file) => {
-                            file.key = [filteringTextPrefix, file.key].join('');
-                        });
-                    }
-                        
-                    setDisableUpload(true);
-                    // ensure cast to DatasetContext is valid
-                    if (state.datasetContext.name && state.datasetContext.type) {
-                        await uploadResources(state.datasetContext as DatasetContext, filesToUpload, notificationService);
-                    }
-                    setDisableUpload(false);
-
-                    // if the filter contains a prefix append that to the Location
-                    const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
-                    updateDatasetContext(effectiveContext, '', false);
-                }
-                break;
-        }
-    }
+    
 
     return <>
         <Button
@@ -137,7 +138,7 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, disa
             {...(isFileUpload ? {directory: '', webkitdirectory: ''} : {})}
             ref={uploadFile}
             style={{ display: 'none' }}
-            onChange={fileHandler}
+            onChange={(event) => fileHandler(Array.from<File>(event.target?.files || event.dataTransfer?.files || []), manageMode, notificationService, {state, setState, updateDatasetContext, setDisableUpload})}
             onBlur={() => {
                 //This remains empty to regain keyboard focus
                 //to the button after user closes the input window

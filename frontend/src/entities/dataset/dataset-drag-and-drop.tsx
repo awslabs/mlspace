@@ -16,24 +16,21 @@
 
 import React from 'react';
 import { useEffect } from 'react';
-import { DatasetActionType, DatasetResourceObject } from '../../modules/dataset/dataset-browser.reducer';
 import { useAppDispatch } from '../../config/store';
 import NotificationService from '../../shared/layout/notification/notification.service';
-import { DatasetBrowserManageMode } from '../../modules/dataset/dataset-browser.types';
-import { prefixForPath } from '../../modules/dataset/dataset-browser.utils';
-import { uploadResources } from './dataset.service';
-import { DatasetContext } from '../../shared/util/dataset-utils';
+import { fileHandler } from './dataset.actions';
+
 
 export const FullScreenDragAndDrop = ({state, setState, updateDatasetContext, setDisableUpload}): React.ReactNode => {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const {manageMode} = state;
 
-    function handleDrop (event) {
+    async function handleDrop (event) {
         // Prevent default behavior (Prevent file from being opened)
         event.preventDefault();
         document.getElementsByClassName('dropzone')[0].classList.add('display-none');
-        fileHandler(event);
+        fileHandler(await getFilesAsync(event.dataTransfer), manageMode, notificationService, {state, setState, updateDatasetContext, setDisableUpload});
     }
 
     function dragEnterHandler (event) {
@@ -145,49 +142,6 @@ export const FullScreenDragAndDrop = ({state, setState, updateDatasetContext, se
     // Helps with explicit typing
     function isFile (entry: FileSystemEntry): entry is FileSystemFileEntry {
         return entry.isFile;
-    }
-
-    async function fileHandler (event) {
-        const arrayOfFiles = await getFilesAsync(event.dataTransfer);
-        const filesToUpload = arrayOfFiles.map((file: File): DatasetResourceObject => ({
-            bucket: '',
-            type: 'object',
-            key: `${state.datasetContext?.location || ''}${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
-            size: file.size,
-            file,
-            name: `${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
-        }));
-        switch (manageMode) {
-            case DatasetBrowserManageMode.Create:
-                setState({
-                    type: DatasetActionType.State,
-                    payload: {
-                        items: [...state.items, ...filesToUpload]
-                    }
-                });
-                break;
-            case DatasetBrowserManageMode.Edit:
-                if (state.datasetContext) {
-                    const filteringTextPrefix = prefixForPath(state.filteringText);
-                    if (filteringTextPrefix) {
-                        filesToUpload.forEach((file) => {
-                            file.key = [filteringTextPrefix, file.key].join('');
-                        });
-                    }
-                    
-                    setDisableUpload(true);
-                    // ensure cast to DatasetContext is valid
-                    if (state.datasetContext.name && state.datasetContext.type) {
-                        await uploadResources(state.datasetContext as DatasetContext, filesToUpload, notificationService);
-                    }
-                    setDisableUpload(false);
-
-                    // if the filter contains a prefix append that to the Location
-                    const effectiveContext = {...state.datasetContext, location: [state.datasetContext.location, filteringTextPrefix].join('')};
-                    updateDatasetContext(effectiveContext, '', false);
-                }
-                break;
-        }
     }
 
     return (
