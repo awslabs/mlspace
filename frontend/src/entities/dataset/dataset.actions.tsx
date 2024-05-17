@@ -64,10 +64,10 @@ export async function fileHandler (arrayOfFiles: File[], manageMode: DatasetBrow
     const filesToUpload = arrayOfFiles.map((file: File): DatasetResourceObject => ({
         bucket: '',
         type: 'object',
-        key: `${state.datasetContext?.location || ''}${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
+        key: `${state.datasetContext?.location || ''}${file.webkitRelativePath || file.name}`,
         size: file.size,
         file,
-        name: `${file.webkitRelativePath ? file.webkitRelativePath : file.name}`,
+        name: `${file.webkitRelativePath || file.name}`,
     }));
 
     switch (manageMode) {
