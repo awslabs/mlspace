@@ -21,9 +21,9 @@ import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { NotificationProp } from './notifications.props';
 
 function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
-    function generateNotification (header: string, type: FlashbarProps.Type) {
-        const id = v4();
-        dispatch(addNotification({ header: header, type: type, id: id }));
+    function generateNotification (header: string, type: FlashbarProps.Type, id: string = v4(), content: React.ReactNode = null) {
+        dispatch(clearNotification(id));
+        dispatch(addNotification({ header: header, type: type, id: id , content: content}));
         return id;
     }
 
@@ -33,6 +33,7 @@ function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
             header: props.header,
             type: props.type,
             dismissible: true,
+            content: props.content || null,
             onDismiss: () => dispatch(clearNotification(props.id)),
             dismissLabel: 'Dismiss notification',
         } as FlashbarProps.MessageDefinition;

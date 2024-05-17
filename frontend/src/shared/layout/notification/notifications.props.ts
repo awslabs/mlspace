@@ -20,4 +20,5 @@ export type NotificationProp = {
     header: string;
     type: FlashbarProps.Type;
     id: string;
+    content?: React.ReactNode;
 };

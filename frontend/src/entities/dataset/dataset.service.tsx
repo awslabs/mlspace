@@ -19,6 +19,8 @@ import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 import axios from '../../shared/util/axios-utils';
 import { default as Axios } from 'axios';
 import { DatasetContext } from '../../shared/util/dataset-utils';
+import { ProgressBar } from '@cloudscape-design/components';
+import React from 'react';
 
 export const getPresignedUrls = async (data: any) => {
     const requestUrl = '/dataset/presigned-url';
@@ -144,6 +146,17 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
 
             if (uploadResponse.status === 204) {
                 successCount++;
+                notificationService.generateNotification(
+                    `Successfully uploaded ${successCount}/${resourceObjects.length} file(s).`,
+                    'in-progress',
+                    'upload-notification',
+                    (<ProgressBar
+                        label='Uploading files to dataset'
+                        description={`Uploading ${resourceObject.name}`}
+                        value={successCount / resourceObjects.length * 100}
+                        variant='flash'
+                    />)
+                );
                 continue;
             }
         }
@@ -154,7 +167,13 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
     if (successCount > 0) {
         notificationService.generateNotification(
             `Successfully uploaded ${successCount} file(s).`,
-            'success'
+            'success',
+            'upload-notification',
+            (<ProgressBar
+                label='Uploading files to dataset'
+                value={successCount / resourceObjects.length * 100}
+                variant='flash'
+            />)
         );
     }
     
@@ -162,7 +181,7 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
         notificationService.generateNotification(
             `Failed to upload file: ${failedUploads.pop()}` +
                 (failedUploads.length > 0 ? ` and ${failedUploads.length} other files.` : '.'),
-            'error'
+            'error',
         );
     }
 }
