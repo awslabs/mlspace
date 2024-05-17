@@ -30,4 +30,5 @@
 .drop-box {
     border: dashed 1px;
     padding: 15px;
+    border-radius: var(--border-radius-container-wqv1zi);
 }
