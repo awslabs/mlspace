@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useEffect } from 'react';
 import { useAppDispatch } from '../../config/store';
 import NotificationService from '../../shared/layout/notification/notification.service';
@@ -24,19 +24,21 @@ import { fileHandler } from './dataset.actions';
 export const FullScreenDragAndDrop = ({state, setState, updateDatasetContext, setDisableUpload}): React.ReactNode => {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
+    const dropzone = useRef<HTMLDivElement>(null);
     const {manageMode} = state;
 
     async function handleDrop (event) {
         // Prevent default behavior (Prevent file from being opened)
         event.preventDefault();
-        document.getElementsByClassName('dropzone')[0].classList.add('display-none');
-        fileHandler(await getFilesAsync(event.dataTransfer), manageMode, notificationService, {state, setState, updateDatasetContext, setDisableUpload});
+        if (dropzone.current !== null) {
+            dropzone.current.classList.add('display-none');
+            fileHandler(await getFilesAsync(event.dataTransfer), manageMode, notificationService, {state, setState, updateDatasetContext, setDisableUpload});
+        }          
     }
 
-    function dragEnterHandler (event) {
-        document.getElementsByClassName('dropzone')[0].classList.add('drag-over');
-        if (event.target.classList.contains('dropzone')) {
-            event.target.classList.add('drag-over');
+    function dragEnterHandler () {
+        if (dropzone.current !== null) {
+            dropzone.current.classList.add('drag-over');
         }
     }
 
@@ -46,13 +48,15 @@ export const FullScreenDragAndDrop = ({state, setState, updateDatasetContext, se
     }
 
     function dragLeaveHandler () {
-        document.getElementsByClassName('dropzone')[0].classList.remove('drag-over');
-        document.getElementsByClassName('dropzone')[0].classList.add('display-none');
+        if (dropzone.current !== null) {
+            dropzone.current.classList.remove('drag-over');
+            dropzone.current.classList.add('display-none');
+        }
     }
 
     function dragWindowEnterHandler (event) {
-        if (event.dataTransfer.types && (event.dataTransfer.types.indexOf ? event.dataTransfer.types.indexOf('Files') !== -1 : event.dataTransfer.types.contains('Files'))) {
-            document.getElementsByClassName('dropzone')[0].classList.remove('display-none');
+        if (event.dataTransfer.types && (event.dataTransfer.types.indexOf ? event.dataTransfer.types.indexOf('Files') !== -1 : event.dataTransfer.types.contains('Files')) && dropzone.current) {
+            dropzone.current.classList.remove('display-none');
         }
     }
 
@@ -145,8 +149,6 @@ export const FullScreenDragAndDrop = ({state, setState, updateDatasetContext, se
     }
 
     return (
-        <>
-            <div className='dropzone display-none' onDrop={handleDrop} onDragOver={dragOverHandler} onDragEnter={dragEnterHandler} onDragLeave={dragLeaveHandler}/>
-        </>
+        <div ref={dropzone} className='dropzone display-none' onDrop={handleDrop} onDragOver={dragOverHandler} onDragEnter={dragEnterHandler} onDragLeave={dragLeaveHandler}/>
     );
 };
