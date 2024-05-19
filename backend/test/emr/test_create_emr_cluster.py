@@ -35,6 +35,7 @@ TEST_ENV_CONFIG = {
     "EMR_SERVICE_ROLE_NAME": "Custom-EMR-ServiceRole",
     "EMR_SECURITY_CONFIGURATION": "Custom-EMR-Security-Config",
     "EMR_EC2_SSH_KEY": "some-key",
+    "EMR_EC2_SSH_KEY": "some-key",
     "MANAGE_IAM_ROLES": "",
 }
 
@@ -98,12 +99,15 @@ def _expected_args(custom_ami: Optional[str] = None):
         "LogUri": "s3://mlspace-log-bucket",
         "ReleaseLabel": MOCK_RELEASE_LABEL,
         "Applications": [{"Name": "Hadoop"}, {"Name": "Spark"}],
+        "ReleaseLabel": MOCK_RELEASE_LABEL,
+        "Applications": [{"Name": "Hadoop"}, {"Name": "Spark"}],
         "Instances": {
             "InstanceGroups": [
                 {
                     "Name": "Master",
                     "Market": "ON_DEMAND",
                     "InstanceRole": "MASTER",
+                    "InstanceType": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterSizes"][0]["masterType"],
                     "InstanceType": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterSizes"][0]["masterType"],
                     "InstanceCount": 1,
                 },
