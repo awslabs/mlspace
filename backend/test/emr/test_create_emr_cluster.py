@@ -84,8 +84,8 @@ MOCK_APP_CONFIG = {
                 "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
             },
             "applications": [
-                {"name": "Hadoop"},
-                {"name": "Spark"},
+                {"Name": "Hadoop"},
+                {"Name": "Spark"},
             ],
         },
     },
