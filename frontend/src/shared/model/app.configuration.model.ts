@@ -62,7 +62,7 @@ export type ScalingPolicy = {
 };
 
 export type Application = {
-    name: string;
+    Name: string;
 };
 
 export type IProjectCreation = {
@@ -150,7 +150,7 @@ export const defaultConfiguration: IAppConfiguration = {
                 }
             },
             applications: [{
-                name: ''
+                Name: ''
             }]
         },
         ProjectCreation: {

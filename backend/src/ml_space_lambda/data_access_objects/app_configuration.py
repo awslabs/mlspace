@@ -316,7 +316,7 @@ class EMRApplications:
         # Given a list of cluster sizes, parse them into a list of ClusterSize objects
         application_object_list = []
         for application in application_list:
-            application_object_list.append(EMRApplications(application["name"]))
+            application_object_list.append(EMRApplications(application["Name"]))
         return application_object_list
 
 

@@ -255,6 +255,7 @@
                     "nlists",
                     "ngrams",
                     "nms",
+                    "nonpositive",
                     "nthread",
                     "ntm",
                     "nullable",
