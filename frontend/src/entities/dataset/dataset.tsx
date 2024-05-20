@@ -39,7 +39,7 @@ export const Dataset = () => {
     !projectName ? DocTitle('Datasets') : DocTitle(projectName!.concat(' Datasets'));
 
     useEffect(() => {
-        dispatch(getDatasetsList(projectName));
+        dispatch(getDatasetsList({projectName}));
         dispatch(
             setBreadcrumbs([
                 getBase(projectName),

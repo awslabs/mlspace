@@ -56,7 +56,7 @@ type TableProps<Entry = TableEntry> = {
     focusProps?: any;
     focusFileUploadProps?: any;
     serverRequestProps?: ServerRequestProps;
-    serverFetch?: AsyncThunk<any, ServerRequestProps, any>;
+    serverFetch?: AsyncThunk<any, ServerRequestProps | undefined, any>;
     storeClear?: ActionCreatorWithoutPayload;
 };
 
