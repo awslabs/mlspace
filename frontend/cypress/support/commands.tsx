@@ -29,7 +29,9 @@ import { AuthType } from './test-initializer/types';
 import { mount } from 'cypress/react18';
 import { MemoryRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import getStore from '../../src/config/store';
+import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
+import { defaultConfiguration } from '../../src/shared/model/app.configuration.model';
 
 export const AUTH_TYPE = Cypress.env('auth_type');
 export const BASE_URL = Cypress.env('base_url');
@@ -38,11 +40,17 @@ export const LAMBDA_ENDPOINT = Cypress.env('lambda_endpoint');
 export const DEFAULT_USERNAME = Cypress.env('username');
 export const DEFAULT_PASSWORD = Cypress.env('password');
 
-const store = getStore();
-
 Cypress.Commands.add('mount', (component, options = {}) => {
-    // Create router properties for React
-    const { 
+    // The thunk middleware is required if the component is making dispatch calls
+    const mockStore = configureStore([thunk]);
+
+    // Extract vars that can be modified from options
+    let {
+        initialStoreState = {},
+    } = options;
+
+    // Extract constant vars from options
+    const {
         routerProps = { 
             initialEntries: ['/'] 
         },
@@ -50,16 +58,38 @@ Cypress.Commands.add('mount', (component, options = {}) => {
         ...mountOptions 
     } = options;
 
+    // Merge the provided initialStoreState with common default values
+    initialStoreState = _.merge({
+        appConfig: { 
+            appConfig: {
+                ..._.cloneDeep(defaultConfiguration)
+            } 
+        },
+        project: {
+            projects: [],
+            project: {}
+        },
+        user: {
+            currentUser: 'co'
+        }
+    }, initialStoreState);
+
+    const store = mockStore(initialStoreState);
+
+    // TODO: Remove this
+    // console.log(store.getState());
+
     // Create a wrapper so that React components can be mounted
     const wrapped = <MemoryRouter {...routerProps}>
-            <Provider store={store}>
-                {component}
-            </Provider>
-        </MemoryRouter>
+        <Provider store={store}>
+            {component}
+        </Provider>
+    </MemoryRouter>;
 
     // Sets default window environment variables that are commonly used across the application
     cy.window().then((win) => {
         win.env = {
+            ...win.env,
             APPLICATION_NAME: 'MLSpace'
         };
     });

@@ -40,14 +40,8 @@ it('Basic Test of Project Create', () => {
         // The request body is a string and must be parsed to JSON
         const body = JSON.parse(request.body);
 
-        // Check individual components of the request
-        expect(body.description).eq(testProjectDescription);
-        // Objects must use deep.equal to do nested comparisons
-        expect(body.metadata).deep.eq({terminationConfiguration:{}});
-        expect(body.name).eq(testProjectName);
-        expect(body.suspended).eq(false);
-
         // Perform a full object comparison
+        // Objects must use deep.equal to do nested comparisons
         expect(body).to.deep.eq(
             {
                 description: testProjectDescription,

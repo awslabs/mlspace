@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { mount } from 'cypress/react18';
 import { MountOptions, MountReturn } from 'cypress/react';
 import { MemoryRouterProps } from 'react-router-dom';
 
@@ -24,7 +23,7 @@ import { MemoryRouterProps } from 'react-router-dom';
 // with a <reference path="./component" /> at the top of your spec.
 declare global {
     namespace Cypress {
-        type Chainable {
+        type Chainable = {
             /**
              * Mounts a React node
              * @param component React Node to mount
@@ -40,6 +39,6 @@ declare global {
                     }
                 }
             ): Cypress.Chainable<MountReturn>
-        }
+        };
     }
-};
+}
