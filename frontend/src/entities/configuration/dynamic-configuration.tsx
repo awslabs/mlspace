@@ -194,7 +194,7 @@ export function DynamicConfiguration () {
         for (const option of detail.selectedOptions) {
             newApps.push({Name: option.value});
         }
-        state.form.configuration.EMRConfig.applications = newApps;
+        setFields({ 'configuration.EMRConfig.applications': newApps });
     };
 
     return (
@@ -216,15 +216,26 @@ export function DynamicConfiguration () {
                     {<pre>TODO</pre>}
                 </ExpandableSection>
                 <ExpandableSection headerText='EMR Config' variant='default' defaultExpanded>
-                    <Container
-                        header={
-                            <Header
-                                variant='h2'
-                                description='The cluster size options that users can select from when creating a new Amazon EMR Cluster.'
-                            >
-                                Cluster Sizes
-                            </Header>
-                        }
+                    <ExpandableSection 
+                        headerText='Applications'
+                        variant='default' 
+                        headingTagOverride='h3' 
+                        headerDescription='A list of applications for Amazon EMR to install and configure when launching the cluster.'
+                    >
+                        <Multiselect
+                            selectedOptions={selectedApplicationOptions}
+                            onChange={({ detail }) =>
+                                addApplication(detail)
+                            }
+                            options={applicationOptions}
+                            placeholder='Select applications'
+                        />
+                    </ExpandableSection>
+                    <ExpandableSection 
+                        headerText='Cluster Sizes'
+                        variant='default' 
+                        headingTagOverride='h3' 
+                        headerDescription='The cluster size options that users can select from when creating a new Amazon EMR Cluster.'
                     >
                         <ClusterSizeConfiguration
                             item={
@@ -234,16 +245,12 @@ export function DynamicConfiguration () {
                             touchFields={touchFields}
                             formErrors={formErrors}
                         />
-                    </Container>
-                    <Container
-                        header={
-                            <Header
-                                variant='h2'
-                                description='An automatic scaling policy for a core instance group or task instance group in an Amazon EMR cluster. The automatic scaling policy defines how an instance group dynamically adds and terminates Amazon EC2 instances.'
-                            >
-                                Auto Scaling Policy
-                            </Header>
-                        }
+                    </ExpandableSection>
+                    <ExpandableSection 
+                        headerText='Auto Scaling Policy'
+                        variant='default' 
+                        headingTagOverride='h3' 
+                        headerDescription='An automatic scaling policy for a core instance group or task instance group in an Amazon EMR cluster. The automatic scaling policy defines how an instance group dynamically adds and terminates Amazon EC2 instances.'
                     >
                         <SpaceBetween direction='vertical' size='m'>
                             <FormField
@@ -277,7 +284,6 @@ export function DynamicConfiguration () {
                                 />
                             </FormField>
                             <ExpandableSection
-                                defaultExpanded={true}
                                 headerText='Scale-Out Policy'
                                 headingTagOverride='h4'
                                 headerDescription='Determines when new Amazon EC2 instances will be provisioned to the cluster.'
@@ -346,7 +352,6 @@ export function DynamicConfiguration () {
                                 </SpaceBetween>
                             </ExpandableSection>
                             <ExpandableSection
-                                defaultExpanded={true}
                                 headerText='Scale-In Policy'
                                 headingTagOverride='h4'
                                 headerDescription='Determines when existing Amazon EC2 instances will released from the cluster.'
@@ -415,26 +420,7 @@ export function DynamicConfiguration () {
                                 </SpaceBetween>
                             </ExpandableSection>
                         </SpaceBetween>
-                    </Container>
-                    <Container
-                        header={
-                            <Header
-                                variant='h2'
-                                description='A list of applications for Amazon EMR to install and configure when launching the cluster.'
-                            >
-                                Applications
-                            </Header>
-                        }
-                    >
-                        <Multiselect
-                            selectedOptions={selectedApplicationOptions}
-                            onChange={({ detail }) =>
-                                addApplication(detail)
-                            }
-                            options={applicationOptions}
-                            placeholder='Select applications'
-                        />
-                    </Container>
+                    </ExpandableSection>
                 </ExpandableSection>
                 <ExpandableSection headerText='Project Creation' variant='default' defaultExpanded>
                     <Toggle

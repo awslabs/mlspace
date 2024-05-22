@@ -32,8 +32,7 @@ export function ClusterSizeConfiguration (props: ClusterSizesProps) {
             {item.configuration.EMRConfig.clusterSizes.map((clusterSize, index) => {
                 return (
                     <ExpandableSection
-                        defaultExpanded={true}
-                        headerText={clusterSize.name}
+                        headerText={`Cluster Size ${index + 1}: ${clusterSize.name}`}
                         headingTagOverride='h4'
                     >
                         <SpaceBetween direction='vertical' size='s'>
@@ -86,7 +85,7 @@ export function ClusterSizeConfiguration (props: ClusterSizesProps) {
     );
 }
 
-type ClusterSizeProps = FormProps<(ClusterSize)>;
+type ClusterSizeProps = FormProps<ClusterSize>;
 function ClusterSizeField (props: ClusterSizeProps) {
     // This setFields is prefixed to reference the app config
     const { item, setFields, touchFields, formErrors } = props;
