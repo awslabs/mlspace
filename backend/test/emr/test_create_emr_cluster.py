@@ -35,7 +35,6 @@ TEST_ENV_CONFIG = {
     "EMR_SERVICE_ROLE_NAME": "Custom-EMR-ServiceRole",
     "EMR_SECURITY_CONFIGURATION": "Custom-EMR-Security-Config",
     "EMR_EC2_SSH_KEY": "some-key",
-    "EMR_EC2_SSH_KEY": "some-key",
     "MANAGE_IAM_ROLES": "",
 }
 
