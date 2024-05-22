@@ -15,69 +15,69 @@
 */
 import React from 'react';
 import { Button, ExpandableSection, FormField, Input, SpaceBetween } from '@cloudscape-design/components';
-import { ClusterSize, IAppConfiguration } from '../../shared/model/app.configuration.model';
+import { ClusterType, IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { FormProps } from '../jobs/form-props';
 import { prefixedSetFields, prefixedTouchFields } from '../../shared/validation';
 import Condition from '../../modules/condition';
 import { InstanceTypeSelector } from '../../shared/metadata/instance-type-dropdown';
 
 
-export type ClusterSizesProps = FormProps<(IAppConfiguration)>;
+export type ClusterTypesProps = FormProps<(IAppConfiguration)>;
 
-export function ClusterSizeConfiguration (props: ClusterSizesProps) {
+export function ClusterTypeConfiguration (props: ClusterTypesProps) {
     const { item, setFields, touchFields, formErrors } = props;
 
     return (
         <SpaceBetween direction='vertical' size='s'>
-            {item.configuration.EMRConfig.clusterSizes.map((clusterSize, index) => {
+            {item.configuration.EMRConfig.clusterTypes.map((clusterType, index) => {
                 return (
                     <ExpandableSection
-                        headerText={`Cluster Size ${index + 1}: ${clusterSize.name}`}
+                        headerText={`Cluster Type ${index + 1}: ${clusterType.name}`}
                         headingTagOverride='h4'
                     >
                         <SpaceBetween direction='vertical' size='s'>
-                            <ClusterSizeField
-                                item={clusterSize}
+                            <ClusterTypeField
+                                item={clusterType}
                                 setFields={prefixedSetFields(
-                                    `configuration.EMRConfig.clusterSizes[${index}]`,
+                                    `configuration.EMRConfig.clusterTypes[${index}]`,
                                     setFields
                                 )}
                                 touchFields={prefixedTouchFields(
-                                    `configuration.EMRConfig.clusterSizes[${index}]`,
+                                    `configuration.EMRConfig.clusterTypes[${index}]`,
                                     touchFields
                                 )}
-                                formErrors={formErrors?.configuration?.EMRConfig?.clusterSizes?.[index]}
+                                formErrors={formErrors?.configuration?.EMRConfig?.clusterTypes?.[index]}
                             />
-                            <Condition condition={item.configuration.EMRConfig.clusterSizes.length > 1}>
+                            <Condition condition={item.configuration.EMRConfig.clusterTypes.length > 1}>
                                 <Button
                                     variant='normal'
                                     iconName='close'
                                     onClick={() => {
                                         setFields({
-                                            'configuration.EMRConfig.clusterSizes': item.configuration.EMRConfig.clusterSizes.filter(
-                                                (element) => element !== clusterSize
+                                            'configuration.EMRConfig.clusterTypes': item.configuration.EMRConfig.clusterTypes.filter(
+                                                (element) => element !== clusterType
                                             ),
                                         });
                                     }}
                                 >
-                                    Remove {`'${clusterSize.name}'`}
+                                    Remove {`'${clusterType.name}'`}
                                 </Button>
                             </Condition>
                         </SpaceBetween>
                     </ExpandableSection>
                 );
             })}
-            <Condition condition={item.configuration.EMRConfig.clusterSizes.length < 20}>
+            <Condition condition={item.configuration.EMRConfig.clusterTypes.length < 20}>
                 <SpaceBetween direction='vertical' size='s'>
                     <hr />
                     <Button
                         variant='normal'
                         iconName='add-plus'
                         onClick={() => {
-                            setFields({ 'configuration.EMRConfig.clusterSizes': [...item.configuration.EMRConfig.clusterSizes, createClusterSize()] });
+                            setFields({ 'configuration.EMRConfig.clusterTypes': [...item.configuration.EMRConfig.clusterTypes, createClusterType()] });
                         }}
                     >
-                        Add New Cluster Size
+                        Add New Cluster Type
                     </Button>
                 </SpaceBetween>
             </Condition>
@@ -85,8 +85,8 @@ export function ClusterSizeConfiguration (props: ClusterSizesProps) {
     );
 }
 
-type ClusterSizeProps = FormProps<ClusterSize>;
-function ClusterSizeField (props: ClusterSizeProps) {
+type ClusterTypeProps = FormProps<ClusterType>;
+function ClusterTypeField (props: ClusterTypeProps) {
     // This setFields is prefixed to reference the app config
     const { item, setFields, touchFields, formErrors } = props;
 
@@ -153,7 +153,7 @@ function ClusterSizeField (props: ClusterSizeProps) {
     );
 }
 
-const createClusterSize = (): ClusterSize => {
+const createClusterType = (): ClusterType => {
     return {
         name: '',
         size: 1,

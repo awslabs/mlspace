@@ -65,7 +65,7 @@ def generate_event(config_scope: str, version_id: int):
                     },
                     "ProjectCreation": {"isAdminOnly": "true", "allowedGroups": ["Justice League", "Avengers", "TMNT"]},
                     "EMRConfig": {
-                        "clusterSizes": [
+                        "clusterTypes": [
                             {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                             {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                             {"name": "Large", "size": 7, "masterType": "m5.xlarge", "coreType": "p3.8xlarge"},

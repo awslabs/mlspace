@@ -205,7 +205,7 @@ class EMRConfig:
 
     def to_dict(self) -> dict:
         return {
-            "clusterSizes": ClusterSize.to_dict(self.cluster_sizes),
+            "clusterTypes": ClusterType.to_dict(self.cluster_sizes),
             "autoScaling": self.auto_scaling.to_dict(),
             "applications": EMRApplications.to_dict(self.applications),
         }
@@ -213,13 +213,13 @@ class EMRConfig:
     @staticmethod
     def from_dict(dict_object: dict) -> EMRConfig:
         return EMRConfig(
-            ClusterSize.extract_cluster_sizes(dict_object["clusterSizes"]),
+            ClusterType.extract_cluster_sizes(dict_object["clusterTypes"]),
             EMRAutoScaling.from_dict(dict_object["autoScaling"]),
             EMRApplications.extract_applications(dict_object["applications"]),
         )
 
 
-class ClusterSize:
+class ClusterType:
     def __init__(self, name: str, size: int, master_type: str, core_type: str):
         self.name = name
         self.size = size
@@ -237,10 +237,10 @@ class ClusterSize:
 
     @staticmethod
     def extract_cluster_sizes(cluster_size_list: list):
-        # Given a list of cluster sizes, parse them into a list of ClusterSize objects
+        # Given a list of cluster sizes, parse them into a list of ClusterType objects
         cluster_object_list = []
         for size in cluster_size_list:
-            cluster_object_list.append(ClusterSize(size["name"], size["size"], size["masterType"], size["coreType"]))
+            cluster_object_list.append(ClusterType(size["name"], size["size"], size["masterType"], size["coreType"]))
         return cluster_object_list
 
 
@@ -313,7 +313,7 @@ class EMRApplications:
 
     @staticmethod
     def extract_applications(application_list: list):
-        # Given a list of cluster sizes, parse them into a list of ClusterSize objects
+        # Given a list of cluster sizes, parse them into a list of ClusterType objects
         application_object_list = []
         for application in application_list:
             application_object_list.append(EMRApplications(application["Name"]))

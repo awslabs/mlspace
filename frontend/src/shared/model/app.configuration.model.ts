@@ -35,12 +35,12 @@ export type IEnabledServices = {
 };
 
 export type IEMRConfig = {
-    clusterSizes: ClusterSize[];
+    clusterTypes: ClusterType[];
     autoScaling: AutoScaling;
     applications: Application[];
 };
 
-export type ClusterSize = {
+export type ClusterType = {
     name: string;
     size: number;
     masterType: string;
@@ -127,7 +127,7 @@ export const defaultConfiguration: IAppConfiguration = {
             transformJob: false,
         },
         EMRConfig: {
-            clusterSizes: [{
+            clusterTypes: [{
                 name: '',
                 size: 0,
                 masterType: '',

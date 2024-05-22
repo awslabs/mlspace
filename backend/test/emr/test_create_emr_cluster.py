@@ -74,7 +74,7 @@ MOCK_APP_CONFIG = {
             ServiceType.TRANSFORM_JOB.value: "true",
         },
         "EMRConfig": {
-            "clusterSizes": [
+            "clusterTypes": [
                 {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                 {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
             ],
@@ -105,14 +105,14 @@ def _expected_args(custom_ami: Optional[str] = None):
                     "Name": "Master",
                     "Market": "ON_DEMAND",
                     "InstanceRole": "MASTER",
-                    "InstanceType": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterSizes"][0]["masterType"],
+                    "InstanceType": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterTypes"][0]["masterType"],
                     "InstanceCount": 1,
                 },
                 {
                     "Name": "Worker",
                     "Market": "ON_DEMAND",
                     "InstanceRole": "CORE",
-                    "InstanceType": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterSizes"][0]["coreType"],
+                    "InstanceType": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterTypes"][0]["coreType"],
                     "InstanceCount": 3,
                     "AutoScalingPolicy": {
                         "Constraints": {
@@ -206,7 +206,7 @@ def _expected_args(custom_ami: Optional[str] = None):
 
 def _mock_event_body(subnet: Optional[str] = "", custom_ami: Optional[str] = None):
     options = {
-        "emrSize": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterSizes"][0]["name"],
+        "emrSize": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterTypes"][0]["name"],
         "emrRelease": "emr-6.2.0",
     }
     if custom_ami:

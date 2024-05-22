@@ -44,7 +44,7 @@ import Condition from '../../../modules/condition';
 import { listSubnets, selectSubnets } from '../../../shared/metadata/metadata.reducer';
 import { Subnet } from '../../../shared/model/vpc.config';
 import { LoadingStatus } from '../../../shared/loading-status';
-import { ClusterSize, IAppConfiguration } from '../../../shared/model/app.configuration.model';
+import { ClusterType, IAppConfiguration } from '../../../shared/model/app.configuration.model';
 import { appConfig } from '../../configuration/configuration-reducer';
 
 enum ClusterAmi {
@@ -246,7 +246,7 @@ export default function EMRClusterCreate () {
                                     selectedOption={{
                                         value: state.form.options.emrSize,
                                     }}
-                                    options={(applicationConfig.configuration.EMRConfig.clusterSizes || []).map((size: ClusterSize) => {
+                                    options={(applicationConfig.configuration.EMRConfig.clusterTypes || []).map((size: ClusterType) => {
                                         return {
                                             label: size.name,
                                             value: size.name,

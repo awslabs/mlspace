@@ -163,7 +163,7 @@ def generate_test_config(config_scope: str = "global", is_project: bool = False,
                 ServiceType.TRANSFORM_JOB.value: "true",
             },
             "EMRConfig": {
-                "clusterSizes": [
+                "clusterTypes": [
                     {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                 ],
                 "autoScaling": {

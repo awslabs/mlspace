@@ -34,7 +34,7 @@ import { z } from 'zod';
 import NotificationService from '../../shared/layout/notification/notification.service';
 import { emrApplications, listEMRApplications } from '../emr/emr.reducer';
 import { formatDisplayNumber } from '../../shared/util/form-utils';
-import { ClusterSizeConfiguration } from './cluster-sizes';
+import { ClusterTypeConfiguration } from './cluster-sizes';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -65,7 +65,7 @@ export function DynamicConfiguration () {
                         evalPeriods: z.number().positive(),
                     })
                 }),
-                clusterSizes: z.array(
+                clusterTypes: z.array(
                     z.object({
                         name: z.string().min(1),
                         size: z.number().positive()
@@ -232,12 +232,12 @@ export function DynamicConfiguration () {
                         />
                     </ExpandableSection>
                     <ExpandableSection 
-                        headerText='Cluster Sizes'
+                        headerText='Cluster Types'
                         variant='default' 
                         headingTagOverride='h3' 
-                        headerDescription='The cluster size options that users can select from when creating a new Amazon EMR Cluster.'
+                        headerDescription='The cluster types options that users can select from when creating a new Amazon EMR Cluster.'
                     >
-                        <ClusterSizeConfiguration
+                        <ClusterTypeConfiguration
                             item={
                                 state.form as (IAppConfiguration)
                             }
