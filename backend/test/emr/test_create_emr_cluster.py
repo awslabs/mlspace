@@ -53,7 +53,7 @@ MOCK_APP_CONFIG = {
     "changedBy": "Tester",
     "createdAt": 1,
     "configuration": {
-        "DisabledInstanceTypes": {
+        "EnabledInstanceTypes": {
             ServiceType.NOTEBOOK.value: [],
             ServiceType.ENDPOINT.value: [],
             ServiceType.TRAINING_JOB.value: [],

@@ -143,7 +143,7 @@ def generate_test_config(config_scope: str = "global", is_project: bool = False,
         "changedBy": "Tester",
         "createdAt": 1,
         "configuration": {
-            "DisabledInstanceTypes": {
+            "EnabledInstanceTypes": {
                 ServiceType.NOTEBOOK.value: [],
                 ServiceType.ENDPOINT.value: [],
                 ServiceType.TRAINING_JOB.value: [],

@@ -78,7 +78,7 @@ export type ISystemBanner = {
 };
 
 export type BaseSettings = {
-    DisabledInstanceTypes: IServiceInstanceTypes;
+    EnabledInstanceTypes: IServiceInstanceTypes;
     EnabledServices: IEnabledServices;
     EMRConfig: IEMRConfig;
 };
@@ -107,7 +107,7 @@ export const defaultConfiguration: IAppConfiguration = {
     changedBy: '',
     changeReason: '',
     configuration: {
-        DisabledInstanceTypes: {
+        EnabledInstanceTypes: {
             notebook: [],
             endpoint: [],
             trainingJob: [],
