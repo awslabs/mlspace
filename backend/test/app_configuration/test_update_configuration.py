@@ -44,7 +44,7 @@ def generate_event(config_scope: str, version_id: int):
                 "changeReason": "Testing",
                 "createdAt": mock_time,
                 "configuration": {
-                    "DisabledInstanceTypes": {
+                    "EnabledInstanceTypes": {
                         ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
                         ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
                         ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
