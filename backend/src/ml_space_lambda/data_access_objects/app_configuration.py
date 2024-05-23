@@ -68,13 +68,13 @@ class AppConfigurationModel:
 class SettingsModel:
     def __init__(
         self,
-        disabled_instance_types: ServiceInstanceTypes,
+        enabled_instance_types: ServiceInstanceTypes,
         enabled_services: EnabledServices,
         emr_config: EMRConfig,
         project_creation: Optional[ProjectCreation] = None,
         system_banner: Optional[SystemBanner] = None,
     ):
-        self.disabled_instance_types = disabled_instance_types
+        self.enabled_instance_types = enabled_instance_types
         self.enabled_services = enabled_services
         self.project_creation = project_creation
         self.emr_config = emr_config
@@ -82,7 +82,7 @@ class SettingsModel:
 
     def to_dict(self) -> dict:
         config_dict = {
-            "DisabledInstanceTypes": self.disabled_instance_types.to_dict(),
+            "EnabledInstanceTypes": self.enabled_instance_types.to_dict(),
             "EnabledServices": self.enabled_services.to_dict(),
             "EMRConfig": self.emr_config.to_dict(),
         }
@@ -97,7 +97,7 @@ class SettingsModel:
     @staticmethod
     def from_dict(dict_object: dict) -> SettingsModel:
         return SettingsModel(
-            disabled_instance_types=ServiceInstanceTypes.from_dict(dict_object["DisabledInstanceTypes"]),
+            enabled_instance_types=ServiceInstanceTypes.from_dict(dict_object["EnabledInstanceTypes"]),
             enabled_services=EnabledServices.from_dict(dict_object["EnabledServices"]),
             emr_config=EMRConfig.from_dict(dict_object["EMRConfig"]),
             project_creation=(
