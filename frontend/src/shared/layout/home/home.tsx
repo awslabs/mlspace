@@ -15,7 +15,7 @@
 */
 
 import React, { useEffect } from 'react';
-import { useAppDispatch } from '../../../config/store';
+import {useAppDispatch, useAppSelector} from '../../../config/store';
 import {
     setActiveHref,
     setBreadcrumbs,
@@ -25,17 +25,19 @@ import ProjectCards from '../../../entities/project/card';
 import { selectProject } from '../../../entities/project/card/project-card.reducer';
 import { ContentLayout, Header } from '@cloudscape-design/components';
 import { resetCurrentProject } from '../../../entities/project/project.reducer';
+import {appConfig} from '../../../entities/configuration/configuration-reducer';
+import {IAppConfiguration} from '../../model/app.configuration.model';
 
 export const Home = () => {
     const dispatch = useAppDispatch();
-
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     useEffect(() => {
         dispatch(selectProject());
         dispatch(setBreadcrumbs([]));
         dispatch(setActiveHref('/#'));
-        dispatch(setItemsForProjectName());
+        dispatch(setItemsForProjectName({'enabledServices': applicationConfig.configuration.EnabledServices}));
         dispatch(resetCurrentProject());
-    }, [dispatch]);
+    }, [dispatch, applicationConfig.configuration.EnabledServices]);
 
     return (
         <ContentLayout

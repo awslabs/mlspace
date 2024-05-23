@@ -22,19 +22,22 @@ import {
     setBreadcrumbs,
     setItemsForProjectName,
 } from '../../shared/layout/navigation/navigation.reducer';
-import { useAppDispatch } from '../../config/store';
+import {useAppDispatch, useAppSelector} from '../../config/store';
 import { getBase } from '../../shared/util/breadcrumb-utils';
 import Logo from '../../shared/layout/logo/logo';
+import {IAppConfiguration} from '../../shared/model/app.configuration.model';
+import {appConfig} from '../../entities/configuration/configuration-reducer';
 
 export default function ResourceNotFound () {
     const dispatch = useAppDispatch();
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     DocTitle('Not Found');
 
     useEffect(() => {
-        dispatch(setItemsForProjectName());
+        dispatch(setItemsForProjectName({ 'enabledServices': applicationConfig.configuration.EnabledServices }));
         dispatch(setBreadcrumbs([getBase(undefined)]));
         dispatch(setActiveHref('/#'));
-    }, [dispatch]);
+    }, [dispatch, applicationConfig.configuration.EnabledServices]);
     return (
         <Container>
             <Grid gridDefinition={[{ colspan: 3, offset: { xxs: 2 } }, { colspan: 4 }]}>

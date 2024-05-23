@@ -51,10 +51,10 @@ const navigationSlice = createSlice({
                 state.adminItems = undefined;
             }
         },
-        setItemsForProjectName (state, action: PayloadAction<string | undefined>) {
-            const projectName = action.payload;
+        setItemsForProjectName (state, action: PayloadAction<any | undefined>) {
+            const projectName = action.payload?.project;
             if (projectName) {
-                const translateItems: any = window.env.ENABLE_TRANSLATE
+                const translateItems: any = action.payload?.enabledServices?.batchTranslate
                     ? [
                         {
                             type: 'section',
@@ -71,7 +71,7 @@ const navigationSlice = createSlice({
                     ]
                     : [];
 
-                const groundTruthItems: any = window.env.ENABLE_GROUNDTRUTH
+                const groundTruthItems: any = action.payload?.enabledServices?.labelingJob
                     ? [
                         {
                             type: 'section',
@@ -104,11 +104,11 @@ const navigationSlice = createSlice({
                                 text: 'Datasets',
                                 href: `#/project/${projectName}/dataset`,
                             },
-                            {
+                            ...action.payload?.enabledServices?.emrCluster ? [{
                                 type: 'link',
                                 text: 'EMR clusters',
                                 href: `#/project/${projectName}/emr`,
-                            },
+                            }] : [],
                             {
                                 type: 'section',
                                 text: 'Inference',

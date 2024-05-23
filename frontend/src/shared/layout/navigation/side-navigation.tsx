@@ -152,7 +152,7 @@ export default function SideNavigation () {
                         selectedOption={selectedOption}
                         onChange={({ detail }) => {
                             setSelectedOption(detail.selectedOption);
-                            dispatch(setItemsForProjectName(detail.selectedOption.value));
+                            dispatch(setItemsForProjectName({ 'project': detail.selectedOption.value, 'enabledServices': applicationConfig.configuration.EnabledServices }));
                             navigate(`/project/${detail.selectedOption.value}`);
                         }}
                         options={projectOptions}
