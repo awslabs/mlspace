@@ -39,7 +39,7 @@ import { ClusterTypeConfiguration } from './cluster-types';
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const configList: IAppConfiguration[] = useAppSelector(appConfigList);
-    const applicationList: string[] = useAppSelector(emrApplications);
+    const emrApplicationList: string[] = useAppSelector(emrApplications);
     const [selectedApplicationOptions, setSelectedApplicationOptions] = React.useState([] as any[]);
     const [applicationOptions, setApplicationOptions] = React.useState([] as any);
     const dispatch = useAppDispatch();
@@ -96,27 +96,24 @@ export function DynamicConfiguration () {
 
     useEffect(() => {
         const appList: any[] = [];
-        for (const application of applicationList) {
-            const app = {
-                value: application,
-                label: application
-            };
-            appList.push(app);
-        }
+        emrApplicationList.forEach((application) => appList.push({value: application, label: application})); 
+        setApplicationOptions(appList);
+
         // Make sure we're always starting from an empty array to prevent duplicates
         setSelectedApplicationOptions([]);
+        const selectedApps: any  = [];
         for (const configApp of applicationConfig.configuration.EMRConfig.applications) {
-            if (applicationList.includes(configApp.Name) && !selectedApplicationOptions.includes(configApp.Name)) {
-                const app = {
+            if (emrApplicationList.includes(configApp.Name) && !selectedApplicationOptions.includes(configApp.Name)) {
+                selectedApps.push({
                     value: configApp.Name,
                     label: configApp.Name
-                };
-                setSelectedApplicationOptions((priorSelectedOptions) => [...priorSelectedOptions, app]);
+                });
             }
         }
-        setApplicationOptions(appList);
+        setSelectedApplicationOptions((priorSelectedOptions) => [...priorSelectedOptions, ...selectedApps]);
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps 
-    }, [applicationList, applicationConfig]);
+    }, [emrApplicationList, applicationConfig]);
 
     const handleSubmit = async () => {
         if (isValid) {
@@ -179,11 +176,9 @@ export function DynamicConfiguration () {
 
     const addApplication = (detail: any) => {
         setSelectedApplicationOptions(detail.selectedOptions);
-        const newApps: Application[] = [];
-        for (const option of detail.selectedOptions) {
-            newApps.push({Name: option.value});
-        }
-        setFields({ 'configuration.EMRConfig.applications': newApps });
+        const updatedSelectedApps: Application[] = [];
+        detail.selectedOptions.forEach((option) => updatedSelectedApps.push({Name: option.value})); 
+        setFields({ 'configuration.EMRConfig.applications': updatedSelectedApps });
     };
 
     return (
@@ -480,7 +475,7 @@ export function DynamicConfiguration () {
                     onClick={handleSubmit}
                     loading={state.formSubmitting}
                     data-cy='dynamic-configuration-submit'
-                    disabled={state.formSubmitting}
+                    disabled={!isValid || state.formSubmitting}
                 >
                     Save Changes
                 </Button>
