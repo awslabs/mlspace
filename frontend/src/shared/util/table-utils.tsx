@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Link,
     StatusIndicator,
@@ -224,7 +224,7 @@ export type ServerSidePaginatorProps<T extends ServerRequestProps> = {
     loading: PaginationLoadingState;
     requestProps?: T;
     setLoading: React.Dispatch<React.SetStateAction<PaginationLoadingState>>;
-    fetchDataThunk: AsyncThunk<any, T | undefined, any>;
+    fetchDataThunk: AsyncThunk<any, T, any>;
     ariaLabels: PaginationProps.Labels;
     storeClear: ActionCreatorWithoutPayload;
 };
@@ -238,7 +238,7 @@ export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerS
     const loading = props.loading;
     const setLoading = props.setLoading;
 
-    const fetchData = useCallback(async (usePagination: boolean, callback?: () => void) => {
+    const fetchData = async (usePagination: boolean, callback?: () => void) => {
         // Disable pagination user input until loading completes
         setDisabled(true);
 
@@ -256,7 +256,7 @@ export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerS
         }
         callback?.();
         setDisabled(false);
-    }, [dispatch, loading, nextToken, projectName, props, setLoading]);
+    };
 
     useEffect(() => {
         if (loading.loadingEmpty) {
