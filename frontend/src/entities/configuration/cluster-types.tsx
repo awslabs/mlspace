@@ -22,7 +22,7 @@ import Condition from '../../modules/condition';
 import { InstanceTypeSelector } from '../../shared/metadata/instance-type-dropdown';
 
 
-export type ClusterTypesProps = FormProps<(IAppConfiguration)>;
+export type ClusterTypesProps = FormProps<IAppConfiguration>;
 
 export function ClusterTypeConfiguration (props: ClusterTypesProps) {
     const { item, setFields, touchFields, formErrors } = props;
@@ -111,7 +111,7 @@ function ClusterTypeField (props: ClusterTypeProps) {
             >
                 <Input
                     value={item.size.toString()}
-                    onChange={(event) => setFields({ size: +event.detail.value })}
+                    onChange={(event) => setFields({ size: Number(event.detail.value) })}
                     onBlur={() => touchFields(['size'])}
                 />
             </FormField>

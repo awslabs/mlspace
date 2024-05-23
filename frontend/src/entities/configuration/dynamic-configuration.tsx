@@ -29,12 +29,12 @@ import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { appConfig, appConfigList, getConfiguration, listConfigurations, updateConfiguration } from './configuration-reducer';
 import { Application, IAppConfiguration } from '../../shared/model/app.configuration.model';
-import { issuesToErrors, scrollToInvalid, useValidationReducer } from '../../shared/validation';
+import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
 import { z } from 'zod';
 import NotificationService from '../../shared/layout/notification/notification.service';
 import { emrApplications, listEMRApplications } from '../emr/emr.reducer';
 import { formatDisplayNumber } from '../../shared/util/form-utils';
-import { ClusterTypeConfiguration } from './cluster-sizes';
+import { ClusterTypeConfiguration } from './cluster-types';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -75,7 +75,7 @@ export function DynamicConfiguration () {
         }),
     });
 
-    const { state, setState, setFields, touchFields } = useValidationReducer(formSchema, {
+    const { state, setState, setFields, touchFields, isValid, errors } = useValidationReducer(formSchema, {
         validateAll: false as boolean,
         needsValidation: false,
         touched: {},
@@ -85,15 +85,6 @@ export function DynamicConfiguration () {
         formValid: false,
         formSubmitting: false as boolean,
     });
-
-    let formErrors = {} as any;
-    const parseResult = formSchema.safeParse(state.form);
-    if (!parseResult.success) {
-        formErrors = issuesToErrors(
-            parseResult.error.issues,
-            state.validateAll === true ? undefined : state.touched
-        );
-    }
 
     useEffect(() => {
         dispatch(listConfigurations({configScope: 'global', numVersions: 5}));
@@ -128,8 +119,7 @@ export function DynamicConfiguration () {
     }, [applicationList, applicationConfig]);
 
     const handleSubmit = async () => {
-        const parseResult = formSchema.safeParse(state.form);
-        if (parseResult.success) {
+        if (isValid) {
             setState({ formSubmitting: true });
             const resp = await dispatch(updateConfiguration({appConfiguration: state.form}));
             const responseStatus = resp.payload.status;
@@ -154,7 +144,6 @@ export function DynamicConfiguration () {
             }
         } else {
             scrollToInvalid();
-            formErrors = issuesToErrors(parseResult.error.issues);
         }
         setState({ formSubmitting: false });
     };
@@ -188,7 +177,7 @@ export function DynamicConfiguration () {
         }
     };
 
-    const addApplication = async (detail: any) => {
+    const addApplication = (detail: any) => {
         setSelectedApplicationOptions(detail.selectedOptions);
         const newApps: Application[] = [];
         for (const option of detail.selectedOptions) {
@@ -239,11 +228,11 @@ export function DynamicConfiguration () {
                     >
                         <ClusterTypeConfiguration
                             item={
-                                state.form as (IAppConfiguration)
+                                state.form
                             }
                             setFields={setFields}
                             touchFields={touchFields}
-                            formErrors={formErrors}
+                            formErrors={errors}
                         />
                     </ExpandableSection>
                     <ExpandableSection 
@@ -256,14 +245,14 @@ export function DynamicConfiguration () {
                             <FormField
                                 label='Max Instances'
                                 constraintText='Must be an integer value.'
-                                errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.maxInstances}
+                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.maxInstances}
                                 description='The maximum number of instances supporting the Amazon EMR Cluster at any time.'
                             >
                                 <Input
                                     data-cy='cluster-max-size'
                                     value={state.form.configuration.EMRConfig.autoScaling.maxInstances.toString()}
                                     onChange={(event) => {
-                                        setFields({ 'configuration.EMRConfig.autoScaling.maxInstances': +event.detail.value });
+                                        setFields({ 'configuration.EMRConfig.autoScaling.maxInstances': Number(event.detail.value) });
                                     }}
                                     onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.maxInstances'])}
                                 />
@@ -271,14 +260,14 @@ export function DynamicConfiguration () {
                             <FormField
                                 label='Min Instances'
                                 constraintText='Must be an integer value.'
-                                errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.minInstances}
+                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.minInstances}
                                 description='The minimum number of instances supporting the Amazon EMR Cluster at any time.'
                             >
                                 <Input
                                     data-cy='cluster-min-size'
                                     value={state.form.configuration.EMRConfig.autoScaling.minInstances.toString()}
                                     onChange={(event) => {
-                                        setFields({ 'configuration.EMRConfig.autoScaling.minInstances': +event.detail.value });
+                                        setFields({ 'configuration.EMRConfig.autoScaling.minInstances': Number(event.detail.value) });
                                     }}
                                     onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.minInstances'])}
                                 />
@@ -292,14 +281,14 @@ export function DynamicConfiguration () {
                                     <FormField
                                         label='Increment'
                                         constraintText='Must be an integer value.'
-                                        errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.increment}
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.increment}
                                         description='The number of Amazon EC2 instances that will be added when the Percentage-Memory-Available value is exceeded.'
                                     >
                                         <Input
                                             data-cy='cluster-scale-out-increment'
                                             value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.increment.toString()}
                                             onChange={(event) => {
-                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.increment': +event.detail.value });
+                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.increment': Number(event.detail.value) });
                                             }}
                                             onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.increment'])}
                                         />
@@ -307,14 +296,14 @@ export function DynamicConfiguration () {
                                     <FormField
                                         label='Cooldown'
                                         constraintText='Must be an integer value.'
-                                        errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.cooldown}
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.cooldown}
                                         description='The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.'
                                     >
                                         <Input
                                             data-cy='cluster-scale-out-cooldown'
                                             value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.cooldown.toString()}
                                             onChange={(event) => {
-                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.cooldown': +event.detail.value });
+                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.cooldown': Number(event.detail.value) });
                                             }}
                                             onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.cooldown'])}
                                         />
@@ -322,14 +311,14 @@ export function DynamicConfiguration () {
                                     <FormField
                                         label='Percentage Memory Available'
                                         constraintText='Must be an integer value.'
-                                        errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.percentageMemAvailable}
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.percentageMemAvailable}
                                         description='The threshold that determines when the Scale-Out policy is triggered. Triggered when the percentage of available memory drops below this value.'
                                     >
                                         <Input
                                             data-cy='cluster-scale-out-percentageMemAvailable'
                                             value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.percentageMemAvailable.toString()}
                                             onChange={(event) => {
-                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.percentageMemAvailable': +event.detail.value });
+                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.percentageMemAvailable': Number(event.detail.value) });
                                             }}
                                             onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.percentageMemAvailable'])}
                                         />
@@ -337,14 +326,14 @@ export function DynamicConfiguration () {
                                     <FormField
                                         label='Evaluation Periods'
                                         constraintText='Must be an integer value.'
-                                        errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.evalPeriods}
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.evalPeriods}
                                         description='The number of periods, in five-minute increments, during which the "Percentage Memory Available" condition must exist before the Scale-Out policy is triggered.'
                                     >
                                         <Input
                                             data-cy='cluster-scale-out-evalPeriods'
                                             value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.evalPeriods.toString()}
                                             onChange={(event) => {
-                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.evalPeriods': +event.detail.value });
+                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.evalPeriods': Number(event.detail.value) });
                                             }}
                                             onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.evalPeriods'])}
                                         />
@@ -360,14 +349,14 @@ export function DynamicConfiguration () {
                                     <FormField
                                         label='Increment'
                                         constraintText='Must be an integer value.'
-                                        errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.increment}
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.increment}
                                         description='The number of Amazon EC2 instances that will be released when the Percentage-Memory-Available value is exceeded.'
                                     >
                                         <Input
                                             data-cy='cluster-scale-in-increment'
                                             value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.increment.toString()}
                                             onChange={(event) => {
-                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.increment': formatDisplayNumber(+event.detail.value) });
+                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.increment': formatDisplayNumber(Number(event.detail.value)) });
                                             }}
                                             onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.increment'])}
                                         />
@@ -375,14 +364,14 @@ export function DynamicConfiguration () {
                                     <FormField
                                         label='Cooldown'
                                         constraintText='Must be an integer value.'
-                                        errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.cooldown}
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.cooldown}
                                         description='The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.'
                                     >
                                         <Input
                                             data-cy='cluster-scale-in-cooldown'
                                             value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.cooldown.toString()}
                                             onChange={(event) => {
-                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.cooldown': +event.detail.value });
+                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.cooldown': Number(event.detail.value) });
                                             }}
                                             onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.cooldown'])}
                                         />
@@ -390,14 +379,14 @@ export function DynamicConfiguration () {
                                     <FormField
                                         label='Percentage Memory Available'
                                         constraintText='Must be an integer value.'
-                                        errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.percentageMemAvailable}
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.percentageMemAvailable}
                                         description='The threshold that determines when the Scale-In policy is triggered. Triggered when the percentage of available memory exceeds this value.'
                                     >
                                         <Input
                                             data-cy='cluster-scale-in-percentageMemAvailable'
                                             value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.percentageMemAvailable.toString()}
                                             onChange={(event) => {
-                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.percentageMemAvailable': +event.detail.value });
+                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.percentageMemAvailable': Number(event.detail.value) });
                                             }}
                                             onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.percentageMemAvailable'])}
                                         />
@@ -405,14 +394,14 @@ export function DynamicConfiguration () {
                                     <FormField
                                         label='Evaluation Periods'
                                         constraintText='Must be an integer value.'
-                                        errorText={formErrors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.evalPeriods}
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.evalPeriods}
                                         description='The number of periods, in five-minute increments, during which the "Percentage Memory Available" condition must exist before the Scale-In policy is triggered.'
                                     >
                                         <Input
                                             data-cy='cluster-scale-in-evalPeriods'
                                             value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.evalPeriods.toString()}
                                             onChange={(event) => {
-                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.evalPeriods': +event.detail.value });
+                                                setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.evalPeriods': Number(event.detail.value) });
                                             }}
                                             onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.evalPeriods'])}
                                         />

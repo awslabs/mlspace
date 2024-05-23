@@ -198,14 +198,14 @@ class EnabledServices:
 
 
 class EMRConfig:
-    def __init__(self, cluster_sizes: list, auto_scaling: EMRAutoScaling, applications: EMRApplications):
-        self.cluster_sizes = cluster_sizes
+    def __init__(self, cluster_types: list, auto_scaling: EMRAutoScaling, applications: EMRApplications):
+        self.cluster_types = cluster_types
         self.auto_scaling = auto_scaling
         self.applications = applications
 
     def to_dict(self) -> dict:
         return {
-            "clusterTypes": ClusterType.to_dict(self.cluster_sizes),
+            "clusterTypes": ClusterType.to_dict(self.cluster_types),
             "autoScaling": self.auto_scaling.to_dict(),
             "applications": EMRApplications.to_dict(self.applications),
         }
@@ -213,7 +213,7 @@ class EMRConfig:
     @staticmethod
     def from_dict(dict_object: dict) -> EMRConfig:
         return EMRConfig(
-            ClusterType.extract_cluster_sizes(dict_object["clusterTypes"]),
+            ClusterType.extract_cluster_types(dict_object["clusterTypes"]),
             EMRAutoScaling.from_dict(dict_object["autoScaling"]),
             EMRApplications.extract_applications(dict_object["applications"]),
         )
@@ -227,20 +227,27 @@ class ClusterType:
         self.core_type = core_type
 
     @staticmethod
-    def to_dict(cluster_size_list: list):
+    def to_dict(cluster_type_list: list):
         list_of_dicts = []
-        for size in cluster_size_list:
+        for clusterType in cluster_type_list:
             list_of_dicts.append(
-                {"name": size.name, "size": size.size, "masterType": size.master_type, "coreType": size.core_type}
+                {
+                    "name": clusterType.name,
+                    "size": clusterType.size,
+                    "masterType": clusterType.master_type,
+                    "coreType": clusterType.core_type,
+                }
             )
         return list_of_dicts
 
     @staticmethod
-    def extract_cluster_sizes(cluster_size_list: list):
-        # Given a list of cluster sizes, parse them into a list of ClusterType objects
+    def extract_cluster_types(cluster_type_list: list):
+        # Given a list of cluster types, parse them into a list of ClusterType objects
         cluster_object_list = []
-        for size in cluster_size_list:
-            cluster_object_list.append(ClusterType(size["name"], size["size"], size["masterType"], size["coreType"]))
+        for clusterType in cluster_type_list:
+            cluster_object_list.append(
+                ClusterType(clusterType["name"], clusterType["size"], clusterType["masterType"], clusterType["coreType"])
+            )
         return cluster_object_list
 
 
@@ -313,7 +320,7 @@ class EMRApplications:
 
     @staticmethod
     def extract_applications(application_list: list):
-        # Given a list of cluster sizes, parse them into a list of ClusterType objects
+        # Given a list of applications, parse them into a list of EMRApplication objects
         application_object_list = []
         for application in application_list:
             application_object_list.append(EMRApplications(application["Name"]))

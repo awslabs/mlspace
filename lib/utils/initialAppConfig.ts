@@ -89,6 +89,23 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
             applicationList.push({'M': {'name': {'S': application['Name']}}});
         }
     }
+    const clusterTypes = [];
+    //List of high level keys to skip since they won't be cluster types
+    const skipKeys = ['ami', 'release', 'log-location', 'ec2-key', 'applications', 'auto-scaling'];
+    let key: keyof typeof clusterConfig;
+    for (key in clusterConfig){
+        if (!skipKeys.includes(key)) {
+            const clusterType = clusterConfig[key];
+            const masterType = 'master-type';
+            const coreType = 'core-type';
+            clusterTypes.push({'M': {
+                'name': {'S': key},
+                'size': {'N': String(clusterType['size' as keyof typeof clusterType])},
+                'masterType': {'S': clusterType[masterType as keyof typeof clusterType]},
+                'coreType': {'S': clusterType[coreType as keyof typeof clusterType]},
+            }});
+        }
+    }
 
     const date = new Date();
     return {
@@ -139,26 +156,7 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                         'evalPeriods': {'N': String(clusterConfig['auto-scaling']['scale-in']['eval-periods'])},
                         'percentageMemAvailable': {'N': String(clusterConfig['auto-scaling']['scale-in']['percentage-mem-available'])}}},
                 }},
-                'clusterTypes': {'L': [
-                    {'M': {
-                        'name': {'S': 'Small'},
-                        'size': {'N': String(clusterConfig['Small']['size'])},
-                        'masterType': {'S': clusterConfig['Small']['master-type']},
-                        'coreType': {'S': clusterConfig['Small']['core-type']},
-                    }},
-                    {'M': {
-                        'name': {'S': 'Medium'},
-                        'size': {'N': String(clusterConfig['Medium']['size'])},
-                        'masterType': {'S': clusterConfig['Medium']['master-type']},
-                        'coreType': {'S': clusterConfig['Medium']['core-type']},
-                    }},
-                    {'M': {
-                        'name': {'S': 'Large'},
-                        'size': {'N': String(clusterConfig['Large']['size'])},
-                        'masterType': {'S': clusterConfig['Large']['master-type']},
-                        'coreType': {'S': clusterConfig['Large']['core-type']},
-                    }}
-                ]},
+                'clusterTypes': {'L': clusterTypes},
                 'applications': {'L': applicationList}
             }
             },
