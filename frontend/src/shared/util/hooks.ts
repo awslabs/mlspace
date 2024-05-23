@@ -47,7 +47,6 @@ export function useBackgroundRefresh (action: () => void, deps: readonly unknown
                     setIsBackgroundRefreshing(false);
                 }, waitTime);
             }, (window.env.BACKGROUND_REFRESH_INTERVAL || 60) * 1000);
-
             
             return () => {
                 clearInterval(timerId);
