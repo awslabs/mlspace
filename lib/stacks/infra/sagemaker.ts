@@ -43,6 +43,13 @@ export class SagemakerStack extends Stack {
                     ),
                 },
             ],
+            onStart: [
+                {
+                    content: Fn.base64(
+                        readFileSync('lib/resources/sagemaker/lifecycle-start.sh', 'utf8')
+                    ),
+                },
+            ],
         });
     }
 }
