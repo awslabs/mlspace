@@ -42,7 +42,7 @@ export const getDatasetsList = createAsyncThunk(
     'dataset/fetch_entity_list',
     async (params: ServerRequestProps) => {
         let requestUrl = '/dataset';
-        if (params.projectName !== undefined) {
+        if (params?.projectName !== undefined) {
             requestUrl = `/project/${params.projectName}/datasets`;
         }
         return axios.get<IDataset[]>(requestUrl);

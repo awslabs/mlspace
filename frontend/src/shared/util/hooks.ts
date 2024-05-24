@@ -47,15 +47,12 @@ export function useBackgroundRefresh (action: () => void, deps: readonly unknown
                     setIsBackgroundRefreshing(false);
                 }, waitTime);
             }, (window.env.BACKGROUND_REFRESH_INTERVAL || 60) * 1000);
-
             
             return () => {
                 clearInterval(timerId);
             };
         }
-        // We only want to recreate the interval if the condition changes
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [condition]);
+    }, [callbackAction, condition]);
     return isBackgroundRefreshing;
 }
 

@@ -110,7 +110,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     }, [dispatch, isCreating, notificationService, projectName, username]);
 
     const fetchDatasets = useCallback((type: DatasetType) => {
-        dispatch(getDatasetsList(projectName)).then((response) => {
+        dispatch(getDatasetsList({projectName})).then((response) => {
             if (isFulfilled(response)) {
                 setState({
                     type: DatasetActionType.State,
