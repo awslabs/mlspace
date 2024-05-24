@@ -62,7 +62,7 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
         "changedBy": "Tester",
         "createdAt": mock_time,
         "configuration": {
-            "DisabledInstanceTypes": {
+            "EnabledInstanceTypes": {
                 ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
                 ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
                 ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
@@ -82,7 +82,7 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
                 ServiceType.TRANSFORM_JOB.value: "true",
             },
             "EMRConfig": {
-                "clusterSizes": [
+                "clusterTypes": [
                     {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                     {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                     {"name": "Large", "size": 7, "masterType": "m5.xlarge", "coreType": "p3.8xlarge"},
@@ -94,13 +94,13 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
                     "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
                 },
                 "applications": [
-                    {"name": "Hadoop"},
-                    {"name": "Spark"},
-                    {"name": "Ganglia"},
-                    {"name": "Hive"},
-                    {"name": "Tez"},
-                    {"name": "Presto"},
-                    {"name": "Livy"},
+                    {"Name": "Hadoop"},
+                    {"Name": "Spark"},
+                    {"Name": "Ganglia"},
+                    {"Name": "Hive"},
+                    {"Name": "Tez"},
+                    {"Name": "Presto"},
+                    {"Name": "Livy"},
                 ],
             },
         },

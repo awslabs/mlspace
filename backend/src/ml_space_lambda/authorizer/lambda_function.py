@@ -357,6 +357,8 @@ def lambda_handler(event, context):
                     "/translate/list-languages",
                     "/project",
                     "/emr",
+                    "/emr/applications",
+                    "/emr/release",
                     "/translate/custom-terminologies",
                 ]
             ) and request_method == "GET":
