@@ -79,10 +79,6 @@ export class IAMStack extends Stack {
         const privateSubnetArnList = props.mlSpaceVPC.privateSubnets.map(
             (s) => `${ec2ArnBase}:subnet/${s.subnetId}`
         );
-        // Translate Service IAM Principles
-        const passRolePrincipals = props.enableTranslate
-            ? ['sagemaker.amazonaws.com', 'translate.amazonaws.com']
-            : 'sagemaker.amazonaws.com';
 
         /**
          * NOTEBOOK POLICY & ROLE SECTION
@@ -324,6 +320,20 @@ export class IAMStack extends Stack {
                         `arn:${partition}:s3:::${props.dataBucketName}/global-read-only/*`,
                     ],
                 }),
+                /**
+                 * Allow listing the contents of the MLSpace example data bucket.
+                 * List bucket may not be needed if onCreate script is changed to use 's3 cp' instead of 's3 sync'
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['s3:ListBucket'],
+                    resources: [`arn:${partition}:s3:::${props.dataBucketName}`],
+                    conditions: {
+                        StringLike: {
+                            's3:prefix': 'global-read-only/*',
+                        },
+                    },
+                }),
             ];
             
             if (props.enableTranslate) {
@@ -435,6 +445,10 @@ export class IAMStack extends Stack {
                 );
             } else {
                 // If roles are dynamically managed
+                // Translate Service IAM Principles
+                const passRolePrincipals = props.enableTranslate
+                    ? ['sagemaker.amazonaws.com', 'translate.amazonaws.com']
+                    : 'sagemaker.amazonaws.com';
 
                 // Permission boundary policy that ensures IAM policies never exceed these permissions
                 this.mlSpacePermissionsBoundary = new ManagedPolicy(
@@ -834,11 +848,30 @@ export class IAMStack extends Stack {
                         ],
                         conditions: {
                             StringEquals: {
-                                'iam:PassedToService': passRolePrincipals,
+                                'iam:PassedToService': 'sagemaker.amazonaws.com',
                             },
                         },
                     })
                 );
+
+                if (props.enableTranslate) {
+                    appPolicy.addStatements(
+                        new PolicyStatement({
+                            effect: Effect.ALLOW,
+                            actions: ['iam:PassRole'],
+                            // We don't *currently* run these jobs using the user IAM roles so we can
+                            // specify a specific role here
+                            resources: [
+                                `arn:${this.partition}:iam::${this.account}:role/${mlSpaceAppRoleName}`,
+                            ],
+                            conditions: {
+                                StringEquals: {
+                                    'iam:PassedToService': 'translate.amazonaws.com',
+                                },
+                            },
+                        })
+                    );
+                }
             }
 
             const appPolicyAllowPrinciples = props.enableTranslate
