@@ -58,10 +58,10 @@ const navigationSlice = createSlice({
                 state.adminItems = undefined;
             }
         },
-        setItemsForProjectName (state, action: PayloadAction<NavigationReducerState | undefined>) {
-            const projectName = action.payload?.project;
+        setItemsForProjectName (state, action: PayloadAction<NavigationReducerState>) {
+            const projectName = action.payload.project;
             if (projectName) {
-                const translateItems: any = action.payload?.enabledServices?.batchTranslate
+                const translateItems: any = action.payload.enabledServices.batchTranslate
                     ? [
                         {
                             type: 'section',
@@ -78,7 +78,7 @@ const navigationSlice = createSlice({
                     ]
                     : [];
 
-                const groundTruthItems: any = action.payload?.enabledServices?.labelingJob
+                const groundTruthItems: any = action.payload.enabledServices.labelingJob
                     ? [
                         {
                             type: 'section',
@@ -111,7 +111,7 @@ const navigationSlice = createSlice({
                                 text: 'Datasets',
                                 href: `#/project/${projectName}/dataset`,
                             },
-                            ...action.payload?.enabledServices?.emrCluster ? [{
+                            ...action.payload.enabledServices.emrCluster ? [{
                                 type: 'link',
                                 text: 'EMR clusters',
                                 href: `#/project/${projectName}/emr`,
