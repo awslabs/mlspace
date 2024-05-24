@@ -45,6 +45,12 @@ export function DynamicConfiguration () {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const [selectedFile, setSelectedFile] = useState<File[]>([]);
+    const configurableServices = {
+        batchTranslate: 'Batch Translate',
+        realtimeTranslate: 'Realtime Translate',
+        emrCluster: 'EMR',
+        labelingJob: 'Labeling Jobs'
+    };
 
     const formSchema = z.object({
         configuration: z.object({
@@ -197,7 +203,20 @@ export function DynamicConfiguration () {
                     {<pre>TODO</pre>}
                 </ExpandableSection>
                 <ExpandableSection headerText='Enabled Services' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
+                    { Object.keys(configurableServices).map((service) => {
+                        return (
+                            <Toggle
+                                onChange={({detail}) => {
+                                    const updatedField = {};
+                                    updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
+                                    setFields(updatedField);
+                                }}
+                                checked={state.form.configuration.EnabledServices[service]}
+                            >
+                                { configurableServices[service] }
+                            </Toggle>
+                        );
+                    })}
                 </ExpandableSection>
                 <ExpandableSection headerText='EMR Config' variant='default' defaultExpanded>
                     <ExpandableSection 
