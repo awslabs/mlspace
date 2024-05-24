@@ -16,6 +16,13 @@
 
 import { BreadcrumbGroupProps, SideNavigationProps } from '@cloudscape-design/components';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {IEnabledServices} from '../../model/app.configuration.model';
+
+export type NavigationReducerState = {
+    project?: string;
+    enabledServices: IEnabledServices;
+};
+
 
 const initialState = {
     breadcrumbs: [] as BreadcrumbGroupProps.Item[],
@@ -51,7 +58,7 @@ const navigationSlice = createSlice({
                 state.adminItems = undefined;
             }
         },
-        setItemsForProjectName (state, action: PayloadAction<any | undefined>) {
+        setItemsForProjectName (state, action: PayloadAction<NavigationReducerState | undefined>) {
             const projectName = action.payload?.project;
             if (projectName) {
                 const translateItems: any = action.payload?.enabledServices?.batchTranslate
