@@ -38,22 +38,22 @@
         {
            "Name": "Hadoop"
         },
-				{
+		{
            "Name": "Spark"
         },
-				{
+		{
            "Name": "Ganglia"
         },
-				{
+		{
            "Name": "Hive"
         },
-				{
+		{
            "Name": "Tez"
         },
-				{
+		{
            "Name": "Presto"
         },
-				{
+		{
            "Name": "Livy"
         }
     ]

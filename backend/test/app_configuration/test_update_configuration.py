@@ -65,7 +65,7 @@ def generate_event(config_scope: str, version_id: int):
                     },
                     "ProjectCreation": {"isAdminOnly": "true", "allowedGroups": ["Justice League", "Avengers", "TMNT"]},
                     "EMRConfig": {
-                        "clusterSizes": [
+                        "clusterTypes": [
                             {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                             {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                             {"name": "Large", "size": 7, "masterType": "m5.xlarge", "coreType": "p3.8xlarge"},
@@ -77,13 +77,13 @@ def generate_event(config_scope: str, version_id: int):
                             "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
                         },
                         "applications": [
-                            {"name": "Hadoop"},
-                            {"name": "Spark"},
-                            {"name": "Ganglia"},
-                            {"name": "Hive"},
-                            {"name": "Tez"},
-                            {"name": "Presto"},
-                            {"name": "Livy"},
+                            {"Name": "Hadoop"},
+                            {"Name": "Spark"},
+                            {"Name": "Ganglia"},
+                            {"Name": "Hive"},
+                            {"Name": "Tez"},
+                            {"Name": "Presto"},
+                            {"Name": "Livy"},
                         ],
                     },
                     "SystemBanner": {

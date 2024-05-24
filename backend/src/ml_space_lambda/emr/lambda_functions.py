@@ -62,7 +62,7 @@ def create(event, context):
         param_file = pull_config_from_s3()
         subnet = random.sample(param_file["pSMSSubnetIds"].split(","), 1)[0]
 
-    for size in app_config.configuration.emr_config.cluster_sizes:
+    for size in app_config.configuration.emr_config.cluster_types:
         if size.name == emr_size:
             master_instance_type = size.master_type
             core_instance_type = size.core_type
