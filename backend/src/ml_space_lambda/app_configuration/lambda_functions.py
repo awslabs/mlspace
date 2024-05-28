@@ -93,46 +93,36 @@ def create_sagemaker_resource_arn(resource: str, context) -> str:
 def update_instance_constraint_policies(previous_configuration, new_configuration, context) -> None:
     env_vars = get_environment_variables()
 
-    if (
-        previous_configuration.training_job_instance_types != new_configuration.training_job_instance_types
-        or previous_configuration.transform_jobs_instance_types != new_configuration.transform_jobs_instance_types
-    ):
-        actions = ["sagemaker:CreateTrainingJob", "sagemaker:CreateHyperParameterTuningJob"]
-        resources = [
-            create_sagemaker_resource_arn("training-job", context),
-            create_sagemaker_resource_arn(ResourceType.HPO_JOB.value, context),
-        ]
-        training_statement = create_instance_constraint_statement(
-            "training1", actions, resources, new_configuration.training_job_instance_types
-        )
+    # update jobs
+    actions = ["sagemaker:CreateTrainingJob", "sagemaker:CreateHyperParameterTuningJob", "sagemaker:CreateTransformJob"]
+    resources = [
+        create_sagemaker_resource_arn(ResourceType.TRAINING_JOB.value, context),
+        create_sagemaker_resource_arn(ResourceType.HPO_JOB.value, context),
+        create_sagemaker_resource_arn(ResourceType.TRANSFORM_JOB.value, context),
+    ]
 
-        actions = ["sagemaker:CreateTransformJob"]
-        resources = [create_sagemaker_resource_arn(ResourceType.TRANSFORM_JOB.value, context)]
-        transform_statement = create_instance_constraint_statement(
-            "transform1", actions, resources, new_configuration.transform_jobs_instance_types
-        )
+    training_statement = create_instance_constraint_statement(
+        "training1",
+        actions,
+        resources,
+        new_configuration.training_job_instance_types,
+    )
 
-        create_instance_constraint_policy_version(
-            env_vars["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"], [training_statement, transform_statement]
-        )
+    transform_statement = create_instance_constraint_statement(
+        "transform1", actions, resources, new_configuration.transform_jobs_instance_types
+    )
 
-    if previous_configuration.endpoint_instance_types != new_configuration.endpoint_instance_types:
-        actions = ["sagemaker:CreateEndpointConfig"]
-        resources = [create_sagemaker_resource_arn(ResourceType.ENDPOINT.value, context)]
-        endpoint_statement = create_instance_constraint_statement(
-            "endpoint1", actions, resources, new_configuration.endpoint_instance_types
-        )
-        create_instance_constraint_policy_version(
-            env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"], [endpoint_statement]
-        )
+    create_instance_constraint_policy_version(
+        env_vars["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"], [training_statement, transform_statement]
+    )
 
-    if previous_configuration.notebook_instance_types != new_configuration.notebook_instance_types:
-        actions = ["sagemaker:CreateNotebookInstance"]
-        resources = [create_sagemaker_resource_arn(ResourceType.NOTEBOOK.value, context)]
-        endpoint_statement = create_instance_constraint_statement(
-            "notebook1", actions, resources, new_configuration.notebook_instance_types
-        )
-        create_instance_constraint_policy_version(env_vars["NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN"], [endpoint_statement])
+    # endpoint config
+    actions = ["sagemaker:CreateEndpointConfig"]
+    resources = [create_sagemaker_resource_arn(ResourceType.ENDPOINT.value, context)]
+    endpoint_statement = create_instance_constraint_statement(
+        "endpoint1", actions, resources, new_configuration.endpoint_instance_types
+    )
+    create_instance_constraint_policy_version(env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"], [endpoint_statement])
 
 
 def create_instance_constraint_policy_version(policy_arn: str, statements: list) -> None:

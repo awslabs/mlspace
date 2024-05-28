@@ -235,21 +235,16 @@ def test_update_instance_constraint_policies_allchanges(iam):
                 PolicyDocument=mock.ANY,
                 SetAsDefault=True,
             ),
-            mock.call(
-                PolicyArn=TEST_ENV_CONFIG["NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN"],
-                PolicyDocument=mock.ANY,
-                SetAsDefault=True,
-            ),
         ]
     )
 
 
 def test_create_instance_constraint_statement():
     statement_id = "sid1"
-    actions = ["sagemaker:CreateTraningJob", "sagemaker:CreateNotebookInstance"]
+    actions = ["sagemaker:CreateTraningJob", "sagemaker:CreateTransformJob"]
     resources = [
         create_sagemaker_resource_arn(ResourceType.TRAINING_JOB.value, mock_context),
-        create_sagemaker_resource_arn(ResourceType.NOTEBOOK.value, mock_context),
+        create_sagemaker_resource_arn(ResourceType.ENDPOINT_CONFIG.value, mock_context),
     ]
     allowed_instances = ["ml.m4.large"]
     expectedResponse = {
