@@ -18,11 +18,24 @@ import json
 import logging
 import time
 
-from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
-from ml_space_lambda.utils.common_functions import api_wrapper
+import boto3
 
+from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
+from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.utils.common_functions import api_wrapper
+from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
+
+iam = boto3.client("iam", config=retry_config)
 log = logging.getLogger(__name__)
 app_configuration_dao = AppConfigurationDAO()
+
+
+@api_wrapper
+def get_configuration(event, context):
+    configScope = event["queryStringParameters"]["configScope"]
+    num_versions = int(event["queryStringParameters"].get("numVersions", 1))
+
+    return app_configuration_dao.get(configScope=configScope, num_versions=num_versions)
 
 
 @api_wrapper
@@ -32,6 +45,13 @@ def update_configuration(event, context):
     version_id = request["versionId"] + 1  # increment so this will be the latest version
 
     new_configuration = SettingsModel.from_dict(request["configuration"])
+
+    previous_app_configurations = app_configuration_dao.get(configScope=configScope, num_versions=1)
+    if len(previous_app_configurations) > 0:
+        previous_configuration = previous_app_configurations[0].configuration
+        update_instance_constraint_policies(
+            previous_configuration.disabled_instance_types, new_configuration.disabled_instance_types, context
+        )
 
     app_configuration = AppConfigurationModel(
         configScope=configScope,
@@ -53,9 +73,88 @@ def update_configuration(event, context):
     return f"Successfully updated configuration for {configScope}, version {version_id}."
 
 
-@api_wrapper
-def get_configuration(event, context):
-    configScope = event["queryStringParameters"]["configScope"]
-    num_versions = int(event["queryStringParameters"].get("numVersions", 1))
+def create_instance_constraint_statement(
+    statement_id: str, actions: list[str], resources: list[str], allowed_instances: list[str]
+):
+    return {
+        "Sid": statement_id,
+        "Effect": "Allow",
+        "Action": actions,
+        "Resource": resources,
+        "Condition": {"ForAnyValue:StringEquals": {"sagemaker:InstanceTypes": allowed_instances}},
+    }
 
-    return app_configuration_dao.get(configScope=configScope, num_versions=num_versions)
+
+def create_sagemaker_resource_arn(resource: str, context) -> str:
+    components = context.invoked_function_arn.split(":")
+    return f"arn:{components[1]}:sagemaker:{components[3]}:{components[4]}:{resource}/*"
+
+
+def update_instance_constraint_policies(previous_configuration, new_configuration, context) -> None:
+    env_vars = get_environment_variables()
+
+    if (
+        previous_configuration.training_job_instance_types != new_configuration.training_job_instance_types
+        or previous_configuration.transform_jobs_instance_types != new_configuration.transform_jobs_instance_types
+    ):
+        actions = ["sagemaker:CreateTrainingJob", "sagemaker:CreateHyperParameterTuningJob"]
+        resources = [
+            create_sagemaker_resource_arn("training-job", context),
+            create_sagemaker_resource_arn(ResourceType.HPO_JOB.value, context),
+        ]
+        training_statement = create_instance_constraint_statement(
+            "training1", actions, resources, new_configuration.training_job_instance_types
+        )
+
+        actions = ["sagemaker:CreateTransformJob"]
+        resources = [create_sagemaker_resource_arn(ResourceType.TRANSFORM_JOB.value, context)]
+        transform_statement = create_instance_constraint_statement(
+            "transform1", actions, resources, new_configuration.transform_jobs_instance_types
+        )
+
+        create_instance_constraint_policy_version(
+            env_vars["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"], [training_statement, transform_statement]
+        )
+
+    if previous_configuration.endpoint_instance_types != new_configuration.endpoint_instance_types:
+        actions = ["sagemaker:CreateEndpointConfig"]
+        resources = [create_sagemaker_resource_arn(ResourceType.ENDPOINT.value, context)]
+        endpoint_statement = create_instance_constraint_statement(
+            "endpoint1", actions, resources, new_configuration.endpoint_instance_types
+        )
+        create_instance_constraint_policy_version(
+            env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"], [endpoint_statement]
+        )
+
+    if previous_configuration.notebook_instance_types != new_configuration.notebook_instance_types:
+        actions = ["sagemaker:CreateNotebookInstance"]
+        resources = [create_sagemaker_resource_arn(ResourceType.NOTEBOOK.value, context)]
+        endpoint_statement = create_instance_constraint_statement(
+            "notebook1", actions, resources, new_configuration.notebook_instance_types
+        )
+        create_instance_constraint_policy_version(env_vars["NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN"], [endpoint_statement])
+
+
+def create_instance_constraint_policy_version(policy_arn: str, statements: list) -> None:
+    log.info("Creating new version %s", policy_arn)
+    iam.create_policy_version(
+        PolicyArn=policy_arn,
+        PolicyDocument=json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": statements,
+            }
+        ),
+        SetAsDefault=True,
+    )
+
+    delete_non_default_policy(policy_arn)
+
+
+def delete_non_default_policy(policy_arn: str) -> None:
+    list_policy_versions_response = iam.list_policy_versions(PolicyArn=policy_arn)
+    log.info(list_policy_versions_response)
+    for version in list_policy_versions_response["Versions"]:
+        if not version["IsDefaultVersion"]:
+            log.info("Deleting version %s", version)
+            iam.delete_policy_version(PolicyArn=policy_arn, VersionId=version["VersionId"])

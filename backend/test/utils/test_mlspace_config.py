@@ -70,4 +70,7 @@ def test_environment_variables():
             "EMR_EC2_SSH_KEY": "",
             "NEW_USER_SUSPENSION_DEFAULT": "True",
             "TRANSLATE_DATE_ROLE_ARN": "",
+            "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "",
+            "NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN": "",
+            "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "",
         }

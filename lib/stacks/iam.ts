@@ -50,6 +50,9 @@ export class IAMStack extends Stack {
     public mlSpacePermissionsBoundary?: IManagedPolicy;
     public emrServiceRoleName: string;
     public emrEC2RoleName: string;
+    public mlspaceEndpointConfigInstanceConstraintPolicy: IManagedPolicy;
+    public mlspaceNotebookInstanceConstraintPolicy: IManagedPolicy;
+    public mlspaceJobInstanceConstraintPolicy: IManagedPolicy;
 
     constructor (parent: App, name: string, props: IAMStackProp) {
         super(parent, name, {
@@ -211,7 +214,7 @@ export class IAMStack extends Stack {
                 new PolicyStatement({
                     effect: Effect.ALLOW,
                     actions: ['sagemaker:CreateModel'],
-                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
+                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:model/*`],
                     conditions: {
                         Null: {
                             'sagemaker:VpcSecurityGroupIds': 'false',
@@ -227,7 +230,10 @@ export class IAMStack extends Stack {
                         'sagemaker:CreateHyperParameterTuningJob',
                         'sagemaker:CreateTrainingJob',
                     ],
-                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
+                    resources: [
+                        `arn:${partition}:sagemaker:${region}:${this.account}:training-job/*`,
+                        `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-training-job/*`
+                    ],
                     conditions: {
                         Null: {
                             'sagemaker:VpcSecurityGroupIds': 'false',
@@ -396,12 +402,46 @@ export class IAMStack extends Stack {
             return statements;
         };
 
+        const instanceConstraintPolicyStatement = (partition: string, region: string, action: string, resource: string) => {
+            return [
+                new PolicyStatement({
+                    effect: Effect.DENY,
+                    actions: [
+                        `sagemaker:${action}`,
+                    ],
+                    resources: [
+                        `arn:${partition}:sagemaker:${region}:${this.account}:${resource}/*`,
+                    ],
+                    conditions: {
+                        'ForAnyValue:StringEquals': {
+                            'sagemaker:InstanceTypes': [],
+                        },
+                    },
+                }),
+            ];
+        };
+
         const notebookPolicy = new ManagedPolicy(this, 'mlspace-notebook-policy', {
             statements: notebookPolicyStatements(this.partition, Aws.REGION),
             description: 'Enables general MLSpace actions in notebooks and across the entire application.'
         });
 
-        // If roles are manually created use the existing role
+        this.mlspaceEndpointConfigInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-endpoint-config-instance-constraint', {
+            statements: instanceConstraintPolicyStatement(this.partition, Aws.REGION, 'CreateEndpointConfig', 'endpoint-config')
+        });
+
+        this.mlspaceNotebookInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-notebook-instance-constraint', {
+            statements: instanceConstraintPolicyStatement(this.partition, Aws.REGION, 'CreateNotebook', 'notebook')
+        });
+
+        this.mlspaceJobInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-job-instance-constraint', {
+            statements: [
+                instanceConstraintPolicyStatement(this.partition, Aws.REGION, 'CreateHyperParameterTuningJob', 'hyper-parameter-tuning-job')[0],
+                instanceConstraintPolicyStatement(this.partition, Aws.REGION, 'CreateTrainingJob', 'training-job')[0],
+                instanceConstraintPolicyStatement(this.partition, Aws.REGION, 'CreateTransformJob', 'transform-job')[0]
+            ]
+        });
+
         if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
             this.mlSpaceNotebookRole = Role.fromRoleArn(
                 this,
@@ -422,7 +462,12 @@ export class IAMStack extends Stack {
             this.mlSpaceNotebookRole = new Role(this, 'mlspace-notebook-role', {
                 roleName: mlSpaceNotebookRoleName,
                 assumedBy: notebookPolicyAllowPrinciples,
-                managedPolicies: [notebookPolicy],
+                managedPolicies: [
+                    notebookPolicy,
+                    this.mlspaceEndpointConfigInstanceConstraintPolicy,
+                    this.mlspaceNotebookInstanceConstraintPolicy,
+                    this.mlspaceJobInstanceConstraintPolicy
+                ],
                 description:
                     'Allows SageMaker Notebooks within ML Space to access necessary AWS services (S3, SQS, DynamoDB, ...)',
             });

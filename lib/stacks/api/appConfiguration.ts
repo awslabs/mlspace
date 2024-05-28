@@ -54,6 +54,11 @@ export class AppConfigurationApiStack extends Stack {
                 description: 'Update the MLSpace application configuration',
                 path: 'app-config',
                 method: 'POST',
+                environment: {
+                    ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.endpointConfigInstanceConstraintPolicy.managedPolicyArn,
+                    NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN: props.notebookInstanceConstraintPolicy.managedPolicyArn,
+                    JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.jobInstanceConstraintPolicy.managedPolicyArn,
+                }
             },
         ];
 
