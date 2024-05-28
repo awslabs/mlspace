@@ -44,6 +44,8 @@ import Condition from '../../../modules/condition';
 import { listSubnets, selectSubnets } from '../../../shared/metadata/metadata.reducer';
 import { Subnet } from '../../../shared/model/vpc.config';
 import { LoadingStatus } from '../../../shared/loading-status';
+import { ClusterType, IAppConfiguration } from '../../../shared/model/app.configuration.model';
+import { appConfig } from '../../configuration/configuration-reducer';
 
 enum ClusterAmi {
     BUILT_IN = 'built-in',
@@ -57,6 +59,7 @@ export default function EMRClusterCreate () {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const subnets = useAppSelector(selectSubnets);
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const [clusterAmi, setClusterAmi] = useState(ClusterAmi.BUILT_IN);
 
     const formSchema = z.object({
@@ -243,11 +246,12 @@ export default function EMRClusterCreate () {
                                     selectedOption={{
                                         value: state.form.options.emrSize,
                                     }}
-                                    options={[
-                                        { value: 'Small' },
-                                        { value: 'Medium' },
-                                        { value: 'Large' },
-                                    ]}
+                                    options={(applicationConfig.configuration.EMRConfig.clusterTypes || []).map((size: ClusterType) => {
+                                        return {
+                                            label: size.name,
+                                            value: size.name,
+                                        };
+                                    })}
                                     onChange={({ detail }) =>
                                         setFields({
                                             'options.emrSize': detail.selectedOption.value,
