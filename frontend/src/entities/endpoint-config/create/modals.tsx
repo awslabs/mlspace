@@ -31,6 +31,7 @@ import { getProjectModels, clearModelsList } from '../../model/model.reducer';
 import { setTableAnnouncement } from '../../../shared/util/table-utils';
 import { ModelResourceMetadata } from '../../../shared/model/resource-metadata.model';
 import { InstanceTypeSelector } from '../../../shared/metadata/instance-type-dropdown';
+import { ServiceTypes } from '../../../shared/model/app.configuration.model';
 
 export const AddModelModal = ({
     endpointConfig,
@@ -174,8 +175,7 @@ export const EditVariantModal = ({
                                     InstanceType: detail.selectedOption.value,
                                 });
                             }}
-                            instanceTypeCategory='ProductionVariantInstanceType'
-                            service='endpoint'
+                            service={ServiceTypes.ENDPOINT}
                         />
                     </FormField>
                     <FormField label='Elastic inference'>

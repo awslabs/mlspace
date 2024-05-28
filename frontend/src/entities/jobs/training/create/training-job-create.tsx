@@ -76,6 +76,7 @@ import { generateNameConstraintText } from '../../../../shared/util/form-utils';
 import { useUsername } from '../../../../shared/util/auth-utils';
 import '../../../../shared/validation/helpers/uri';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
+import { ServiceTypes } from '../../../../shared/model/app.configuration.model';
 
 const ALGORITHMS: { [key: string]: Algorithm } = {};
 ML_ALGORITHMS.filter((algorithm) => algorithm.defaultHyperParameters.length > 0).map(
@@ -462,14 +463,13 @@ export default function TrainingJobCreate () {
                                         selectedOption={{
                                             value: state.form.ResourceConfig.InstanceType,
                                         }}
-                                        instanceTypeCategory='TrainingInstanceType'
                                         onChange={(event) =>
                                             setFields({
                                                 'ResourceConfig.InstanceType':
                                                     event.detail.selectedOption.value,
                                             })
                                         }
-                                        service='trainingJob'
+                                        service={ServiceTypes.TRAINING_JOB}
                                         onBlur={() => touchFields(['ResourceConfig.InstanceType'])}
                                     />
                                 </FormField>

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useEffect } from 'react';
 import { LoadingStatus } from '../loading-status';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -34,6 +34,10 @@ import { appConfig } from '../../entities/configuration/configuration-reducer';
 export type InstanceTypeProperties = {
     onChange?: NonCancelableEventHandler<SelectProps.ChangeDetail>;
     onBlur?: NonCancelableEventHandler;
+};
+
+type InstanceTypeMultiSelectorProperties = InstanceTypeProperties & {
+    selectedOptions: OptionDefinition[]; 
     instanceTypeCategory?:
         | 'InstanceType'
         | 'TransformInstanceType'
@@ -41,10 +45,6 @@ export type InstanceTypeProperties = {
         | 'TrainingInstanceType'
         | 'AppInstanceType'
         | 'ProductionVariantInstanceType';
-};
-
-type InstanceTypeMultiSelectorProperties = InstanceTypeProperties & {
-    selectedOptions: OptionDefinition[]; 
 };
 
 type InstanceTypeSelectorProperties = InstanceTypeProperties & {
@@ -94,30 +94,20 @@ export function InstanceTypeSelector (props: InstanceTypeSelectorProperties) {
     const dispatch = useAppDispatch();
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const computeTypes = useAppSelector(selectComputeTypes);
-    const [instanceOptions, setInstanceOptions] = useState([] as OptionDefinition[]);
-
-    useEffect(() => {
+    
+    const instanceOptions = useMemo(() => {
         if (props.service) {
-            const groups = getInstanceTypes(applicationConfig.configuration.EnabledInstanceTypes[props.service]);
-            setInstanceOptions(groups);
+            return getInstanceTypes(applicationConfig.configuration.EnabledInstanceTypes[props.service]);
         } else {
-            if (computeTypes.status === LoadingStatus.INITIAL) {
-                dispatch(listComputeTypes());
-            }
-            if (computeTypes.status === LoadingStatus.FULFILLED) {
-                const groups = getInstanceTypes(computeTypes.values.InstanceTypes[props.instanceTypeCategory || 'InstanceType']);
-                setInstanceOptions(groups);
-            }
+            return getInstanceTypes(computeTypes.values.InstanceTypes['InstanceType']);
         }
-        
-    }, [
-        dispatch,
-        applicationConfig.configuration.EnabledInstanceTypes,
-        props.service,
-        computeTypes.status,
-        computeTypes,
-        props.instanceTypeCategory,
-    ]);
+    }, [props, applicationConfig.configuration.EnabledInstanceTypes, computeTypes.values.InstanceTypes]);
+      
+    useEffect(() => {
+        if (computeTypes.status === LoadingStatus.INITIAL) {
+            dispatch(listComputeTypes());
+        }
+    }, [dispatch, computeTypes.status]);
 
     return (
         <Select
@@ -156,7 +146,7 @@ export function InstanceTypeMultiSelector (props: InstanceTypeMultiSelectorPrope
 
     return (
         <Multiselect
-            data-cy='instance-type-select'
+            data-cy={`instance-type-multi-select-${props.instanceTypeCategory}`}
             selectedOptions={props.selectedOptions}
             loadingText='Loading instance types...'
             placeholder='Select instance types...'

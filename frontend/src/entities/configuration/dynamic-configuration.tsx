@@ -28,7 +28,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { appConfig, appConfigList, getConfiguration, listConfigurations, updateConfiguration } from './configuration-reducer';
-import { Application, IAppConfiguration } from '../../shared/model/app.configuration.model';
+import { Application, IAppConfiguration, ServiceTypes } from '../../shared/model/app.configuration.model';
 import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
 import { z } from 'zod';
 import NotificationService from '../../shared/layout/notification/notification.service';
@@ -238,26 +238,26 @@ export function DynamicConfiguration () {
         setFields({ 'configuration.EMRConfig.applications': updatedSelectedApps });
     };
 
-    const addInstanceType = (detail: any, service: string) => {
+    const addInstanceType = (detail: any, service: ServiceTypes) => {
         const updatedSelectedInstances: string[] = [];
 
         switch (service) {
-            case 'notebook':
+            case  ServiceTypes.NOTEBOOK:
                 setSelectedNotebookInstanceOptions(detail.selectedOptions);
                 detail.selectedOptions.forEach((option) => updatedSelectedInstances.push(option.value)); 
                 setFields({ 'configuration.EnabledInstanceTypes.notebook': updatedSelectedInstances });
                 break;
-            case 'trainingJob':
+            case ServiceTypes.TRAINING_JOB:
                 setSelectedTrainingJobInstanceOptions(detail.selectedOptions);
                 detail.selectedOptions.forEach((option) => updatedSelectedInstances.push(option.value)); 
                 setFields({ 'configuration.EnabledInstanceTypes.trainingJob': updatedSelectedInstances });
                 break;
-            case 'transformJob':
+            case ServiceTypes.TRANSFORM_JOB:
                 setSelectedTransformJobInstanceOptions(detail.selectedOptions);
                 detail.selectedOptions.forEach((option) => updatedSelectedInstances.push(option.value)); 
                 setFields({ 'configuration.EnabledInstanceTypes.transformJob': updatedSelectedInstances });
                 break;
-            case 'endpoint':
+            case ServiceTypes.ENDPOINT:
                 setSelectedEndpointInstanceOptions(detail.selectedOptions);
                 detail.selectedOptions.forEach((option) => updatedSelectedInstances.push(option.value)); 
                 setFields({ 'configuration.EnabledInstanceTypes.endpoint': updatedSelectedInstances });
@@ -282,7 +282,7 @@ export function DynamicConfiguration () {
                         <InstanceTypeMultiSelector
                             selectedOptions={selectedNotebookInstanceOptions}
                             onChange={({ detail }) => {
-                                addInstanceType(detail, 'notebook');
+                                addInstanceType(detail, ServiceTypes.NOTEBOOK);
                             }}
                             instanceTypeCategory='InstanceType'
                         />
@@ -291,7 +291,7 @@ export function DynamicConfiguration () {
                         <InstanceTypeMultiSelector
                             selectedOptions={selectedTrainingJobInstanceOptions}
                             onChange={({ detail }) => {
-                                addInstanceType(detail, 'trainingJob');
+                                addInstanceType(detail, ServiceTypes.TRAINING_JOB);
                             }}
                             instanceTypeCategory='TrainingInstanceType'
                         />
@@ -300,7 +300,7 @@ export function DynamicConfiguration () {
                         <InstanceTypeMultiSelector
                             selectedOptions={selectedTransformJobInstanceOptions}
                             onChange={({ detail }) => {
-                                addInstanceType(detail, 'transformJob');
+                                addInstanceType(detail, ServiceTypes.TRANSFORM_JOB);
                             }}
                             instanceTypeCategory='TransformInstanceType'
                         />
@@ -309,7 +309,7 @@ export function DynamicConfiguration () {
                         <InstanceTypeMultiSelector
                             selectedOptions={selectedEndpointInstanceOptions}
                             onChange={({ detail }) => {
-                                addInstanceType(detail, 'endpoint');
+                                addInstanceType(detail, ServiceTypes.ENDPOINT);
                             }}
                             instanceTypeCategory='ProductionVariantInstanceType'
                         />
