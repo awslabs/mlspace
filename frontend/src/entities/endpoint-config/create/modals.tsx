@@ -175,6 +175,7 @@ export const EditVariantModal = ({
                                 });
                             }}
                             instanceTypeCategory='ProductionVariantInstanceType'
+                            service='endpoint'
                         />
                     </FormField>
                     <FormField label='Elastic inference'>

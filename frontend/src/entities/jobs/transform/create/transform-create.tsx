@@ -341,6 +341,7 @@ export function TransformCreate () {
                                                     detail.selectedOption.value,
                                             })
                                         }
+                                        service='transformJob'
                                         onBlur={() =>
                                             touchFields(['TransformResources.InstanceType'])
                                         }

@@ -469,6 +469,7 @@ export default function TrainingJobCreate () {
                                                     event.detail.selectedOption.value,
                                             })
                                         }
+                                        service='trainingJob'
                                         onBlur={() => touchFields(['ResourceConfig.InstanceType'])}
                                     />
                                 </FormField>

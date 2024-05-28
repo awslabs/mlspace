@@ -48,6 +48,7 @@ export function ResourceConfiguration (props: ResourceConfigurationProps) {
                             setFields({ InstanceType: event.detail.selectedOption.value });
                         }}
                         instanceTypeCategory='TrainingInstanceType'
+                        service='trainingJob'
                     />
                 </FormField>
                 <Grid gridDefinition={[{ colspan: 4 }, { colspan: 4 }]}>

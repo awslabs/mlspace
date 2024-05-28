@@ -355,6 +355,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                                     }}
                                     onBlur={() => touchFields(['InstanceType'])}
                                     instanceTypeCategory='InstanceType'
+                                    service='notebook'
                                 />
                             </FormField>
                             <FormField
