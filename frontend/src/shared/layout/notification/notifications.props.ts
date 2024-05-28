@@ -21,4 +21,5 @@ export type NotificationProp = {
     type: FlashbarProps.Type;
     id: string;
     content?: React.ReactNode;
+    dismissible?: boolean;
 };

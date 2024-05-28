@@ -155,7 +155,8 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
                         description={`Uploading ${resourceObject.name}`}
                         value={successCount / resourceObjects.length * 100}
                         variant='flash'
-                    />)
+                    />),
+                    false
                 );
                 continue;
             }
