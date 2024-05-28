@@ -22,7 +22,7 @@ import { NotificationProp } from './notifications.props';
 import React from 'react';
 
 function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
-    function generateNotification (header: string, type: FlashbarProps.Type, id: string = v4(), content: React.ReactNode = null, dismissible: boolean = true) {
+    function generateNotification (header: string, type: FlashbarProps.Type, id: string = v4(), content: React.ReactNode = null, dismissible = true) {
         dispatch(clearNotification(id));
         dispatch(addNotification({ header: header, type: type, id: id , content: content, dismissible: dismissible}));
         return id;
