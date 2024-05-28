@@ -23,6 +23,7 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.app_configuration import ServiceInstanceTypes
 from ml_space_lambda.enums import ResourceType, ServiceType
+from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
@@ -200,8 +201,11 @@ def test_update_instance_constraint_policies_nochanges(iam):
     update_instance_constraint_policies(previous_configuration, previous_configuration, mock_context)
 
 
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam")
 def test_update_instance_constraint_policies_allchanges(iam):
+    # Clear out previously cached env variables
+    mlspace_config.env_variables = {}
     previous_configuration = ServiceInstanceTypes.from_dict(
         {
             ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
