@@ -1,5 +1,7 @@
+@use '@cloudscape-design/design-tokens/index' as awsui;
+
 .drag-over {
-    background: var(--color-background-container-content-4un1ap)    !important;
+    background: awsui.$color-background-container-content  !important;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -30,5 +32,5 @@
 .drop-box {
     border: dashed 1px;
     padding: 15px;
-    border-radius: var(--border-radius-container-wqv1zi);
+    border-radius: awsui.$border-radius-container;
 }
