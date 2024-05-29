@@ -48,7 +48,6 @@ export type ApiStackProperties = {
     readonly applicationRole: IRole;
     readonly notebookInstanceRole: IRole;
     readonly endpointConfigInstanceConstraintPolicy: IManagedPolicy,
-    readonly notebookInstanceConstraintPolicy: IManagedPolicy,
     readonly jobInstanceConstraintPolicy: IManagedPolicy,
     readonly configBucketName: string;
     readonly notebookParamFileKey: string;

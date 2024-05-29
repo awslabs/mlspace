@@ -94,7 +94,6 @@ stacks.push(iamStack);
 
 const mlSpaceNotebookRole = iamStack.mlSpaceNotebookRole;
 const mlspaceEndpointConfigInstanceConstraintPolicy = iamStack.mlspaceEndpointConfigInstanceConstraintPolicy;
-const mlspaceNotebookInstanceConstraintPolicy = iamStack.mlspaceNotebookInstanceConstraintPolicy;
 const mlspaceJobInstanceConstraintPolicy = iamStack.mlspaceJobInstanceConstraintPolicy;
 const mlSpaceAppRole = iamStack.mlSpaceAppRole;
 const websiteS3ReaderRole = iamStack.s3ReaderRole;
@@ -162,7 +161,6 @@ const apiStackProperties: ApiStackProperties = {
     applicationRole: mlSpaceAppRole,
     notebookInstanceRole: mlSpaceNotebookRole,
     endpointConfigInstanceConstraintPolicy: mlspaceEndpointConfigInstanceConstraintPolicy,
-    notebookInstanceConstraintPolicy: mlspaceNotebookInstanceConstraintPolicy,
     jobInstanceConstraintPolicy: mlspaceJobInstanceConstraintPolicy,
     notebookParamFileKey: config.NOTEBOOK_PARAMETERS_FILE_NAME,
     deploymentEnvironmentName: 'mlspace',
