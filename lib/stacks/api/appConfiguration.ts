@@ -56,7 +56,6 @@ export class AppConfigurationApiStack extends Stack {
                 method: 'POST',
                 environment: {
                     ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.endpointConfigInstanceConstraintPolicy.managedPolicyArn,
-                    NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN: props.notebookInstanceConstraintPolicy.managedPolicyArn,
                     JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.jobInstanceConstraintPolicy.managedPolicyArn,
                 }
             },

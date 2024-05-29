@@ -71,6 +71,5 @@ def test_environment_variables():
             "NEW_USER_SUSPENSION_DEFAULT": "True",
             "TRANSLATE_DATE_ROLE_ARN": "",
             "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "",
-            "NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN": "",
             "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "",
         }

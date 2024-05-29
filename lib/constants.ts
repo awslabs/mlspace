@@ -110,7 +110,6 @@ export const APPLICATION_NAME = 'MLSpace';
 // Policy names attached to NOTEBOOK_ROLE_ARN that restricts instance types that a notebook
 // can use for each service
 export const ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN = '';
-export const NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN = '';
 // Training / HPO / Transform
 export const JOB_INSTANCE_CONSTRAINT_POLICY_ARN = '';
 

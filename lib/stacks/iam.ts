@@ -51,7 +51,6 @@ export class IAMStack extends Stack {
     public emrServiceRoleName: string;
     public emrEC2RoleName: string;
     public mlspaceEndpointConfigInstanceConstraintPolicy: IManagedPolicy;
-    public mlspaceNotebookInstanceConstraintPolicy: IManagedPolicy;
     public mlspaceJobInstanceConstraintPolicy: IManagedPolicy;
 
     constructor (parent: App, name: string, props: IAMStackProp) {
@@ -402,6 +401,11 @@ export class IAMStack extends Stack {
             return statements;
         };
 
+        /*
+         * WARNING: Changing this method will cause any policy statement created by this to be regenerated. This will cause
+         * any changes to this policy (like dynamic policy updates for app configuration changes) to be lost until the app
+         * configuration is updated and it updates this policy with the expected values.
+         */
         const instanceConstraintPolicyStatement = (partition: string, region: string, action: string, resource: string) => {
             return [
                 new PolicyStatement({
@@ -426,14 +430,16 @@ export class IAMStack extends Stack {
             description: 'Enables general MLSpace actions in notebooks and across the entire application.'
         });
 
+        /*
+         * WARNING: @see instanceConstraintPolicyStatement
+         */
         this.mlspaceEndpointConfigInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-endpoint-config-instance-constraint', {
             statements: instanceConstraintPolicyStatement(this.partition, Aws.REGION, 'CreateEndpointConfig', 'endpoint-config')
         });
 
-        this.mlspaceNotebookInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-notebook-instance-constraint', {
-            statements: instanceConstraintPolicyStatement(this.partition, Aws.REGION, 'CreateNotebook', 'notebook')
-        });
-
+        /*
+         * WARNING: @see instanceConstraintPolicyStatement
+         */
         this.mlspaceJobInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-job-instance-constraint', {
             statements: [
                 instanceConstraintPolicyStatement(this.partition, Aws.REGION, 'CreateHyperParameterTuningJob', 'hyper-parameter-tuning-job')[0],
@@ -465,7 +471,6 @@ export class IAMStack extends Stack {
                 managedPolicies: [
                     notebookPolicy,
                     this.mlspaceEndpointConfigInstanceConstraintPolicy,
-                    this.mlspaceNotebookInstanceConstraintPolicy,
                     this.mlspaceJobInstanceConstraintPolicy
                 ],
                 description:

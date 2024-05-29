@@ -30,7 +30,6 @@ TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
     "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::policy/job-instance-constraint",
     "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::policy/job-instance-constraint",
-    "NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::policy/endpoint-instance-constraint",
 }
 
 mock_context = mock.Mock()
@@ -41,7 +40,6 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
         create_instance_constraint_policy_version,
         create_instance_constraint_statement,
         create_sagemaker_resource_arn,
-        delete_non_default_policy,
     )
     from ml_space_lambda.app_configuration.lambda_functions import update_configuration as lambda_handler
     from ml_space_lambda.app_configuration.lambda_functions import update_instance_constraint_policies
@@ -187,8 +185,9 @@ def test_update_config_unexpected_exception(mock_app_config_dao):
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
+@mock.patch("ml_space_lambda.utils.iam_manager.boto3")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam")
-def test_update_instance_constraint_policies_nochanges(iam):
+def test_update_instance_constraint_policies_nochanges(iam, boto3):
     previous_configuration = ServiceInstanceTypes.from_dict(
         {
             ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
@@ -240,7 +239,6 @@ def test_update_instance_constraint_policies_allchanges(iam):
 
 
 def test_create_instance_constraint_statement():
-    statement_id = "sid1"
     actions = ["sagemaker:CreateTraningJob", "sagemaker:CreateTransformJob"]
     resources = [
         create_sagemaker_resource_arn(ResourceType.TRAINING_JOB.value, mock_context),
@@ -248,13 +246,12 @@ def test_create_instance_constraint_statement():
     ]
     allowed_instances = ["ml.m4.large"]
     expectedResponse = {
-        "Sid": statement_id,
         "Effect": "Allow",
         "Action": actions,
         "Resource": resources,
         "Condition": {"ForAnyValue:StringEquals": {"sagemaker:InstanceTypes": allowed_instances}},
     }
-    assert expectedResponse == create_instance_constraint_statement("sid1", actions, resources, allowed_instances)
+    assert expectedResponse == create_instance_constraint_statement(actions, resources, allowed_instances)
 
 
 def test_create_sagemaker_resource_arn():
@@ -262,13 +259,18 @@ def test_create_sagemaker_resource_arn():
     assert arn == "arn:aws:sagemaker:us-east-1:123456789010:testing/*"
 
 
+@mock.patch("ml_space_lambda.utils.iam_manager.boto3")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam")
-def test_create_instance_constraint_policy_version(iam):
+def test_create_instance_constraint_policy_version(iam, boto3):
     policy_arn = "arn:aws:iam:::policy/some_policy"
     statements = []
 
     iam.create_policy_version.return_value = {
         "Versions": [{"IsDefaultVersion": False, "VersionId": 1}, {"IsDefaultVersion": True, "VersionId": 2}]
+    }
+
+    iam.list_policy_versions.return_value = {
+        "Versions": [{"VersionId": 1, "IsDefaultVersion": False}, {"VersionId": 2, "IsDefaultVersion": True}]
     }
 
     create_instance_constraint_policy_version(policy_arn, statements)
@@ -285,17 +287,5 @@ def test_create_instance_constraint_policy_version(iam):
         SetAsDefault=True,
     )
 
-
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam")
-def test_delete_non_default_policy(iam):
-    policy_arn = "arn:aws:iam:::policy/some_policy"
-    iam.list_policy_versions.return_value = {
-        "Versions": [{"IsDefaultVersion": False, "VersionId": 1}, {"IsDefaultVersion": True, "VersionId": 2}]
-    }
-
-    delete_non_default_policy(policy_arn)
-
-    iam.list_policy_versions.assert_called_once()
-    iam.list_policy_versions.assert_called_with(PolicyArn=policy_arn)
-    iam.delete_policy_version.assert_called_once()
+    iam.create_policy_version.assert_called_once()
     iam.delete_policy_version.assert_called_with(PolicyArn=policy_arn, VersionId=1)

@@ -1,0 +1,7 @@
+{
+  "AWS_ACCOUNT": "427935540279",
+  "AWS_REGION": "us-east-1",
+  "OIDC_URL": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_gGfd5y9Fd",
+  "OIDC_CLIENT_NAME": "2voakvh33rj8st1qr004sisvtt",
+  "KEY_MANAGER_ROLE_NAME": "Admin"
+}

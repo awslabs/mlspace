@@ -66,7 +66,6 @@ def get_environment_variables() -> dict:
             "TRANSLATE_DATE_ROLE_ARN": os.getenv("TRANSLATE_DATE_ROLE_ARN", ""),
             "USERS_TABLE": os.getenv("USERS_TABLE", "mlspace-users"),
             "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": os.getenv("ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN", ""),
-            "NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN": os.getenv("NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN", ""),
             "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": os.getenv("JOB_INSTANCE_CONSTRAINT_POLICY_ARN", ""),
         }
 

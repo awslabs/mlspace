@@ -23,6 +23,7 @@ import boto3
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper
+from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
 
 iam = boto3.client("iam", config=retry_config)
@@ -73,11 +74,8 @@ def update_configuration(event, context):
     return f"Successfully updated configuration for {configScope}, version {version_id}."
 
 
-def create_instance_constraint_statement(
-    statement_id: str, actions: list[str], resources: list[str], allowed_instances: list[str]
-):
+def create_instance_constraint_statement(actions: list[str], resources: list[str], allowed_instances: list[str]):
     return {
-        "Sid": statement_id,
         "Effect": "Allow",
         "Action": actions,
         "Resource": resources,
@@ -102,14 +100,13 @@ def update_instance_constraint_policies(previous_configuration, new_configuratio
     ]
 
     training_statement = create_instance_constraint_statement(
-        "training1",
         actions,
         resources,
         new_configuration.training_job_instance_types,
     )
 
     transform_statement = create_instance_constraint_statement(
-        "transform1", actions, resources, new_configuration.transform_jobs_instance_types
+        actions, resources, new_configuration.transform_jobs_instance_types
     )
 
     create_instance_constraint_policy_version(
@@ -119,9 +116,7 @@ def update_instance_constraint_policies(previous_configuration, new_configuratio
     # endpoint config
     actions = ["sagemaker:CreateEndpointConfig"]
     resources = [create_sagemaker_resource_arn(ResourceType.ENDPOINT.value, context)]
-    endpoint_statement = create_instance_constraint_statement(
-        "endpoint1", actions, resources, new_configuration.endpoint_instance_types
-    )
+    endpoint_statement = create_instance_constraint_statement(actions, resources, new_configuration.endpoint_instance_types)
     create_instance_constraint_policy_version(env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"], [endpoint_statement])
 
 
@@ -138,13 +133,5 @@ def create_instance_constraint_policy_version(policy_arn: str, statements: list)
         SetAsDefault=True,
     )
 
-    delete_non_default_policy(policy_arn)
-
-
-def delete_non_default_policy(policy_arn: str) -> None:
-    list_policy_versions_response = iam.list_policy_versions(PolicyArn=policy_arn)
-    log.info(list_policy_versions_response)
-    for version in list_policy_versions_response["Versions"]:
-        if not version["IsDefaultVersion"]:
-            log.info("Deleting version %s", version)
-            iam.delete_policy_version(PolicyArn=policy_arn, VersionId=version["VersionId"])
+    iam_manager = IAMManager(iam)
+    iam_manager._delete_unused_policy_versions(policy_arn)

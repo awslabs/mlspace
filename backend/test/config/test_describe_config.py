@@ -65,7 +65,6 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
             "TRANSLATE_DATE_ROLE_ARN": "",
             "USERS_TABLE": "mlspace-users",
             "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "",
-            "NOTEBOOK_INSTANCE_CONSTRAINT_POLICY_ARN": "",
             "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "",
         },
         "s3ParamFile": {
