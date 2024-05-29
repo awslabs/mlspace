@@ -48,7 +48,6 @@ export class IAMStack extends Stack {
     public mlSpaceNotebookRole: IRole;
     public s3ReaderRole: IRole;
     public mlSpacePermissionsBoundary?: IManagedPolicy;
-    public mlSpaceDeniedServicesAppPolicy: IManagedPolicy;
     public emrServiceRoleName: string;
     public emrEC2RoleName: string;
 
@@ -83,35 +82,6 @@ export class IAMStack extends Stack {
         const privateSubnetArnList = props.mlSpaceVPC.privateSubnets.map(
             (s) => `${ec2ArnBase}:subnet/${s.subnetId}`
         );
-
-        // The following is a generic constructor that will be overwritten if the policy is used
-        this.mlSpaceDeniedServicesAppPolicy = new ManagedPolicy(this, 'mlspace-denied-services-app-policy');
-        if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
-            // This policy allows enabling/disabling services by denying IAM permissions at an application level
-            if (props.mlspaceConfig.DENIED_SERVICES_POLICY_ARN){
-                this.mlSpaceDeniedServicesAppPolicy = ManagedPolicy.fromManagedPolicyArn(
-                    this,
-                    'mlspace-denied-services-app-policy',
-                    props.mlspaceConfig.DENIED_SERVICES_POLICY_ARN
-                );
-            } else {
-                this.mlSpaceDeniedServicesAppPolicy = new ManagedPolicy(this, 'mlspace-denied-services-app-policy', {
-                    /**
-                     * Policies must have at least one statement with an effect, actions, and resources property for validation.
-                     * The CreateTableReplica permission should never be needed for MLSpace. 
-                     * This policy statement will be overwritten by dynamic policy creation in the application configuration lambda helper functions.
-                     * 
-                     * WARNING: Alterations to this policy may break dynamic roles. This policy is designed to be dynamically managed by helper functions
-                     */
-                    statements: [new PolicyStatement({
-                        effect: Effect.DENY,
-                        actions: ['dynamodb:CreateTableReplica'],
-                        resources: ['*']
-                    })],
-                    description: 'Denies access to services that are disabled at an application level'
-                });
-            }
-        }
 
         /**
          * NOTEBOOK POLICY & ROLE SECTION
@@ -430,11 +400,6 @@ export class IAMStack extends Stack {
             statements: notebookPolicyStatements(this.partition, Aws.REGION),
             description: 'Enables general MLSpace actions in notebooks and across the entire application.'
         });
-        const notebookRolePolicies : IManagedPolicy[] = [notebookPolicy];
-
-        if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
-            notebookRolePolicies.push(this.mlSpaceDeniedServicesAppPolicy);
-        }
 
         // If roles are manually created use the existing role
         if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
@@ -457,7 +422,7 @@ export class IAMStack extends Stack {
             this.mlSpaceNotebookRole = new Role(this, 'mlspace-notebook-role', {
                 roleName: mlSpaceNotebookRoleName,
                 assumedBy: notebookPolicyAllowPrinciples,
-                managedPolicies: notebookRolePolicies,
+                managedPolicies: [notebookPolicy],
                 description:
                     'Allows SageMaker Notebooks within ML Space to access necessary AWS services (S3, SQS, DynamoDB, ...)',
             });
@@ -907,16 +872,6 @@ export class IAMStack extends Stack {
                 }
             }
 
-            const appPolicies = [
-                appPolicy, 
-                notebookPolicy,
-                ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')
-            ];
-
-            if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
-                appPolicies.push(this.mlSpaceDeniedServicesAppPolicy);
-            }
-
             const appPolicyAllowPrinciples = props.enableTranslate
                 ? new CompositePrincipal(
                     new ServicePrincipal('lambda.amazonaws.com'),
@@ -926,7 +881,11 @@ export class IAMStack extends Stack {
             this.mlSpaceAppRole = new Role(this, 'mlspace-app-role', {
                 roleName: mlSpaceAppRoleName,
                 assumedBy: appPolicyAllowPrinciples,
-                managedPolicies: appPolicies,
+                managedPolicies: [
+                    appPolicy, 
+                    notebookPolicy,
+                    ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')
+                ],
                 description:
                     'Allows ML Space Application to access necessary AWS services (S3, SQS, DynamoDB, ...)',
             });

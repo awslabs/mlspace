@@ -75,7 +75,6 @@ export const ADDITIONAL_LAMBDA_ENVIRONMENT_VARS: { [key: string]: string } = {};
  */
 export const NOTEBOOK_ROLE_ARN = '';
 export const APP_ROLE_ARN = '';
-export const DENIED_SERVICES_POLICY_ARN = '';
 
 /* EMR Configuration */
 // Role that will be used as the "ServiceRole" for all EMR clusters
