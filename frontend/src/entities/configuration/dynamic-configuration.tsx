@@ -25,10 +25,10 @@ import {
     FormField,
     Multiselect,
 } from '@cloudscape-design/components';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { appConfig, appConfigList, getConfiguration, listConfigurations, updateConfiguration } from './configuration-reducer';
-import { Application, IAppConfiguration, ServiceTypes } from '../../shared/model/app.configuration.model';
+import { Application, IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
 import { z } from 'zod';
 import NotificationService from '../../shared/layout/notification/notification.service';
@@ -43,10 +43,6 @@ export function DynamicConfiguration () {
     const emrApplicationList: string[] = useAppSelector(emrApplications);
     const [selectedApplicationOptions, setSelectedApplicationOptions] = useState([] as any[]);
     const [applicationOptions, setApplicationOptions] = useState([] as any);
-    const [selectedNotebookInstanceOptions, setSelectedNotebookInstanceOptions] = useState([] as any[]);
-    const [selectedTrainingJobInstanceOptions, setSelectedTrainingJobInstanceOptions] = useState([] as any[]);
-    const [selectedTransformJobInstanceOptions, setSelectedTransformJobInstanceOptions] = useState([] as any[]);
-    const [selectedEndpointInstanceOptions, setSelectedEndpointInstanceOptions] = useState([] as any[]);
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const [selectedFile, setSelectedFile] = useState<File[]>([]);
@@ -120,57 +116,37 @@ export function DynamicConfiguration () {
         // eslint-disable-next-line react-hooks/exhaustive-deps 
     }, [emrApplicationList, applicationConfig]);
 
-    useEffect(() => {
-        // Initialize the notebook instance type selectors with the currently selected options
-        setSelectedNotebookInstanceOptions([]);
-        const selectedNotebookInstances: any[] = [];
-        for (const notebookInstance of applicationConfig.configuration.EnabledInstanceTypes.notebook) {
-            selectedNotebookInstances.push({
-                value: notebookInstance,
-                label: notebookInstance
-            });
-        }
-        setSelectedNotebookInstanceOptions((priorSelectedOptions) => [...priorSelectedOptions, ...selectedNotebookInstances]);
-    }, [applicationConfig.configuration.EnabledInstanceTypes.notebook]);
+    // Initialize the notebook instance type selectors with the currently selected options
+    const selectedNotebookInstanceOptions = useMemo(() => state.form.configuration.EnabledInstanceTypes.notebook.map((instance) => {
+        return {
+            value: instance,
+            label: instance,
+        };
+    }), [state.form.configuration.EnabledInstanceTypes.notebook]);
 
-    useEffect(() => {
-        // Initialize the training job instance type selectors with the currently selected options
-        setSelectedTrainingJobInstanceOptions([]);
-        const selectedTrainingJobInstances: any[] = [];
-        for (const tjInstance of applicationConfig.configuration.EnabledInstanceTypes.trainingJob) {
-            selectedTrainingJobInstances.push({
-                value: tjInstance,
-                label: tjInstance
-            });
-        }
-        setSelectedTrainingJobInstanceOptions((priorSelectedOptions) => [...priorSelectedOptions, ...selectedTrainingJobInstances]);
-    }, [applicationConfig.configuration.EnabledInstanceTypes.trainingJob]);
+    // Initialize the training job instance type selectors with the currently selected options
+    const selectedTrainingJobInstanceOptions = useMemo(() => state.form.configuration.EnabledInstanceTypes.trainingJob.map((instance) => {
+        return {
+            value: instance,
+            label: instance,
+        };
+    }), [state.form.configuration.EnabledInstanceTypes.trainingJob]);
 
-    useEffect(() => {
-        // Initialize the transform job instance type selectors with the currently selected options
-        setSelectedTransformJobInstanceOptions([]);
-        const selectedTransformInstances: any[] = [];
-        for (const transformInstance of applicationConfig.configuration.EnabledInstanceTypes.transformJob) {
-            selectedTransformInstances.push({
-                value: transformInstance,
-                label: transformInstance
-            });
-        }
-        setSelectedTransformJobInstanceOptions((priorSelectedOptions) => [...priorSelectedOptions, ...selectedTransformInstances]);
-    }, [applicationConfig.configuration.EnabledInstanceTypes.transformJob]);
+    // Initialize the transform job instance type selectors with the currently selected options
+    const selectedTransformJobInstanceOptions = useMemo(() => state.form.configuration.EnabledInstanceTypes.transformJob.map((instance) => {
+        return {
+            value: instance,
+            label: instance,
+        };
+    }), [state.form.configuration.EnabledInstanceTypes.transformJob]);
 
-    useEffect(() => {
-        // Initialize the endpoint instance type selectors with the currently selected options
-        setSelectedEndpointInstanceOptions([]);
-        const selectedEndpointInstances: any[] = [];
-        for (const transformInstance of applicationConfig.configuration.EnabledInstanceTypes.endpoint) {
-            selectedEndpointInstances.push({
-                value: transformInstance,
-                label: transformInstance
-            });
-        }
-        setSelectedEndpointInstanceOptions((priorSelectedOptions) => [...priorSelectedOptions, ...selectedEndpointInstances]);
-    }, [applicationConfig.configuration.EnabledInstanceTypes.endpoint]);
+    // Initialize the endpoint instance type selectors with the currently selected options
+    const selectedEndpointInstanceOptions = useMemo(() => state.form.configuration.EnabledInstanceTypes.endpoint.map((instance) => {
+        return {
+            value: instance,
+            label: instance,
+        };
+    }), [state.form.configuration.EnabledInstanceTypes.endpoint]);
 
     const handleSubmit = async () => {
         if (isValid) {
@@ -238,33 +214,6 @@ export function DynamicConfiguration () {
         setFields({ 'configuration.EMRConfig.applications': updatedSelectedApps });
     };
 
-    const addInstanceType = (detail: any, service: ServiceTypes) => {
-        const updatedSelectedInstances: string[] = [];
-
-        switch (service) {
-            case  ServiceTypes.NOTEBOOK:
-                setSelectedNotebookInstanceOptions(detail.selectedOptions);
-                detail.selectedOptions.forEach((option) => updatedSelectedInstances.push(option.value)); 
-                setFields({ 'configuration.EnabledInstanceTypes.notebook': updatedSelectedInstances });
-                break;
-            case ServiceTypes.TRAINING_JOB:
-                setSelectedTrainingJobInstanceOptions(detail.selectedOptions);
-                detail.selectedOptions.forEach((option) => updatedSelectedInstances.push(option.value)); 
-                setFields({ 'configuration.EnabledInstanceTypes.trainingJob': updatedSelectedInstances });
-                break;
-            case ServiceTypes.TRANSFORM_JOB:
-                setSelectedTransformJobInstanceOptions(detail.selectedOptions);
-                detail.selectedOptions.forEach((option) => updatedSelectedInstances.push(option.value)); 
-                setFields({ 'configuration.EnabledInstanceTypes.transformJob': updatedSelectedInstances });
-                break;
-            case ServiceTypes.ENDPOINT:
-                setSelectedEndpointInstanceOptions(detail.selectedOptions);
-                detail.selectedOptions.forEach((option) => updatedSelectedInstances.push(option.value)); 
-                setFields({ 'configuration.EnabledInstanceTypes.endpoint': updatedSelectedInstances });
-                break;
-        }
-    };
-
     return (
         <Container
             header={
@@ -281,36 +230,28 @@ export function DynamicConfiguration () {
                     <ExpandableSection headerText='Notebook instances' variant='default'>
                         <InstanceTypeMultiSelector
                             selectedOptions={selectedNotebookInstanceOptions}
-                            onChange={({ detail }) => {
-                                addInstanceType(detail, ServiceTypes.NOTEBOOK);
-                            }}
+                            onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.notebook': detail.selectedOptions.map((option) => option.value)})}
                             instanceTypeCategory='InstanceType'
                         />
                     </ExpandableSection>
                     <ExpandableSection headerText='Training and HPO jobs' variant='default'>
                         <InstanceTypeMultiSelector
                             selectedOptions={selectedTrainingJobInstanceOptions}
-                            onChange={({ detail }) => {
-                                addInstanceType(detail, ServiceTypes.TRAINING_JOB);
-                            }}
+                            onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.trainingJob': detail.selectedOptions.map((option) => option.value)})}
                             instanceTypeCategory='TrainingInstanceType'
                         />
                     </ExpandableSection>
                     <ExpandableSection headerText='Transform jobs' variant='default'>
                         <InstanceTypeMultiSelector
                             selectedOptions={selectedTransformJobInstanceOptions}
-                            onChange={({ detail }) => {
-                                addInstanceType(detail, ServiceTypes.TRANSFORM_JOB);
-                            }}
+                            onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.transformJob': detail.selectedOptions.map((option) => option.value)})}
                             instanceTypeCategory='TransformInstanceType'
                         />
                     </ExpandableSection>
                     <ExpandableSection headerText='Endpoints' variant='default'>
                         <InstanceTypeMultiSelector
                             selectedOptions={selectedEndpointInstanceOptions}
-                            onChange={({ detail }) => {
-                                addInstanceType(detail, ServiceTypes.ENDPOINT);
-                            }}
+                            onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.endpoint': detail.selectedOptions.map((option) => option.value)})}
                             instanceTypeCategory='ProductionVariantInstanceType'
                         />
                     </ExpandableSection>
