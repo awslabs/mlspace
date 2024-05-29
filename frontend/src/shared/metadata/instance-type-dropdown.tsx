@@ -26,7 +26,7 @@ import {
     OptionGroup,
 } from '@cloudscape-design/components/internal/components/option/interfaces';
 import { useState } from 'react';
-import { IAppConfiguration } from '../model/app.configuration.model';
+import { IAppConfiguration, ServiceTypes } from '../model/app.configuration.model';
 import { appConfig } from '../../entities/configuration/configuration-reducer';
 
 
@@ -49,7 +49,7 @@ type InstanceTypeMultiSelectorProperties = InstanceTypeProperties & {
 
 type InstanceTypeSelectorProperties = InstanceTypeProperties & {
     selectedOption: OptionDefinition | null;
-    service?: string;
+    service?: ServiceTypes;
 };
 
 function getInstanceTypes (computeTypes: string[]) {
