@@ -85,7 +85,7 @@ function registerEndpoint (
         securityGroups,
     });
     const functionResource = getOrCreateResource(stack, api.root, funcDef.path.split('/'));
-    functionResource.addMethod(funcDef.method, new LambdaIntegration(handler), {
+    functionResource.addMethod(funcDef.method, new LambdaIntegration(handler), authorizer && {
         authorizer,
         authorizationType: AuthorizationType.CUSTOM,
     });
