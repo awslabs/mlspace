@@ -214,6 +214,7 @@ export function DynamicConfiguration () {
         setFields({ 'configuration.EMRConfig.applications': updatedSelectedApps });
     };
 
+
     return (
         <Container
             header={

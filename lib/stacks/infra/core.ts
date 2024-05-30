@@ -216,6 +216,33 @@ export class CoreStack extends Stack {
                 : undefined,
         });
 
+        const commonLambdaLayer = createLambdaLayer(this, 'common');
+
+        // Save common layer arn to SSM to avoid issue related to cross stack references
+        new StringParameter(this, 'VersionArn', {
+            parameterName: props.mlspaceConfig.COMMON_LAYER_ARN_PARAM,
+            stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
+        });
+
+        // Lambda for populating the initial app config 
+        const appConfigLambda = new Function(this, 'appConfigDeployment', {
+            functionName: 'mls-lambda-app-config-deployment',
+            description:
+                'Populates the initial app config',
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
+            handler: 'ml_space_lambda.initial_app_config.lambda_function.lambda_handler',
+            code: Code.fromAsset(props.lambdaSourcePath),
+            timeout: Duration.seconds(30),
+            role: props.mlSpaceAppRole,
+            environment: {
+                APP_CONFIG_TABLE: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
+            },
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+        });
+
         const notifierLambdaLayer = createLambdaLayer(this, 'common', 'notifier');
 
         const s3NotificationLambda = new Function(this, 's3Notifier', {
@@ -252,14 +279,6 @@ export class CoreStack extends Stack {
             EventType.OBJECT_CREATED,
             new LambdaDestination(s3NotificationLambda)
         );
-
-        const commonLambdaLayer = createLambdaLayer(this, 'common');
-
-        // Save common layer arn to SSM to avoid issue related to cross stack references
-        new StringParameter(this, 'VersionArn', {
-            parameterName: props.mlspaceConfig.COMMON_LAYER_ARN_PARAM,
-            stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
-        });
 
         const terminateResourcesLambda = new Function(this, 'resourceTerminator', {
             functionName: 'mls-lambda-resource-terminator',
@@ -433,6 +452,31 @@ export class CoreStack extends Stack {
                 physicalResourceId: PhysicalResourceId.of('initAppConfigData'),
             },
             policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: [appConfigTable.tableArn] }),
+        });
+
+        new AwsCustomResource(this, 'populate-instance-types', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                physicalResourceId: PhysicalResourceId.of('initInstanceTypes'),
+                parameters: {
+                    FunctionName: appConfigLambda.functionName,
+                    Payload: '{}'
+                }, 
+            },
+            policy: AwsCustomResourcePolicy.fromStatements([
+                //Lambda functions must have their policy statement created explicitly, cannot use 'fromSdkCalls'
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['lambda:InvokeFunction'],
+                    resources: [appConfigLambda.functionArn],
+                }),
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['dynamodb:PutItem'],
+                    resources: [appConfigTable.tableArn],
+                }),
+            ])
         });
 
         // EMR Security Configuration
