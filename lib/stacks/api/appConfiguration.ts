@@ -17,7 +17,7 @@
 import { App, Stack } from 'aws-cdk-lib';
 import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
+import { registerAPIEndpoint, registerUnauthenticatedEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
 import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 
@@ -40,7 +40,14 @@ export class AppConfigurationApiStack extends Stack {
             rootResourceId: props.rootResourceId,
         });
 
-        const apis: MLSpacePythonLambdaFunction[] = [
+        // Anyone can get the application configuration
+        registerUnauthenticatedEndpoint(
+            this,
+            restApi,
+            props.applicationRole,
+            props.notebookInstanceRole.roleName,
+            props.lambdaSourcePath,
+            [commonLambdaLayer],
             {
                 name: 'get_configuration',
                 resource: 'app_configuration',
@@ -48,6 +55,20 @@ export class AppConfigurationApiStack extends Stack {
                 path: 'app-config',
                 method: 'GET',
             },
+            props.mlSpaceVPC,
+            props.securityGroups,
+            props.mlspaceConfig,
+            props.permissionsBoundaryArn
+        );
+        // Only authenticated users (with the appropriate permissions) can update the application
+        registerAPIEndpoint(
+            this,
+            restApi,
+            props.authorizer,
+            props.applicationRole,
+            props.notebookInstanceRole.roleName,
+            props.lambdaSourcePath,
+            [commonLambdaLayer],
             {
                 name: 'update_configuration',
                 resource: 'app_configuration',
@@ -55,23 +76,10 @@ export class AppConfigurationApiStack extends Stack {
                 path: 'app-config',
                 method: 'POST',
             },
-        ];
-
-        apis.forEach((f) => {
-            registerAPIEndpoint(
-                this,
-                restApi,
-                props.authorizer,
-                props.applicationRole,
-                props.notebookInstanceRole.roleName,
-                props.lambdaSourcePath,
-                [commonLambdaLayer],
-                f,
-                props.mlSpaceVPC,
-                props.securityGroups,
-                props.mlspaceConfig,
-                props.permissionsBoundaryArn
-            );
-        });
+            props.mlSpaceVPC,
+            props.securityGroups,
+            props.mlspaceConfig,
+            props.permissionsBoundaryArn
+        );
     }
 }
