@@ -13,6 +13,14 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+
+// This is different than the ResourceTypes enum as it's the names of services as they're stored in the app config
+export enum ServiceTypes {
+    NOTEBOOK = 'notebook',
+    ENDPOINT = 'endpoint',
+    TRAINING_JOB = 'trainingJob',
+    TRANSFORM_JOB = 'transformJob',
+}
 export type IServiceInstanceTypes = {
     notebook: string[];
     endpoint: string[];
