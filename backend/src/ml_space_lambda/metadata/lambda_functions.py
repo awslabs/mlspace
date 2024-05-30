@@ -58,6 +58,10 @@ this.sagemaker_eia_shapes = [
 
 @api_wrapper
 def compute_types(event, context):
+    return get_compute_types()
+
+
+def get_compute_types():
     response = {"InstanceTypes": {}, "AcceleratorTypes": {}}
 
     if this.cached_response_compute_types:
