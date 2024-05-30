@@ -114,12 +114,6 @@ export function InstanceTypeSelector (props: InstanceTypeSelectorProperties) {
         computeTypes.status,
         dispatch,
     ]);
-      
-    useEffect(() => {
-        if (computeTypes.status === LoadingStatus.INITIAL) {
-            dispatch(listComputeTypes());
-        }
-    }, [dispatch, computeTypes.status]);
 
     return (
         <Select
