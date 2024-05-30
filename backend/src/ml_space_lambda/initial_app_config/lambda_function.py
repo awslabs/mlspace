@@ -12,9 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# TODO: create a lambda handler. We accept the service type as an argument. We then map that service type to
-# the instance type it needs when we call compute types. We parse out the instances from compute types,
-# put those in a big list, and then use those to make a PUT call to the app config table
 import json
 import logging
 

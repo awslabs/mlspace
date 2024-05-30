@@ -224,7 +224,7 @@ export class CoreStack extends Stack {
             stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
         });
 
-        // Lambda for populating the initial app config 
+        // Lambda for populating the initial allowed instances in the app config 
         const appConfigLambda = new Function(this, 'appConfigDeployment', {
             functionName: 'mls-lambda-app-config-deployment',
             description:
