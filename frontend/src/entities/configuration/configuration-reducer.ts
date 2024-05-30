@@ -22,6 +22,7 @@ import {
     PayloadAction,
 } from '@reduxjs/toolkit';
 import axios from '../../shared/util/axios-utils';
+import {setEnabledServices} from '../../shared/layout/navigation/navigation.reducer';
 import { defaultConfiguration, IAppConfiguration } from '../../shared/model/app.configuration.model';
 
 const initialState = {
@@ -37,7 +38,7 @@ export const getConfiguration = (configScope: string) => {
 
 export const listConfigurations = createAsyncThunk(
     'app_config/list_configurations',
-    async (props: ListAppConfigurationProps) => {
+    async (props: ListAppConfigurationProps, { dispatch }) => {
         const searchParams = new URLSearchParams();
         searchParams.set('configScope', props.configScope);
         if (props.numVersions) {
@@ -45,7 +46,10 @@ export const listConfigurations = createAsyncThunk(
         }
         const requestUrl = `/app-config?${searchParams}`;
         
-        return await axios.get<IAppConfiguration[]>(requestUrl);
+        const response =  await axios.get<IAppConfiguration[]>(requestUrl);
+        dispatch(setEnabledServices(response.data[0].configuration.EnabledServices));
+
+        return response;
     }
 );
 

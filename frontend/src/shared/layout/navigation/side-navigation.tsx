@@ -23,7 +23,7 @@ import {
     FormField
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { setActiveHref, setItemsForProjectName } from './navigation.reducer';
+import {setActiveHref, setItemsForProjectName} from './navigation.reducer';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import { IProject } from '../../model/project.model';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -152,7 +152,7 @@ export default function SideNavigation () {
                         selectedOption={selectedOption}
                         onChange={({ detail }) => {
                             setSelectedOption(detail.selectedOption);
-                            dispatch(setItemsForProjectName({ 'project': detail.selectedOption.value, 'enabledServices': applicationConfig.configuration.EnabledServices }));
+                            dispatch(setItemsForProjectName(detail.selectedOption.value));
                             navigate(`/project/${detail.selectedOption.value}`);
                         }}
                         options={projectOptions}

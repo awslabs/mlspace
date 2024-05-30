@@ -18,17 +18,12 @@ import { BreadcrumbGroupProps, SideNavigationProps } from '@cloudscape-design/co
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {IEnabledServices} from '../../model/app.configuration.model';
 
-export type NavigationReducerState = {
-    project?: string;
-    enabledServices: IEnabledServices;
-};
-
-
 const initialState = {
     breadcrumbs: [] as BreadcrumbGroupProps.Item[],
     activeHref: '#/',
     navItems: [] as SideNavigationProps.Item[],
     adminItems: undefined as SideNavigationProps.Item | undefined,
+    enabledServices: {} as IEnabledServices,
 };
 
 // slice
@@ -41,6 +36,9 @@ const navigationSlice = createSlice({
         },
         setActiveHref (state, action: PayloadAction<string>) {
             state.activeHref = action.payload;
+        },
+        setEnabledServices (state, action: PayloadAction<IEnabledServices>) {
+            state.enabledServices = action.payload;
         },
         setAdminItems (state, action: PayloadAction<boolean>) {
             if (action.payload) {
@@ -58,10 +56,10 @@ const navigationSlice = createSlice({
                 state.adminItems = undefined;
             }
         },
-        setItemsForProjectName (state, action: PayloadAction<NavigationReducerState>) {
-            const projectName = action.payload.project;
+        setItemsForProjectName (state, action: PayloadAction<string | undefined>) {
+            const projectName = action.payload;
             if (projectName) {
-                const translateItems: any = action.payload.enabledServices.batchTranslate
+                const translateItems: any = state.enabledServices.batchTranslate
                     ? [
                         {
                             type: 'section',
@@ -78,7 +76,7 @@ const navigationSlice = createSlice({
                     ]
                     : [];
 
-                const groundTruthItems: any = action.payload.enabledServices.labelingJob
+                const groundTruthItems: any = state.enabledServices.labelingJob
                     ? [
                         {
                             type: 'section',
@@ -111,7 +109,7 @@ const navigationSlice = createSlice({
                                 text: 'Datasets',
                                 href: `#/project/${projectName}/dataset`,
                             },
-                            ...action.payload.enabledServices.emrCluster ? [{
+                            ...state.enabledServices.emrCluster ? [{
                                 type: 'link',
                                 text: 'EMR clusters',
                                 href: `#/project/${projectName}/emr`,
@@ -174,6 +172,6 @@ const navigationSlice = createSlice({
 });
 
 // Reducer
-export const { setBreadcrumbs, setActiveHref, setItemsForProjectName, setAdminItems } =
+export const { setBreadcrumbs, setActiveHref, setItemsForProjectName, setAdminItems, setEnabledServices } =
     navigationSlice.actions;
 export default navigationSlice.reducer;

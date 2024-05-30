@@ -62,10 +62,10 @@ function ProjectDetail () {
             .catch(() => {
                 navigate('/404');
             });
-        dispatch(setItemsForProjectName({ 'project': projectName, 'enabledServices': applicationConfig.configuration.EnabledServices }));
+        dispatch(setItemsForProjectName(projectName));
         dispatch(setBreadcrumbs([getBase(projectName)]));
         dispatch(setActiveHref('/#'));
-    }, [dispatch, navigate, projectName, project.name, applicationConfig.configuration.EnabledServices]);
+    }, [dispatch, navigate, projectName, project.name]);
 
     // Refresh data in the background to keep state fresh
     const isBackgroundRefreshing = useBackgroundRefresh(async () => {
