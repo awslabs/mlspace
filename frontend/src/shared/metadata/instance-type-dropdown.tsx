@@ -99,9 +99,21 @@ export function InstanceTypeSelector (props: InstanceTypeSelectorProperties) {
         if (props.service) {
             return getInstanceTypes(applicationConfig.configuration.EnabledInstanceTypes[props.service]);
         } else {
-            return getInstanceTypes(computeTypes.values.InstanceTypes['InstanceType']);
+            if (computeTypes.status === LoadingStatus.INITIAL) {
+                dispatch(listComputeTypes());
+                return [];
+            }
+            if (computeTypes.status === LoadingStatus.FULFILLED) {
+                return getInstanceTypes(computeTypes.values.InstanceTypes['InstanceType']);
+            }
         }
-    }, [props, applicationConfig.configuration.EnabledInstanceTypes, computeTypes.values.InstanceTypes]);
+    }, [
+        props, 
+        applicationConfig.configuration.EnabledInstanceTypes, 
+        computeTypes.values.InstanceTypes,
+        computeTypes.status,
+        dispatch,
+    ]);
       
     useEffect(() => {
         if (computeTypes.status === LoadingStatus.INITIAL) {
