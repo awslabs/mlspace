@@ -53,16 +53,12 @@ const config = (requestConfig: AxiosRequestConfig = {}) => {
     const oidcString = sessionStorage.getItem(
         `oidc.user:${window.env.OIDC_URL}:${window.env.OIDC_CLIENT_NAME}`
     );
-    if (oidcString) {
-        const token = JSON.parse(oidcString).id_token;
-        const headerName = 'Authorization';
-        const headerValue = `Bearer ${token}`;
+    const token = oidcString ? JSON.parse(oidcString).id_token : '';
 
-        if (undefined === requestConfig.headers) {
-            requestConfig.headers = {};
-        }
-        requestConfig.headers[headerName] = headerValue;
+    if (requestConfig.headers === undefined) {
+        requestConfig.headers = {};
     }
+    requestConfig.headers['Authorization'] = `Bearer ${token}`;
 
     return requestConfig;
 };
