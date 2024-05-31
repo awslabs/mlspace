@@ -204,7 +204,7 @@ export function DynamicConfiguration () {
                 <ExpandableSection headerText='Allowed Instance Types' variant='default' defaultExpanded>
                     {<pre>TODO</pre>}
                 </ExpandableSection>
-                <ExpandableSection headerText='Enabled Services' variant='default' defaultExpanded>
+                <ExpandableSection headerText='Activated Services' variant='default' defaultExpanded>
                     <ContentLayout >
                         <SpaceBetween direction='vertical' size='m'>
                             <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services within MLSpace. IAM permissions that control access to these services within the MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated services will no longer appear within the MLSpace user interface. Deactivating services will terminate all active corresponding jobs and instances associated with the service.</Alert>
@@ -450,7 +450,7 @@ export function DynamicConfiguration () {
                             }}
                             checked={state.form.configuration.SystemBanner.isEnabled!}
                         >
-                            Enable System Banner
+                            Activate System Banner
                         </Toggle>
                         <FormField
                             label='Banner Text'
