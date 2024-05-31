@@ -209,12 +209,12 @@ function ProjectDetail () {
                                     <ProjectResourceCount iconName='status-stopped' variantStyle='subtle' resourceKey={`${ResourceType.NOTEBOOK}.Stopped`} resourceLabel='Stopped' />
                                 </ProjectResourceRow>
 
-                                <ProjectResourceRow label='EMR clusters' path='emr'>
+                                {applicationConfig.configuration.EnabledServices.emrCluster && <ProjectResourceRow label='EMR clusters' path='emr'>
                                     <ProjectResourceCount iconName='add-plus' variantStyle='subtle' resourceKey={`${ResourceType.EMR_CLUSTER}.Total`} resourceLabel='Total' />
                                     <ProjectResourceCount iconName='status-in-progress' variantStyle='success' resourceKey={`${ResourceType.EMR_CLUSTER}.RUNNING`} resourceLabel='Running' />
                                     <ProjectResourceCount iconName='status-pending' variantStyle='subtle' resourceKey={`${ResourceType.EMR_CLUSTER}.STARTING`} resourceLabel='Starting' />
                                     <ProjectResourceCount iconName='status-positive' variantStyle='success' resourceKey={`${ResourceType.EMR_CLUSTER}.WAITING`} resourceLabel='Waiting' />
-                                </ProjectResourceRow>
+                                </ProjectResourceRow>}
 
                                 <ProjectResourceRow label='Endpoints' path='endpoint'>
                                     <ProjectResourceCount iconName='add-plus' variantStyle='subtle' resourceKey={`${ResourceType.ENDPOINT}.Total`} resourceLabel='Total' />
