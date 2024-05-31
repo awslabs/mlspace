@@ -18,6 +18,7 @@ import {
     createAsyncThunk,
     createSlice,
     isFulfilled,
+    isPending,
     isRejected,
     PayloadAction,
 } from '@reduxjs/toolkit';
@@ -28,12 +29,13 @@ import { defaultConfiguration, IAppConfiguration } from '../../shared/model/app.
 const initialState = {
     appConfigList: [],
     appConfig: defaultConfiguration,
+    loadingAppConfig: false,
     failedToLoadConfig: false,
 };
 
 // Actions
 export const getConfiguration = (configScope: string) => {
-    return listConfigurations({ configScope, numVersions: 1});
+    return listConfigurations({ configScope, numVersions: 5});
 };
 
 export const listConfigurations = createAsyncThunk(
@@ -81,12 +83,21 @@ export const AppConfigSlice = createSlice({
                     appConfig: data[0],
                     appConfigList: data,
                     failedToLoadConfig: false,
+                    loadingAppConfig: false,
+                };
+                
+            })
+            .addMatcher(isPending(listConfigurations), (state) => {
+                return {
+                    ...state,
+                    loadingAppConfig: true,
                 };
             })
             .addMatcher(isRejected(listConfigurations), (state) => {
                 return {
                     ...state,
                     failedToLoadConfig: true,
+                    loadingAppConfig: false,
                 };
             });
     },
@@ -107,4 +118,5 @@ export default AppConfigSlice.reducer;
 export const { updateEntity } = AppConfigSlice.actions;
 export const appConfigList = (state: any): IAppConfiguration[] => state.appConfig.appConfigList;
 export const appConfig = (state: any): IAppConfiguration => state.appConfig.appConfig;
+export const loadingAppConfig = (state: any): boolean => state.appConfig.loadingAppConfig;
 export const failedToLoadConfig = (state: any): boolean => state.appConfig.failedToLoadConfig;

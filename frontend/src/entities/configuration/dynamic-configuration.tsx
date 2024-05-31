@@ -27,7 +27,7 @@ import {
 } from '@cloudscape-design/components';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
-import { appConfig, appConfigList, getConfiguration, listConfigurations, updateConfiguration } from './configuration-reducer';
+import { appConfig, getConfiguration, updateConfiguration } from './configuration-reducer';
 import { Application, IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
 import { z } from 'zod';
@@ -36,10 +36,10 @@ import { emrApplications, listEMRApplications } from '../emr/emr.reducer';
 import { formatDisplayNumber } from '../../shared/util/form-utils';
 import { ClusterTypeConfiguration } from './cluster-types';
 import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-dropdown';
+import { ConfigurationHistoryTable } from './configuration-history-table';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
-    const configList: IAppConfiguration[] = useAppSelector(appConfigList);
     const emrApplicationList: string[] = useAppSelector(emrApplications);
     const [selectedApplicationOptions, setSelectedApplicationOptions] = useState([] as any[]);
     const [applicationOptions, setApplicationOptions] = useState([] as any);
@@ -86,10 +86,6 @@ export function DynamicConfiguration () {
         formValid: false,
         formSubmitting: false as boolean,
     });
-
-    useEffect(() => {
-        dispatch(listConfigurations({configScope: 'global', numVersions: 5}));
-    }, [dispatch]);
 
     useEffect(() => {
         dispatch(listEMRApplications());
@@ -598,9 +594,8 @@ export function DynamicConfiguration () {
                         </Button>
                     </SpaceBetween>
                 </Container>
-                <ExpandableSection headerText='Configuration History' variant='default' defaultExpanded>
-                    {<pre>View the configuration history and rollback to prior versions.</pre>}
-                    {configList.length}
+                <ExpandableSection headerText='Configuration History' variant='default' defaultExpanded headerDescription='View the configuration history and rollback to prior versions.'>
+                    <ConfigurationHistoryTable/>
                 </ExpandableSection>
             </SpaceBetween>
         </Container>

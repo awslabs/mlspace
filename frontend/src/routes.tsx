@@ -16,7 +16,7 @@
 
 import { Route, Routes } from 'react-router-dom';
 import ErrorBoundaryRoutes from './shared/error/error-boundary-routes';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
     setAdminItems,
     setBreadcrumbs,
@@ -76,7 +76,7 @@ export default function AppRoutes () {
         auth.signinRedirect,
     ]);
 
-    useEffect(() => {
+    useMemo(() => {
         dispatch(getConfiguration('global'));
         if (configLoadError) {
             notificationService.generateNotification(
