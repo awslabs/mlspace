@@ -28,10 +28,9 @@ from ml_space_lambda.enums import EnvVariable, IAMEffect, IAMStatementProperty, 
 from ml_space_lambda.utils.account_utils import get_account_arn
 from ml_space_lambda.utils.common_functions import api_wrapper
 from ml_space_lambda.utils.iam_manager import IAM_RESOURCE_PREFIX, IAMManager
-from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
+from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
-iam = boto3.client("iam", config=retry_config)
-iam_manager = IAMManager(iam)
+iam_manager = IAMManager()
 log = logging.getLogger(__name__)
 app_configuration_dao = AppConfigurationDAO()
 env_variables = get_environment_variables()
@@ -160,7 +159,6 @@ def update_configuration(event, context):
         enabled_services_dict = app_configuration.configuration.enabled_services.to_dict()
         # Check each service
         for service in enabled_services_dict.keys():
-            log.info(f"Checking service {service}")
             # If the service has permissions that need to be denied
             if service in service_disable_permissions:
                 # If the service is deactivated
@@ -180,8 +178,6 @@ def update_configuration(event, context):
                 if not active_service_in_group and "Statements" in group:
                     deny_policy_statements.extend(group["Statements"])
 
-        log.info(f"Deny policy statements {json.dumps(deny_policy_statements)}")
-
         iam_manager.create_or_update_policy(
             iam_manager.generate_policy_string(deny_policy_statements),
             "app-denied-services",
@@ -190,7 +186,7 @@ def update_configuration(event, context):
             on_create_attach_to_notebook_role=True,
         )
     except Exception as e:
-        logging.error("Failed to create denied services role", e)
+        logging.error(f"Failed to create or update denied services policy {str(e)}")
 
     return f"Successfully updated configuration for {configScope}, version {version_id}."
 
