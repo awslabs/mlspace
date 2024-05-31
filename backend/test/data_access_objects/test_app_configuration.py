@@ -202,3 +202,21 @@ class TestAppConfigDAO(TestCase):
         new_record = AppConfigurationModel.from_dict(generate_test_config("project1", 1, True))  # versionId 1 already exists
         with pytest.raises(self.ddb.exceptions.ConditionalCheckFailedException):
             self.app_config_dao.create(new_record)
+
+    def test_update_app_config(self):
+        # Update the initial app config
+        new_record = generate_test_config("global", 0, False)
+        new_record["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK.value].append("ml.t3.large")
+        self.app_config_dao.update(new_record["configuration"])
+
+        # Check that the update succeeded
+        from_ddb = self.app_config_dao.get(self.GLOBAL_RECORD.configScope, 2)
+        initial_config = from_ddb[0]
+        assert (
+            initial_config["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK.value]
+            == new_record["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK.value]
+        )
+
+        # Revert the update so it doesn't impact other tests
+        new_record["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK.value].pop()
+        self.app_config_dao.update(new_record["configuration"])
