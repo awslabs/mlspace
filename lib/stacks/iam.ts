@@ -60,6 +60,7 @@ export class IAMStack extends Stack {
             ...props,
         });
 
+        const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
         /**
          * Comprehend Permissions
          * Translate Permissions
@@ -474,12 +475,12 @@ export class IAMStack extends Stack {
         if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
             this.mlSpaceNotebookRole = Role.fromRoleArn(
                 this,
-                'mlspace-notebook-role',
+                mlSpaceNotebookRoleName,
                 props.mlspaceConfig.NOTEBOOK_ROLE_ARN
             );
         } else {    
             // If roles are managed by CDK, create the notebook role
-            const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
+            
             // Translate Permissions Principles
             const notebookPolicyAllowPrinciples = props.enableTranslate
                 ? new CompositePrincipal(
@@ -488,7 +489,7 @@ export class IAMStack extends Stack {
                 )
                 : new ServicePrincipal('sagemaker.amazonaws.com');
 
-            this.mlSpaceNotebookRole = new Role(this, 'mlspace-notebook-role', {
+            this.mlSpaceNotebookRole = new Role(this, mlSpaceNotebookRoleName, {
                 roleName: mlSpaceNotebookRoleName,
                 assumedBy: notebookPolicyAllowPrinciples,
                 managedPolicies: notebookManagedPolicies,
@@ -853,6 +854,7 @@ export class IAMStack extends Stack {
                         // This needs to match the IAM_RESOURCE_PREFIX prefix in iam_manager.py
                         resources: [
                             `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
+                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceNotebookRoleName}`,
                         ],
                         conditions: {
                             StringEqualsIgnoreCase: {
