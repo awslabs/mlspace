@@ -20,6 +20,7 @@ import os
 
 import boto3
 
+from backend.src.ml_space_lambda.enums import EnvVariable
 from ml_space_lambda.utils.common_functions import retry_config
 
 param_file = {}
@@ -43,30 +44,28 @@ def get_environment_variables() -> dict:
     global env_variables
     if not env_variables:
         env_variables = {
-            "APP_CONFIGURATION_TABLE": os.getenv("APP_CONFIGURATION_TABLE", "mlspace-app-configuration"),
-            "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION", "us-iso-east-1"),
-            "BUCKET": os.getenv("BUCKET", "mlspace-data-bucket"),
-            "DATA_BUCKET": os.getenv("DATA_BUCKET", "mlspace-data-bucket"),
-            "DATASETS_TABLE": os.getenv("DATASETS_TABLE", "mlspace-datasets"),
-            "DYNAMO_TABLE": os.getenv("DYNAMO_TABLE", "mlspace-project"),
-            "EMR_CONFIG_BUCKET": os.getenv("EMR_CONFIG_BUCKET", "mlspace-emr-config-bucket"),
-            "EMR_EC2_ROLE_NAME": os.getenv("EMR_EC2_ROLE_NAME", "EMR_EC2_DefaultRole"),
-            "EMR_SERVICE_ROLE_NAME": os.getenv("EMR_SERVICE_ROLE_NAME", "EMR_DefaultRole"),
-            "EMR_SECURITY_CONFIGURATION": os.getenv("EMR_SECURITY_CONFIGURATION", "MLSpace-EMR-SecurityConfig"),
-            "EMR_EC2_SSH_KEY": os.getenv("EMR_EC2_SSH_KEY", ""),
-            "LOG_BUCKET": os.getenv("LOG_BUCKET", "mlspace-log-bucket"),
-            "MANAGE_IAM_ROLES": os.getenv("MANAGE_IAM_ROLES", ""),
-            "NEW_USER_SUSPENSION_DEFAULT": os.getenv("NEW_USER_SUSPENSION_DEFAULT", "True"),
-            "PROJECT_USERS_TABLE": os.getenv("PROJECT_USERS_TABLE", "mlspace-project-users"),
-            "PROJECTS_TABLE": os.getenv("PROJECTS_TABLE", "mlspace-projects"),
-            "RESOURCE_METADATA_TABLE": os.getenv("RESOURCE_METADATA_TABLE", "mlspace-resource-metadata"),
-            "RESOURCE_SCHEDULE_TABLE": os.getenv("RESOURCE_SCHEDULE_TABLE", "mlspace-resource-schedule"),
-            "S3_KEY": os.getenv("S3_KEY", "notebook-params.json"),
-            "SYSTEM_TAG": os.getenv("SYSTEM_TAG", "MLSpace"),
-            "TRANSLATE_DATE_ROLE_ARN": os.getenv("TRANSLATE_DATE_ROLE_ARN", ""),
-            "USERS_TABLE": os.getenv("USERS_TABLE", "mlspace-users"),
-            "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": os.getenv("ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN", ""),
-            "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": os.getenv("JOB_INSTANCE_CONSTRAINT_POLICY_ARN", ""),
+            EnvVariable.BUCKET: os.getenv("BUCKET", "mlspace-data-bucket"),
+            EnvVariable.S3_KEY: os.getenv("S3_KEY", "notebook-params.json"),
+            EnvVariable.SYSTEM_TAG: os.getenv("SYSTEM_TAG", "MLSpace"),
+            EnvVariable.DATASETS_TABLE: os.getenv("DATASETS_TABLE", "mlspace-datasets"),
+            EnvVariable.PROJECTS_TABLE: os.getenv("PROJECTS_TABLE", "mlspace-projects"),
+            EnvVariable.PROJECT_USERS_TABLE: os.getenv("PROJECT_USERS_TABLE", "mlspace-project-users"),
+            EnvVariable.USERS_TABLE: os.getenv("USERS_TABLE", "mlspace-users"),
+            EnvVariable.RESOURCE_SCHEDULE_TABLE: os.getenv("RESOURCE_SCHEDULE_TABLE", "mlspace-resource-schedule"),
+            EnvVariable.RESOURCE_METADATA_TABLE: os.getenv("RESOURCE_METADATA_TABLE", "mlspace-resource-metadata"),
+            EnvVariable.APP_CONFIGURATION_TABLE: os.getenv("APP_CONFIGURATION_TABLE", "mlspace-app-configuration"),
+            EnvVariable.AWS_DEFAULT_REGION: os.getenv("AWS_DEFAULT_REGION", "us-iso-east-1"),
+            EnvVariable.DATA_BUCKET: os.getenv("DATA_BUCKET", "mlspace-data-bucket"),
+            EnvVariable.EMR_CONFIG_BUCKET: os.getenv("EMR_CONFIG_BUCKET", "mlspace-emr-config-bucket"),
+            EnvVariable.MANAGE_IAM_ROLES: os.getenv("MANAGE_IAM_ROLES", ""),
+            EnvVariable.LOG_BUCKET: os.getenv("LOG_BUCKET", "mlspace-log-bucket"),
+            EnvVariable.DYNAMO_TABLE: os.getenv("DYNAMO_TABLE", "mlspace-project"),
+            EnvVariable.EMR_EC2_ROLE_NAME: os.getenv("EMR_EC2_ROLE_NAME", "EMR_EC2_DefaultRole"),
+            EnvVariable.EMR_SERVICE_ROLE_NAME: os.getenv("EMR_SERVICE_ROLE_NAME", "EMR_DefaultRole"),
+            EnvVariable.EMR_SECURITY_CONFIGURATION: os.getenv("EMR_SECURITY_CONFIGURATION", "MLSpace-EMR-SecurityConfig"),
+            EnvVariable.EMR_EC2_SSH_KEY: os.getenv("EMR_EC2_SSH_KEY", ""),
+            EnvVariable.NEW_USER_SUSPENSION_DEFAULT: os.getenv("NEW_USER_SUSPENSION_DEFAULT", "True"),
+            EnvVariable.TRANSLATE_DATE_ROLE_ARN: os.getenv("TRANSLATE_DATE_ROLE_ARN", ""),
         }
 
     return env_variables
