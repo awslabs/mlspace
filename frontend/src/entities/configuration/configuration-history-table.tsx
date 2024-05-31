@@ -27,9 +27,10 @@ export function ConfigurationHistoryTable () {
     const loadingConfig: boolean = useAppSelector(loadingAppConfig);
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
-    const [modal, setModal] = React.useState<{ visible: boolean; appConfig: IAppConfiguration }>({
+    const [modal, setModal] = React.useState<{ visible: boolean; prevConfig: IAppConfiguration, newConfig: IAppConfiguration }>({
         visible: false,
-        appConfig: defaultConfiguration,
+        prevConfig: defaultConfiguration,
+        newConfig: defaultConfiguration,
     });
 
     const columnDefinition = [
@@ -48,7 +49,7 @@ export function ConfigurationHistoryTable () {
         {
             header: 'Rollback',
             cell: (item) => (
-                <Button variant={'inline-link'} onClick={() => setModal({...modal, visible: true, appConfig: {...item, versionId: applicationConfig.versionId}})}>Rollback</Button>),
+                <Button variant={'inline-link'} onClick={() => setModal({...modal, visible: true, newConfig: {...item, versionId: applicationConfig.versionId, changeReason: `Rolled back from version ${item.versionId}`}, prevConfig: item})}>Rollback</Button>),
         },
     ];
     return (
@@ -70,7 +71,7 @@ export function ConfigurationHistoryTable () {
                         <SpaceBetween direction='horizontal' size='xs'>
                             <Button onClick={() => setModal({...modal, visible: false})}>Cancel</Button>
                             <Button onClick={async () => {
-                                const resp = await dispatch(updateConfiguration({appConfiguration: modal.appConfig}));
+                                const resp = await dispatch(updateConfiguration({appConfiguration: modal.newConfig}));
                                 setModal({...modal, visible: false});
                                 const responseStatus = resp.payload.status;
                                 if (responseStatus >= 400) {
@@ -98,7 +99,7 @@ export function ConfigurationHistoryTable () {
                     </Box>
                 }
             >
-                Are you sure you want to rollback to this version?
+                Are you sure you want to rollback to version {modal.prevConfig.versionId}?
             </Modal>
         </>
         
