@@ -24,6 +24,8 @@ import {
     Toggle,
     FormField,
     Multiselect,
+    Alert,
+    ContentLayout,
 } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -46,10 +48,10 @@ export function DynamicConfiguration () {
     const notificationService = NotificationService(dispatch);
     const [selectedFile, setSelectedFile] = useState<File[]>([]);
     const configurableServices = {
-        batchTranslate: 'Batch Translate',
-        realtimeTranslate: 'Realtime Translate',
-        emrCluster: 'EMR',
-        labelingJob: 'Labeling Jobs'
+        batchTranslate: 'Amazon Translate asynchronous batch processing',
+        realtimeTranslate: 'Amazon Translate real-time translation',
+        emrCluster: 'Amazon EMR',
+        labelingJob: 'Amazon Ground Truth create labeling jobs'
     };
 
     const formSchema = z.object({
@@ -203,20 +205,25 @@ export function DynamicConfiguration () {
                     {<pre>TODO</pre>}
                 </ExpandableSection>
                 <ExpandableSection headerText='Enabled Services' variant='default' defaultExpanded>
-                    { Object.keys(configurableServices).map((service) => {
-                        return (
-                            <Toggle
-                                onChange={({detail}) => {
-                                    const updatedField = {};
-                                    updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
-                                    setFields(updatedField);
-                                }}
-                                checked={state.form.configuration.EnabledServices[service]}
-                            >
-                                { configurableServices[service] }
-                            </Toggle>
-                        );
-                    })}
+                    <ContentLayout >
+                        <SpaceBetween direction='vertical' size='m'>
+                            <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services within MLSpace. IAM permissions that control access to these services within the MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated services will no longer appear within the MLSpace user interface. Deactivating services will terminate all active corresponding jobs and instances associated with the service.</Alert>
+                            { Object.keys(configurableServices).map((service) => {
+                                return (
+                                    <Toggle
+                                        onChange={({detail}) => {
+                                            const updatedField = {};
+                                            updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
+                                            setFields(updatedField);
+                                        }}
+                                        checked={state.form.configuration.EnabledServices[service]}
+                                    >
+                                        { configurableServices[service] }
+                                    </Toggle>
+                                );
+                            })}
+                        </SpaceBetween>
+                    </ContentLayout>
                 </ExpandableSection>
                 <ExpandableSection headerText='EMR Config' variant='default' defaultExpanded>
                     <ExpandableSection 

@@ -114,17 +114,17 @@ export const defaultConfiguration: IAppConfiguration = {
             transformJob: []
         },
         EnabledServices: {
-            batchTranslate: true,
-            realtimeTranslate: true,
-            emrCluster: true,
-            endpoint: true,
-            endpointConfig: true,
-            hpoJob: true,
-            labelingJob: true,
-            model: true,
-            notebook: true,
-            trainingJob: true,
-            transformJob: true,
+            batchTranslate: false,
+            realtimeTranslate: false,
+            emrCluster: false,
+            endpoint: false,
+            endpointConfig: false,
+            hpoJob: false,
+            labelingJob: false,
+            model: false,
+            notebook: false,
+            trainingJob: false,
+            transformJob: false,
         },
         EMRConfig: {
             clusterTypes: [{
