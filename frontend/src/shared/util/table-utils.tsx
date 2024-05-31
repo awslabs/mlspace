@@ -271,7 +271,7 @@ export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerS
     const isBackgroundRefreshing = useBackgroundRefresh(async () => {
         await fetchData(false);
         setLoading({ loadingAdditional: false, loadingEmpty: false, loadingInBackground: true });
-    });
+    }, [fetchData, setLoading]);
     
     useEffect(() => {
         setLoading({ ...loading, loadingInBackground: isBackgroundRefreshing });

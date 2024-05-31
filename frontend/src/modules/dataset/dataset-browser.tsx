@@ -33,7 +33,7 @@ import { EmptyState } from '../table';
 import { DatasetBrowserProps } from './dataset-browser.types';
 import NotificationService from '../../shared/layout/notification/notification.service';
 import { useUsername } from '../../shared/util/auth-utils';
-import '../../entities/dataset/dataset.css';
+import '../../entities/dataset/dataset.scss';
 
 
 export function DatasetBrowser (props: DatasetBrowserProps) {
@@ -110,7 +110,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     }, [dispatch, isCreating, notificationService, projectName, username]);
 
     const fetchDatasets = useCallback((type: DatasetType) => {
-        dispatch(getDatasetsList(projectName)).then((response) => {
+        dispatch(getDatasetsList({projectName})).then((response) => {
             if (isFulfilled(response)) {
                 setState({
                     type: DatasetActionType.State,

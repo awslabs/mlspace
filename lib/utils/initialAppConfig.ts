@@ -19,28 +19,92 @@ import * as fs from 'fs';
 
 
 export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
+    //Create a default clusterConfig in case cluster-config.json doesn't exist
+    let clusterConfig = {
+        'Small': {
+            'size' : 3,
+            'master-type' : 'm5.xlarge',
+            'core-type' : 'm5.xlarge'
+        },
+        'Medium': {
+            'size' : 5,
+            'master-type' : 'm5.xlarge',
+            'core-type' : 'm5.xlarge'
+        },
+        'Large': {
+            'size' : 7,
+            'master-type' : 'm5.xlarge',
+            'core-type' : 'p3.8xlarge'
+        },
+        'auto-scaling': {
+            'min-instances' : 2,
+            'max-instances': 15,
+            'scale-out': {
+                'increment': 1,
+                'percentage-mem-available': 15.0,
+                'eval-periods': 1,
+                'cooldown': 300
+            },
+            'scale-in': {
+                'increment': -1,
+                'percentage-mem-available': 75.0,
+                'eval-periods': 1,
+                'cooldown': 300
+            }
+        },
+        'applications' : [
+            {
+                'Name': 'Hadoop'
+            },
+            {
+                'Name': 'Spark'
+            },
+            {
+                'Name': 'Ganglia'
+            },
+            {
+                'Name': 'Hive'
+            },
+            {
+                'Name': 'Tez'
+            },
+            {
+                'Name': 'Presto'
+            },
+            {
+                'Name': 'Livy'
+            }
+        ]
+    };
+    const applicationList = [];
     //Check for properties set in config.json and default to that value if it exists
-    let clusterConfig = undefined;
-    let applicationList = [];
     if (fs.existsSync('lib/resources/config/cluster-config.json')) {
         clusterConfig = JSON.parse(
             fs.readFileSync('lib/resources/config/cluster-config.json').toString('utf8')
         );
-        if (clusterConfig['applications']) {
-            for (const application of clusterConfig['applications']) {
-                applicationList.push({'M': {'name': {'S': application['Name']}}});
-            }
+    }
+    // This may not be set in the user's cluster-config (if it existed)
+    if (clusterConfig['applications']) {
+        for (const application of clusterConfig['applications']) {
+            applicationList.push({'M': {'name': {'S': application['Name']}}});
         }
-    } else {
-        applicationList = [
-            {'M': {'name': {'S': 'Hadoop'}}},
-            {'M': {'name': {'S': 'Spark'}}},
-            {'M': {'name': {'S': 'Ganglia'}}},
-            {'M': {'name': {'S': 'Hive'}}},
-            {'M': {'name': {'S': 'Tez'}}},
-            {'M': {'name': {'S': 'Presto'}}},
-            {'M': {'name': {'S': 'Livy'}}}
-        ];
+    }
+    const clusterTypes = [];
+    //List of high level keys to skip since they won't be cluster types
+    const skipKeys = ['ami', 'release', 'log-location', 'ec2-key', 'applications', 'auto-scaling'];
+    let key: keyof typeof clusterConfig;
+    for (key in clusterConfig){
+        if (!skipKeys.includes(key)) {
+            const clusterType = clusterConfig[key];
+            const masterType = 'master-type';
+            const coreType = 'core-type';
+            clusterTypes.push({'M': {
+                'name': {'S': key},
+                'size': {'N': String(clusterType['size' as keyof typeof clusterType])},
+                'masterType': {'S': clusterType[masterType as keyof typeof clusterType]},
+                'coreType': {'S': clusterType[coreType as keyof typeof clusterType]},
+            }});
+        }
     }
 
     const date = new Date();
@@ -79,43 +143,24 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
             }},
             'EMRConfig': {'M': {
                 'autoScaling': {'M': {
-                    'minInstances': {'N': clusterConfig['auto-scaling']['min-instances'] || '2'},
-                    'maxInstances': {'N': clusterConfig['auto-scaling']['max-instances'] || '15'},
+                    'minInstances': {'N': String(clusterConfig['auto-scaling']['min-instances'])},
+                    'maxInstances': {'N': String(clusterConfig['auto-scaling']['max-instances'])},
                     'scaleOut': {'M': {
-                        'cooldown': {'N': clusterConfig['auto-scaling']['scale-out']['cooldown'] || '300'},
-                        'increment': {'N': clusterConfig['auto-scaling']['scale-out']['increment'] || '1'},
-                        'evalPeriods': {'N': clusterConfig['auto-scaling']['scale-out']['eval-periods'] || '1'},
-                        'percentageMemAvailable': {'N': clusterConfig['auto-scaling']['scale-out']['percentage-mem-available'] || '15'}}},
+                        'cooldown': {'N': String(clusterConfig['auto-scaling']['scale-out']['cooldown'])},
+                        'increment': {'N': String(clusterConfig['auto-scaling']['scale-out']['increment'])},
+                        'evalPeriods': {'N': String(clusterConfig['auto-scaling']['scale-out']['eval-periods'])},
+                        'percentageMemAvailable': {'N': String(clusterConfig['auto-scaling']['scale-out']['percentage-mem-available'])}}},
                     'scaleIn': {'M': {
-                        'cooldown': {'N': clusterConfig['auto-scaling']['scale-in']['cooldown'] || '300'},
-                        'increment': {'N': clusterConfig['auto-scaling']['scale-in']['increment'] || '-1'},
-                        'evalPeriods': {'N': clusterConfig['auto-scaling']['scale-in']['eval-periods'] || '1'},
-                        'percentageMemAvailable': {'N': clusterConfig['auto-scaling']['scale-in']['percentage-mem-available'] || '75'}}},
+                        'cooldown': {'N': String(clusterConfig['auto-scaling']['scale-in']['cooldown'])},
+                        'increment': {'N': String(clusterConfig['auto-scaling']['scale-in']['increment'])},
+                        'evalPeriods': {'N': String(clusterConfig['auto-scaling']['scale-in']['eval-periods'])},
+                        'percentageMemAvailable': {'N': String(clusterConfig['auto-scaling']['scale-in']['percentage-mem-available'])}}},
                 }},
-                'clusterSizes': {'L': [
-                    {'M': {
-                        'name': {'S': clusterConfig['Small'] || 'Small'},
-                        'size': {'N': clusterConfig['Small']['size'] || '3'},
-                        'masterType': {'S': clusterConfig['Small']['master-type'] || 'm5.xlarge'},
-                        'coreType': {'S': clusterConfig['Small']['core-type'] || 'm5.xlarge'},
-                    }},
-                    {'M': {
-                        'name': {'S': clusterConfig['Medium'] || 'Medium'},
-                        'size': {'N': clusterConfig['Medium']['size'] || '5'},
-                        'masterType': {'S': clusterConfig['Medium']['master-type'] || 'm5.xlarge'},
-                        'coreType': {'S': clusterConfig['Medium']['core-type'] || 'm5.xlarge'},
-                    }},
-                    {'M': {
-                        'name': {'S': clusterConfig['Large'] || 'Large'},
-                        'size': {'N': clusterConfig['Large']['size'] || '7'},
-                        'masterType': {'S': clusterConfig['Large']['master-type'] || 'm5.xlarge'},
-                        'coreType': {'S': clusterConfig['Large']['core-type'] || 'p3.8xlarge'},
-                    }}
-                ]},
+                'clusterTypes': {'L': clusterTypes},
                 'applications': {'L': applicationList}
             }
             },
-            'DisabledInstanceTypes': {'M': {
+            'EnabledInstanceTypes': {'M': {
                 'trainingJob': {'L':
                 [
 
@@ -134,7 +179,7 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                 ]}
             }
             }
-        }},
+        }}
     };
 }
 

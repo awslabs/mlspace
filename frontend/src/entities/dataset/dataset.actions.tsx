@@ -42,7 +42,7 @@ import { prefixForPath, stripDatasetPrefix } from '../../modules/dataset/dataset
 import { Dispatch as ReduxDispatch } from '@reduxjs/toolkit';
 import { Dispatch as ReactDispatch } from 'react';
 import { DatasetContext } from '../../shared/util/dataset-utils';
-import './dataset.css';
+import './dataset.scss';
 import { FullScreenDragAndDrop } from './dataset-drag-and-drop';
 
 function DatasetActions (props?: any) {

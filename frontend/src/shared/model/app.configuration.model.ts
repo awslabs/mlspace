@@ -13,6 +13,14 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+
+// This is different than the ResourceTypes enum as it's the names of services as they're stored in the app config
+export enum ServiceTypes {
+    NOTEBOOK = 'notebook',
+    ENDPOINT = 'endpoint',
+    TRAINING_JOB = 'trainingJob',
+    TRANSFORM_JOB = 'transformJob',
+}
 export type IServiceInstanceTypes = {
     notebook: string[];
     endpoint: string[];
@@ -35,12 +43,12 @@ export type IEnabledServices = {
 };
 
 export type IEMRConfig = {
-    clusterSizes: ClusterSize[];
+    clusterTypes: ClusterType[];
     autoScaling: AutoScaling;
     applications: Application[];
 };
 
-export type ClusterSize = {
+export type ClusterType = {
     name: string;
     size: number;
     masterType: string;
@@ -62,7 +70,7 @@ export type ScalingPolicy = {
 };
 
 export type Application = {
-    name: string;
+    Name: string;
 };
 
 export type IProjectCreation = {
@@ -78,7 +86,7 @@ export type ISystemBanner = {
 };
 
 export type BaseSettings = {
-    DisabledInstanceTypes: IServiceInstanceTypes;
+    EnabledInstanceTypes: IServiceInstanceTypes;
     EnabledServices: IEnabledServices;
     EMRConfig: IEMRConfig;
 };
@@ -107,7 +115,7 @@ export const defaultConfiguration: IAppConfiguration = {
     changedBy: '',
     changeReason: '',
     configuration: {
-        DisabledInstanceTypes: {
+        EnabledInstanceTypes: {
             notebook: [],
             endpoint: [],
             trainingJob: [],
@@ -127,7 +135,7 @@ export const defaultConfiguration: IAppConfiguration = {
             transformJob: false,
         },
         EMRConfig: {
-            clusterSizes: [{
+            clusterTypes: [{
                 name: '',
                 size: 0,
                 masterType: '',
@@ -150,7 +158,7 @@ export const defaultConfiguration: IAppConfiguration = {
                 }
             },
             applications: [{
-                name: ''
+                Name: ''
             }]
         },
         ProjectCreation: {

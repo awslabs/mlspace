@@ -62,6 +62,7 @@ import { tryCreateDataset } from '../../../dataset/dataset.service';
 import DatasetResourceSelector from '../../../../modules/dataset/dataset-selector';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 import { DatasetResourceSelectorSelectableItems } from '../../../../modules/dataset/dataset-selector.types';
+import { ServiceTypes } from '../../../../shared/model/app.configuration.model';
 
 export function TransformCreate () {
     const [s3DataTypes, setS3DataTypes] = useState([] as SelectProps.Option[]);
@@ -341,10 +342,10 @@ export function TransformCreate () {
                                                     detail.selectedOption.value,
                                             })
                                         }
+                                        service={ServiceTypes.TRANSFORM_JOB}
                                         onBlur={() =>
                                             touchFields(['TransformResources.InstanceType'])
                                         }
-                                        instanceTypeCategory='TransformInstanceType'
                                     />
                                 </FormField>
                                 <FormField
