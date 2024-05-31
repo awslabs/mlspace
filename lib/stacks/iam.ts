@@ -851,25 +851,25 @@ export class IAMStack extends Stack {
                         },
                     })
                 );
+            }
 
-                if (props.enableTranslate) {
-                    appPolicy.addStatements(
-                        new PolicyStatement({
-                            effect: Effect.ALLOW,
-                            actions: ['iam:PassRole'],
-                            // We don't *currently* run these jobs using the user IAM roles so we can
-                            // specify a specific role here
-                            resources: [
-                                `arn:${this.partition}:iam::${this.account}:role/${mlSpaceAppRoleName}`,
-                            ],
-                            conditions: {
-                                StringEquals: {
-                                    'iam:PassedToService': 'translate.amazonaws.com',
-                                },
+            if (props.enableTranslate) {
+                appPolicy.addStatements(
+                    new PolicyStatement({
+                        effect: Effect.ALLOW,
+                        actions: ['iam:PassRole'],
+                        // We don't *currently* run these jobs using the user IAM roles so we can
+                        // specify a specific role here
+                        resources: [
+                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceAppRoleName}`,
+                        ],
+                        conditions: {
+                            StringEquals: {
+                                'iam:PassedToService': 'translate.amazonaws.com',
                             },
-                        })
-                    );
-                }
+                        },
+                    })
+                );
             }
 
             const appPolicyAllowPrinciples = props.enableTranslate

@@ -71,7 +71,7 @@ import {
     WEBSITE_BUCKET_NAME,
     SYSTEM_BANNER_BACKGROUND_COLOR,
     SYSTEM_BANNER_TEXT,
-    SYSTEM_BANNER_TEXT_COLOR,
+    SYSTEM_BANNER_TEXT_COLOR
 } from '../constants';
 import * as fs from 'fs';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
