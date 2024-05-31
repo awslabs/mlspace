@@ -35,7 +35,7 @@ const initialState = {
 
 // Actions
 export const getConfiguration = (configScope: string) => {
-    return listConfigurations({ configScope, numVersions: 5});
+    return listConfigurations({ configScope, numVersions: 10});
 };
 
 export const listConfigurations = createAsyncThunk(
