@@ -40,9 +40,10 @@ export type MLSpacePythonLambdaFunction = {
     };
 };
 
-function registerEndpoint (
+export function registerAPIEndpoint (
     stack: Stack,
     api: IRestApi,
+    authorizer: IAuthorizer,
     role: IRole,
     notebookRoleName: string,
     lambdaSourcePath: string,
@@ -51,7 +52,6 @@ function registerEndpoint (
     vpc: IVpc,
     securityGroups: ISecurityGroup[],
     mlspaceConfig: MLSpaceConfig,
-    authorizer?: IAuthorizer,
     permissionsBoundaryArn?: string,
 ) {
     const functionId = `mls-lambda-${funcDef.id || [funcDef.resource, funcDef.name].join('-')}`;
@@ -90,67 +90,6 @@ function registerEndpoint (
         authorizationType: AuthorizationType.CUSTOM,
     });
 }
-
-export function registerAPIEndpoint (
-    stack: Stack,
-    api: IRestApi,
-    authorizer: IAuthorizer,
-    role: IRole,
-    notebookRoleName: string,
-    lambdaSourcePath: string,
-    layers: ILayerVersion[],
-    funcDef: MLSpacePythonLambdaFunction,
-    vpc: IVpc,
-    securityGroups: ISecurityGroup[],
-    mlspaceConfig: MLSpaceConfig,
-    permissionsBoundaryArn?: string,
-) {
-    registerEndpoint(
-        stack,
-        api,
-        role,
-        notebookRoleName,
-        lambdaSourcePath,
-        layers,
-        funcDef,
-        vpc,
-        securityGroups,
-        mlspaceConfig,
-        authorizer,
-        permissionsBoundaryArn
-    );
-}
-
-export function registerUnauthenticatedEndpoint (
-    stack: Stack,
-    api: IRestApi,
-    role: IRole,
-    notebookRoleName: string,
-    lambdaSourcePath: string,
-    layers: ILayerVersion[],
-    funcDef: MLSpacePythonLambdaFunction,
-    vpc: IVpc,
-    securityGroups: ISecurityGroup[],
-    mlspaceConfig: MLSpaceConfig,
-    permissionsBoundaryArn?: string,
-) {
-    registerEndpoint(
-        stack,
-        api,
-        role,
-        notebookRoleName,
-        lambdaSourcePath,
-        layers,
-        funcDef,
-        vpc,
-        securityGroups,
-        mlspaceConfig,
-        undefined,
-        permissionsBoundaryArn
-    );
-}
-
-
 
 function getOrCreateResource (stack: Stack, parentResource: IResource, path: string[]): IResource {
     let resource = parentResource.getResource(path[0]);
