@@ -22,7 +22,7 @@ import {
     setBreadcrumbs,
     setItemsForProjectName,
 } from '../../shared/layout/navigation/navigation.reducer';
-import { useAppDispatch } from '../../config/store';
+import {useAppDispatch} from '../../config/store';
 import { getBase } from '../../shared/util/breadcrumb-utils';
 import Logo from '../../shared/layout/logo/logo';
 

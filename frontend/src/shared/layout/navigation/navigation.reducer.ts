@@ -16,12 +16,14 @@
 
 import { BreadcrumbGroupProps, SideNavigationProps } from '@cloudscape-design/components';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {IEnabledServices} from '../../model/app.configuration.model';
 
 const initialState = {
     breadcrumbs: [] as BreadcrumbGroupProps.Item[],
     activeHref: '#/',
     navItems: [] as SideNavigationProps.Item[],
     adminItems: undefined as SideNavigationProps.Item | undefined,
+    enabledServices: {} as IEnabledServices,
 };
 
 // slice
@@ -34,6 +36,9 @@ const navigationSlice = createSlice({
         },
         setActiveHref (state, action: PayloadAction<string>) {
             state.activeHref = action.payload;
+        },
+        setEnabledServices (state, action: PayloadAction<IEnabledServices>) {
+            state.enabledServices = action.payload;
         },
         setAdminItems (state, action: PayloadAction<boolean>) {
             if (action.payload) {
@@ -54,7 +59,7 @@ const navigationSlice = createSlice({
         setItemsForProjectName (state, action: PayloadAction<string | undefined>) {
             const projectName = action.payload;
             if (projectName) {
-                const translateItems: any = window.env.ENABLE_TRANSLATE
+                const translateItems: any = state.enabledServices.batchTranslate
                     ? [
                         {
                             type: 'section',
@@ -71,7 +76,7 @@ const navigationSlice = createSlice({
                     ]
                     : [];
 
-                const groundTruthItems: any = window.env.ENABLE_GROUNDTRUTH
+                const groundTruthItems: any = state.enabledServices.labelingJob
                     ? [
                         {
                             type: 'section',
@@ -104,11 +109,11 @@ const navigationSlice = createSlice({
                                 text: 'Datasets',
                                 href: `#/project/${projectName}/dataset`,
                             },
-                            {
+                            ...state.enabledServices.emrCluster ? [{
                                 type: 'link',
                                 text: 'EMR clusters',
                                 href: `#/project/${projectName}/emr`,
-                            },
+                            }] : [],
                             {
                                 type: 'section',
                                 text: 'Inference',
@@ -167,6 +172,6 @@ const navigationSlice = createSlice({
 });
 
 // Reducer
-export const { setBreadcrumbs, setActiveHref, setItemsForProjectName, setAdminItems } =
+export const { setBreadcrumbs, setActiveHref, setItemsForProjectName, setAdminItems, setEnabledServices } =
     navigationSlice.actions;
 export default navigationSlice.reducer;
