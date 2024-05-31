@@ -112,7 +112,7 @@ export function DynamicConfiguration () {
                 dispatch(getConfiguration({configScope: 'global'}));
                 if (responseStatus === 207) {
                     notificationService.generateNotification(
-                        'Successfully updated configuration.',
+                        resp.payload.data,
                         'warning'
                     );
                 } else {

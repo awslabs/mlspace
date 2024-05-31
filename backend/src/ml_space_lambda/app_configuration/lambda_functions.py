@@ -131,6 +131,15 @@ service_disable_permissions = {
     ],
 }
 
+# Instead of deleting the policy (which requires unattaching from all roles) assign a filler non-impactful statement
+filler_deny_statement = (
+    {
+        IAMStatementProperty.EFFECT: IAMEffect.DENY,
+        IAMStatementProperty.ACTION: ["dynamodb:CreateTable"],
+        IAMStatementProperty.RESOURCE: get_account_arn("dynamodb", "table/invalid-table"),
+    },
+)
+
 
 @event_wrapper
 def update_configuration(event, context):
@@ -186,8 +195,12 @@ def update_configuration(event, context):
                     if not active_service_in_group and "Statements" in group:
                         deny_policy_statements.extend(group["Statements"])
 
-            # Will create, update, or delete the current deny services policy with the new permissions
-            # An empty deny_policy_statements list will result in the policy being deleted as there are no permissions to apply
+            # When all services are activated, apply a filler statement so that the policy does not need to be unattached and deleted
+            # Unattaching from all roles could cause throttling and will require re-attaching to all dynamic roles later
+            if len(deny_policy_statements) == 0:
+                deny_policy_statements.extend(filler_deny_statement)
+
+            # Will create, update the current deny services policy with the new permissions
             iam_manager.update_dynamic_policy(
                 iam_manager.generate_policy_string(deny_policy_statements),
                 "app-denied-services",
@@ -203,18 +216,16 @@ def update_configuration(event, context):
 
         # All updates were successfully executed
         if response_status_code == 200:
-            response_message = f"Successfully updated configuration for {configScope}, version {version_id}."
+            response_message = f"Successfully updated app configuration"
         # App config was successfullyl updated but other elements may have failed resulting in mixed results
         elif response_status_code == 207:
-            response_message = (
-                f"Successfully updated configuration for {configScope}, version {version_id}, but some issues were encountered"
-            )
+            response_message = "Successfully updated app configuration, but some issues were encountered."
             if len(warning_issues) > 0:
                 response_message = (
                     response_message
                     + "\n"
                     + "\n".join(warning_issues)
-                    + "Please contact your system administrator for further assistance."
+                    + "\nPlease contact your system administrator for assistance."
                 )
 
         return generate_html_response(response_status_code, response_message)

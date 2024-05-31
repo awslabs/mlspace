@@ -22,8 +22,8 @@ from typing import List, Optional
 
 import boto3
 
-from backend.src.ml_space_lambda.utils.account_utils import get_account_arn, get_account_id, get_partition
 from ml_space_lambda.enums import IAMResourceType
+from ml_space_lambda.utils.account_utils import get_account_arn, get_account_id, get_partition
 from ml_space_lambda.utils.common_functions import generate_tags, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -465,8 +465,10 @@ class IAMManager:
             return None
 
     def generate_policy_string(self, statements: list):
-        return json.dumps(self.generate_policy(statements))
+        policy = self.generate_policy(statements)
+        return json.dumps(policy) if policy is not None else None
 
+    # If the provided policy doesn't exist, it will be created
     def update_dynamic_policy(
         self,
         policy: str,
@@ -478,6 +480,7 @@ class IAMManager:
     ):
         prefixed_policy_name = f"{IAM_RESOURCE_PREFIX}-{policy_name}"
         policy_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{prefixed_policy_name}"
+        logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
         # Create the policy if it doesn't exist
         existing_policy_version = self._get_policy_version(policy_arn)
         if existing_policy_version is None and policy is not None:
@@ -494,12 +497,9 @@ class IAMManager:
             if on_create_attach_to_notebook_role:
                 self.iam_client.attach_role_policy(RoleName=self.notebook_role_name, PolicyArn=policy_arn)
 
-        elif policy is None:
-            logger.info(f"Provided update for {policy_name} dynamic policy was empty. Deleting the policy")
-            self._delete_policy(policy_arn)
         # If the policy does exist, then update it
         elif expected_policy_version is None or existing_policy_version < expected_policy_version:
-            logger.info("Updating {policy_name} dynamic policy")
+            logger.info(f"Updating the existing {policy_name} dynamic policy")
             # Remove unused versions of the policy making room for the new policy if needed
             self._delete_unused_policy_versions(policy_arn)
             self.iam_client.create_policy_version(
@@ -520,6 +520,8 @@ class IAMManager:
                     {"Key": "system", "Value": self.system_tag},
                 ],
             )
+        else:
+            logger.info(f"Provided inputs didn't meet criteria for updating or creating a new policy")
 
     def _generate_user_hash(self, username: str) -> str:
         return hashlib.sha256(username.encode()).hexdigest()
@@ -553,4 +555,5 @@ class IAMManager:
                 self.iam_client.delete_policy_version(PolicyArn=policy_arn, VersionId=version["VersionId"])
 
     def _delete_policy(self, policy_arn: str) -> None:
+        self.iam_client.list_entities_for_policy(PolicyArn=policy_arn)
         self.iam_client.delete_policy(PolicyArn=policy_arn)

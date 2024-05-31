@@ -20,7 +20,7 @@ import os
 
 import boto3
 
-from backend.src.ml_space_lambda.enums import EnvVariable
+from ml_space_lambda.enums import EnvVariable
 from ml_space_lambda.utils.common_functions import retry_config
 
 param_file = {}
