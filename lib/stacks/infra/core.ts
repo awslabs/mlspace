@@ -464,19 +464,7 @@ export class CoreStack extends Stack {
                     Payload: '{}'
                 }, 
             },
-            policy: AwsCustomResourcePolicy.fromStatements([
-                //Lambda functions must have their policy statement created explicitly, cannot use 'fromSdkCalls'
-                new PolicyStatement({
-                    effect: Effect.ALLOW,
-                    actions: ['lambda:InvokeFunction'],
-                    resources: [appConfigLambda.functionArn],
-                }),
-                new PolicyStatement({
-                    effect: Effect.ALLOW,
-                    actions: ['dynamodb:PutItem'],
-                    resources: [appConfigTable.tableArn],
-                }),
-            ])
+            role: props.mlSpaceAppRole,
         });
 
         // EMR Security Configuration
