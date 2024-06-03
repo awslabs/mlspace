@@ -77,7 +77,7 @@ export default function AppRoutes () {
     ]);
 
     useMemo(() => {
-        dispatch(getConfiguration('global'));
+        dispatch(getConfiguration({configScope: 'global'}));
         if (configLoadError) {
             notificationService.generateNotification(
                 'Error loading app configuration. Restrictive default policy has been applied in its place. Consult with system admin to resolve issue.',

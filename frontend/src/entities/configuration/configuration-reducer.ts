@@ -34,13 +34,23 @@ const initialState = {
 };
 
 // Actions
-export const getConfiguration = (configScope: string) => {
-    return listConfigurations({ configScope, numVersions: 10});
-};
+export const getConfiguration = createAsyncThunk(
+    'app_config/get_configuration',
+    async (props: GetAppConfigurationProps, { dispatch }) => {
+        const searchParams = new URLSearchParams();
+        searchParams.set('configScope', props.configScope);
+        const requestUrl = `/app-config?${searchParams}`;
+        
+        const response =  await axios.get<IAppConfiguration[]>(requestUrl);
+        dispatch(setEnabledServices(response.data[0].configuration.EnabledServices));
+
+        return response;
+    }
+);
 
 export const listConfigurations = createAsyncThunk(
     'app_config/list_configurations',
-    async (props: ListAppConfigurationProps, { dispatch }) => {
+    async (props: ListAppConfigurationProps) => {
         const searchParams = new URLSearchParams();
         searchParams.set('configScope', props.configScope);
         if (props.numVersions) {
@@ -49,8 +59,6 @@ export const listConfigurations = createAsyncThunk(
         const requestUrl = `/app-config?${searchParams}`;
         
         const response =  await axios.get<IAppConfiguration[]>(requestUrl);
-        dispatch(setEnabledServices(response.data[0].configuration.EnabledServices));
-
         return response;
     }
 );
@@ -80,7 +88,6 @@ export const AppConfigSlice = createSlice({
                 const { data } = action.payload;
                 return {
                     ...state,
-                    appConfig: data[0],
                     appConfigList: data,
                     failedToLoadConfig: false,
                     loadingAppConfig: false,
@@ -99,6 +106,27 @@ export const AppConfigSlice = createSlice({
                     failedToLoadConfig: true,
                     loadingAppConfig: false,
                 };
+            })
+            .addMatcher(isFulfilled(getConfiguration), (state, action: any) => {
+                const { data } = action.payload;
+                return {
+                    ...state,
+                    appConfig: data[0],
+                    loadingAppConfig: false,
+                };
+                
+            })
+            .addMatcher(isPending(getConfiguration), (state) => {
+                return {
+                    ...state,
+                    loadingAppConfig: true,
+                };
+            })
+            .addMatcher(isRejected(getConfiguration), (state) => {
+                return {
+                    ...state,
+                    loadingAppConfig: false,
+                };
             });
     },
 });
@@ -110,6 +138,9 @@ type AppConfigurationProps = {
 type ListAppConfigurationProps = {
     configScope: string;
     numVersions: number;
+};
+type GetAppConfigurationProps = {
+    configScope: string;
 };
 
 

@@ -162,7 +162,7 @@ export function DynamicConfiguration () {
                     );
                 }
             } else {
-                dispatch(getConfiguration('global'));
+                dispatch(getConfiguration({configScope: 'global'}));
                 notificationService.generateNotification(
                     'Successfully updated configuration.',
                     'success'

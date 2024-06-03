@@ -14,10 +14,10 @@
   limitations under the License.
 */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { IAppConfiguration, defaultConfiguration } from '../../shared/model/app.configuration.model';
-import { appConfig, appConfigList, getConfiguration, loadingAppConfig, updateConfiguration } from './configuration-reducer';
+import { appConfig, appConfigList, getConfiguration, listConfigurations, loadingAppConfig, updateConfiguration } from './configuration-reducer';
 import { Box, Button, Header, Modal, SpaceBetween, Table } from '@cloudscape-design/components';
 import NotificationService from '../../shared/layout/notification/notification.service';
 
@@ -32,6 +32,10 @@ export function ConfigurationHistoryTable () {
         prevConfig: defaultConfiguration,
         newConfig: defaultConfiguration,
     });
+
+    useMemo(() => {
+        dispatch(listConfigurations({configScope: 'global', numVersions: 10}));
+    }, [dispatch]);
 
     const columnDefinition = [
         {
@@ -87,7 +91,7 @@ export function ConfigurationHistoryTable () {
                                         );
                                     }
                                 } else {
-                                    dispatch(getConfiguration('global'));
+                                    dispatch(getConfiguration({configScope: 'global'}));
                                     notificationService.generateNotification(
                                         'Successfully updated configuration.',
                                         'success'
