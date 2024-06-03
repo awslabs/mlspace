@@ -77,14 +77,12 @@ export default function AppRoutes () {
     ]);
 
     useEffect(() => {
-        if (Object.keys(currentUser).length !== 0) {
-            dispatch(getConfiguration('global'));
-            if (configLoadError) {
-                notificationService.generateNotification(
-                    'Error loading app configuration. Restrictive default policy has been applied in its place. Consult with system admin to resolve issue.',
-                    'error'
-                );
-            }
+        dispatch(getConfiguration('global'));
+        if (configLoadError) {
+            notificationService.generateNotification(
+                'Error loading app configuration. Restrictive default policy has been applied in its place. Consult with system admin to resolve issue.',
+                'error'
+            );
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
@@ -95,7 +93,7 @@ export default function AppRoutes () {
 
     /**
      * Alerts a notification if the user failed to connect to the authentication service
-     * 
+     *
      * This should only occur when the redirect is not properly configured
      */
     useEffect(() => {
@@ -104,7 +102,7 @@ export default function AppRoutes () {
             notificationService.generateNotification('Failed to connect to the authentication service', 'error');
         }
         notifiedError.current = false;
-        
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [auth.error]);
 
@@ -121,7 +119,7 @@ export default function AppRoutes () {
                                 </h1>
                                 <p className='landing-page-description'>{window.env.APPLICATION_NAME} is an open source, web based, data science environment. Through {window.env.APPLICATION_NAME}&apos;s accessible portal, users leverage the power of Amazon SageMaker, a fully managed machine learning service, without needing individual AWS Accounts. {window.env.APPLICATION_NAME} allows data science teams to collaboratively build, train, and deploy machine learning models.</p>
                                 <ColumnLayout columns={3}>
-                                    <Container 
+                                    <Container
                                         className='landing-page-card'
                                         media={{
                                             content: (<img src={groupLogo} alt='Icon of a group' />),
@@ -131,7 +129,7 @@ export default function AppRoutes () {
                                         <h2>Request Access</h2>
                                         <p>To access {window.env.APPLICATION_NAME}, request an account from your {window.env.APPLICATION_NAME} administrator.</p>
                                     </Container>
-                                    <Container 
+                                    <Container
                                         className='landing-page-card'
                                         media={{
                                             content: (<img src={keyLogo} alt='Icon of a key' />),
@@ -142,29 +140,29 @@ export default function AppRoutes () {
                                             Login To Get Started
                                         </h2>
                                         <p>Click below to sign into your {window.env.APPLICATION_NAME} account.</p>
-                                        <Button 
-                                            className='landing-page-card-button' 
-                                            variant='primary' 
+                                        <Button
+                                            className='landing-page-card-button'
+                                            variant='primary'
                                             onClick={() => {
                                                 auth.signinRedirect();
                                             }}>
                                                 Login
                                         </Button>
                                     </Container>
-                                    <Container 
+                                    <Container
                                         className='landing-page-card'
-                                        media={{ 
+                                        media={{
                                             content: (<img src={docsLogo} alt='Icon of reading a document' />),
                                             height: 200,
                                             position: 'top'
                                         }}>
                                         <h2>Read The Docs</h2>
                                         <p>Consult {window.env.APPLICATION_NAME}&apos;s documentation to learn more.</p>
-                                        <Button 
-                                            className='landing-page-card-button' 
-                                            variant='primary' 
-                                            iconName='external' 
-                                            href={`${window.env.LAMBDA_ENDPOINT}/docs/index.html`} 
+                                        <Button
+                                            className='landing-page-card-button'
+                                            variant='primary'
+                                            iconName='external'
+                                            href={`${window.env.LAMBDA_ENDPOINT}/docs/index.html`}
                                             target='_blank'
                                         >
                                             Documentation
@@ -188,7 +186,7 @@ export default function AppRoutes () {
                                 <h1>Account is suspended</h1>
 
                                 <p>
-                                    Your account is in a suspended state. While suspended, you will 
+                                    Your account is in a suspended state. While suspended, you will
                                     not have access to {window.env.APPLICATION_NAME}. Contact your system administrator to
                                     have your account reinstated.
                                 </p>
