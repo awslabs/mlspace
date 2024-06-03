@@ -24,6 +24,8 @@ import {
     Toggle,
     FormField,
     Multiselect,
+    Alert,
+    ContentLayout,
 } from '@cloudscape-design/components';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -46,6 +48,12 @@ export function DynamicConfiguration () {
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const [selectedFile, setSelectedFile] = useState<File[]>([]);
+    const configurableServices = {
+        batchTranslate: 'Amazon Translate asynchronous batch processing',
+        realtimeTranslate: 'Amazon Translate real-time translation',
+        emrCluster: 'Amazon EMR',
+        labelingJob: 'Amazon Ground Truth create labeling jobs'
+    };
 
     const formSchema = z.object({
         configuration: z.object({
@@ -252,8 +260,26 @@ export function DynamicConfiguration () {
                         />
                     </ExpandableSection>
                 </ExpandableSection>
-                <ExpandableSection headerText='Enabled Services' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
+                <ExpandableSection headerText='Activated Services' variant='default' defaultExpanded>
+                    <ContentLayout >
+                        <SpaceBetween direction='vertical' size='m'>
+                            <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services within MLSpace. IAM permissions that control access to these services within the MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated services will no longer appear within the MLSpace user interface. Deactivating services will terminate all active corresponding jobs and instances associated with the service.</Alert>
+                            { Object.keys(configurableServices).map((service) => {
+                                return (
+                                    <Toggle
+                                        onChange={({detail}) => {
+                                            const updatedField = {};
+                                            updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
+                                            setFields(updatedField);
+                                        }}
+                                        checked={state.form.configuration.EnabledServices[service]}
+                                    >
+                                        { configurableServices[service] }
+                                    </Toggle>
+                                );
+                            })}
+                        </SpaceBetween>
+                    </ContentLayout>
                 </ExpandableSection>
                 <ExpandableSection headerText='EMR Config' variant='default' defaultExpanded>
                     <ExpandableSection 
@@ -480,7 +506,7 @@ export function DynamicConfiguration () {
                             }}
                             checked={state.form.configuration.SystemBanner.isEnabled!}
                         >
-                            Enable System Banner
+                            Activate System Banner
                         </Toggle>
                         <FormField
                             label='Banner Text'
