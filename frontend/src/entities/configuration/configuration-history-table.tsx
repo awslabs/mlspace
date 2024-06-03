@@ -18,7 +18,7 @@ import React, { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { IAppConfiguration, defaultConfiguration } from '../../shared/model/app.configuration.model';
 import { appConfig, appConfigList, getConfiguration, listConfigurations, loadingAppConfig, updateConfiguration } from './configuration-reducer';
-import { Box, Button, Header, Modal, SpaceBetween, Table } from '@cloudscape-design/components';
+import { Box, Button, FormField, Header, Input, Modal, SpaceBetween, Table } from '@cloudscape-design/components';
 import NotificationService from '../../shared/layout/notification/notification.service';
 
 export function ConfigurationHistoryTable () {
@@ -53,7 +53,7 @@ export function ConfigurationHistoryTable () {
         {
             header: 'Rollback',
             cell: (item) => (
-                <Button variant={'inline-link'} onClick={() => setModal({...modal, visible: true, newConfig: {...item, versionId: applicationConfig.versionId, changeReason: `Rolled back from version ${item.versionId}`}, prevConfig: item})}>Rollback</Button>),
+                <Button variant={'inline-link'} onClick={() => setModal({...modal, visible: true, newConfig: {...item, versionId: applicationConfig.versionId, changeReason: `Rolled back to version ${item.versionId}`}, prevConfig: item})}>Rollback</Button>),
         },
     ];
     return (
@@ -74,36 +74,55 @@ export function ConfigurationHistoryTable () {
                     <Box float='right'>
                         <SpaceBetween direction='horizontal' size='xs'>
                             <Button onClick={() => setModal({...modal, visible: false})}>Cancel</Button>
-                            <Button onClick={async () => {
-                                const resp = await dispatch(updateConfiguration({appConfiguration: modal.newConfig}));
-                                setModal({...modal, visible: false});
-                                const responseStatus = resp.payload.status;
-                                if (responseStatus >= 400) {
-                                    if (responseStatus === 429) {
-                                        notificationService.generateNotification(
-                                            'Outdated configuration - please refresh to get the latest configuration, then try again.',
-                                            'error'
-                                        );
+                            <Button 
+                                variant='primary'
+                                loading={loadingConfig}
+                                onClick={async () => {
+                                    const resp = await dispatch(updateConfiguration({appConfiguration: modal.newConfig}));
+                                    setModal({...modal, visible: false});
+                                    const responseStatus = resp.payload.status;
+                                    if (responseStatus >= 400) {
+                                        if (responseStatus === 429) {
+                                            notificationService.generateNotification(
+                                                'Outdated configuration - please refresh to get the latest configuration, then try again.',
+                                                'error'
+                                            );
+                                        } else {
+                                            notificationService.generateNotification(
+                                                'Something went wrong while uploading the configuration. Please try again or check system logs.',
+                                                'error'
+                                            );
+                                        }
                                     } else {
+                                        dispatch(getConfiguration({configScope: 'global'}));
                                         notificationService.generateNotification(
-                                            'Something went wrong while uploading the configuration. Please try again or check system logs.',
-                                            'error'
+                                            'Successfully updated configuration.',
+                                            'success'
                                         );
                                     }
-                                } else {
-                                    dispatch(getConfiguration({configScope: 'global'}));
-                                    notificationService.generateNotification(
-                                        'Successfully updated configuration.',
-                                        'success'
-                                    );
                                 }
-                            }
-                            }>Rollback</Button>
+                                }>Rollback</Button>
                         </SpaceBetween>
                     </Box>
                 }
             >
-                Are you sure you want to rollback to version {modal.prevConfig.versionId}?
+                <SpaceBetween size={'xxs'}>
+                    <p>Are you sure you want to rollback to version {modal.prevConfig.versionId}?</p>
+                    <FormField
+                        label='Change reason'
+                    >
+                        <Input
+                            value={modal.newConfig.changeReason}
+                            onChange={(event) => {
+                                if (event.detail.value) {
+                                    setModal({...modal, newConfig: {...modal.newConfig, changeReason: event.detail.value}});
+                                }
+                            }}
+                        />
+                    </FormField>
+
+                </SpaceBetween>
+                
             </Modal>
         </>
         
