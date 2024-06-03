@@ -160,7 +160,7 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                 'applications': {'L': applicationList}
             }
             },
-            'DisabledInstanceTypes': {'M': {
+            'EnabledInstanceTypes': {'M': {
                 'trainingJob': {'L':
                 [
 
