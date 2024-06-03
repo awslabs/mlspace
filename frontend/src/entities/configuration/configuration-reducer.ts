@@ -89,22 +89,20 @@ export const AppConfigSlice = createSlice({
                 return {
                     ...state,
                     appConfigList: data,
-                    failedToLoadConfig: false,
-                    loadingAppConfig: false,
+                    loadingAppConfigList: false,
                 };
                 
             })
             .addMatcher(isPending(listConfigurations), (state) => {
                 return {
                     ...state,
-                    loadingAppConfig: true,
+                    loadingAppConfigList: true,
                 };
             })
             .addMatcher(isRejected(listConfigurations), (state) => {
                 return {
                     ...state,
-                    failedToLoadConfig: true,
-                    loadingAppConfig: false,
+                    loadingAppConfigList: false,
                 };
             })
             .addMatcher(isFulfilled(getConfiguration), (state, action: any) => {
@@ -112,6 +110,7 @@ export const AppConfigSlice = createSlice({
                 return {
                     ...state,
                     appConfig: data[0],
+                    failedToLoadConfig: false,
                     loadingAppConfig: false,
                 };
                 
@@ -125,6 +124,7 @@ export const AppConfigSlice = createSlice({
             .addMatcher(isRejected(getConfiguration), (state) => {
                 return {
                     ...state,
+                    failedToLoadConfig: true,
                     loadingAppConfig: false,
                 };
             });
@@ -150,4 +150,5 @@ export const { updateEntity } = AppConfigSlice.actions;
 export const appConfigList = (state: any): IAppConfiguration[] => state.appConfig.appConfigList;
 export const appConfig = (state: any): IAppConfiguration => state.appConfig.appConfig;
 export const loadingAppConfig = (state: any): boolean => state.appConfig.loadingAppConfig;
+export const loadingAppConfigList = (state: any): boolean => state.appConfig.loadingAppConfigList;
 export const failedToLoadConfig = (state: any): boolean => state.appConfig.failedToLoadConfig;

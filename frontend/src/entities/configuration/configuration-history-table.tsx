@@ -17,14 +17,14 @@
 import React, { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { IAppConfiguration, defaultConfiguration } from '../../shared/model/app.configuration.model';
-import { appConfig, appConfigList, getConfiguration, listConfigurations, loadingAppConfig, updateConfiguration } from './configuration-reducer';
+import { appConfig, appConfigList, getConfiguration, listConfigurations, loadingAppConfigList, updateConfiguration } from './configuration-reducer';
 import { Box, Button, FormField, Header, Input, Modal, SpaceBetween, Table } from '@cloudscape-design/components';
 import NotificationService from '../../shared/layout/notification/notification.service';
 
 export function ConfigurationHistoryTable () {
     const configList: IAppConfiguration[] = useAppSelector(appConfigList);
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
-    const loadingConfig: boolean = useAppSelector(loadingAppConfig);
+    const loadingConfigList: boolean = useAppSelector(loadingAppConfigList);
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const [modal, setModal] = React.useState<{ visible: boolean; prevConfig: IAppConfiguration, newConfig: IAppConfiguration }>({
@@ -62,7 +62,7 @@ export function ConfigurationHistoryTable () {
                 header={<Header> Configuration history </Header>}
                 columnDefinitions={columnDefinition}
                 items={configList}
-                loading={loadingConfig}
+                loading={loadingConfigList}
                 loadingText='Loading configurations'
             />
 
@@ -76,7 +76,7 @@ export function ConfigurationHistoryTable () {
                             <Button onClick={() => setModal({...modal, visible: false})}>Cancel</Button>
                             <Button 
                                 variant='primary'
-                                loading={loadingConfig}
+                                loading={loadingConfigList}
                                 onClick={async () => {
                                     const resp = await dispatch(updateConfiguration({appConfiguration: modal.newConfig}));
                                     setModal({...modal, visible: false});
