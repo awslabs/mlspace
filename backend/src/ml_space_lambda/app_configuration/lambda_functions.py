@@ -18,27 +18,45 @@ import json
 import logging
 import time
 
-from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
-from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
-from ml_space_lambda.utils.common_functions import api_wrapper
 import boto3
 
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
-from ml_space_lambda.enums import EnvVariable, IAMEffect, IAMStatementProperty, ServiceType
+from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
+from ml_space_lambda.enums import EnvVariable, IAMEffect, IAMStatementProperty, ResourceType, ServiceType
 from ml_space_lambda.utils.account_utils import get_account_arn
 from ml_space_lambda.utils.common_functions import (
     api_wrapper,
     event_wrapper,
     generate_exception_response,
     generate_html_response,
+    retry_config,
 )
 from ml_space_lambda.utils.iam_manager import IAM_RESOURCE_PREFIX, IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
+from ml_space_lambda.utils.resoruce_utils import suspend_all_of_type
 
 iam_manager = IAMManager()
 log = logging.getLogger(__name__)
 app_configuration_dao = AppConfigurationDAO()
 env_variables = get_environment_variables()
+translate_client = boto3.client("translate", config=retry_config)
+resource_metadata_dao = ResourceMetadataDAO()
+
+
+# TODO: Get this working
+def batch_translate_cleanup():
+    suspend_all_of_type(ResourceType.BATCH_TRANSLATE_JOB)
+
+
+# TODO: Copy process of batch_translate
+def labeling_cleanup():
+    log.info("Cleaning up labeling")
+
+
+# TODO: Copy process of EMR
+def emr_cleanup():
+    log.info("Cleaning up EMR")
+
 
 service_group_disable_permissions = [
     {
@@ -66,69 +84,80 @@ service_group_disable_permissions = [
 ]
 
 service_disable_permissions = {
-    ServiceType.BATCH_TRANSLATE: [
-        {
-            IAMStatementProperty.EFFECT: IAMEffect.DENY,
-            IAMStatementProperty.ACTION: [
-                "translate:StopTextTranslationJob",
-                "translate:ListTextTranslationJob",
-                "translate:StartTextTranslationJob",
-                "translate:DescribeTextTranslationJob",
-            ],
-            IAMStatementProperty.RESOURCE: "*",
-        }
-    ],
-    ServiceType.REALTIME_TRANSLATE: [
-        {
-            IAMStatementProperty.EFFECT: IAMEffect.DENY,
-            IAMStatementProperty.ACTION: ["translate:TranslateDocument", "translate:TranslateText"],
-            IAMStatementProperty.RESOURCE: "*",
-        }
-    ],
-    ServiceType.LABELING_JOB: [
-        {
-            IAMStatementProperty.EFFECT: IAMEffect.DENY,
-            IAMStatementProperty.ACTION: [
-                "sagemaker:CreateLabelingJob",
-                "sagemaker:DescribeLabelingJob",
-                "sagemaker:StopLabelingJob",
-            ],
-            IAMStatementProperty.RESOURCE: "*",
-        }
-    ],
-    ServiceType.EMR_CLUSTER: [
-        {
-            IAMStatementProperty.EFFECT: IAMEffect.DENY,
-            IAMStatementProperty.ACTION: [
-                "elasticmapreduce:RunJobFlow",
-                "elasticmapreduce:ListClusters",
-                "elasticmapreduce:DescribeCluster",
-                "elasticmapreduce:ListInstances",
-                "elasticmapreduce:AddTags",
-                "elasticmapreduce:TerminateJobFlows",
-                "elasticmapreduce:SetTerminationProtection",
-            ],
-            IAMStatementProperty.RESOURCE: "*",
-        },
-        {
-            IAMStatementProperty.EFFECT: IAMEffect.DENY,
-            IAMStatementProperty.ACTION: ["iam:PassRole", "iam:ListRoleTags"],
-            IAMStatementProperty.RESOURCE: [
-                get_account_arn("iam", f"role/{env_variables[EnvVariable.EMR_EC2_ROLE_NAME]}"),
-                get_account_arn("iam", f"role/{env_variables[EnvVariable.EMR_SERVICE_ROLE_NAME]}"),
-            ],
-        },
-        {
-            IAMStatementProperty.EFFECT: IAMEffect.DENY,
-            IAMStatementProperty.ACTION: ["ec2:AuthorizeSecurityGroupIngress"],
-            IAMStatementProperty.RESOURCE: get_account_arn("ec2", "security-group/*"),
-        },
-        {
-            IAMStatementProperty.EFFECT: IAMEffect.DENY,
-            IAMStatementProperty.ACTION: ["ec2:DescribeInstances", "ec2:DescribeRoutesTables"],
-            IAMStatementProperty.RESOURCE: "*",
-        },
-    ],
+    ServiceType.BATCH_TRANSLATE: {
+        "Statements": [
+            {
+                IAMStatementProperty.EFFECT: IAMEffect.DENY,
+                IAMStatementProperty.ACTION: [
+                    "translate:StopTextTranslationJob",
+                    "translate:ListTextTranslationJob",
+                    "translate:StartTextTranslationJob",
+                    "translate:DescribeTextTranslationJob",
+                ],
+                IAMStatementProperty.RESOURCE: "*",
+            }
+        ],
+        "CleanupFunction": batch_translate_cleanup,
+    },
+    ServiceType.REALTIME_TRANSLATE: {
+        "Statements": [
+            {
+                IAMStatementProperty.EFFECT: IAMEffect.DENY,
+                IAMStatementProperty.ACTION: ["translate:TranslateDocument", "translate:TranslateText"],
+                IAMStatementProperty.RESOURCE: "*",
+            }
+        ]
+    },
+    ServiceType.LABELING_JOB: {
+        "Statements": [
+            {
+                IAMStatementProperty.EFFECT: IAMEffect.DENY,
+                IAMStatementProperty.ACTION: [
+                    "sagemaker:CreateLabelingJob",
+                    "sagemaker:DescribeLabelingJob",
+                    "sagemaker:StopLabelingJob",
+                ],
+                IAMStatementProperty.RESOURCE: "*",
+            }
+        ],
+        "CleanupFunction": labeling_cleanup,
+    },
+    ServiceType.EMR_CLUSTER: {
+        "Statements": [
+            {
+                IAMStatementProperty.EFFECT: IAMEffect.DENY,
+                IAMStatementProperty.ACTION: [
+                    "elasticmapreduce:RunJobFlow",
+                    "elasticmapreduce:ListClusters",
+                    "elasticmapreduce:DescribeCluster",
+                    "elasticmapreduce:ListInstances",
+                    "elasticmapreduce:AddTags",
+                    "elasticmapreduce:TerminateJobFlows",
+                    "elasticmapreduce:SetTerminationProtection",
+                ],
+                IAMStatementProperty.RESOURCE: "*",
+            },
+            {
+                IAMStatementProperty.EFFECT: IAMEffect.DENY,
+                IAMStatementProperty.ACTION: ["iam:PassRole", "iam:ListRoleTags"],
+                IAMStatementProperty.RESOURCE: [
+                    get_account_arn("iam", f"role/{env_variables[EnvVariable.EMR_EC2_ROLE_NAME]}"),
+                    get_account_arn("iam", f"role/{env_variables[EnvVariable.EMR_SERVICE_ROLE_NAME]}"),
+                ],
+            },
+            {
+                IAMStatementProperty.EFFECT: IAMEffect.DENY,
+                IAMStatementProperty.ACTION: ["ec2:AuthorizeSecurityGroupIngress"],
+                IAMStatementProperty.RESOURCE: get_account_arn("ec2", "security-group/*"),
+            },
+            {
+                IAMStatementProperty.EFFECT: IAMEffect.DENY,
+                IAMStatementProperty.ACTION: ["ec2:DescribeInstances", "ec2:DescribeRoutesTables"],
+                IAMStatementProperty.RESOURCE: "*",
+            },
+        ],
+        "CleanupFunction": emr_cleanup,
+    },
 }
 
 # Instead of deleting the policy (which requires unattaching from all roles) assign a filler non-impactful statement
@@ -179,8 +208,10 @@ def update_configuration(event, context):
                 if service in service_disable_permissions:
                     # If the service is deactivated
                     if not enabled_services_dict[service]:
-                        # TODO: Stop all jobs and instances associated with the service
-                        deny_policy_statements.extend(service_disable_permissions[service])
+                        if "CleanupFunction" in service_disable_permissions[service]:
+                            service_disable_permissions[service]["CleanupFunction"]()
+                        if "Statements" in service_disable_permissions[service]:
+                            deny_policy_statements.extend(service_disable_permissions[service]["Statements"])
 
             # Check for permissions associated with multiple services
             for group in service_group_disable_permissions:

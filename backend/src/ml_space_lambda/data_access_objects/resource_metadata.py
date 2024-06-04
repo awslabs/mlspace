@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from botocore.exceptions import ClientError
 from dynamodb_json import json_util as dynamodb_json
@@ -162,6 +162,56 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
             key_condition_expression="#u = :user and resourceType = :resourceType",
             expression_values=json.loads(dynamodb_json.dumps(expression_values)),
             expression_names={"#u": "user"},
+            limit=limit if not fetch_all else None,
+            page_response=not fetch_all,
+            next_token=next_token,
+            filter_expression=filter_expression,
+        )
+        return PagedMetadataResults(
+            [ResourceMetadataModel.from_dict(entry) for entry in ddb_response.records],
+            ddb_response.next_token,
+        )
+
+    def get_all_of_type_with_filters(
+        self,
+        type: ResourceType,
+        project: str = None,
+        user: str = None,
+        limit: Optional[int] = None,
+        next_token: Optional[str] = None,
+        fetch_all: Optional[bool] = False,
+        filter_expression: Optional[str] = None,
+        filter_values: Optional[Dict[str, Any]] = None,
+        index_name: Literal["ProjectResources", "UserResources", None] = None,
+    ) -> PagedMetadataResults:
+        # Base values
+        expression_values: Dict[str, Any] = {":resourceType": type}
+        key_condition_expressions = ["resourceType = :resourceType"]
+
+        # Update with provided project
+        if project is not None:
+            expression_values[":project"] = project
+            if index_name == "ProjectResources":
+                key_condition_expressions.append("project = :project")
+
+        if user is not None:
+            expression_values[":user"] = user
+            if index_name == "UserResources":
+                key_condition_expressions.append("user = :user")
+
+        if filter_expression and filter_values:
+            if ":resourceType" in filter_values:
+                raise ValueError("Reserved expression value ':resourceType' specified in filter_values.")
+            expression_values.update(filter_values)
+
+        # Assemble the key condition expression
+        if len(key_condition_expressions) > 1:
+            key_condition_expression = key_condition_expressions.join(" and ")
+
+        ddb_response = self._query(
+            index_name=index_name,
+            key_condition_expression=key_condition_expression,
+            expression_values=json.loads(dynamodb_json.dumps(expression_values)),
             limit=limit if not fetch_all else None,
             page_response=not fetch_all,
             next_token=next_token,
