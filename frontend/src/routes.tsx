@@ -16,7 +16,7 @@
 
 import { Route, Routes } from 'react-router-dom';
 import ErrorBoundaryRoutes from './shared/error/error-boundary-routes';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
     setAdminItems,
     setBreadcrumbs,
@@ -76,8 +76,8 @@ export default function AppRoutes () {
         auth.signinRedirect,
     ]);
 
-    useEffect(() => {
-        dispatch(getConfiguration('global'));
+    useMemo(() => {
+        dispatch(getConfiguration({configScope: 'global'}));
         if (configLoadError) {
             notificationService.generateNotification(
                 'Error loading app configuration. Restrictive default policy has been applied in its place. Consult with system admin to resolve issue.',
