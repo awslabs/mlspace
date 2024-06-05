@@ -15,7 +15,7 @@
 */
 
 import React, { useEffect } from 'react';
-import { useAppDispatch } from '../../../config/store';
+import {useAppDispatch} from '../../../config/store';
 import {
     setActiveHref,
     setBreadcrumbs,
@@ -28,7 +28,6 @@ import { resetCurrentProject } from '../../../entities/project/project.reducer';
 
 export const Home = () => {
     const dispatch = useAppDispatch();
-
     useEffect(() => {
         dispatch(selectProject());
         dispatch(setBreadcrumbs([]));

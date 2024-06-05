@@ -23,7 +23,7 @@ import {
     FormField
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { setActiveHref, setItemsForProjectName } from './navigation.reducer';
+import {setActiveHref, setItemsForProjectName} from './navigation.reducer';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import { IProject } from '../../model/project.model';
 import { useLocation, useNavigate } from 'react-router-dom';

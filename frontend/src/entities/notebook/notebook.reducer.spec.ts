@@ -302,18 +302,32 @@ describe('Entities reducer tests', () => {
 
     describe('Actions', () => {
         let store: any;
+        const mockOidcUrl = 'https://fake-oidc.com';
+        const mockLambdaEndpoint = 'https://fake-endpoint.com';
+        const mockOidcClientName = 'fake-oidc-client-name';
+        const mockToken = 'token';
+        const mockOidcSessionStorageName = `oidc.user:${mockOidcUrl}:${mockOidcClientName}`;
+        const mockOidcSessionStorageValue = `{"id_token":"${mockToken}"}`;
+        const expectedRequestConfig = {
+            baseURL: mockLambdaEndpoint,
+            headers: {
+                Authorization: `Bearer ${mockToken}`
+            }
+        };
 
         const resolvedObject = { data: [{ id: 1 }, { id: 2 }] };
         afterEach(() => {
             mockAxios.reset();
+            sessionStorage.removeItem(mockOidcSessionStorageName);
         });
         beforeEach(() => {
             window.env = {
-                LAMBDA_ENDPOINT: 'fake',
-                OIDC_URL: 'test',
-                OIDC_CLIENT_NAME: 'web-client',
+                LAMBDA_ENDPOINT: mockLambdaEndpoint,
+                OIDC_URL: mockOidcUrl,
+                OIDC_CLIENT_NAME: mockOidcClientName,
                 OIDC_REDIRECT_URI: '',
             };
+            sessionStorage.setItem(mockOidcSessionStorageName, mockOidcSessionStorageValue);
             const mockStore = configureStore([thunk]);
             store = mockStore({});
             mockAxios.get.mockResolvedValueOnce(resolvedObject);
@@ -339,9 +353,7 @@ describe('Entities reducer tests', () => {
                 },
             ];
             await store.dispatch(listNotebookInstances({ projectName: 'project' }));
-            expect(mockAxios.get).toHaveBeenCalledWith('/project/project/notebooks', {
-                baseURL: 'fake',
-            });
+            expect(mockAxios.get).toHaveBeenCalledWith('/project/project/notebooks', expectedRequestConfig);
             expect(store.getActions()[0]).toMatchObject(expectedActions[0]);
             expect(store.getActions()[1]).toMatchObject(expectedActions[1]);
         });
@@ -357,7 +369,7 @@ describe('Entities reducer tests', () => {
                 },
             ];
             await store.dispatch(listNotebookInstances({}));
-            expect(mockAxios.get).toHaveBeenCalledWith('/notebook', { baseURL: 'fake' });
+            expect(mockAxios.get).toHaveBeenCalledWith('/notebook', expectedRequestConfig);
             expect(store.getActions()[0]).toMatchObject(expectedActions[0]);
             expect(store.getActions()[1]).toMatchObject(expectedActions[1]);
         });
@@ -373,9 +385,7 @@ describe('Entities reducer tests', () => {
                 },
             ];
             await store.dispatch(describeNotebookInstance('42666'));
-            expect(mockAxios.get).toHaveBeenCalledWith('/notebook/42666', {
-                baseURL: 'fake',
-            });
+            expect(mockAxios.get).toHaveBeenCalledWith('/notebook/42666', expectedRequestConfig);
             expect(store.getActions()[0]).toMatchObject(expectedActions[0]);
             expect(store.getActions()[1]).toMatchObject(expectedActions[1]);
         });
@@ -393,8 +403,11 @@ describe('Entities reducer tests', () => {
                 startNotebookInstance({ notebookName: '42666', projectName: 'testProject' })
             );
             expect(mockAxios.post).toHaveBeenCalledWith('/notebook/42666/start', undefined, {
-                baseURL: 'fake',
-                headers: { 'x-mlspace-project': 'testProject' },
+                ... expectedRequestConfig,
+                headers: {
+                    ...expectedRequestConfig.headers,
+                    'x-mlspace-project': 'testProject'
+                },
             });
             expect(store.getActions()[0]).toMatchObject(expectedActions[0]);
             expect(store.getActions()[1]).toMatchObject(expectedActions[1]);
@@ -413,8 +426,11 @@ describe('Entities reducer tests', () => {
                 stopNotebookInstance({ notebookName: '42666', projectName: 'testProject' })
             );
             expect(mockAxios.post).toHaveBeenCalledWith('/notebook/42666/stop', undefined, {
-                baseURL: 'fake',
-                headers: { 'x-mlspace-project': 'testProject' },
+                ... expectedRequestConfig,
+                headers: {
+                    ...expectedRequestConfig.headers,
+                    'x-mlspace-project': 'testProject'
+                },
             });
             expect(store.getActions()[0]).toMatchObject(expectedActions[0]);
             expect(store.getActions()[1]).toMatchObject(expectedActions[1]);
@@ -430,7 +446,7 @@ describe('Entities reducer tests', () => {
                 },
             ];
             await store.dispatch(deleteNotebookInstance('42666'));
-            expect(mockAxios.delete).toHaveBeenCalledWith('/notebook/42666', { baseURL: 'fake' });
+            expect(mockAxios.delete).toHaveBeenCalledWith('/notebook/42666', expectedRequestConfig);
             expect(store.getActions()[0]).toMatchObject(expectedActions[0]);
             expect(store.getActions()[1]).toMatchObject(expectedActions[1]);
         });
@@ -464,8 +480,11 @@ describe('Entities reducer tests', () => {
                 })
             );
             expect(mockAxios.post).toHaveBeenCalledWith('/notebook', createdNotebook, {
-                baseURL: 'fake',
-                headers: { 'x-mlspace-project': 'testProject' },
+                ... expectedRequestConfig,
+                headers: {
+                    ...expectedRequestConfig.headers,
+                    'x-mlspace-project': 'testProject'
+                },
             });
             expect(store.getActions()[0]).toMatchObject(expectedActions[0]);
             expect(store.getActions()[1]).toMatchObject(expectedActions[1]);
@@ -493,9 +512,7 @@ describe('Entities reducer tests', () => {
                 },
             ];
             await store.dispatch(updateNotebookInstance(updatedNotebook));
-            expect(mockAxios.put).toHaveBeenCalledWith('/notebook/firstNotebook', newNotebook, {
-                baseURL: 'fake',
-            });
+            expect(mockAxios.put).toHaveBeenCalledWith('/notebook/firstNotebook', newNotebook, expectedRequestConfig);
             expect(store.getActions()[0]).toMatchObject(expectedActions[0]);
             expect(store.getActions()[1]).toMatchObject(expectedActions[1]);
         });
