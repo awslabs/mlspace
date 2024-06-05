@@ -164,7 +164,7 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
                             variant='flash'
                         />
                         <Box float='right'>
-                            <Button onClick={() => breakout = true}>Cancel</Button>
+                            <Button onClick={() => breakout = true}>Stop</Button>
                         </Box>
                         
                     </ColumnLayout>
