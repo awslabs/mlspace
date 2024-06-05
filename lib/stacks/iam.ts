@@ -854,6 +854,7 @@ export class IAMStack extends Stack {
                         // This needs to match the IAM_RESOURCE_PREFIX prefix in iam_manager.py
                         resources: [
                             `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
+                            // This is needed for the deny services policy to be attached to the notebook role
                             `arn:${this.partition}:iam::${this.account}:role/${mlSpaceNotebookRoleName}`,
                         ],
                         conditions: {

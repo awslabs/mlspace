@@ -17,12 +17,11 @@
 import hashlib
 import json
 import logging
-import os
 from typing import List, Optional
 
 import boto3
 
-from ml_space_lambda.enums import IAMResourceType
+from ml_space_lambda.enums import EnvVariable, IAMResourceType
 from ml_space_lambda.utils.account_utils import get_account_arn, get_account_id, get_partition
 from ml_space_lambda.utils.common_functions import generate_tags, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
@@ -42,11 +41,11 @@ class IAMManager:
         self.iam_client = iam_client if iam_client else boto3.client("iam", config=retry_config)
 
         env_variables = get_environment_variables()
-        self.data_bucket = env_variables["DATA_BUCKET"]
-        self.system_tag = env_variables["SYSTEM_TAG"]
-        self.notebook_role_name = os.getenv("NOTEBOOK_ROLE_NAME", "")
+        self.data_bucket = env_variables[EnvVariable.DATA_BUCKET]
+        self.system_tag = env_variables[EnvVariable.SYSTEM_TAG]
+        self.notebook_role_name = env_variables[EnvVariable.NOTEBOOK_ROLE_NAME]
         self.default_notebook_role_policy_arns = []
-        self.permissions_boundary_arn = os.getenv("PERMISSIONS_BOUNDARY_ARN", "")
+        self.permissions_boundary_arn = env_variables[EnvVariable.PERMISSIONS_BOUNDARY_ARN]
         self.aws_account = get_account_id()
 
         # If you update this you need to increment the PROJECT_POLICY_VERSION value
@@ -347,9 +346,7 @@ class IAMManager:
 
         if project:
             project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{project}"
-            self.iam_client.delete_policy(
-                PolicyArn=f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{project_policy_name}"
-            )
+            self.iam_client.delete_policy(PolicyArn=get_account_arn("iam", f"policy/{project_policy_name}"))
 
     # Removes all roles for the given user and deletes user specific policies
     def remove_all_user_roles(self, username: str, projects: List[str]) -> None:
@@ -361,7 +358,7 @@ class IAMManager:
         self.remove_project_user_roles(roles_to_delete)
         # Delete user policy
         user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
-        user_policy_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{user_policy_name}"
+        user_policy_arn = get_account_arn("iam", f"policy/{user_policy_name}")
         self.iam_client.delete_policy(PolicyArn=user_policy_arn)
 
     # Creates the IAM role for the MLSpace user/project context
@@ -553,7 +550,3 @@ class IAMManager:
         for version in policy_versions["Versions"]:
             if not version["IsDefaultVersion"]:
                 self.iam_client.delete_policy_version(PolicyArn=policy_arn, VersionId=version["VersionId"])
-
-    def _delete_policy(self, policy_arn: str) -> None:
-        self.iam_client.list_entities_for_policy(PolicyArn=policy_arn)
-        self.iam_client.delete_policy(PolicyArn=policy_arn)
