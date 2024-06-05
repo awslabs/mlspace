@@ -137,11 +137,11 @@ export const determineScope = (
 export async function uploadResources (datasetContext: DatasetContext, resourceObjects: DatasetResourceObject[], notificationService: any) {
     let successCount = 0;
     const failedUploads: string[] = [];
-    let breakout = false;
+    let stopUpload = false;
 
     for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
         
-        if (breakout) {
+        if (stopUpload) {
             break;
         }
 
@@ -164,7 +164,7 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
                             variant='flash'
                         />
                         <Box float='right'>
-                            <Button onClick={() => breakout = true}>Stop</Button>
+                            <Button onClick={() => stopUpload = true}>Stop</Button>
                         </Box>
                         
                     </ColumnLayout>
