@@ -19,7 +19,7 @@ import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 import axios from '../../shared/util/axios-utils';
 import { default as Axios } from 'axios';
 import { DatasetContext } from '../../shared/util/dataset-utils';
-import { ProgressBar } from '@cloudscape-design/components';
+import { Box, Button, ColumnLayout, ProgressBar } from '@cloudscape-design/components';
 import React from 'react';
 
 export const getPresignedUrls = async (data: any) => {
@@ -137,8 +137,14 @@ export const determineScope = (
 export async function uploadResources (datasetContext: DatasetContext, resourceObjects: DatasetResourceObject[], notificationService: any) {
     let successCount = 0;
     const failedUploads: string[] = [];
+    let stopUpload = false;
 
     for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
+        
+        if (stopUpload) {
+            break;
+        }
+
         const presignedUrl = await fetchPresignedURL(s3Uri);
 
         if (presignedUrl?.data) {
@@ -150,12 +156,19 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
                     `Successfully uploaded ${successCount}/${resourceObjects.length} file(s).`,
                     'in-progress',
                     'upload-notification',
-                    (<ProgressBar
-                        label='Uploading files to dataset'
-                        description={`Uploading ${resourceObject.name}`}
-                        value={successCount / resourceObjects.length * 100}
-                        variant='flash'
-                    />),
+                    (<ColumnLayout columns={2}>
+                        <ProgressBar
+                            label='Uploading files to dataset'
+                            description={`Uploading ${resourceObject.name}`}
+                            value={successCount / resourceObjects.length * 100}
+                            variant='flash'
+                        />
+                        <Box float='right'>
+                            <Button onClick={() => stopUpload = true}>Stop</Button>
+                        </Box>
+                        
+                    </ColumnLayout>
+                    ),
                     false
                 );
                 continue;
