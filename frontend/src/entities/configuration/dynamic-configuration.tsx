@@ -28,6 +28,7 @@ import {
     ContentLayout,
     Modal,
     Box,
+    TextContent,
 } from '@cloudscape-design/components';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -41,6 +42,7 @@ import { formatDisplayNumber } from '../../shared/util/form-utils';
 import { ClusterTypeConfiguration } from './cluster-types';
 import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-dropdown';
 import { ConfigurationHistoryTable } from './configuration-history-table';
+import _ from 'lodash';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -221,39 +223,105 @@ export function DynamicConfiguration () {
         setFields({ 'configuration.EMRConfig.applications': updatedSelectedApps });
     };
 
+
+    const isObject = (x) => typeof x === 'object' && !Array.isArray(x) && x !== null;
+
+    /**
+     * Computes the difference between two JSON objects, recursively.
+     *
+     * This function takes two JSON objects as input and returns a new object that
+     * contains the differences between the two. Works with nested objects.
+     *
+     * @param {object} [obj1={}] - The first JSON object to compare.
+     * @param {object} [obj2={}] - The second JSON object to compare.
+     * @returns {object} - A new object containing the differences between the two input objects.
+     */
+    function getJsonDifference (obj1 = {}, obj2 = {}) {
+        const output = {},
+            merged = { ...obj1, ...obj2 }; // has properties of both
+
+        for (const key in merged) {
+            const value1 = obj1[key], value2 = obj2[key];
+
+            if (isObject(value1) || isObject(value2)) {
+                const value = getJsonDifference(value1, value2); // recursively call
+                if (Object.keys(value).length !== 0) {
+                    output[key] = value;
+                }
+
+            } else {
+                if (JSON.stringify(value1) !== JSON.stringify(value2)) {
+                    output[key] = value2;
+                }
+            }
+        }
+        return output;
+    }
+
+    /**
+     * Converts a JSON object into an outline structure represented as React nodes.
+     *
+     * @param {object} [json={}] - The JSON object to be converted.
+     * @returns {React.ReactNode[]} - An array of React nodes representing the outline structure.
+     */
+    function jsonToOutline (json = {}) {
+        const output: React.ReactNode[] = [];
+
+        for (const key in json) {
+            const value = json[key];
+            output.push((<li><p><strong>{key}</strong></p></li>));
+
+            if (isObject(value)) {
+                const recursiveJson = jsonToOutline(value); // recursively call
+                output.push((recursiveJson));
+            }
+        }
+        return <ul>{output}</ul>;
+    }
+
+    const changesDiff = getJsonDifference(applicationConfig.configuration, state.form.configuration);
+
     return (
         <>
             <Modal 
                 visible={modalVisible}
                 onDismiss={() => setModalVisible(false)}
-                header={<Header>Rollback</Header>}
+                header={<Header>Confirm changes</Header>}
                 footer={
                     <Box float='right'>
                         <SpaceBetween direction='horizontal' size='xs'>
                             <Button onClick={() => setModalVisible(false)}>Cancel</Button>
                             <Button 
                                 variant='primary'
-                                loading={loadingConfig}
+                                loading={state.formSubmitting}
+                                disabled={_.isEmpty(changesDiff)}
                                 onClick={async () => {
-                                    
+                                    await handleSubmit();
+                                    setModalVisible(false);
                                 }
-                                }>Rollback</Button>
+                                }>Save</Button>
                         </SpaceBetween>
                     </Box>
                 }
             >
-                <SpaceBetween size={'xxs'}>
-                    <p>Are you sure you want to rollback to version {modal.prevConfig.versionId}?</p>
+                <SpaceBetween size={'s'}>
+                    <Container>
+                        <TextContent>
+                            {_.isEmpty(changesDiff) ? <p>No changes detected</p> : jsonToOutline(changesDiff)}
+                        </TextContent>
+                    </Container>
+                    
+                    
                     <FormField
                         label='Change reason'
                     >
                         <Input
-                            value={modal.newConfig.changeReason}
+                            value={`Changes to: ${Object.keys(changesDiff)}`}
                             onChange={(event) => {
-                                if (event.detail.value) {
-                                    setModal({...modal, newConfig: {...modal.newConfig, changeReason: event.detail.value}});
-                                }
+                                setFields({ 'changeReason': event.detail.value });
+                                console.log(state.form);
                             }}
+                            disabled={_.isEmpty(changesDiff)}
                         />
                     </FormField>
 
@@ -595,7 +663,9 @@ export function DynamicConfiguration () {
                     <Button
                         iconAlt='Update dynamic configuration'
                         variant='primary'
-                        onClick={handleSubmit}
+                        onClick={() => {
+                            setModalVisible(true);
+                        }}
                         loading={state.formSubmitting}
                         data-cy='dynamic-configuration-submit'
                         disabled={!isValid || state.formSubmitting}
