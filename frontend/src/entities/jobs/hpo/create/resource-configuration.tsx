@@ -26,6 +26,7 @@ import {
 } from '@cloudscape-design/components';
 import { ResourceConfig } from '../hpo-job.model';
 import { InstanceTypeSelector } from '../../../../shared/metadata/instance-type-dropdown';
+import { ServiceTypes } from '../../../../shared/model/app.configuration.model';
 
 export type ResourceConfigurationProps = FormProps<ResourceConfig>;
 
@@ -47,7 +48,7 @@ export function ResourceConfiguration (props: ResourceConfigurationProps) {
                         onChange={(event) => {
                             setFields({ InstanceType: event.detail.selectedOption.value });
                         }}
-                        instanceTypeCategory='TrainingInstanceType'
+                        service={ServiceTypes.TRAINING_JOB}
                     />
                 </FormField>
                 <Grid gridDefinition={[{ colspan: 4 }, { colspan: 4 }]}>

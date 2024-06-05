@@ -33,7 +33,7 @@ import { EmptyState } from '../table';
 import { DatasetBrowserProps } from './dataset-browser.types';
 import NotificationService from '../../shared/layout/notification/notification.service';
 import { useUsername } from '../../shared/util/auth-utils';
-import '../../entities/dataset/dataset.css';
+import '../../entities/dataset/dataset.scss';
 
 
 export function DatasetBrowser (props: DatasetBrowserProps) {

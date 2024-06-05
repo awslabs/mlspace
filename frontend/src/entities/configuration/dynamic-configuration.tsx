@@ -24,10 +24,12 @@ import {
     Toggle,
     FormField,
     Multiselect,
+    Alert,
+    ContentLayout,
 } from '@cloudscape-design/components';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
-import { appConfig, appConfigList, getConfiguration, listConfigurations, updateConfiguration } from './configuration-reducer';
+import { appConfig, getConfiguration, updateConfiguration } from './configuration-reducer';
 import { Application, IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
 import { z } from 'zod';
@@ -35,16 +37,23 @@ import NotificationService from '../../shared/layout/notification/notification.s
 import { emrApplications, listEMRApplications } from '../emr/emr.reducer';
 import { formatDisplayNumber } from '../../shared/util/form-utils';
 import { ClusterTypeConfiguration } from './cluster-types';
+import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-dropdown';
+import { ConfigurationHistoryTable } from './configuration-history-table';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
-    const configList: IAppConfiguration[] = useAppSelector(appConfigList);
     const emrApplicationList: string[] = useAppSelector(emrApplications);
-    const [selectedApplicationOptions, setSelectedApplicationOptions] = React.useState([] as any[]);
-    const [applicationOptions, setApplicationOptions] = React.useState([] as any);
+    const [selectedApplicationOptions, setSelectedApplicationOptions] = useState([] as any[]);
+    const [applicationOptions, setApplicationOptions] = useState([] as any);
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
     const [selectedFile, setSelectedFile] = useState<File[]>([]);
+    const configurableServices = {
+        batchTranslate: 'Amazon Translate asynchronous batch processing',
+        realtimeTranslate: 'Amazon Translate real-time translation',
+        emrCluster: 'Amazon EMR',
+        labelingJob: 'Amazon Ground Truth create labeling jobs'
+    };
 
     const formSchema = z.object({
         configuration: z.object({
@@ -87,10 +96,6 @@ export function DynamicConfiguration () {
     });
 
     useEffect(() => {
-        dispatch(listConfigurations({configScope: 'global', numVersions: 5}));
-    }, [dispatch]);
-
-    useEffect(() => {
         dispatch(listEMRApplications());
     }, [dispatch]);
 
@@ -115,6 +120,38 @@ export function DynamicConfiguration () {
         // eslint-disable-next-line react-hooks/exhaustive-deps 
     }, [emrApplicationList, applicationConfig]);
 
+    // Initialize the notebook instance type selectors with the currently selected options
+    const selectedNotebookInstanceOptions = useMemo(() => state.form.configuration.EnabledInstanceTypes.notebook.map((instance) => {
+        return {
+            value: instance,
+            label: instance,
+        };
+    }), [state.form.configuration.EnabledInstanceTypes.notebook]);
+
+    // Initialize the training job instance type selectors with the currently selected options
+    const selectedTrainingJobInstanceOptions = useMemo(() => state.form.configuration.EnabledInstanceTypes.trainingJob.map((instance) => {
+        return {
+            value: instance,
+            label: instance,
+        };
+    }), [state.form.configuration.EnabledInstanceTypes.trainingJob]);
+
+    // Initialize the transform job instance type selectors with the currently selected options
+    const selectedTransformJobInstanceOptions = useMemo(() => state.form.configuration.EnabledInstanceTypes.transformJob.map((instance) => {
+        return {
+            value: instance,
+            label: instance,
+        };
+    }), [state.form.configuration.EnabledInstanceTypes.transformJob]);
+
+    // Initialize the endpoint instance type selectors with the currently selected options
+    const selectedEndpointInstanceOptions = useMemo(() => state.form.configuration.EnabledInstanceTypes.endpoint.map((instance) => {
+        return {
+            value: instance,
+            label: instance,
+        };
+    }), [state.form.configuration.EnabledInstanceTypes.endpoint]);
+
     const handleSubmit = async () => {
         if (isValid) {
             setState({ formSubmitting: true });
@@ -133,7 +170,7 @@ export function DynamicConfiguration () {
                     );
                 }
             } else {
-                dispatch(getConfiguration('global'));
+                dispatch(getConfiguration({configScope: 'global'}));
                 notificationService.generateNotification(
                     'Successfully updated configuration.',
                     'success'
@@ -194,10 +231,55 @@ export function DynamicConfiguration () {
         >
             <SpaceBetween direction='vertical' size='xl'>
                 <ExpandableSection headerText='Allowed Instance Types' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
+                    <ExpandableSection headerText='Notebook instances' variant='default'>
+                        <InstanceTypeMultiSelector
+                            selectedOptions={selectedNotebookInstanceOptions}
+                            onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.notebook': detail.selectedOptions.map((option) => option.value)})}
+                            instanceTypeCategory='InstanceType'
+                        />
+                    </ExpandableSection>
+                    <ExpandableSection headerText='Training and HPO jobs' variant='default'>
+                        <InstanceTypeMultiSelector
+                            selectedOptions={selectedTrainingJobInstanceOptions}
+                            onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.trainingJob': detail.selectedOptions.map((option) => option.value)})}
+                            instanceTypeCategory='TrainingInstanceType'
+                        />
+                    </ExpandableSection>
+                    <ExpandableSection headerText='Transform jobs' variant='default'>
+                        <InstanceTypeMultiSelector
+                            selectedOptions={selectedTransformJobInstanceOptions}
+                            onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.transformJob': detail.selectedOptions.map((option) => option.value)})}
+                            instanceTypeCategory='TransformInstanceType'
+                        />
+                    </ExpandableSection>
+                    <ExpandableSection headerText='Endpoints' variant='default'>
+                        <InstanceTypeMultiSelector
+                            selectedOptions={selectedEndpointInstanceOptions}
+                            onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.endpoint': detail.selectedOptions.map((option) => option.value)})}
+                            instanceTypeCategory='ProductionVariantInstanceType'
+                        />
+                    </ExpandableSection>
                 </ExpandableSection>
-                <ExpandableSection headerText='Enabled Services' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
+                <ExpandableSection headerText='Activated Services' variant='default' defaultExpanded>
+                    <ContentLayout >
+                        <SpaceBetween direction='vertical' size='m'>
+                            <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services within MLSpace. IAM permissions that control access to these services within the MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated services will no longer appear within the MLSpace user interface. Deactivating services will terminate all active corresponding jobs and instances associated with the service.</Alert>
+                            { Object.keys(configurableServices).map((service) => {
+                                return (
+                                    <Toggle
+                                        onChange={({detail}) => {
+                                            const updatedField = {};
+                                            updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
+                                            setFields(updatedField);
+                                        }}
+                                        checked={state.form.configuration.EnabledServices[service]}
+                                    >
+                                        { configurableServices[service] }
+                                    </Toggle>
+                                );
+                            })}
+                        </SpaceBetween>
+                    </ContentLayout>
                 </ExpandableSection>
                 <ExpandableSection headerText='EMR Config' variant='default' defaultExpanded>
                     <ExpandableSection 
@@ -424,7 +506,7 @@ export function DynamicConfiguration () {
                             }}
                             checked={state.form.configuration.SystemBanner.isEnabled!}
                         >
-                            Enable System Banner
+                            Activate System Banner
                         </Toggle>
                         <FormField
                             label='Banner Text'
@@ -538,9 +620,8 @@ export function DynamicConfiguration () {
                         </Button>
                     </SpaceBetween>
                 </Container>
-                <ExpandableSection headerText='Configuration History' variant='default' defaultExpanded>
-                    {<pre>View the configuration history and rollback to prior versions.</pre>}
-                    {configList.length}
+                <ExpandableSection headerText='Configuration History' variant='default' defaultExpanded headerDescription='View the configuration history and rollback to prior versions.'>
+                    <ConfigurationHistoryTable/>
                 </ExpandableSection>
             </SpaceBetween>
         </Container>

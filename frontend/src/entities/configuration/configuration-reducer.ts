@@ -18,22 +18,35 @@ import {
     createAsyncThunk,
     createSlice,
     isFulfilled,
+    isPending,
     isRejected,
     PayloadAction,
 } from '@reduxjs/toolkit';
 import axios from '../../shared/util/axios-utils';
+import {setEnabledServices} from '../../shared/layout/navigation/navigation.reducer';
 import { defaultConfiguration, IAppConfiguration } from '../../shared/model/app.configuration.model';
 
 const initialState = {
     appConfigList: [],
     appConfig: defaultConfiguration,
+    loadingAppConfig: false,
     failedToLoadConfig: false,
 };
 
 // Actions
-export const getConfiguration = (configScope: string) => {
-    return listConfigurations({ configScope, numVersions: 1});
-};
+export const getConfiguration = createAsyncThunk(
+    'app_config/get_configuration',
+    async (props: GetAppConfigurationProps, { dispatch }) => {
+        const searchParams = new URLSearchParams();
+        searchParams.set('configScope', props.configScope);
+        const requestUrl = `/app-config?${searchParams}`;
+        
+        const response =  await axios.get<IAppConfiguration[]>(requestUrl);
+        dispatch(setEnabledServices(response.data[0].configuration.EnabledServices));
+
+        return response;
+    }
+);
 
 export const listConfigurations = createAsyncThunk(
     'app_config/list_configurations',
@@ -45,7 +58,8 @@ export const listConfigurations = createAsyncThunk(
         }
         const requestUrl = `/app-config?${searchParams}`;
         
-        return await axios.get<IAppConfiguration[]>(requestUrl);
+        const response =  await axios.get<IAppConfiguration[]>(requestUrl);
+        return response;
     }
 );
 
@@ -74,15 +88,44 @@ export const AppConfigSlice = createSlice({
                 const { data } = action.payload;
                 return {
                     ...state,
-                    appConfig: data[0],
                     appConfigList: data,
-                    failedToLoadConfig: false,
+                    loadingAppConfigList: false,
+                };
+                
+            })
+            .addMatcher(isPending(listConfigurations), (state) => {
+                return {
+                    ...state,
+                    loadingAppConfigList: true,
                 };
             })
             .addMatcher(isRejected(listConfigurations), (state) => {
                 return {
                     ...state,
+                    loadingAppConfigList: false,
+                };
+            })
+            .addMatcher(isFulfilled(getConfiguration), (state, action: any) => {
+                const { data } = action.payload;
+                return {
+                    ...state,
+                    appConfig: data[0],
+                    failedToLoadConfig: false,
+                    loadingAppConfig: false,
+                };
+                
+            })
+            .addMatcher(isPending(getConfiguration), (state) => {
+                return {
+                    ...state,
+                    loadingAppConfig: true,
+                };
+            })
+            .addMatcher(isRejected(getConfiguration), (state) => {
+                return {
+                    ...state,
                     failedToLoadConfig: true,
+                    loadingAppConfig: false,
                 };
             });
     },
@@ -96,6 +139,9 @@ type ListAppConfigurationProps = {
     configScope: string;
     numVersions: number;
 };
+type GetAppConfigurationProps = {
+    configScope: string;
+};
 
 
 // Reducer
@@ -103,4 +149,6 @@ export default AppConfigSlice.reducer;
 export const { updateEntity } = AppConfigSlice.actions;
 export const appConfigList = (state: any): IAppConfiguration[] => state.appConfig.appConfigList;
 export const appConfig = (state: any): IAppConfiguration => state.appConfig.appConfig;
+export const loadingAppConfig = (state: any): boolean => state.appConfig.loadingAppConfig;
+export const loadingAppConfigList = (state: any): boolean => state.appConfig.loadingAppConfigList;
 export const failedToLoadConfig = (state: any): boolean => state.appConfig.failedToLoadConfig;

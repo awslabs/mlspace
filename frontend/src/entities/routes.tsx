@@ -140,26 +140,34 @@ const EntityRoutes = () => {
                     element={<TransformJobRoutes />}
                 />
 
-                <Route path='project/:projectName/emr' element={<EMRClusters />} />
-                <Route path='project/:projectName/emr/create' element={<EMRClusterCreate />} />
-                <Route
-                    path='project/:projectName/emr/:clusterId/:clusterName'
-                    element={<EMRDetail />}
-                />
-                {applicationConfig.configuration.EnabledServices.batchTranslate ? (
-                    <Route
-                        path='project/:projectName/batch-translate'
-                        element={<BatchTranslate />}
-                    />
+                {applicationConfig.configuration.EnabledServices.emrCluster ? (
+                    <>
+                        <Route path='project/:projectName/emr' element={<EMRClusters />} />
+
+                        <Route path='project/:projectName/emr/create' element={<EMRClusterCreate />} />
+                        <Route
+                            path='project/:projectName/emr/:clusterId/:clusterName'
+                            element={<EMRDetail />}
+                        />
+                    </>
                 ) : undefined}
-                <Route
-                    path='project/:projectName/batch-translate/create'
-                    element={<BatchTranslateCreate />}
-                />
-                <Route
-                    path='project/:projectName/batch-translate/:jobId'
-                    element={<BatchTranslateDetail />}
-                />
+                {applicationConfig.configuration.EnabledServices.batchTranslate ? (
+                    <>
+                        <Route
+                            path='project/:projectName/batch-translate'
+                            element={<BatchTranslate />}
+                        />
+
+                        <Route
+                            path='project/:projectName/batch-translate/create'
+                            element={<BatchTranslateCreate />}
+                        />
+                        <Route
+                            path='project/:projectName/batch-translate/:jobId'
+                            element={<BatchTranslateDetail />}
+                        />
+                    </>
+                ) : undefined}
                 <Route path='*' element={<ResourceNotFound />} />
             </ErrorBoundaryRoutes>
         </div>
