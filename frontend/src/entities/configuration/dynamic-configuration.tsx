@@ -250,7 +250,7 @@ export function DynamicConfiguration () {
                 }
 
             } else {
-                if (JSON.stringify(value1) !== JSON.stringify(value2)) {
+                if (!_.isEqual(value1, value2)) {
                     output[key] = value2;
                 }
             }
