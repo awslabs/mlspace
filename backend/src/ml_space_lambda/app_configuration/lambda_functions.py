@@ -42,22 +42,6 @@ env_variables = get_environment_variables()
 translate_client = boto3.client("translate", config=retry_config)
 resource_metadata_dao = ResourceMetadataDAO()
 
-
-# TODO: Get this working
-def batch_translate_cleanup():
-    suspend_all_of_type(ResourceType.BATCH_TRANSLATE_JOB)
-
-
-# TODO: Copy process of batch_translate
-def labeling_cleanup():
-    log.info("Cleaning up labeling")
-
-
-# TODO: Copy process of EMR
-def emr_cleanup():
-    log.info("Cleaning up EMR")
-
-
 service_group_disable_permissions = [
     {
         "Description": "Permissions shared by translate services",
@@ -97,7 +81,7 @@ service_disable_permissions = {
                 IAMStatementProperty.RESOURCE: "*",
             }
         ],
-        "CleanupFunction": batch_translate_cleanup,
+        "ResourceType": ResourceType.BATCH_TRANSLATE_JOB,
     },
     ServiceType.REALTIME_TRANSLATE: {
         "Statements": [
@@ -120,7 +104,7 @@ service_disable_permissions = {
                 IAMStatementProperty.RESOURCE: "*",
             }
         ],
-        "CleanupFunction": labeling_cleanup,
+        "ResourceType": ResourceType.LABELING_JOB,
     },
     ServiceType.EMR_CLUSTER: {
         "Statements": [
@@ -156,7 +140,7 @@ service_disable_permissions = {
                 IAMStatementProperty.RESOURCE: "*",
             },
         ],
-        "CleanupFunction": emr_cleanup,
+        "ResourceType": ResourceType.EMR_CLUSTER,
     },
 }
 
@@ -208,8 +192,8 @@ def update_configuration(event, context):
                 if service in service_disable_permissions:
                     # If the service is deactivated
                     if not enabled_services_dict[service]:
-                        if "CleanupFunction" in service_disable_permissions[service]:
-                            service_disable_permissions[service]["CleanupFunction"]()
+                        if "ResourceType" in service_disable_permissions[service]:
+                            suspend_all_of_type(service_disable_permissions[service]["ResourceType"])
                         if "Statements" in service_disable_permissions[service]:
                             deny_policy_statements.extend(service_disable_permissions[service]["Statements"])
 
@@ -241,7 +225,7 @@ def update_configuration(event, context):
             )
 
         except Exception as e:
-            logging.error(f"Failed to update the denied services policy {str(e)}")
+            logging.exception(f"Failed to update the denied services policy {str(e)}")
             response_status_code = 207
             warning_issues.append("Failed when updating the deny policy for deacivating service IAM permissions.")
 

@@ -182,6 +182,7 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
         fetch_all: Optional[bool] = False,
         filter_expression: Optional[str] = None,
         filter_values: Optional[Dict[str, Any]] = None,
+        filter_names: Optional[Dict[str, Any]] = None,
         index_name: Literal["ProjectResources", "UserResources", None] = None,
     ) -> PagedMetadataResults:
         # Base values
@@ -207,11 +208,14 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
         # Assemble the key condition expression
         if len(key_condition_expressions) > 1:
             key_condition_expression = key_condition_expressions.join(" and ")
+        else:
+            key_condition_expression = key_condition_expressions[0]
 
         ddb_response = self._query(
             index_name=index_name,
             key_condition_expression=key_condition_expression,
             expression_values=json.loads(dynamodb_json.dumps(expression_values)),
+            expression_names=filter_names,
             limit=limit if not fetch_all else None,
             page_response=not fetch_all,
             next_token=next_token,
