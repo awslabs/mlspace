@@ -52,7 +52,7 @@ import {
     visibleContentPreference,
 } from '../../../model/model.columns';
 import { ModelResourceMetadata } from '../../../../shared/model/resource-metadata.model';
-import { InstanceTypeSelector } from '../../../../shared/metadata/instance-type-dropdown';
+import { InstanceTypeSelector } from '../../../../shared/metadata/instance-type-selector';
 import { ModifyMethod } from '../../../../shared/validation/modify-method';
 import {
     AttributeEditorSchema,
@@ -333,6 +333,7 @@ export function TransformCreate () {
                                     errorText={errors.TransformResources?.InstanceType}
                                 >
                                     <InstanceTypeSelector
+                                        enabledInstances='transformJob'
                                         selectedOption={{
                                             value: state.form.TransformResources?.InstanceType,
                                         }}

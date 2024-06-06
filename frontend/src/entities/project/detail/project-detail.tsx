@@ -39,7 +39,6 @@ import { selectCurrentUser } from '../../user/user.reducer';
 import { Timezone } from '../../../shared/model/user.model';
 import _ from 'lodash';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
-import { IAppConfiguration } from '../../../shared/model/app.configuration.model';
 import { appConfig } from '../../configuration/configuration-reducer';
 
 function ProjectDetail () {
@@ -48,7 +47,7 @@ function ProjectDetail () {
     const loadingProjectDetails = useAppSelector((state) => state.project.loading);
     const [initialLoaded, setInitialLoaded] = useState(false);
     const currentUser = useAppSelector(selectCurrentUser);
-    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const applicationConfig = useAppSelector(appConfig);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 

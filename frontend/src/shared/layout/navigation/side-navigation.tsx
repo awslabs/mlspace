@@ -30,7 +30,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { colorTextBodyDefault } from '@cloudscape-design/design-tokens';
 import Logo from '../logo/logo';
 import { appConfig } from '../../../entities/configuration/configuration-reducer';
-import { IAppConfiguration } from '../../model/app.configuration.model';
 
 export default function SideNavigation () {
     const items: SideNavigationProps.Item[] = useAppSelector((state) => state.navigation.navItems);
@@ -41,7 +40,7 @@ export default function SideNavigation () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const project: IProject = useAppSelector((state) => state.project.project);
-    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const applicationConfig = useAppSelector(appConfig);
     const defaultState: OptionDefinition = {
         label: 'Select a project',
         value: '',

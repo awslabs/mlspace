@@ -78,12 +78,12 @@ export const defaultEndpointConfig: IEndpointConfig = {
 
 export const defaultValue: Readonly<IEndpointConfig> = defaultEndpointConfig;
 
-export const defaultProductionVariant = (modelName: string, variantNumber: number) => {
+export const defaultProductionVariant = (modelName: string, variantNumber: number, instanceType: string) => {
     return {
         VariantName: `variant-name-${variantNumber}`,
         ModelName: modelName,
         InitialInstanceCount: 1,
         InitialVariantWeight: 1,
-        InstanceType: 'ml.m4.xlarge',
+        InstanceType: instanceType,
     };
 };

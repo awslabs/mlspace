@@ -29,7 +29,7 @@ export type ITrainingJob = {
     HyperParameters?: { [key: string]: string };
     AlgorithmSpecification?: {
         TrainingImage?: string;
-        AlgorithmName?: null;
+        AlgorithmName?: string;
         TrainingInputMode?: string;
         MetricDefinitions?: { Name: string; Regex: string }[];
         EnableSageMakerMetricsTimeSeries: boolean;
@@ -41,7 +41,7 @@ export type ITrainingJob = {
         S3OutputPath: string;
     };
     ResourceConfig?: {
-        InstanceType: string;
+        InstanceType?: string;
         InstanceCount: number;
         VolumeSizeInGB: number;
         VolumeKmsKeyId?: string;

@@ -19,7 +19,7 @@ import { ClusterType, IAppConfiguration } from '../../shared/model/app.configura
 import { FormProps } from '../jobs/form-props';
 import { prefixedSetFields, prefixedTouchFields } from '../../shared/validation';
 import Condition from '../../modules/condition';
-import { InstanceTypeSelector } from '../../shared/metadata/instance-type-dropdown';
+import { InstanceTypeSelector } from '../../shared/metadata/instance-type-selector';
 
 
 export type ClusterTypesProps = FormProps<IAppConfiguration>;

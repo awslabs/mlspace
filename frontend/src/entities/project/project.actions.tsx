@@ -17,7 +17,6 @@
 import React, { RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@cloudscape-design/components';
-import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { useAppSelector } from '../../config/store';
 import { appConfig } from '../configuration/configuration-reducer';
 import Condition from '../../modules/condition';
@@ -31,7 +30,7 @@ export type ActionItem = {
 
 function ProjectCreateButton (createButtonHref: RefObject<HTMLInputElement>) {
     const navigate = useNavigate();
-    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const applicationConfig = useAppSelector(appConfig);
     const currentUser = useAppSelector(selectCurrentUser);
     
 

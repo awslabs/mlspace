@@ -63,10 +63,9 @@ import { Permission, Timezone } from '../../../shared/model/user.model';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { EMRStatusState } from '../../emr/emr.model';
 import { notebookCluster } from '../notebook.service';
-import { InstanceTypeSelector } from '../../../shared/metadata/instance-type-dropdown';
+import { InstanceTypeSelector } from '../../../shared/metadata/instance-type-selector';
 import { convertDailyStopTime, timezoneDisplayString } from '../../../shared/util/date-utils';
 import { EMRResourceMetadata } from '../../../shared/model/resource-metadata.model';
-import { ServiceTypes } from '../../../shared/model/app.configuration.model';
 
 export type NotebookCreateProps = {
     update?: boolean;
@@ -346,6 +345,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                                 errorText={formErrors?.InstanceType}
                             >
                                 <InstanceTypeSelector
+                                    enabledInstances='notebook'
                                     selectedOption={
                                         state.form.InstanceType
                                             ? { value: state.form.InstanceType }
@@ -355,7 +355,6 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                                         setFields({ InstanceType: detail.selectedOption.value });
                                     }}
                                     onBlur={() => touchFields(['InstanceType'])}
-                                    service={ServiceTypes.NOTEBOOK}
                                 />
                             </FormField>
                             <FormField

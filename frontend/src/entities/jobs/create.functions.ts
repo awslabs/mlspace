@@ -86,7 +86,6 @@ export const createTrainingJob = (): Omit<
             },
         } as OutputDataConfig,
         ResourceConfig: {
-            InstanceType: 'ml.m4.xlarge',
             InstanceCount: 1,
             VolumeSizeInGB: 10,
         },

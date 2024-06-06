@@ -40,7 +40,6 @@ import NotificationService from '../../shared/layout/notification/notification.s
 import { emrApplications, listEMRApplications } from '../emr/emr.reducer';
 import { formatDisplayNumber } from '../../shared/util/form-utils';
 import { ClusterTypeConfiguration } from './cluster-types';
-import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-dropdown';
 import { ConfigurationHistoryTable } from './configuration-history-table';
 import _ from 'lodash';
 

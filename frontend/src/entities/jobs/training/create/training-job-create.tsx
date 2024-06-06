@@ -62,7 +62,7 @@ import NotificationService from '../../../../shared/layout/notification/notifica
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { setBreadcrumbs } from '../../../../shared/layout/navigation/navigation.reducer';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
-import { InstanceTypeSelector } from '../../../../shared/metadata/instance-type-dropdown';
+import { InstanceTypeSelector } from '../../../../shared/metadata/instance-type-selector';
 import {
     AlgorithmOptions,
     AlgorithmSource,
@@ -463,6 +463,7 @@ export default function TrainingJobCreate () {
                                         selectedOption={{
                                             value: state.form.ResourceConfig.InstanceType,
                                         }}
+                                        enabledInstances='trainingJob'
                                         onChange={(event) =>
                                             setFields({
                                                 'ResourceConfig.InstanceType':

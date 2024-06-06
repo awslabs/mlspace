@@ -25,8 +25,8 @@ import {
     SpaceBetween,
 } from '@cloudscape-design/components';
 import { ResourceConfig } from '../hpo-job.model';
-import { InstanceTypeSelector } from '../../../../shared/metadata/instance-type-dropdown';
 import { ServiceTypes } from '../../../../shared/model/app.configuration.model';
+import { InstanceTypeSelector } from '../../../../shared/metadata/instance-type-selector';
 
 export type ResourceConfigurationProps = FormProps<ResourceConfig>;
 
@@ -44,6 +44,7 @@ export function ResourceConfiguration (props: ResourceConfigurationProps) {
             <SpaceBetween direction='vertical' size='l'>
                 <FormField label='Instance type' errorText={formErrors?.InstanceType}>
                     <InstanceTypeSelector
+                        enabledInstances='trainingJob'
                         selectedOption={item.InstanceType ? { value: item.InstanceType } : null}
                         onChange={(event) => {
                             setFields({ InstanceType: event.detail.selectedOption.value });

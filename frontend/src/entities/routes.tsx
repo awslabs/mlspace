@@ -55,10 +55,9 @@ import BatchTranslateCreate from './batch-translate/create';
 import BatchTranslateDetail from './batch-translate/detail';
 import TranslateRealtime from './translate-realtime/translate-realtime';
 import { appConfig } from './configuration/configuration-reducer';
-import { IAppConfiguration } from '../shared/model/app.configuration.model';
 
 const EntityRoutes = () => {
-    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const applicationConfig = useAppSelector(appConfig);
     const currentUser = useAppSelector(selectCurrentUser);
 
 

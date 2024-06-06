@@ -26,12 +26,14 @@ import { toggleAddModelModal, toggleEditVariantModal } from '../endpoint-config.
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { Form, FormField, Input } from '@cloudscape-design/components';
 import Condition from '../../../modules/condition';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getProjectModels, clearModelsList } from '../../model/model.reducer';
 import { setTableAnnouncement } from '../../../shared/util/table-utils';
 import { ModelResourceMetadata } from '../../../shared/model/resource-metadata.model';
-import { InstanceTypeSelector } from '../../../shared/metadata/instance-type-dropdown';
-import { ServiceTypes } from '../../../shared/model/app.configuration.model';
+import { InstanceTypeSelector } from '../../../shared/metadata/instance-type-selector';
+import { appConfig as selectAppConfig } from '../../../entities/configuration/configuration-reducer';
+import { listComputeTypes, selectComputeTypes } from '../../../shared/metadata/metadata.reducer';
+import { LoadingStatus } from '../../../shared/loading-status';
 
 export const AddModelModal = ({
     endpointConfig,
@@ -44,6 +46,18 @@ export const AddModelModal = ({
     const modelList: ModelResourceMetadata[] = useAppSelector((state) => state.model.modelsList);
     const loadingModels = useAppSelector((state) => state.model.loadingModelsList);
     const [selectedModel, setSelectedModel] = useState('');
+
+    const appConfig = useAppSelector(selectAppConfig);
+    const computeTypes = useAppSelector(selectComputeTypes);
+    const defaultInstanceType = useMemo(() => {
+        return (computeTypes.values?.InstanceTypes?.ProductionVariantInstanceType || []).find((instanceType) => !appConfig.configuration.DisabledInstanceTypes.endpoint.includes(instanceType));
+    }, [computeTypes, appConfig]);
+
+    useEffect(() => {
+        if (computeTypes.status === LoadingStatus.INITIAL) {
+            dispatch(listComputeTypes());
+        }
+    }, [dispatch, computeTypes.status]);
 
     return (
         <Modal
@@ -61,7 +75,8 @@ export const AddModelModal = ({
                         ...(endpointConfig.ProductionVariants || []),
                         defaultProductionVariant(
                             selectedModel!,
-                            (endpointConfig.ProductionVariants?.length || 0) + 1
+                            (endpointConfig.ProductionVariants?.length || 0) + 1,
+                            defaultInstanceType || 'ml.m4.xlarge'
                         ),
                     ],
                 });
@@ -161,6 +176,7 @@ export const EditVariantModal = ({
                 <Condition condition={!isServerless}>
                     <FormField label='Instance type'>
                         <InstanceTypeSelector
+                            enabledInstances='endpoint'
                             selectedOption={
                                 selectedVariant.InstanceType
                                     ? {
@@ -175,7 +191,6 @@ export const EditVariantModal = ({
                                     InstanceType: detail.selectedOption.value,
                                 });
                             }}
-                            service={ServiceTypes.ENDPOINT}
                         />
                     </FormField>
                     <FormField label='Elastic inference'>

@@ -18,14 +18,13 @@ import { TextContent } from '@cloudscape-design/components';
 import { appConfig } from '../../entities/configuration/configuration-reducer';
 import { useAppSelector } from '../../config/store';
 import React from 'react';
-import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 
 type BannerOptions = {
     position: 'TOP' | 'BOTTOM';
 };
 
 export const SystemBanner = ({ position }: BannerOptions) => {
-    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const applicationConfig = useAppSelector(appConfig);
 
     if (applicationConfig.configuration.SystemBanner.isEnabled) {
         document.getElementById('root')!.style.paddingTop = '1.5em';

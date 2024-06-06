@@ -34,14 +34,13 @@ import NotificationBanner from './shared/layout/notification/notification';
 import { applyTheme } from '@cloudscape-design/components/theming';
 import BreadcrumbsProvider from './shared/layout/navigation/breadcrumbs';
 import { appConfig } from './entities/configuration/configuration-reducer';
-import { IAppConfiguration } from './shared/model/app.configuration.model';
 
 const baseHref = document?.querySelector('base')?.getAttribute('href')?.replace(/\/$/, '');
 
 export default function App () {
     const modal: DeleteModalProps = useAppSelector((state) => state.modal.deleteModal);
     const updateModal: UpdateModalProps = useAppSelector((state) => state.modal.updateModal);
-    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const applicationConfig = useAppSelector(appConfig);
     const resourceScheduleModal: ResourceScheduleModalProps = useAppSelector(
         (state) => state.modal.resourceScheduleModal
     );
