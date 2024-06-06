@@ -36,13 +36,13 @@ mock_context = mock.Mock()
 mock_context.invoked_function_arn.split.return_value = "arn:aws:lambda:us-east-1:123456789010:function/some-lambda".split(":")
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.app_configuration.lambda_functions import (
+    from ml_space_lambda.app_configuration.lambda_functions import update_configuration as lambda_handler
+    from ml_space_lambda.app_configuration.lambda_functions import update_instance_constraint_policies
+    from ml_space_lambda.app_configuration.policy_helper.notebook import (
         create_instance_constraint_policy_version,
         create_instance_constraint_statement,
         create_sagemaker_resource_arn,
     )
-    from ml_space_lambda.app_configuration.lambda_functions import update_configuration as lambda_handler
-    from ml_space_lambda.app_configuration.lambda_functions import update_instance_constraint_policies
 
 mock_time = int(time.time())
 
@@ -123,8 +123,9 @@ def generate_event(config_scope: str, version_id: int, enabled_instances=None):
         "update_config_project",
     ],
 )
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_success(mock_app_config_dao, config_scope: str):
+def test_update_config_success(mock_app_config_dao, update_instance_constraint_policies, config_scope: str):
     version_id = 1
     mock_event = generate_event(config_scope, version_id)
     mock_app_config_dao.create.return_value = None
@@ -147,8 +148,9 @@ def test_update_config_success(mock_app_config_dao, config_scope: str):
         "update_config_project_outdated",
     ],
 )
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_outdated(mock_app_config_dao, config_scope: str):
+def test_update_config_outdated(mock_app_config_dao, update_instance_constraint_policies, config_scope: str):
     version_id = 1
     mock_event = generate_event(config_scope, version_id)
 
@@ -166,8 +168,9 @@ def test_update_config_outdated(mock_app_config_dao, config_scope: str):
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_unexpected_exception(mock_app_config_dao):
+def test_update_config_unexpected_exception(mock_app_config_dao, update_instance_constraint_policies):
     version_id = 1
     mock_event = generate_event("global", version_id)
 
@@ -185,34 +188,11 @@ def test_update_config_unexpected_exception(mock_app_config_dao):
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
-@mock.patch("ml_space_lambda.utils.iam_manager.boto3")
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam")
-def test_update_instance_constraint_policies_nochanges(iam, boto3):
-    previous_configuration = ServiceInstanceTypes.from_dict(
-        {
-            ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
-            ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
-            ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
-            ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig", "ml.r5.kindasmall"],
-        }
-    )
-
-    update_instance_constraint_policies(previous_configuration, previous_configuration, mock_context)
-
-
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam")
-def test_update_instance_constraint_policies_allchanges(iam):
+@mock.patch("ml_space_lambda.app_configuration.policy_helper.notebook.iam")
+def test_update_instance_constraint_policies(iam):
     # Clear out previously cached env variables
     mlspace_config.env_variables = {}
-    previous_configuration = ServiceInstanceTypes.from_dict(
-        {
-            ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
-            ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
-            ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
-            ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig", "ml.r5.kindasmall"],
-        }
-    )
 
     new_configuration = ServiceInstanceTypes.from_dict(
         {
@@ -223,7 +203,7 @@ def test_update_instance_constraint_policies_allchanges(iam):
         }
     )
 
-    update_instance_constraint_policies(previous_configuration, new_configuration, mock_context)
+    update_instance_constraint_policies(new_configuration, mock_context)
     iam.create_policy_version.assert_has_calls(
         [
             mock.call(
@@ -260,7 +240,7 @@ def test_create_sagemaker_resource_arn():
 
 
 @mock.patch("ml_space_lambda.utils.iam_manager.boto3")
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam")
+@mock.patch("ml_space_lambda.app_configuration.policy_helper.notebook.iam")
 def test_create_instance_constraint_policy_version(iam, boto3):
     policy_arn = "arn:aws:iam:::policy/some_policy"
     statements = []
