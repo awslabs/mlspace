@@ -734,7 +734,7 @@ export class IAMStack extends Stack {
                      */
                     new PolicyStatement({
                         effect: Effect.ALLOW,
-                        actions: ['elasticmapreduce:RunJobFlow', 'elasticmapreduce:ListClusters'],
+                        actions: ['elasticmapreduce:RunJobFlow', 'elasticmapreduce:ListClusters', 'elasticmapreduce:ListReleaseLabels'],
                         resources: ['*'],
                     }),
                     // EMR Permissions
