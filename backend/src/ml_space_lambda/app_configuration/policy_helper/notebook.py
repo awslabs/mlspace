@@ -19,7 +19,6 @@ import logging
 
 import boto3
 
-from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
 
@@ -47,8 +46,8 @@ def update_instance_constraint_policies(new_configuration, context) -> None:
     # update jobs
     actions = ["sagemaker:CreateTrainingJob", "sagemaker:CreateHyperParameterTuningJob"]
     resources = [
-        create_sagemaker_resource_arn(ResourceType.TRAINING_JOB.value, context),
-        create_sagemaker_resource_arn(ResourceType.HPO_JOB.value, context),
+        create_sagemaker_resource_arn("training-job", context),
+        create_sagemaker_resource_arn("hyper-parameter-tuning-job", context),
     ]
 
     training_statement = create_instance_constraint_statement(
@@ -58,7 +57,7 @@ def update_instance_constraint_policies(new_configuration, context) -> None:
     )
 
     actions = ["sagemaker:CreateTransformJob"]
-    resources = [create_sagemaker_resource_arn(ResourceType.TRANSFORM_JOB.value, context)]
+    resources = [create_sagemaker_resource_arn("transform-job", context)]
     transform_statement = create_instance_constraint_statement(
         actions, resources, new_configuration.transform_jobs_instance_types
     )
@@ -69,7 +68,7 @@ def update_instance_constraint_policies(new_configuration, context) -> None:
 
     # endpoint config
     actions = ["sagemaker:CreateEndpointConfig"]
-    resources = [create_sagemaker_resource_arn(ResourceType.ENDPOINT.value, context)]
+    resources = [create_sagemaker_resource_arn("endpoint-config", context)]
     endpoint_statement = create_instance_constraint_statement(actions, resources, new_configuration.endpoint_instance_types)
     create_instance_constraint_policy_version(env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"], [endpoint_statement])
 
