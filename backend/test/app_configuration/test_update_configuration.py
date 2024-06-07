@@ -21,21 +21,33 @@ from unittest import mock
 import pytest
 from botocore.exceptions import ClientError
 
-from ml_space_lambda.enums import ServiceType
+from ml_space_lambda.data_access_objects.app_configuration import ServiceInstanceTypes
+from ml_space_lambda.enums import ResourceType, ServiceType
+from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 
-TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1"}
+TEST_ENV_CONFIG = {
+    "AWS_DEFAULT_REGION": "us-east-1",
+    "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::policy/job-instance-constraint",
+    "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::policy/job-instance-constraint",
+}
 
 mock_context = mock.Mock()
+mock_context.invoked_function_arn.split.return_value = "arn:aws:lambda:us-east-1:123456789010:function/some-lambda".split(":")
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.app_configuration.lambda_functions import update_configuration as lambda_handler
-
+    from ml_space_lambda.app_configuration.lambda_functions import update_instance_constraint_policies
+    from ml_space_lambda.app_configuration.policy_helper.notebook import (
+        create_instance_constraint_policy_version,
+        create_instance_constraint_statement,
+        create_sagemaker_resource_arn,
+    )
 
 mock_time = int(time.time())
 
 
-def generate_event(config_scope: str, version_id: int):
+def generate_event(config_scope: str, version_id: int, enabled_instances=None):
     return {
         "body": json.dumps(
             {
@@ -44,7 +56,8 @@ def generate_event(config_scope: str, version_id: int):
                 "changeReason": "Testing",
                 "createdAt": mock_time,
                 "configuration": {
-                    "EnabledInstanceTypes": {
+                    "EnabledInstanceTypes": enabled_instances
+                    or {
                         ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
                         ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
                         ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
@@ -110,8 +123,9 @@ def generate_event(config_scope: str, version_id: int):
         "update_config_project",
     ],
 )
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_success(mock_app_config_dao, config_scope: str):
+def test_update_config_success(mock_app_config_dao, update_instance_constraint_policies, config_scope: str):
     version_id = 1
     mock_event = generate_event(config_scope, version_id)
     mock_app_config_dao.create.return_value = None
@@ -134,8 +148,9 @@ def test_update_config_success(mock_app_config_dao, config_scope: str):
         "update_config_project_outdated",
     ],
 )
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_outdated(mock_app_config_dao, config_scope: str):
+def test_update_config_outdated(mock_app_config_dao, update_instance_constraint_policies, config_scope: str):
     version_id = 1
     mock_event = generate_event(config_scope, version_id)
 
@@ -153,8 +168,9 @@ def test_update_config_outdated(mock_app_config_dao, config_scope: str):
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_unexpected_exception(mock_app_config_dao):
+def test_update_config_unexpected_exception(mock_app_config_dao, update_instance_constraint_policies):
     version_id = 1
     mock_event = generate_event("global", version_id)
 
@@ -170,3 +186,86 @@ def test_update_config_unexpected_exception(mock_app_config_dao):
 
     mock_app_config_dao.create.side_effect = ClientError(error_msg, "PutItem")
     assert lambda_handler(mock_event, mock_context) == expected_response
+
+
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.app_configuration.policy_helper.notebook.iam")
+def test_update_instance_constraint_policies(iam):
+    # Clear out previously cached env variables
+    mlspace_config.env_variables = {}
+
+    new_configuration = ServiceInstanceTypes.from_dict(
+        {
+            ServiceType.NOTEBOOK.value: ["ml.t3.medium"],
+            ServiceType.ENDPOINT.value: ["ml.t3.large"],
+            ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge"],
+            ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig"],
+        }
+    )
+
+    update_instance_constraint_policies(new_configuration, mock_context)
+    iam.create_policy_version.assert_has_calls(
+        [
+            mock.call(
+                PolicyArn=TEST_ENV_CONFIG["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"], PolicyDocument=mock.ANY, SetAsDefault=True
+            ),
+            mock.call(
+                PolicyArn=TEST_ENV_CONFIG["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
+                PolicyDocument=mock.ANY,
+                SetAsDefault=True,
+            ),
+        ]
+    )
+
+
+def test_create_instance_constraint_statement():
+    actions = ["sagemaker:CreateTraningJob", "sagemaker:CreateTransformJob"]
+    resources = [
+        create_sagemaker_resource_arn(ResourceType.TRAINING_JOB.value, mock_context),
+        create_sagemaker_resource_arn(ResourceType.ENDPOINT_CONFIG.value, mock_context),
+    ]
+    allowed_instances = ["ml.m4.large"]
+    expectedResponse = {
+        "Effect": "Allow",
+        "Action": actions,
+        "Resource": resources,
+        "Condition": {"ForAnyValue:StringEquals": {"sagemaker:InstanceTypes": allowed_instances}},
+    }
+    assert expectedResponse == create_instance_constraint_statement(actions, resources, allowed_instances)
+
+
+def test_create_sagemaker_resource_arn():
+    arn = create_sagemaker_resource_arn("testing", mock_context)
+    assert arn == "arn:aws:sagemaker:us-east-1:123456789010:testing/*"
+
+
+@mock.patch("ml_space_lambda.utils.iam_manager.boto3")
+@mock.patch("ml_space_lambda.app_configuration.policy_helper.notebook.iam")
+def test_create_instance_constraint_policy_version(iam, boto3):
+    policy_arn = "arn:aws:iam:::policy/some_policy"
+    statements = []
+
+    iam.create_policy_version.return_value = {
+        "Versions": [{"IsDefaultVersion": False, "VersionId": 1}, {"IsDefaultVersion": True, "VersionId": 2}]
+    }
+
+    iam.list_policy_versions.return_value = {
+        "Versions": [{"VersionId": 1, "IsDefaultVersion": False}, {"VersionId": 2, "IsDefaultVersion": True}]
+    }
+
+    create_instance_constraint_policy_version(policy_arn, statements)
+
+    iam.create_policy_version.assert_called_once()
+    iam.create_policy_version.assert_called_with(
+        PolicyArn=policy_arn,
+        PolicyDocument=json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": statements,
+            }
+        ),
+        SetAsDefault=True,
+    )
+
+    iam.create_policy_version.assert_called_once()
+    iam.delete_policy_version.assert_called_with(PolicyArn=policy_arn, VersionId=1)

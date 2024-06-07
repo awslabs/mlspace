@@ -18,11 +18,20 @@ import json
 import logging
 import time
 
+from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
 from ml_space_lambda.utils.common_functions import api_wrapper
 
 log = logging.getLogger(__name__)
 app_configuration_dao = AppConfigurationDAO()
+
+
+@api_wrapper
+def get_configuration(event, context):
+    configScope = event["queryStringParameters"]["configScope"]
+    num_versions = int(event["queryStringParameters"].get("numVersions", 1))
+
+    return app_configuration_dao.get(configScope=configScope, num_versions=num_versions)
 
 
 @api_wrapper
@@ -32,6 +41,7 @@ def update_configuration(event, context):
     version_id = request["versionId"] + 1  # increment so this will be the latest version
 
     new_configuration = SettingsModel.from_dict(request["configuration"])
+    update_instance_constraint_policies(new_configuration.enabled_instance_types, context)
 
     app_configuration = AppConfigurationModel(
         configScope=configScope,
@@ -51,11 +61,3 @@ def update_configuration(event, context):
         raise e
 
     return f"Successfully updated configuration for {configScope}, version {version_id}."
-
-
-@api_wrapper
-def get_configuration(event, context):
-    configScope = event["queryStringParameters"]["configScope"]
-    num_versions = int(event["queryStringParameters"].get("numVersions", 1))
-
-    return app_configuration_dao.get(configScope=configScope, num_versions=num_versions)
