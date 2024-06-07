@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
     Button,
     Container,
@@ -33,7 +33,7 @@ import z from 'zod';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { issuesToErrors, scrollToInvalid, useValidationReducer } from '../../../shared/validation';
-import { createEMRCluster } from '../emr.reducer';
+import { createEMRCluster, emrReleaseLabels, listEMRReleaseLabels } from '../emr.reducer';
 import { setBreadcrumbs } from '../../../../src/shared/layout/navigation/navigation.reducer';
 import { getBase } from '../../../../src/shared/util/breadcrumb-utils';
 import { scrollToPageHeader } from '../../../../src/shared/doc';
@@ -60,6 +60,7 @@ export default function EMRClusterCreate () {
     const notificationService = NotificationService(dispatch);
     const subnets = useAppSelector(selectSubnets);
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const releaseLabels: string[] = useAppSelector(emrReleaseLabels);
     const [clusterAmi, setClusterAmi] = useState(ClusterAmi.BUILT_IN);
 
     const formSchema = z.object({
@@ -96,7 +97,7 @@ export default function EMRClusterCreate () {
             options: {
                 customAmiId: '',
                 emrSize: 'Small',
-                emrRelease: 'emr-6.2.0',
+                emrRelease: releaseLabels[0],
             },
             Instances: {
                 Ec2SubnetId: ''
@@ -165,6 +166,11 @@ export default function EMRClusterCreate () {
             setState({ validateAll: true, formSubmitting: false });
         }
     };
+
+    useMemo(() => {
+        dispatch(listEMRReleaseLabels());
+    }, [dispatch]);
+
 
     return (
         <ContentLayout header={<Header variant='h1'>Create EMR Cluster</Header>}>
@@ -273,11 +279,11 @@ export default function EMRClusterCreate () {
                                             'options.emrRelease': detail.selectedOption.value,
                                         });
                                     }}
-                                    options={[
-                                        { value: 'emr-6.6.0' },
-                                        { value: 'emr-6.3.0' },
-                                        { value: 'emr-6.2.0' },
-                                    ]}
+                                    options={releaseLabels.map((release) => {
+                                        return {
+                                            value: release,
+                                        };
+                                    })}
                                 />
                             </FormField>
                             <ExpandableSection
