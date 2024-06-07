@@ -21,11 +21,14 @@ import {
     Header,
     ContentLayout,
     SpaceBetween,
+    Tabs
 } from '@cloudscape-design/components';
 import React, { useEffect } from 'react';
 import { getBase } from '../../shared/util/breadcrumb-utils';
 import { useParams } from 'react-router-dom';
 import DeploymentConfiguration from './deployment-configuration';
+import DynamicConfiguration from './dynamic-configuration';
+import { ConfigurationHistoryTable } from './configuration-history-table';
 
 export function Configuration () {
     const dispatch = useAppDispatch();
@@ -57,7 +60,27 @@ export function Configuration () {
             }
         >
             <SpaceBetween direction='vertical' size='xl'>
-                <DeploymentConfiguration/>
+                <Tabs
+                    tabs={[
+                        {
+                            label: 'Dynamic Configuration',
+                            id: 'dynamic-config',
+                            content: <DynamicConfiguration/>,
+                            // disabled: true
+                        },
+                        {
+                            label: 'Dynamic Configuration History',
+                            id: 'config-hist',
+                            content: <ConfigurationHistoryTable/>,
+                            // disabled: true
+                        },
+                        {
+                            label: 'Deployment Configuration',
+                            id: 'deployment-config',
+                            content: <DeploymentConfiguration/>
+                        },
+                    ]}
+                />
             </SpaceBetween>
             
         </ContentLayout>

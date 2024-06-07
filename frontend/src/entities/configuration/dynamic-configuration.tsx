@@ -29,6 +29,8 @@ import {
     Modal,
     Box,
     TextContent,
+    ButtonDropdown,
+    Grid
 } from '@cloudscape-design/components';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -41,7 +43,6 @@ import { emrApplications, listEMRApplications } from '../emr/emr.reducer';
 import { formatDisplayNumber } from '../../shared/util/form-utils';
 import { ClusterTypeConfiguration } from './cluster-types';
 import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-dropdown';
-import { ConfigurationHistoryTable } from './configuration-history-table';
 import _ from 'lodash';
 
 export function DynamicConfiguration () {
@@ -54,11 +55,12 @@ export function DynamicConfiguration () {
     const [selectedFile, setSelectedFile] = useState<File[]>([]);
     const configurableServices = {
         batchTranslate: 'Amazon Translate asynchronous batch processing',
-        realtimeTranslate: 'Amazon Translate real-time translation',
         emrCluster: 'Amazon EMR',
+        realtimeTranslate: 'Amazon Translate real-time translation',
         labelingJob: 'Amazon Ground Truth create labeling jobs'
     };
     const [modalVisible, setModalVisible] = useState(false);
+    const [expandedSections, setExpandedSections] = useState({notebookInstances: false, trainingAndHpo: false, transform: false, endpoints: false, applications: false, clusterTypes: false, autoScaling: false});
 
     const formSchema = z.object({
         configuration: z.object({
@@ -330,72 +332,129 @@ export function DynamicConfiguration () {
             </Modal>
             <Container
                 header={
-                    <Header
-                        variant='h2'
-                        description={`The current dynamic configuration of ${window.env.APPLICATION_NAME}. These settings can be modified without redeploying the application.`}
-                    >
-                        {window.env.APPLICATION_NAME} Dynamic Configuration
-                    </Header>
+                    <div  style={{width: '100%', display: 'flex'}}>
+                        <Header
+                            variant='h2'
+                            description={`The current dynamic configuration of ${window.env.APPLICATION_NAME}. These settings can be modified without redeploying the application.`}
+                        >
+                            {window.env.APPLICATION_NAME} Dynamic Configuration
+                        </Header>
+                        <div style={{display: 'inline-block', width: '140px'}}>
+                            <ButtonDropdown
+                                items={[
+                                    { text: 'Import Configuration', id: 'import-config' },
+                                    { text: 'Export Configuration', id: 'export-config'},
+                                    { text: 'Expand All', id: 'expand-all' },
+                                ]}
+                                onItemClick={(e) => {
+                                    if (e.detail.id === 'export-config') {
+                                        JSONToFile();
+                                    } else if (e.detail.id === 'expand-all') {
+                                        setExpandedSections({notebookInstances: true, trainingAndHpo: true, transform: true, endpoints: true, applications: true, clusterTypes: true, autoScaling: true});
+                                    }
+                                }}
+                            >
+                                    Actions
+                            </ButtonDropdown>
+                        </div>
+                    </div>
                 }
             >
                 <SpaceBetween direction='vertical' size='xl'>
-                    <ExpandableSection headerText='Allowed Instance Types' variant='default' defaultExpanded>
-                        <ExpandableSection headerText='Notebook instances' variant='default'>
+                    <Container
+                        header={
+                            <Header variant='h2'>
+                                Allowed Instance Types
+                            </Header>
+                        }
+                    >
+                        <ExpandableSection headerText='Notebook instances' variant='default' expanded={expandedSections.notebookInstances} onChange={({ detail }) =>
+                            setExpandedSections({...expandedSections, notebookInstances: detail.expanded})
+                        }>
                             <InstanceTypeMultiSelector
                                 selectedOptions={selectedNotebookInstanceOptions}
                                 onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.notebook': detail.selectedOptions.map((option) => option.value)})}
                                 instanceTypeCategory='InstanceType'
                             />
                         </ExpandableSection>
-                        <ExpandableSection headerText='Training and HPO jobs' variant='default'>
+                        <ExpandableSection headerText='Training and HPO jobs' variant='default' expanded={expandedSections.trainingAndHpo} onChange={({ detail }) =>
+                            setExpandedSections({...expandedSections, trainingAndHpo: detail.expanded})
+                        }>
                             <InstanceTypeMultiSelector
                                 selectedOptions={selectedTrainingJobInstanceOptions}
                                 onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.trainingJob': detail.selectedOptions.map((option) => option.value)})}
                                 instanceTypeCategory='TrainingInstanceType'
                             />
                         </ExpandableSection>
-                        <ExpandableSection headerText='Transform jobs' variant='default'>
+                        <ExpandableSection headerText='Transform jobs' variant='default' expanded={expandedSections.transform} onChange={({ detail }) =>
+                            setExpandedSections({...expandedSections, transform: detail.expanded})
+                        }>
                             <InstanceTypeMultiSelector
                                 selectedOptions={selectedTransformJobInstanceOptions}
                                 onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.transformJob': detail.selectedOptions.map((option) => option.value)})}
                                 instanceTypeCategory='TransformInstanceType'
                             />
                         </ExpandableSection>
-                        <ExpandableSection headerText='Endpoints' variant='default'>
+                        <ExpandableSection headerText='Endpoints' variant='default' expanded={expandedSections.endpoints} onChange={({ detail }) =>
+                            setExpandedSections({...expandedSections, endpoints: detail.expanded})
+                        }>
                             <InstanceTypeMultiSelector
                                 selectedOptions={selectedEndpointInstanceOptions}
                                 onChange={({ detail }) => setFields({ 'configuration.EnabledInstanceTypes.endpoint': detail.selectedOptions.map((option) => option.value)})}
                                 instanceTypeCategory='ProductionVariantInstanceType'
                             />
                         </ExpandableSection>
-                    </ExpandableSection>
-                    <ExpandableSection headerText='Activated Services' variant='default' defaultExpanded>
-                        <ContentLayout >
+                    </Container>
+                    <Container
+                        header={
+                            <Header variant='h2'>
+                                Activated Services
+                            </Header>
+                        }>
+                        <ContentLayout>
                             <SpaceBetween direction='vertical' size='m'>
-                                <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services within MLSpace. IAM permissions that control access to these services within the MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated services will no longer appear within the MLSpace user interface. Deactivating services will terminate all active corresponding jobs and instances associated with the service.</Alert>
-                                { Object.keys(configurableServices).map((service) => {
-                                    return (
-                                        <Toggle
-                                            onChange={({detail}) => {
-                                                const updatedField = {};
-                                                updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
-                                                setFields(updatedField);
-                                            }}
-                                            checked={state.form.configuration.EnabledServices[service]}
-                                        >
-                                            { configurableServices[service] }
-                                        </Toggle>
-                                    );
-                                })}
+                                <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services
+                                    within MLSpace. IAM permissions that control access to these services within the
+                                    MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated
+                                    services will no longer appear within the MLSpace user interface. Deactivating
+                                    services will terminate all active corresponding jobs and instances associated with
+                                    the service.</Alert>
+                                <Grid gridDefinition={Object.keys(configurableServices).map(() => ({colspan: 3}))}>
+                                    {Object.keys(configurableServices).map((service) => {
+                                        return (
+                                            <div style={{display: 'grid', textAlign: 'center'}}>
+                                                <div style={{display: 'grid', justifyContent: 'center'}}>
+                                                    <Toggle
+                                                        onChange={({detail}) => {
+                                                            const updatedField = {};
+                                                            updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
+                                                            setFields(updatedField);
+                                                        }}
+                                                        checked={state.form.configuration.EnabledServices[service]}
+                                                    >
+                                                    </Toggle>
+                                                </div>
+                                                <p>{configurableServices[service]}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </Grid>
                             </SpaceBetween>
                         </ContentLayout>
-                    </ExpandableSection>
-                    <ExpandableSection headerText='EMR Config' variant='default' defaultExpanded>
-                        <ExpandableSection 
+                    </Container>
+                    <Container
+                        header={
+                            <Header variant='h2'>
+                                EMR Config
+                            </Header>
+                        }>
+                        <ExpandableSection
                             headerText='Applications'
                             variant='default' 
                             headingTagOverride='h3' 
                             headerDescription='A list of applications for Amazon EMR to install and configure when launching the cluster.'
+                            expanded={expandedSections.applications}
+                            onChange={({ detail }) => setExpandedSections({...expandedSections, applications: detail.expanded})}
                         >
                             <Multiselect
                                 selectedOptions={selectedApplicationOptions}
@@ -411,6 +470,8 @@ export function DynamicConfiguration () {
                             variant='default' 
                             headingTagOverride='h3' 
                             headerDescription='The cluster types options that users can select from when creating a new Amazon EMR Cluster.'
+                            expanded={expandedSections.clusterTypes}
+                            onChange={({ detail }) => setExpandedSections({...expandedSections, clusterTypes: detail.expanded})}
                         >
                             <ClusterTypeConfiguration
                                 item={
@@ -426,178 +487,193 @@ export function DynamicConfiguration () {
                             variant='default' 
                             headingTagOverride='h3' 
                             headerDescription='An automatic scaling policy for a core instance group or task instance group in an Amazon EMR cluster. The automatic scaling policy defines how an instance group dynamically adds and terminates Amazon EC2 instances.'
+                            expanded={expandedSections.autoScaling}
+                            onChange={({ detail }) => setExpandedSections({...expandedSections, autoScaling: detail.expanded})}
                         >
                             <SpaceBetween direction='vertical' size='m'>
-                                <FormField
-                                    label='Max Instances'
-                                    constraintText='Must be an integer value.'
-                                    errorText={errors?.configuration?.EMRConfig?.autoScaling?.maxInstances}
-                                    description='The maximum number of instances supporting the Amazon EMR Cluster at any time.'
+                                <Grid
+                                    gridDefinition={[{colspan: 6}, {colspan: 6}, {colspan: 6}, {colspan: 6}]}
                                 >
-                                    <Input
-                                        data-cy='cluster-max-size'
-                                        value={state.form.configuration.EMRConfig.autoScaling.maxInstances.toString()}
-                                        onChange={(event) => {
-                                            setFields({ 'configuration.EMRConfig.autoScaling.maxInstances': Number(event.detail.value) });
-                                        }}
-                                        onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.maxInstances'])}
-                                    />
-                                </FormField>
-                                <FormField
-                                    label='Min Instances'
-                                    constraintText='Must be an integer value.'
-                                    errorText={errors?.configuration?.EMRConfig?.autoScaling?.minInstances}
-                                    description='The minimum number of instances supporting the Amazon EMR Cluster at any time.'
-                                >
-                                    <Input
-                                        data-cy='cluster-min-size'
-                                        value={state.form.configuration.EMRConfig.autoScaling.minInstances.toString()}
-                                        onChange={(event) => {
-                                            setFields({ 'configuration.EMRConfig.autoScaling.minInstances': Number(event.detail.value) });
-                                        }}
-                                        onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.minInstances'])}
-                                    />
-                                </FormField>
-                                <ExpandableSection
-                                    headerText='Scale-Out Policy'
-                                    headingTagOverride='h4'
-                                    headerDescription='Determines when new Amazon EC2 instances will be provisioned to the cluster.'
-                                >
-                                    <SpaceBetween direction='vertical' size='s'>
-                                        <FormField
-                                            label='Increment'
-                                            constraintText='Must be an integer value.'
-                                            errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.increment}
-                                            description='The number of Amazon EC2 instances that will be added when the Percentage-Memory-Available value is exceeded.'
-                                        >
-                                            <Input
-                                                data-cy='cluster-scale-out-increment'
-                                                value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.increment.toString()}
-                                                onChange={(event) => {
-                                                    setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.increment': Number(event.detail.value) });
-                                                }}
-                                                onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.increment'])}
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            label='Cooldown'
-                                            constraintText='Must be an integer value.'
-                                            errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.cooldown}
-                                            description='The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.'
-                                        >
-                                            <Input
-                                                data-cy='cluster-scale-out-cooldown'
-                                                value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.cooldown.toString()}
-                                                onChange={(event) => {
-                                                    setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.cooldown': Number(event.detail.value) });
-                                                }}
-                                                onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.cooldown'])}
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            label='Percentage Memory Available'
-                                            constraintText='Must be an integer value.'
-                                            errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.percentageMemAvailable}
-                                            description='The threshold that determines when the Scale-Out policy is triggered. Triggered when the percentage of available memory drops below this value.'
-                                        >
-                                            <Input
-                                                data-cy='cluster-scale-out-percentageMemAvailable'
-                                                value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.percentageMemAvailable.toString()}
-                                                onChange={(event) => {
-                                                    setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.percentageMemAvailable': Number(event.detail.value) });
-                                                }}
-                                                onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.percentageMemAvailable'])}
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            label='Evaluation Periods'
-                                            constraintText='Must be an integer value.'
-                                            errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.evalPeriods}
-                                            description='The number of periods, in five-minute increments, during which the "Percentage Memory Available" condition must exist before the Scale-Out policy is triggered.'
-                                        >
-                                            <Input
-                                                data-cy='cluster-scale-out-evalPeriods'
-                                                value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.evalPeriods.toString()}
-                                                onChange={(event) => {
-                                                    setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.evalPeriods': Number(event.detail.value) });
-                                                }}
-                                                onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.evalPeriods'])}
-                                            />
-                                        </FormField>
-                                    </SpaceBetween>
-                                </ExpandableSection>
-                                <ExpandableSection
-                                    headerText='Scale-In Policy'
-                                    headingTagOverride='h4'
-                                    headerDescription='Determines when existing Amazon EC2 instances will released from the cluster.'
-                                >
-                                    <SpaceBetween direction='vertical' size='s'>
-                                        <FormField
-                                            label='Increment'
-                                            constraintText='Must be an integer value.'
-                                            errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.increment}
-                                            description='The number of Amazon EC2 instances that will be released when the Percentage-Memory-Available value is exceeded.'
-                                        >
-                                            <Input
-                                                data-cy='cluster-scale-in-increment'
-                                                value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.increment.toString()}
-                                                onChange={(event) => {
-                                                    setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.increment': formatDisplayNumber(Number(event.detail.value)) });
-                                                }}
-                                                onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.increment'])}
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            label='Cooldown'
-                                            constraintText='Must be an integer value.'
-                                            errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.cooldown}
-                                            description='The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.'
-                                        >
-                                            <Input
-                                                data-cy='cluster-scale-in-cooldown'
-                                                value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.cooldown.toString()}
-                                                onChange={(event) => {
-                                                    setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.cooldown': Number(event.detail.value) });
-                                                }}
-                                                onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.cooldown'])}
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            label='Percentage Memory Available'
-                                            constraintText='Must be an integer value.'
-                                            errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.percentageMemAvailable}
-                                            description='The threshold that determines when the Scale-In policy is triggered. Triggered when the percentage of available memory exceeds this value.'
-                                        >
-                                            <Input
-                                                data-cy='cluster-scale-in-percentageMemAvailable'
-                                                value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.percentageMemAvailable.toString()}
-                                                onChange={(event) => {
-                                                    setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.percentageMemAvailable': Number(event.detail.value) });
-                                                }}
-                                                onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.percentageMemAvailable'])}
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            label='Evaluation Periods'
-                                            constraintText='Must be an integer value.'
-                                            errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.evalPeriods}
-                                            description='The number of periods, in five-minute increments, during which the "Percentage Memory Available" condition must exist before the Scale-In policy is triggered.'
-                                        >
-                                            <Input
-                                                data-cy='cluster-scale-in-evalPeriods'
-                                                value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.evalPeriods.toString()}
-                                                onChange={(event) => {
-                                                    setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.evalPeriods': Number(event.detail.value) });
-                                                }}
-                                                onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.evalPeriods'])}
-                                            />
-                                        </FormField>
-                                    </SpaceBetween>
-                                </ExpandableSection>
+                                    <FormField
+                                        label='Max Instances'
+                                        constraintText='Must be an integer value.'
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.maxInstances}
+                                        description='The maximum number of instances supporting the Amazon EMR Cluster at any time.'
+                                    >
+                                        <Input
+                                            data-cy='cluster-max-size'
+                                            value={state.form.configuration.EMRConfig.autoScaling.maxInstances.toString()}
+                                            onChange={(event) => {
+                                                setFields({ 'configuration.EMRConfig.autoScaling.maxInstances': Number(event.detail.value) });
+                                            }}
+                                            onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.maxInstances'])}
+                                        />
+                                    </FormField>
+                                    <FormField
+                                        label='Min Instances'
+                                        constraintText='Must be an integer value.'
+                                        errorText={errors?.configuration?.EMRConfig?.autoScaling?.minInstances}
+                                        description='The minimum number of instances supporting the Amazon EMR Cluster at any time.'
+                                    >
+                                        <Input
+                                            data-cy='cluster-min-size'
+                                            value={state.form.configuration.EMRConfig.autoScaling.minInstances.toString()}
+                                            onChange={(event) => {
+                                                setFields({ 'configuration.EMRConfig.autoScaling.minInstances': Number(event.detail.value) });
+                                            }}
+                                            onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.minInstances'])}
+                                        />
+                                    </FormField>
+                                    <Container
+                                        header={
+                                            <Header variant='h2'  description='Determines when new Amazon EC2 instances will be provisioned to the cluster.'>
+                                                Scale-Out Policy
+                                            </Header>
+                                        }
+                                    >
+                                        <SpaceBetween direction='vertical' size='s'>
+                                            <FormField
+                                                label='Increment'
+                                                constraintText='Must be an integer value.'
+                                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.increment}
+                                                description='The number of Amazon EC2 instances that will be added when the Percentage-Memory-Available value is exceeded.'
+                                            >
+                                                <Input
+                                                    data-cy='cluster-scale-out-increment'
+                                                    value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.increment.toString()}
+                                                    onChange={(event) => {
+                                                        setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.increment': Number(event.detail.value) });
+                                                    }}
+                                                    onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.increment'])}
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                label='Cooldown'
+                                                constraintText='Must be an integer value.'
+                                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.cooldown}
+                                                description='The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.'
+                                            >
+                                                <Input
+                                                    data-cy='cluster-scale-out-cooldown'
+                                                    value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.cooldown.toString()}
+                                                    onChange={(event) => {
+                                                        setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.cooldown': Number(event.detail.value) });
+                                                    }}
+                                                    onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.cooldown'])}
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                label='Percentage Memory Available'
+                                                constraintText='Must be an integer value.'
+                                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.percentageMemAvailable}
+                                                description='The threshold that determines when the Scale-Out policy is triggered. Triggered when the percentage of available memory drops below this value.'
+                                            >
+                                                <Input
+                                                    data-cy='cluster-scale-out-percentageMemAvailable'
+                                                    value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.percentageMemAvailable.toString()}
+                                                    onChange={(event) => {
+                                                        setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.percentageMemAvailable': Number(event.detail.value) });
+                                                    }}
+                                                    onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.percentageMemAvailable'])}
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                label='Evaluation Periods'
+                                                constraintText='Must be an integer value.'
+                                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleOut?.evalPeriods}
+                                                description='The number of periods, in five-minute increments, during which the "Percentage Memory Available" condition must exist before the Scale-Out policy is triggered.'
+                                            >
+                                                <Input
+                                                    data-cy='cluster-scale-out-evalPeriods'
+                                                    value={state.form.configuration.EMRConfig.autoScaling.scaleOut?.evalPeriods.toString()}
+                                                    onChange={(event) => {
+                                                        setFields({ 'configuration.EMRConfig.autoScaling.scaleOut.evalPeriods': Number(event.detail.value) });
+                                                    }}
+                                                    onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleOut.evalPeriods'])}
+                                                />
+                                            </FormField>
+                                        </SpaceBetween>
+                                    </Container>
+                                    <Container
+                                        header={
+                                            <Header variant='h2'  description='Determines when existing Amazon EC2 instances will released from the cluster.'>
+                                                Scale-In Policy
+                                            </Header>
+                                        }
+                                    >
+                                        <SpaceBetween direction='vertical' size='s'>
+                                            <FormField
+                                                label='Increment'
+                                                constraintText='Must be an integer value.'
+                                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.increment}
+                                                description='The number of Amazon EC2 instances that will be released when the Percentage-Memory-Available value is exceeded.'
+                                            >
+                                                <Input
+                                                    data-cy='cluster-scale-in-increment'
+                                                    value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.increment.toString()}
+                                                    onChange={(event) => {
+                                                        setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.increment': formatDisplayNumber(Number(event.detail.value)) });
+                                                    }}
+                                                    onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.increment'])}
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                label='Cooldown'
+                                                constraintText='Must be an integer value.'
+                                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.cooldown}
+                                                description='The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.'
+                                            >
+                                                <Input
+                                                    data-cy='cluster-scale-in-cooldown'
+                                                    value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.cooldown.toString()}
+                                                    onChange={(event) => {
+                                                        setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.cooldown': Number(event.detail.value) });
+                                                    }}
+                                                    onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.cooldown'])}
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                label='Percentage Memory Available'
+                                                constraintText='Must be an integer value.'
+                                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.percentageMemAvailable}
+                                                description='The threshold that determines when the Scale-In policy is triggered. Triggered when the percentage of available memory exceeds this value.'
+                                            >
+                                                <Input
+                                                    data-cy='cluster-scale-in-percentageMemAvailable'
+                                                    value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.percentageMemAvailable.toString()}
+                                                    onChange={(event) => {
+                                                        setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.percentageMemAvailable': Number(event.detail.value) });
+                                                    }}
+                                                    onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.percentageMemAvailable'])}
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                label='Evaluation Periods'
+                                                constraintText='Must be an integer value.'
+                                                errorText={errors?.configuration?.EMRConfig?.autoScaling?.scaleIn?.evalPeriods}
+                                                description='The number of periods, in five-minute increments, during which the "Percentage Memory Available" condition must exist before the Scale-In policy is triggered.'
+                                            >
+                                                <Input
+                                                    data-cy='cluster-scale-in-evalPeriods'
+                                                    value={state.form.configuration.EMRConfig.autoScaling.scaleIn?.evalPeriods.toString()}
+                                                    onChange={(event) => {
+                                                        setFields({ 'configuration.EMRConfig.autoScaling.scaleIn.evalPeriods': Number(event.detail.value) });
+                                                    }}
+                                                    onBlur={() => touchFields(['configuration.EMRConfig.autoScaling.scaleIn.evalPeriods'])}
+                                                />
+                                            </FormField>
+                                        </SpaceBetween>
+                                    </Container>
+                                </Grid>
                             </SpaceBetween>
                         </ExpandableSection>
-                    </ExpandableSection>
-                    <ExpandableSection headerText='Project Creation' variant='default' defaultExpanded>
+                    </Container>
+                    <Container
+                        header={
+                            <Header variant='h2'>
+                                Project Creation
+                            </Header>
+                        }>
                         <Toggle
                             onChange={({ detail }) => {
                                 setFields({ 'configuration.ProjectCreation.isAdminOnly': detail.checked });
@@ -606,23 +682,66 @@ export function DynamicConfiguration () {
                         >
                         Admin Only - restrict creation of projects to users with Admin permissions
                         </Toggle>
-                    </ExpandableSection>
-                    <ExpandableSection headerText='System Banner' variant='default' defaultExpanded>
+                    </Container>
+                    <Container
+                        header={
+                            <Header variant='h2'>
+                                System Banner
+                            </Header>
+                        }>
                         <SpaceBetween direction='vertical' size='l'>
-                            <Toggle
-                                onChange={({ detail }) => {
-                                    setFields({ 'configuration.SystemBanner.isEnabled': detail.checked });
-                                }}
-                                checked={state.form.configuration.SystemBanner.isEnabled!}
-                            >
-                            Activate System Banner
-                            </Toggle>
+                            <Grid gridDefinition={[{colspan: 4}, {colspan: 4}, {colspan: 4}]}>
+                                <div style={{display: 'grid'}}>
+                                    <Toggle
+                                        onChange={({detail}) => {
+                                            setFields({'configuration.SystemBanner.isEnabled': detail.checked});
+                                        }}
+                                        checked={state.form.configuration.SystemBanner.isEnabled!}
+                                    >
+                                    </Toggle>
+                                    <p>Activate System Banner</p>
+                                </div>
+                                <FormField
+                                    label='Text Color'
+                                >
+                                    <input
+                                        type='color'
+                                        onInput={(event) =>
+                                            setFields({'configuration.SystemBanner.textColor': event.target.value})
+                                        }
+                                        value={state.form.configuration.SystemBanner.textColor}
+                                        disabled={!state.form.configuration.SystemBanner.isEnabled}
+                                        style={{
+                                            border: '2px solid #7F8897',
+                                            borderRadius: '6px',
+                                            padding: '3px'
+                                        }}
+                                    />
+                                </FormField>
+                                <FormField
+                                    label='Background Color'
+                                >
+                                    <input
+                                        type='color'
+                                        onInput={(event) =>
+                                            setFields({'configuration.SystemBanner.backgroundColor': event.target.value})
+                                        }
+                                        value={state.form.configuration.SystemBanner.backgroundColor}
+                                        disabled={!state.form.configuration.SystemBanner.isEnabled}
+                                        style={{
+                                            border: '2px solid #7F8897',
+                                            borderRadius: '6px',
+                                            padding: '3px'
+                                        }}
+                                    />
+                                </FormField>
+                            </Grid>
                             <FormField
                                 label='Banner Text'
                             >
                                 <Input
-                                    onChange={({ detail }) => {
-                                        setFields({ 'configuration.SystemBanner.text': detail.value });
+                                    onChange={({detail}) => {
+                                        setFields({'configuration.SystemBanner.text': detail.value});
                                     }}
                                     onBlur={() => touchFields(['configuration.SystemBanner.text'])}
                                     value={state.form.configuration.SystemBanner.text}
@@ -630,70 +749,22 @@ export function DynamicConfiguration () {
                                     disabled={!state.form.configuration.SystemBanner.isEnabled}
                                 />
                             </FormField>
-                            <SpaceBetween direction='horizontal' size='l'>
-                                <FormField
-                                    label='Text Color'
-                                >
-                                    <input
-                                        type='color'
-                                        onInput={(event) =>
-                                            setFields({ 'configuration.SystemBanner.textColor': event.target.value })
-                                        }
-                                        value={state.form.configuration.SystemBanner.textColor}
-                                        disabled={!state.form.configuration.SystemBanner.isEnabled}
-                                        style={{border: '2px solid #7F8897', borderRadius: '6px', padding: '3px'}}
-                                    />
-                                </FormField>
-                                <FormField
-                                    label='Background Color'
-                                >   
-                                    <input
-                                        type='color'
-                                        onInput={(event) =>
-                                            setFields({ 'configuration.SystemBanner.backgroundColor': event.target.value })
-                                        }
-                                        value={state.form.configuration.SystemBanner.backgroundColor}
-                                        disabled={!state.form.configuration.SystemBanner.isEnabled}
-                                        style={{border: '2px solid #7F8897', borderRadius: '6px', padding: '3px'}}
-                                    />
-                                </FormField>
-                            </SpaceBetween>
                         </SpaceBetween>
-                    </ExpandableSection>
-                    <Button
-                        iconAlt='Update dynamic configuration'
-                        variant='primary'
-                        onClick={() => {
-                            setModalVisible(true);
-                        }}
-                        loading={state.formSubmitting}
-                        data-cy='dynamic-configuration-submit'
-                        disabled={!isValid || state.formSubmitting}
-                    >
-                    Save Changes
-                    </Button>
-                    <Container
-                        header={
-                            <Header
-                                variant='h3'
-                                description={`Export the latest dynamic configuration of ${window.env.APPLICATION_NAME}. This will download a JSON file to your machine with the current configuration. This JSON file can be used for a new ${window.env.APPLICATION_NAME} to ensure it has the same settings.`}
-
-                            >
-                            Export Configuration
-                            </Header>
-                        }
-                    >
-                        <Button
-                            iconAlt='Export dynamic configuration'
-                            variant='primary'
-                            onClick={JSONToFile}
-                            loading={state.formSubmitting}
-                            data-cy='export-configuration-submit'
-                            iconName='download'
-                        >
-                        Export Configuration as JSON File
-                        </Button>
                     </Container>
+                    <div style={{width: '100%', justifyContent: 'right', display: 'flex'}}>
+                        <Button
+                            iconAlt='Update dynamic configuration'
+                            variant='primary'
+                            onClick={() => {
+                                setModalVisible(true);
+                            }}
+                            loading={state.formSubmitting}
+                            data-cy='dynamic-configuration-submit'
+                            disabled={!isValid || state.formSubmitting}
+                        >
+                        Save Changes
+                        </Button>
+                    </div>
                     <Container
                         header={
                             <Header
@@ -706,7 +777,7 @@ export function DynamicConfiguration () {
                     >
                         <SpaceBetween direction='vertical' size='s'>
                             <FileUpload
-                                onChange={({ detail }) => { 
+                                onChange={({ detail }) => {
                                     setSelectedFile([]); // ensure there's never more than one file
                                     setSelectedFile(detail.value);
                                 }}
@@ -731,9 +802,6 @@ export function DynamicConfiguration () {
                             </Button>
                         </SpaceBetween>
                     </Container>
-                    <ExpandableSection headerText='Configuration History' variant='default' defaultExpanded headerDescription='View the configuration history and rollback to prior versions.'>
-                        <ConfigurationHistoryTable/>
-                    </ExpandableSection>
                 </SpaceBetween>
             </Container>
         </>
