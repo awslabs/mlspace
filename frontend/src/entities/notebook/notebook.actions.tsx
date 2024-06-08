@@ -198,7 +198,7 @@ const NotebookActionHandler = async (
             `${success ? 'Successfully' : 'Failed to'} ${e.detail.id}${
                 e.detail.id === 'stop' ? 'p' : ''
             }${success ? 'ing' : ''} notebook instance ${notebook.resourceId}${
-                success ? '.' : ` because: ${response.data}`
+                success ? '.' : ` because: ${response.payload}`
             } `,
             success ? 'success' : 'error'
         );

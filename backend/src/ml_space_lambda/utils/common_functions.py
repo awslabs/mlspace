@@ -200,16 +200,23 @@ def generate_html_response(status_code, response_body):
 
 def generate_exception_response(e):
     status_code = 400
+    error_msg = str(e)
     if hasattr(e, "response"):  # i.e. validate the exception was from an API call
         metadata = e.response.get("ResponseMetadata")
         if metadata:
             status_code = metadata.get("HTTPStatusCode", 400)
+        if e.response["Error"]["Code"] in ["ResourceInUse", "ValidationException"] and any(
+            error in error_msg for error in ["Cannot create a duplicate", "already existing", "already exists"]
+        ):
+            e = f"The resource name you provided already exists. Please choose a different name. Full message: {error_msg}"
+        elif e.response["Error"]["Code"] in ["ResourceLimitExceeded"]:
+            e = f"You have reached the maximum allowed usage for this resource. Please contact your MLSpace administrator to increase the allowed usage limits. Full message: {error_msg}"
+
         logger.exception(e)
     elif hasattr(e, "http_status_code"):
         status_code = e.http_status_code
         logger.exception(e)
     else:
-        error_msg = str(e)
         if error_msg in ["'requestContext'", "'pathParameters'", "'body'"]:
             e = f"Missing event parameter: {error_msg}"
         else:

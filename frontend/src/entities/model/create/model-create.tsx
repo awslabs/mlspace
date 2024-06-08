@@ -162,14 +162,14 @@ export function ModelCreate () {
                         navigate(`/project/${projectName}/model/${state.form.ModelName}`);
                     } else {
                         notificationService.generateNotification(
-                            `Failed to create model because: ${response.data}`,
+                            `Failed to create model with error: ${response.data}`,
                             'error'
                         );
                     }
                 })
                 .catch((err) => {
                     notificationService.generateNotification(
-                        `Failed to create endpoint with error: ${err.response.data}`,
+                        `Failed to create model with error: ${err.response.data}`,
                         'error'
                     );
                 })
