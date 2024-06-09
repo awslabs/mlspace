@@ -161,6 +161,7 @@ export function InstanceTypeMultiSelector (props: InstanceTypeMultiSelectorPrope
             onChange={props.onChange}
             filteringType='auto'
             onBlur={props.onBlur}
+            tokenLimit={7}
         />
     );
 }

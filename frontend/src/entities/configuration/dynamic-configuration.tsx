@@ -20,7 +20,6 @@ import {
     Container,
     Button,
     Input,
-    FileUpload,
     Toggle,
     FormField,
     Multiselect,
@@ -44,6 +43,7 @@ import { formatDisplayNumber } from '../../shared/util/form-utils';
 import { ClusterTypeConfiguration } from './cluster-types';
 import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-dropdown';
 import _ from 'lodash';
+import { ConfigurationImportModal } from './configuration-import-modal';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -52,13 +52,14 @@ export function DynamicConfiguration () {
     const [applicationOptions, setApplicationOptions] = useState([] as any);
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
-    const [selectedFile, setSelectedFile] = useState<File[]>([]);
     const configurableServices = {
         batchTranslate: 'Amazon Translate asynchronous batch processing',
         emrCluster: 'Amazon EMR',
         realtimeTranslate: 'Amazon Translate real-time translation',
         labelingJob: 'Amazon Ground Truth create labeling jobs'
     };
+    const [importConfigVisible, setImportConfigVisible] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File[]>([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [expandedSections, setExpandedSections] = useState({notebookInstances: false, trainingAndHpo: false, transform: false, endpoints: false, applications: false, clusterTypes: false, autoScaling: false});
 
@@ -285,6 +286,7 @@ export function DynamicConfiguration () {
 
     return (
         <>
+            <ConfigurationImportModal visible={importConfigVisible} setVisible={setImportConfigVisible} upload={handleFileUpload} selectedFile={selectedFile} setSelectedFile={setSelectedFile}/>
             <Modal 
                 visible={modalVisible}
                 onDismiss={() => setModalVisible(false)}
@@ -351,6 +353,8 @@ export function DynamicConfiguration () {
                                         JSONToFile();
                                     } else if (e.detail.id === 'expand-all') {
                                         setExpandedSections({notebookInstances: true, trainingAndHpo: true, transform: true, endpoints: true, applications: true, clusterTypes: true, autoScaling: true});
+                                    } else if (e.detail.id === 'import-config') {
+                                        setImportConfigVisible(true);
                                     }
                                 }}
                             >
@@ -765,43 +769,6 @@ export function DynamicConfiguration () {
                         Save Changes
                         </Button>
                     </div>
-                    <Container
-                        header={
-                            <Header
-                                variant='h3'
-                                description={`Upload a JSON configuration for ${window.env.APPLICATION_NAME}. This will be parsed for validity and then uploaded as the active configuraion. The import will fail if the provided configuration doesn't have the required values.`}
-                            >
-                            Import Configuration
-                            </Header>
-                        }
-                    >
-                        <SpaceBetween direction='vertical' size='s'>
-                            <FileUpload
-                                onChange={({ detail }) => {
-                                    setSelectedFile([]); // ensure there's never more than one file
-                                    setSelectedFile(detail.value);
-                                }}
-                                value={selectedFile}
-                                i18nStrings={{
-                                    uploadButtonText: (e) =>
-                                        e ? 'Choose files' : 'Choose file',
-                                    dropzoneText: (e) =>
-                                        e ? 'Drop files to upload' : 'Drop file to upload',
-                                    removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
-                                    limitShowFewer: 'Show fewer files',
-                                    limitShowMore: 'Show more files',
-                                    errorIconAriaLabel: 'Error uploading file'
-                                }}
-                            />
-                            <Button
-                                onClick={async () => handleFileUpload()}
-                                disabled={selectedFile.length === 0}
-                                variant='primary'
-                            >
-                            Upload Configuration
-                            </Button>
-                        </SpaceBetween>
-                    </Container>
                 </SpaceBetween>
             </Container>
         </>
