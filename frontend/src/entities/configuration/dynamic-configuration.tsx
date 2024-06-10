@@ -318,7 +318,7 @@ export function DynamicConfiguration () {
                         label='Change reason'
                     >
                         <Input
-                            value={_.isEqual(state.form.changeReason, applicationConfig.changeReason) ? `Changes to: ${Object.keys(changesDiff)}` : state.form.changeReason}
+                            value={state.form.changeReason}
                             onChange={(event) => {
                                 setFields({ 'changeReason': event.detail.value });
                             }}
@@ -665,6 +665,7 @@ export function DynamicConfiguration () {
                         iconAlt='Update dynamic configuration'
                         variant='primary'
                         onClick={() => {
+                            setFields({ 'changeReason': `Changes to: ${Object.keys(changesDiff)}` });
                             setModalVisible(true);
                         }}
                         loading={state.formSubmitting}
