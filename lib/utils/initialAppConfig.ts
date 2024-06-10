@@ -86,7 +86,7 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
     // This may not be set in the user's cluster-config (if it existed)
     if (clusterConfig['applications']) {
         for (const application of clusterConfig['applications']) {
-            applicationList.push({'M': {'name': {'S': application['Name']}}});
+            applicationList.push({'M': {'Name': {'S': application['Name']}}});
         }
     }
     const clusterTypes = [];
