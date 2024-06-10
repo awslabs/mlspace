@@ -40,8 +40,8 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.app_configuration.policy_helper.notebook.iam")
-def test_update_instance_constraint_policies(iam):
+@mock.patch("ml_space_lambda.app_configuration.policy_helper.notebook.create_instance_constraint_policy_version")
+def test_update_instance_constraint_policies(create_instance_constraint_policy_version):
     # Clear out previously cached env variables
     mlspace_config.env_variables = {}
 
@@ -55,16 +55,10 @@ def test_update_instance_constraint_policies(iam):
     )
 
     update_instance_constraint_policies(new_configuration, mock_context)
-    iam.create_policy_version.assert_has_calls(
+    create_instance_constraint_policy_version.assert_has_calls(
         [
-            mock.call(
-                PolicyArn=TEST_ENV_CONFIG["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"], PolicyDocument=mock.ANY, SetAsDefault=True
-            ),
-            mock.call(
-                PolicyArn=TEST_ENV_CONFIG["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
-                PolicyDocument=mock.ANY,
-                SetAsDefault=True,
-            ),
+            mock.call(TEST_ENV_CONFIG["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"], mock.ANY),
+            mock.call(TEST_ENV_CONFIG["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"], mock.ANY),
         ]
     )
 
@@ -118,5 +112,4 @@ def test_create_instance_constraint_policy_version(iam, boto3):
         SetAsDefault=True,
     )
 
-    iam.create_policy_version.assert_called_once()
     iam.delete_policy_version.assert_called_with(PolicyArn=policy_arn, VersionId=1)

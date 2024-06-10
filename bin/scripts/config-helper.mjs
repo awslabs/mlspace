@@ -67,19 +67,10 @@ async function advancedConfigPrompts () {
     const roleResponse = await prompt({
         type: 'confirm',
         name: 'existingRoles',
-        message: 'Do you want to use existing IAM Roles? (selecting no will create new IAM Roles for MLSpace actions)',
+        message: 'Do you want to use existing IAM Roles/Policies? (selecting no will create new IAM Roles/Policies for MLSpace actions)',
     });
     if (roleResponse.existingRoles) {
         await askRoleQuestions();
-    }
-
-    const policiesResponse = await prompt({
-        type: 'confirm',
-        name: 'existingPolicies',
-        message: 'Do you want to use existing IAM Policies? (selecting no will create new IAM Policies for IAM Roles)',
-    });
-    if (policiesResponse.existingPolicies) {
-        await askPolicyQuestions();
     }
 
     const bannerResponse = await prompt({
@@ -182,6 +173,16 @@ async function askRoleQuestions () {
         },
         {
             type: 'input',
+            name: 'ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN',
+            message: 'Notebook Endpoint Config Instance Constraint Policy ARN: arn of an existing IAM policy to use for constraining instance types that an Endpoint Configuration can be created with from a Notebook',
+        },
+        {
+            type: 'input',
+            name: 'JOB_INSTANCE_CONSTRAINT_POLICY_ARN',
+            message: 'Notebook Job Instance Constraint Policy ARN: arn of an existing IAM policy to use for constraining instance types that Training/HPO/Transform jobs can be created with from a Notebook',
+        },
+        {
+            type: 'input',
             name: 'APP_ROLE_ARN',
             message: 'App Role ARN: arn of an existing IAM role to use for executing the MLSpace lambdas. This value must be set to an existing role because the default CDK deployment will not create one',
         },
@@ -198,23 +199,6 @@ async function askRoleQuestions () {
     ];
     const rolePromptAnswers = await prompt(roleQuestions);
     answers = {...answers, ...rolePromptAnswers};
-}
-
-async function askPolicyQuestions () {
-    const policyQuestions = [
-        {
-            type: 'input',
-            name: 'ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN',
-            message: 'Notebook Endpoint Config Instance Constraint Policy ARN: arn of an existing IAM policy to use for constraining instance types that an Endpoint Configuration can be created with from a Notebook',
-        },
-        {
-            type: 'input',
-            name: 'JOB_INSTANCE_CONSTRAINT_POLICY_ARN',
-            message: 'Notebook Job Instance Constraint Policy ARN: arn of an existing IAM policy to use for constraining instance types that Training/HPO/Transform jobs can be created with from a Notebook',
-        },
-    ];
-    const policyPromptAnswers = await prompt(policyQuestions);
-    answers = {...answers, ...policyPromptAnswers};
 }
 
 async function askBannerQuestions () {

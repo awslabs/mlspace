@@ -433,51 +433,50 @@ export class IAMStack extends Stack {
             statements: notebookPolicyStatements(this.partition, Aws.REGION),
             description: 'Enables general MLSpace actions in notebooks and across the entire application.'
         });
+        const notebookManagedPolicies: IManagedPolicy[] = [notebookPolicy];      
 
+        if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
+            if (props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN) {
+                this.mlspaceEndpointConfigInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-endpoint-config-instance-constraint', props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN);
+            } else {
+                /*
+                 * WARNING: @see instanceConstraintPolicyStatement
+                 */
+                this.mlspaceEndpointConfigInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-endpoint-config-instance-constraint', {
+                    managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-endpoint-instance-constraint`,
+                    statements: instanceConstraintPolicyStatement(this.partition, Aws.REGION, {CreateEndpointConfig: 'endpoint-config'})
+                });
+            }
+    
+            if (props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN) {
+                this.mlspaceJobInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-job-instance-constraint', props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN);
+            } else {
+                /*
+                 * WARNING: @see instanceConstraintPolicyStatement
+                 */
+                this.mlspaceJobInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-job-instance-constraint', {
+                    managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-job-instance-constraint`,
+                    statements: [
+                        instanceConstraintPolicyStatement(this.partition, Aws.REGION, {
+                            CreateHyperParameterTuningJob: 'hyper-parameter-tuning-job',
+                            CreateTrainingJob: 'training-job'
+                        })[0],
+                        instanceConstraintPolicyStatement(this.partition, Aws.REGION, {CreateTransformJob: 'transform-job'})[0]
+                    ]
+                });
+            }
+
+            notebookManagedPolicies.push(this.mlspaceEndpointConfigInstanceConstraintPolicy, this.mlspaceJobInstanceConstraintPolicy);
+        }
+
+        // If roles are manually created use the existing role
         if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
             this.mlSpaceNotebookRole = Role.fromRoleArn(
                 this,
                 'mlspace-notebook-role',
                 props.mlspaceConfig.NOTEBOOK_ROLE_ARN
             );
-        } else {
-            const managedPolicies: IManagedPolicy[] = [notebookPolicy];
-
-            if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
-                if (props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN) {
-                    this.mlspaceEndpointConfigInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-endpoint-config-instance-constraint', props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN);
-                } else {
-                    /*
-                     * WARNING: @see instanceConstraintPolicyStatement
-                     */
-                    this.mlspaceEndpointConfigInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-endpoint-config-instance-constraint', {
-                        managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-endpoint-instance-constraint`,
-                        statements: instanceConstraintPolicyStatement(this.partition, Aws.REGION, {CreateEndpointConfig: 'endpoint-config'})
-                    });
-                }
-        
-                if (props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN) {
-                    this.mlspaceJobInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-job-instance-constraint', props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN);
-                } else {
-                    /*
-                     * WARNING: @see instanceConstraintPolicyStatement
-                     */
-                    this.mlspaceJobInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-job-instance-constraint', {
-                        managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-job-instance-constraint`,
-                        statements: [
-                            instanceConstraintPolicyStatement(this.partition, Aws.REGION, {
-                                CreateHyperParameterTuningJob: 'hyper-parameter-tuning-job',
-                                CreateTrainingJob: 'training-job'
-                            })[0],
-                            instanceConstraintPolicyStatement(this.partition, Aws.REGION, {CreateTransformJob: 'transform-job'})[0]
-                        ]
-                    });
-                }
-
-                managedPolicies.push(this.mlspaceEndpointConfigInstanceConstraintPolicy, this.mlspaceJobInstanceConstraintPolicy);
-            }
-            
-
+        } else {    
             // If roles are managed by CDK, create the notebook role
             const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
             // Translate Permissions Principles
@@ -491,12 +490,11 @@ export class IAMStack extends Stack {
             this.mlSpaceNotebookRole = new Role(this, 'mlspace-notebook-role', {
                 roleName: mlSpaceNotebookRoleName,
                 assumedBy: notebookPolicyAllowPrinciples,
-                managedPolicies,
+                managedPolicies: notebookManagedPolicies,
                 description:
                     'Allows SageMaker Notebooks within ML Space to access necessary AWS services (S3, SQS, DynamoDB, ...)',
             });
         }
-
 
         /**
          * PERMISSIONS BOUNDARY SECTION
