@@ -82,7 +82,7 @@ export class ProjectsApiStack extends Stack {
                 path: 'project/{projectName}/users/{username}',
                 method: 'PUT',
             },
-            {
+            { //TODO: give system role
                 name: 'delete',
                 resource: 'project',
                 description: 'Delete an MLSpace project',
@@ -99,7 +99,7 @@ export class ProjectsApiStack extends Stack {
                 path: 'project/{projectName}',
                 method: 'GET',
             },
-            {
+            { //TODO: give system role
                 name: 'remove_user',
                 resource: 'project',
                 description: 'Removes a user from a project',
@@ -109,7 +109,7 @@ export class ProjectsApiStack extends Stack {
                     DATA_BUCKET: props.dataBucketName,
                 },
             },
-            {
+            { //TODO this one too
                 name: 'update',
                 resource: 'project',
                 description: 'Updates project state (suspended/active)',
@@ -220,11 +220,12 @@ export class ProjectsApiStack extends Stack {
         ];
 
         apis.forEach((f) => {
+            const system_permissions = ['remove_user', 'update', 'delete'];
             registerAPIEndpoint(
                 this,
                 restApi,
                 props.authorizer,
-                props.applicationRole,
+                system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],

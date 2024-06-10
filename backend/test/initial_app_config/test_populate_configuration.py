@@ -70,5 +70,5 @@ def test_initial_config_success(mock_app_config_dao, mock_compute_types):
             endpoint_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["ProductionVariantInstanceType"],
             training_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["TrainingInstanceType"],
             transform_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["TransformInstanceType"],
-        )["configuration"]
+        )
     )

@@ -19,6 +19,7 @@ import boto3
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO
 from ml_space_lambda.enums import ServiceType
 from ml_space_lambda.metadata.lambda_functions import get_compute_types
+from ml_space_lambda.utils.common_functions import generate_html_response
 from ml_space_lambda.utils.mlspace_config import retry_config
 
 log = logging.getLogger(__name__)
@@ -29,11 +30,19 @@ app_configuration_dao = AppConfigurationDAO()
 def lambda_handler(event, context):
     instances = get_compute_types()
     resp = app_configuration_dao.get("global", 1)
-    config = resp[0]["configuration"]
+    config = resp[0]
 
-    config["EnabledInstanceTypes"][ServiceType.NOTEBOOK.value] = instances["InstanceTypes"]["InstanceType"]
-    config["EnabledInstanceTypes"][ServiceType.TRAINING_JOB.value] = instances["InstanceTypes"]["TrainingInstanceType"]
-    config["EnabledInstanceTypes"][ServiceType.TRANSFORM_JOB.value] = instances["InstanceTypes"]["TransformInstanceType"]
-    config["EnabledInstanceTypes"][ServiceType.ENDPOINT.value] = instances["InstanceTypes"]["ProductionVariantInstanceType"]
+    config["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK.value] = instances["InstanceTypes"]["InstanceType"]
+    config["configuration"]["EnabledInstanceTypes"][ServiceType.TRAINING_JOB.value] = instances["InstanceTypes"][
+        "TrainingInstanceType"
+    ]
+    config["configuration"]["EnabledInstanceTypes"][ServiceType.TRANSFORM_JOB.value] = instances["InstanceTypes"][
+        "TransformInstanceType"
+    ]
+    config["configuration"]["EnabledInstanceTypes"][ServiceType.ENDPOINT.value] = instances["InstanceTypes"][
+        "ProductionVariantInstanceType"
+    ]
 
     app_configuration_dao.update(config)
+
+    generate_html_response(200, "Successfully updated app config")

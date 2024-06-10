@@ -95,6 +95,7 @@ stacks.push(iamStack);
 const mlSpaceNotebookRole = iamStack.mlSpaceNotebookRole;
 const mlSpaceAppRole = iamStack.mlSpaceAppRole;
 const websiteS3ReaderRole = iamStack.s3ReaderRole;
+const mlSpaceSystemRole = iamStack.mlSpaceSystemRole;
 
 const lambdaSourcePath = './backend/src/';
 const frontEndAssetsPath = './frontend/build/';
@@ -157,6 +158,7 @@ const apiStackProperties: ApiStackProperties = {
     configBucketName,
     cwlBucketName,
     applicationRole: mlSpaceAppRole,
+    systemRole: mlSpaceSystemRole,
     notebookInstanceRole: mlSpaceNotebookRole,
     notebookParamFileKey: config.NOTEBOOK_PARAMETERS_FILE_NAME,
     deploymentEnvironmentName: 'mlspace',
