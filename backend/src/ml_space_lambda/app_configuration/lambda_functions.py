@@ -27,14 +27,6 @@ app_configuration_dao = AppConfigurationDAO()
 
 
 @api_wrapper
-def get_configuration(event, context):
-    configScope = event["queryStringParameters"]["configScope"]
-    num_versions = int(event["queryStringParameters"].get("numVersions", 1))
-
-    return app_configuration_dao.get(configScope=configScope, num_versions=num_versions)
-
-
-@api_wrapper
 def update_configuration(event, context):
     request = json.loads(event["body"])
     configScope = request["configScope"]
@@ -61,3 +53,11 @@ def update_configuration(event, context):
         raise e
 
     return f"Successfully updated configuration for {configScope}, version {version_id}."
+
+
+@api_wrapper
+def get_configuration(event, context):
+    configScope = event["queryStringParameters"]["configScope"]
+    num_versions = int(event["queryStringParameters"].get("numVersions", 1))
+
+    return app_configuration_dao.get(configScope=configScope, num_versions=num_versions)

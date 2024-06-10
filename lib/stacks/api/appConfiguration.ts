@@ -55,8 +55,8 @@ export class AppConfigurationApiStack extends Stack {
                 path: 'app-config',
                 method: 'POST',
                 environment: {
-                    ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.endpointConfigInstanceConstraintPolicy.managedPolicyArn,
-                    JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.jobInstanceConstraintPolicy.managedPolicyArn,
+                    ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.endpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
+                    JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.jobInstanceConstraintPolicy?.managedPolicyArn || '',
                 }
             },
         ];
