@@ -316,10 +316,9 @@ export function DynamicConfiguration () {
                         label='Change reason'
                     >
                         <Input
-                            value={`Changes to: ${Object.keys(changesDiff)}`}
+                            value={_.isEqual(state.form.changeReason, applicationConfig.changeReason) ? `Changes to: ${Object.keys(changesDiff)}` : state.form.changeReason}
                             onChange={(event) => {
                                 setFields({ 'changeReason': event.detail.value });
-                                console.log(state.form);
                             }}
                             disabled={_.isEmpty(changesDiff)}
                         />
