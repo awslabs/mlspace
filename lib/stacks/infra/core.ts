@@ -441,7 +441,7 @@ export class CoreStack extends Stack {
         });
 
         // Populate the App Config table with default config
-        new AwsCustomResource(this, 'mlspace-init-ddb-app-config3', {
+        new AwsCustomResource(this, 'mlspace-init-ddb-app-config', {
             onCreate: {
                 service: 'DynamoDB',
                 action: 'putItem',
@@ -449,16 +449,16 @@ export class CoreStack extends Stack {
                     TableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
                     Item: generateAppConfig(props.mlspaceConfig),
                 },
-                physicalResourceId: PhysicalResourceId.of('initAppConfigData3'),
+                physicalResourceId: PhysicalResourceId.of('initAppConfigData'),
             },
             role: props.mlSpaceAppRole
         });
 
-        new AwsCustomResource(this, 'populate-instance-types3', {
+        new AwsCustomResource(this, 'populate-allowed-instance-types', {
             onCreate: {
                 service: 'Lambda',
                 action: 'invoke',
-                physicalResourceId: PhysicalResourceId.of('initInstanceTypes3'),
+                physicalResourceId: PhysicalResourceId.of('initAllowedInstanceTypes'),
                 parameters: {
                     FunctionName: appConfigLambda.functionName,
                     Payload: '{}'

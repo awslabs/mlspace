@@ -82,7 +82,7 @@ export class ProjectsApiStack extends Stack {
                 path: 'project/{projectName}/users/{username}',
                 method: 'PUT',
             },
-            { //TODO: give system role
+            {
                 name: 'delete',
                 resource: 'project',
                 description: 'Delete an MLSpace project',
@@ -99,7 +99,7 @@ export class ProjectsApiStack extends Stack {
                 path: 'project/{projectName}',
                 method: 'GET',
             },
-            { //TODO: give system role
+            {
                 name: 'remove_user',
                 resource: 'project',
                 description: 'Removes a user from a project',
@@ -109,7 +109,7 @@ export class ProjectsApiStack extends Stack {
                     DATA_BUCKET: props.dataBucketName,
                 },
             },
-            { //TODO this one too
+            {
                 name: 'update',
                 resource: 'project',
                 description: 'Updates project state (suspended/active)',
