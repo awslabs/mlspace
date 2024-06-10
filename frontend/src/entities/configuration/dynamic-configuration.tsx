@@ -695,49 +695,57 @@ export function DynamicConfiguration () {
                         }>
                         <SpaceBetween direction='vertical' size='l'>
                             <Grid gridDefinition={[{colspan: 4}, {colspan: 4}, {colspan: 4}]}>
-                                <div style={{display: 'grid'}}>
-                                    <Toggle
-                                        onChange={({detail}) => {
-                                            setFields({'configuration.SystemBanner.isEnabled': detail.checked});
-                                        }}
-                                        checked={state.form.configuration.SystemBanner.isEnabled!}
-                                    >
-                                    </Toggle>
+                                <div style={{display: 'grid', textAlign: 'center'}}>
+                                    <div style={{display: 'grid', justifyContent: 'center'}}>
+                                        <Toggle
+                                            onChange={({detail}) => {
+                                                setFields({'configuration.SystemBanner.isEnabled': detail.checked});
+                                            }}
+                                            checked={state.form.configuration.SystemBanner.isEnabled!}
+                                        >
+                                        </Toggle>
+                                    </div>
                                     <p>Activate System Banner</p>
                                 </div>
-                                <FormField
-                                    label='Text Color'
-                                >
-                                    <input
-                                        type='color'
-                                        onInput={(event) =>
-                                            setFields({'configuration.SystemBanner.textColor': event.target.value})
-                                        }
-                                        value={state.form.configuration.SystemBanner.textColor}
-                                        disabled={!state.form.configuration.SystemBanner.isEnabled}
-                                        style={{
-                                            border: '2px solid #7F8897',
-                                            borderRadius: '6px',
-                                            padding: '3px'
-                                        }}
-                                    />
+                                <FormField>
+                                    <div style={{display: 'grid', textAlign: 'center'}}>
+                                        <div style={{display: 'grid', justifyContent: 'center'}}>
+                                            <input
+                                                type='color'
+                                                onInput={(event) =>
+                                                    setFields({'configuration.SystemBanner.textColor': event.target.value})
+                                                }
+                                                value={state.form.configuration.SystemBanner.textColor}
+                                                disabled={!state.form.configuration.SystemBanner.isEnabled}
+                                                style={{
+                                                    border: '2px solid #7F8897',
+                                                    borderRadius: '6px',
+                                                    padding: '3px'
+                                                }}
+                                            />
+                                        </div>
+                                        <p>Text Color</p>
+                                    </div>
                                 </FormField>
-                                <FormField
-                                    label='Background Color'
-                                >
-                                    <input
-                                        type='color'
-                                        onInput={(event) =>
-                                            setFields({'configuration.SystemBanner.backgroundColor': event.target.value})
-                                        }
-                                        value={state.form.configuration.SystemBanner.backgroundColor}
-                                        disabled={!state.form.configuration.SystemBanner.isEnabled}
-                                        style={{
-                                            border: '2px solid #7F8897',
-                                            borderRadius: '6px',
-                                            padding: '3px'
-                                        }}
-                                    />
+                                <FormField>
+                                    <div style={{display: 'grid', textAlign: 'center'}}>
+                                        <div style={{display: 'grid', justifyContent: 'center'}}>
+                                            <input
+                                                type='color'
+                                                onInput={(event) =>
+                                                    setFields({'configuration.SystemBanner.backgroundColor': event.target.value})
+                                                }
+                                                value={state.form.configuration.SystemBanner.backgroundColor}
+                                                disabled={!state.form.configuration.SystemBanner.isEnabled}
+                                                style={{
+                                                    border: '2px solid #7F8897',
+                                                    borderRadius: '6px',
+                                                    padding: '3px'
+                                                }}
+                                            />
+                                        </div>
+                                        <p>Background Color</p>
+                                    </div>
                                 </FormField>
                             </Grid>
                             <FormField

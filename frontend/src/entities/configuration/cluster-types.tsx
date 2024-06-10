@@ -64,7 +64,7 @@ export function ClusterTypeConfiguration (props: ClusterTypesProps) {
                                             });
                                         }}
                                     >
-                                        Remove {`'${clusterType.name}'`}
+                                        Remove
                                     </Button>
                                 </Condition>
                             </SpaceBetween>
