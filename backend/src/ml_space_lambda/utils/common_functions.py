@@ -224,6 +224,7 @@ def generate_exception_response(e):
                 error in error_msg for error in errorType["MatchStrings"]
             ):
                 e = f"{errorType['FriendlyMessage']} Full message: {error_msg}"
+                break
 
         logger.exception(e)
     elif hasattr(e, "http_status_code"):
