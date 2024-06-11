@@ -114,6 +114,8 @@ export function DynamicConfiguration () {
                     'Successfully updated configuration.',
                     'success'
                 );
+                // Increment the versionId so subsequent changes don't fail from "stale" config
+                setFields({ 'versionId': state.form.versionId + 1});
             }
         } else {
             scrollToInvalid();
