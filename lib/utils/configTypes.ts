@@ -71,7 +71,8 @@ import {
     WEBSITE_BUCKET_NAME,
     SYSTEM_BANNER_BACKGROUND_COLOR,
     SYSTEM_BANNER_TEXT,
-    SYSTEM_BANNER_TEXT_COLOR
+    SYSTEM_BANNER_TEXT_COLOR,
+    SYSTEM_ROLE_ARN,
 } from '../constants';
 import * as fs from 'fs';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -123,6 +124,7 @@ export type MLSpaceConfig = {
     NEW_USERS_SUSPENDED: boolean,
     LAMBDA_ARCHITECTURE: Architecture,
     LAMBDA_RUNTIME: Runtime,
+    SYSTEM_ROLE_ARN: string,
     //Properties that can optionally be set in config.json
     AWS_ACCOUNT: string,
     AWS_REGION: string,
@@ -201,6 +203,7 @@ export function generateConfig () {
         RESOURCE_TERMINATION_INTERVAL: RESOURCE_TERMINATION_INTERVAL,
         LAMBDA_ARCHITECTURE: LAMBDA_ARCHITECTURE,
         LAMBDA_RUNTIME: LAMBDA_RUNTIME,
+        SYSTEM_ROLE_ARN: SYSTEM_ROLE_ARN,
         //Properties that are prompted for in the config-helper wizard
         AWS_ACCOUNT: AWS_ACCOUNT,
         AWS_REGION: AWS_REGION,
