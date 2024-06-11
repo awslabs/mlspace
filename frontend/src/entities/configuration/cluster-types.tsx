@@ -101,7 +101,7 @@ function ClusterTypeField (props: ClusterTypeProps) {
             <FormField 
                 label='Name' 
                 errorText={formErrors?.name} 
-                description='The name used to describe this cluster. Ex: "Small", "Medium GPU", "Large Compute Optimized".'
+                description='The cluster types name is visible to users. Ex: “Small,” “Medium GPU,” or “Large Compute Optimized.”'
             >
                 <Input
                     value={item.name}

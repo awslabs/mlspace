@@ -35,7 +35,8 @@ export function ConfigurationHistoryTable () {
 
     useMemo(() => {
         dispatch(listConfigurations({configScope: 'global', numVersions: 10}));
-    }, [dispatch]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch, applicationConfig]);
 
     const columnDefinition = [
         {
