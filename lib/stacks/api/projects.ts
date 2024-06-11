@@ -220,11 +220,12 @@ export class ProjectsApiStack extends Stack {
         ];
 
         apis.forEach((f) => {
+            const system_permissions = ['remove_user', 'update', 'delete'];
             registerAPIEndpoint(
                 this,
                 restApi,
                 props.authorizer,
-                props.applicationRole,
+                system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],

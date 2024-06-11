@@ -397,8 +397,19 @@ class AppConfigurationDAO(DynamoDBObjectStore):
     # Currently only used to update the initial app config (versionId=0)
     def update(self, config: dict) -> None:
         json_key = {"configScope": "global", "versionId": 0}
-        update_exp = "SET configuration = :config"
-        exp_values = json.loads(dynamodb_json.dumps({":config": config}))
+        update_exp = (
+            "SET configuration = :config, changedBy = :changedBy, changeReason = :changeReason, createdAt = :createdAt"
+        )
+        exp_values = json.loads(
+            dynamodb_json.dumps(
+                {
+                    ":changedBy": config["changedBy"],
+                    ":changeReason": config["changeReason"],
+                    ":createdAt": config["createdAt"],
+                    ":config": config["configuration"],
+                }
+            )
+        )
         self._update(
             json_key=json_key,
             update_expression=update_exp,

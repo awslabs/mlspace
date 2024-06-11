@@ -75,6 +75,7 @@ export const ADDITIONAL_LAMBDA_ENVIRONMENT_VARS: { [key: string]: string } = {};
  */
 export const NOTEBOOK_ROLE_ARN = '';
 export const APP_ROLE_ARN = '';
+export const SYSTEM_ROLE_ARN = '';
 
 /* EMR Configuration */
 // Role that will be used as the "ServiceRole" for all EMR clusters
@@ -106,6 +107,12 @@ export const ENABLE_GROUNDTRUTH = true;
 
 // The default name for the application
 export const APPLICATION_NAME = 'MLSpace';
+
+// Policy names attached to NOTEBOOK_ROLE_ARN that restricts instance types that a notebook
+// can use for each service
+export const ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN = '';
+// Training / HPO / Transform
+export const JOB_INSTANCE_CONSTRAINT_POLICY_ARN = '';
 
 /* Web app properties */
 export const IDP_ENDPOINT_SSM_PARAM = '';

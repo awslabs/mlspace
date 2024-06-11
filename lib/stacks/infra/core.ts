@@ -39,7 +39,7 @@ import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
 import { MLSpaceConfig } from '../../utils/configTypes';
-import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { AwsCustomResource, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { generateAppConfig } from '../../utils/initialAppConfig';
 
 export type CoreStackProps = {
@@ -432,7 +432,7 @@ export class CoreStack extends Stack {
         });
 
         // App Configuration Table
-        const appConfigTable = new Table(this, 'mlspace-ddb-app-configuration', {
+        new Table(this, 'mlspace-ddb-app-configuration', {
             tableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
             partitionKey: { name: 'configScope', type: AttributeType.STRING },
             sortKey: { name: 'versionId', type: AttributeType.NUMBER },
@@ -451,32 +451,20 @@ export class CoreStack extends Stack {
                 },
                 physicalResourceId: PhysicalResourceId.of('initAppConfigData'),
             },
-            policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: [appConfigTable.tableArn] }),
+            role: props.mlSpaceAppRole
         });
 
-        new AwsCustomResource(this, 'populate-instance-types', {
+        new AwsCustomResource(this, 'populate-allowed-instance-types', {
             onCreate: {
                 service: 'Lambda',
                 action: 'invoke',
-                physicalResourceId: PhysicalResourceId.of('initInstanceTypes'),
+                physicalResourceId: PhysicalResourceId.of('initAllowedInstanceTypes'),
                 parameters: {
                     FunctionName: appConfigLambda.functionName,
                     Payload: '{}'
                 }, 
             },
-            policy: AwsCustomResourcePolicy.fromStatements([
-                //Lambda functions must have their policy statement created explicitly, cannot use 'fromSdkCalls'
-                new PolicyStatement({
-                    effect: Effect.ALLOW,
-                    actions: ['lambda:InvokeFunction'],
-                    resources: [appConfigLambda.functionArn],
-                }),
-                new PolicyStatement({
-                    effect: Effect.ALLOW,
-                    actions: ['dynamodb:PutItem'],
-                    resources: [appConfigTable.tableArn],
-                }),
-            ])
+            role: props.mlSpaceAppRole
         });
 
         // EMR Security Configuration
