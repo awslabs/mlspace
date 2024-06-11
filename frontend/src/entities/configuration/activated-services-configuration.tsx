@@ -16,9 +16,13 @@
 
 import {
     Alert,
-    Container, ContentLayout, Grid,
-    Header, SpaceBetween,
-    Toggle
+    Container,
+    ContentLayout,
+    Grid,
+    Header,
+    SpaceBetween,
+    Toggle,
+    Box
 } from '@cloudscape-design/components';
 import React from 'react';
 
@@ -54,8 +58,8 @@ export function ActivatedServicesConfiguration (props: ActivatedServicesConfigur
                         <Grid gridDefinition={Object.keys(configurableServices).map(() => ({colspan: 3}))}>
                             {Object.keys(configurableServices).map((service) => {
                                 return (
-                                    <div style={{display: 'grid', textAlign: 'center'}}>
-                                        <div style={{display: 'grid', justifyContent: 'center'}}>
+                                    <Box textAlign='center'>
+                                        <SpaceBetween alignItems='center' size='xs'>
                                             <Toggle
                                                 onChange={({detail}) => {
                                                     const updatedField = {};
@@ -65,9 +69,9 @@ export function ActivatedServicesConfiguration (props: ActivatedServicesConfigur
                                                 checked={props.enabledServices[service]}
                                             >
                                             </Toggle>
-                                        </div>
+                                        </SpaceBetween>
                                         <p>{configurableServices[service]}</p>
-                                    </div>
+                                    </Box>
                                 );
                             })}
                         </Grid>

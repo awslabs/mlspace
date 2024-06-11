@@ -21,7 +21,8 @@ import {
     Header,
     Input,
     SpaceBetween,
-    Toggle
+    Toggle,
+    Box
 } from '@cloudscape-design/components';
 import React from 'react';
 
@@ -44,8 +45,8 @@ export function SystemBannerConfiguration (props: SystemBannerConfigurationProps
             }>
             <SpaceBetween direction='vertical' size='l'>
                 <Grid gridDefinition={[{colspan: 4}, {colspan: 4}, {colspan: 4}]}>
-                    <div style={{display: 'grid', textAlign: 'center'}}>
-                        <div style={{display: 'grid', justifyContent: 'center'}}>
+                    <Box textAlign='center'>
+                        <SpaceBetween alignItems='center' size='xs'>
                             <Toggle
                                 onChange={({detail}) => {
                                     props.setFields({'configuration.SystemBanner.isEnabled': detail.checked});
@@ -53,12 +54,12 @@ export function SystemBannerConfiguration (props: SystemBannerConfigurationProps
                                 checked={props.isEnabled!}
                             >
                             </Toggle>
-                        </div>
+                        </SpaceBetween>
                         <p>Activate System Banner</p>
-                    </div>
+                    </Box>
                     <FormField>
-                        <div style={{display: 'grid', textAlign: 'center'}}>
-                            <div style={{display: 'grid', justifyContent: 'center'}}>
+                        <Box textAlign='center'>
+                            <SpaceBetween alignItems='center' size='xs'>
                                 <input
                                     type='color'
                                     onInput={(event) =>
@@ -72,13 +73,13 @@ export function SystemBannerConfiguration (props: SystemBannerConfigurationProps
                                         padding: '3px'
                                     }}
                                 />
-                            </div>
+                            </SpaceBetween>
                             <p>Text Color</p>
-                        </div>
+                        </Box>
                     </FormField>
                     <FormField>
-                        <div style={{display: 'grid', textAlign: 'center'}}>
-                            <div style={{display: 'grid', justifyContent: 'center'}}>
+                        <Box textAlign='center'>
+                            <SpaceBetween alignItems='center' size='xs'>
                                 <input
                                     type='color'
                                     onInput={(event) =>
@@ -92,9 +93,9 @@ export function SystemBannerConfiguration (props: SystemBannerConfigurationProps
                                         padding: '3px'
                                     }}
                                 />
-                            </div>
+                            </SpaceBetween>
                             <p>Background Color</p>
-                        </div>
+                        </Box>
                     </FormField>
                 </Grid>
                 <FormField

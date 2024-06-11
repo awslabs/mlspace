@@ -68,7 +68,6 @@ export function ConfigurationImportModal (props: ConfigurationImportModalProps) 
                 <SpaceBetween direction='vertical' size='s'>
                     <FileUpload
                         onChange={({ detail }) => {
-                            props.setSelectedFile([]); // ensure there's never more than one file
                             props.setSelectedFile(detail.value);
                         }}
                         value={props.selectedFile}

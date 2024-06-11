@@ -19,6 +19,7 @@ import {
     Container,
     Button,
     ButtonDropdown,
+    Grid
 } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -28,7 +29,6 @@ import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
 import { z } from 'zod';
 import NotificationService from '../../shared/layout/notification/notification.service';
 import { listEMRApplications } from '../emr/emr.reducer';
-import _ from 'lodash';
 import { ConfigurationImportModal } from './configuration-import-modal';
 import  SystemBannerConfiguration  from './system-banner-configuration';
 import ProjectCreationConfiguration from './project-creation-configuration';
@@ -152,43 +152,6 @@ export function DynamicConfiguration () {
         }
     };
 
-
-    const isObject = (x) => typeof x === 'object' && !Array.isArray(x) && x !== null;
-
-    /**
-     * Computes the difference between two JSON objects, recursively.
-     *
-     * This function takes two JSON objects as input and returns a new object that
-     * contains the differences between the two. Works with nested objects.
-     *
-     * @param {object} [obj1={}] - The first JSON object to compare.
-     * @param {object} [obj2={}] - The second JSON object to compare.
-     * @returns {object} - A new object containing the differences between the two input objects.
-     */
-    function getJsonDifference (obj1 = {}, obj2 = {}) {
-        const output = {},
-            merged = { ...obj1, ...obj2 }; // has properties of both
-
-        for (const key in merged) {
-            const value1 = obj1[key], value2 = obj2[key];
-
-            if (isObject(value1) || isObject(value2)) {
-                const value = getJsonDifference(value1, value2); // recursively call
-                if (Object.keys(value).length !== 0) {
-                    output[key] = value;
-                }
-
-            } else {
-                if (!_.isEqual(value1, value2)) {
-                    output[key] = value2;
-                }
-            }
-        }
-        return output;
-    }
-
-    const changesDiff = getJsonDifference(applicationConfig.configuration, state.form.configuration);
-
     return (
         <>
             <ConfigurationImportModal
@@ -202,19 +165,19 @@ export function DynamicConfiguration () {
                 setVisible={setModalVisible}
                 setFields={setFields}
                 isSubmitting={state.formSubmitting}
-                difference={changesDiff}
-                changeReason={state.form.changeReason}
+                appConfiguration={applicationConfig.configuration}
+                inMemoryConfiguration={state.form.configuration}
                 submit={handleSubmit} />
             <Container
                 header={
-                    <div  style={{width: '100%', display: 'flex'}}>
+                    <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
                         <Header
                             variant='h2'
                             description={`Manage ${window.env.APPLICATION_NAME}'s configuration below. These settings apply across the application.`}
                         >
                             {window.env.APPLICATION_NAME} Dynamic Configuration
                         </Header>
-                        <div style={{display: 'inline-block', width: '140px'}}>
+                        <SpaceBetween direction='vertical' alignItems='end' size='m'>
                             <ButtonDropdown
                                 items={[
                                     { text: 'Import Configuration', id: 'import-config' },
@@ -233,8 +196,8 @@ export function DynamicConfiguration () {
                             >
                                     Actions
                             </ButtonDropdown>
-                        </div>
-                    </div>
+                        </SpaceBetween>
+                    </Grid>
                 }
             >
                 <SpaceBetween direction='vertical' size='xl'>
@@ -276,12 +239,11 @@ export function DynamicConfiguration () {
                         text={state.form.configuration.SystemBanner.text}
                         backgroundColor={state.form.configuration.SystemBanner.backgroundColor}
                         textColor={state.form.configuration.SystemBanner.textColor} />
-                    <div style={{width: '100%', justifyContent: 'right', display: 'flex'}}>
+                    <SpaceBetween alignItems='end' direction='vertical'>
                         <Button
                             iconAlt='Update dynamic configuration'
                             variant='primary'
                             onClick={() => {
-                                setFields({ 'changeReason': `Changes to: ${Object.keys(changesDiff)}` });
                                 setModalVisible(true);
                             }}
                             loading={state.formSubmitting}
@@ -290,7 +252,7 @@ export function DynamicConfiguration () {
                         >
                         Save Changes
                         </Button>
-                    </div>
+                    </SpaceBetween>
                 </SpaceBetween>
             </Container>
         </>

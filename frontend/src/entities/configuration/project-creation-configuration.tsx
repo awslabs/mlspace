@@ -18,7 +18,9 @@ import {
     Container,
     Header,
     Toggle,
-    Grid
+    Grid,
+    Box,
+    SpaceBetween
 } from '@cloudscape-design/components';
 import React from 'react';
 
@@ -38,8 +40,8 @@ export function ProjectCreationConfiguration (props: ProjectCreationConfiguratio
                 </Header>
             }>
             <Grid gridDefinition={[{ colspan: 2 }]}>
-                <div style={{display: 'grid', textAlign: 'center'}}>
-                    <div style={{display: 'grid', justifyContent: 'center'}}>
+                <Box textAlign='center'>
+                    <SpaceBetween alignItems='center' size='xs'>
                         <Toggle
                             onChange={({detail}) => {
                                 props.setFields({'configuration.ProjectCreation.isAdminOnly': detail.checked});
@@ -47,9 +49,9 @@ export function ProjectCreationConfiguration (props: ProjectCreationConfiguratio
                             checked={props.isAdminOnly}
                         >
                         </Toggle>
-                    </div>
+                    </SpaceBetween>
                     <p>Admin Only</p>
-                </div>
+                </Box>
             </Grid>
         </Container>
     );

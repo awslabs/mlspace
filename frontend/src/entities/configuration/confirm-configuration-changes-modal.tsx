@@ -25,7 +25,7 @@ import {
     Input,
     Modal
 } from '@cloudscape-design/components';
-import React from 'react';
+import React, {useEffect} from 'react';
 import _ from 'lodash';
 
 export type ConfirmConfigurationChangesModalProps = {
@@ -33,14 +33,12 @@ export type ConfirmConfigurationChangesModalProps = {
     setVisible: (boolean) => void;
     setFields: (SetFieldsFunction) => void;
     isSubmitting: boolean;
-    difference: {object};
-    changeReason: string;
     submit: () => void;
+    appConfiguration: {object};
+    inMemoryConfiguration: {object};
 };
 
 export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationChangesModalProps) {
-    const isObject = (x) => typeof x === 'object' && !Array.isArray(x) && x !== null;
-
     /**
      * Converts a JSON object into an outline structure represented as React nodes.
      *
@@ -54,13 +52,51 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
             const value = json[key];
             output.push((<li><p><strong>{key}</strong></p></li>));
 
-            if (isObject(value)) {
+            if (_.isPlainObject(value)) {
                 const recursiveJson = jsonToOutline(value); // recursively call
                 output.push((recursiveJson));
             }
         }
         return <ul>{output}</ul>;
     }
+
+    /**
+     * Computes the difference between two JSON objects, recursively.
+     *
+     * This function takes two JSON objects as input and returns a new object that
+     * contains the differences between the two. Works with nested objects.
+     *
+     * @param {object} [obj1={}] - The first JSON object to compare.
+     * @param {object} [obj2={}] - The second JSON object to compare.
+     * @returns {object} - A new object containing the differences between the two input objects.
+     */
+    function getJsonDifference (obj1 = {}, obj2 = {}) {
+        const output = {},
+            merged = { ...obj1, ...obj2 }; // has properties of both
+
+        for (const key in merged) {
+            const value1 = obj1[key], value2 = obj2[key];
+
+            if (_.isPlainObject(value1) || _.isPlainObject(value2)) {
+                const value = getJsonDifference(value1, value2); // recursively call
+                if (Object.keys(value).length !== 0) {
+                    output[key] = value;
+                }
+
+            } else {
+                if (!_.isEqual(value1, value2)) {
+                    output[key] = value2;
+                }
+            }
+        }
+        return output;
+    }
+
+    const changesDiff = getJsonDifference(props.appConfiguration, props.inMemoryConfiguration);
+
+    useEffect(() => {
+        props.setFields({ 'changeReason': `Changes to: ${Object.keys(changesDiff)}` });
+    }, [changesDiff, props]);
 
     return (
         <Modal
@@ -74,7 +110,7 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
                         <Button
                             variant='primary'
                             loading={props.isSubmitting}
-                            disabled={_.isEmpty(props.difference)}
+                            disabled={_.isEmpty(changesDiff)}
                             onClick={async () => {
                                 await props.submit();
                                 props.setVisible(false);
@@ -87,7 +123,7 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
             <SpaceBetween size={'s'}>
                 <Container>
                     <TextContent>
-                        {_.isEmpty(props.difference) ? <p>No changes detected</p> : jsonToOutline(props.difference)}
+                        {_.isEmpty(changesDiff) ? <p>No changes detected</p> : jsonToOutline(changesDiff)}
                     </TextContent>
                 </Container>
 
@@ -96,11 +132,11 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
                     label='Change reason'
                 >
                     <Input
-                        value={props.changeReason}
+                        value={`Changes to: ${Object.keys(changesDiff)}`}
                         onChange={(event) => {
                             props.setFields({ 'changeReason': event.detail.value });
                         }}
-                        disabled={_.isEmpty(props.difference)}
+                        disabled={_.isEmpty(changesDiff)}
                     />
                 </FormField>
             </SpaceBetween>
