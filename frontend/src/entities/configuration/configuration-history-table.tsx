@@ -35,8 +35,8 @@ export function ConfigurationHistoryTable () {
     });
 
     useMemo(() => {
-        dispatch(listConfigurations({configScope: 'global', numVersions: 999999}));
-    }, [dispatch]);
+        dispatch(listConfigurations({configScope: 'global', numVersions: applicationConfig.versionId + 1}));
+    }, [applicationConfig.versionId, dispatch]);
 
     const columnDefinition = [
         {
