@@ -194,6 +194,7 @@ apiStacks.forEach((stack) => {
     stack.addDependency(iamStack);
     stack.addDependency(vpcStack);
     apiDeploymentStack.addDependency(stack);
+    
     if (isIso) {
         Aspects.of(stack).add(new ADCLambdaCABundleAspect());
     }
