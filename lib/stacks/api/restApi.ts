@@ -29,7 +29,7 @@ import {
     StageOptions,
 } from 'aws-cdk-lib/aws-apigateway';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
-import { IRole, Role } from 'aws-cdk-lib/aws-iam';
+import { IManagedPolicy, IRole, Role } from 'aws-cdk-lib/aws-iam';
 import { Code, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { LogGroup } from 'aws-cdk-lib/aws-logs';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
@@ -48,6 +48,8 @@ export type ApiStackProperties = {
     readonly applicationRole: IRole;
     readonly systemRole: IRole;
     readonly notebookInstanceRole: IRole;
+    readonly endpointConfigInstanceConstraintPolicy?: IManagedPolicy,
+    readonly jobInstanceConstraintPolicy?: IManagedPolicy,
     readonly configBucketName: string;
     readonly notebookParamFileKey: string;
     readonly deploymentEnvironmentName: string;

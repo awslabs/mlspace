@@ -18,6 +18,7 @@ import json
 import logging
 import time
 
+from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
 from ml_space_lambda.utils.common_functions import api_wrapper
 
@@ -32,6 +33,7 @@ def update_configuration(event, context):
     version_id = request["versionId"] + 1  # increment so this will be the latest version
 
     new_configuration = SettingsModel.from_dict(request["configuration"])
+    update_instance_constraint_policies(new_configuration.enabled_instance_types, context)
 
     app_configuration = AppConfigurationModel(
         configScope=configScope,

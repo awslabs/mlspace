@@ -50,6 +50,8 @@ export class IAMStack extends Stack {
     public mlSpacePermissionsBoundary?: IManagedPolicy;
     public emrServiceRoleName: string;
     public emrEC2RoleName: string;
+    public mlspaceEndpointConfigInstanceConstraintPolicy?: IManagedPolicy;
+    public mlspaceJobInstanceConstraintPolicy?: IManagedPolicy;
     public mlSpaceSystemRole: IRole;
 
     constructor (parent: App, name: string, props: IAMStackProp) {
@@ -83,6 +85,10 @@ export class IAMStack extends Stack {
         const privateSubnetArnList = props.mlSpaceVPC.privateSubnets.map(
             (s) => `${ec2ArnBase}:subnet/${s.subnetId}`
         );
+
+        const invertedBooleanConditions = (conditions: {[key: string]: string}) => Object.fromEntries(Object.entries(conditions).map(([key, value]) => {
+            return [key, value === 'true' ? 'false' : 'true'];
+        }));
 
         /**
          * NOTEBOOK POLICY & ROLE SECTION
@@ -196,15 +202,15 @@ export class IAMStack extends Stack {
                 }),
                 // Endpoint Configuration Permissions
                 new PolicyStatement({
-                    effect: Effect.ALLOW,
+                    effect: Effect.DENY,
                     actions: ['sagemaker:CreateEndpointConfig'],
                     resources: [
                         `arn:${partition}:sagemaker:${region}:${this.account}:endpoint-config/*`,
                     ],
                     conditions: {
                         Null: {
-                            'sagemaker:VolumeKmsKey': 'false',
-                            ...requestTagsConditions,
+                            'sagemaker:VolumeKmsKey': 'true',
+                            ...invertedBooleanConditions(requestTagsConditions),
                         },
                     },
                 }),
@@ -212,7 +218,7 @@ export class IAMStack extends Stack {
                 new PolicyStatement({
                     effect: Effect.ALLOW,
                     actions: ['sagemaker:CreateModel'],
-                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
+                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:model/*`],
                     conditions: {
                         Null: {
                             'sagemaker:VpcSecurityGroupIds': 'false',
@@ -223,32 +229,35 @@ export class IAMStack extends Stack {
                 }),
                 // HPO Permissions
                 new PolicyStatement({
-                    effect: Effect.ALLOW,
+                    effect: Effect.DENY,
                     actions: [
                         'sagemaker:CreateHyperParameterTuningJob',
                         'sagemaker:CreateTrainingJob',
                     ],
-                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
+                    resources: [
+                        `arn:${partition}:sagemaker:${region}:${this.account}:training-job/*`,
+                        `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-training-job/*`
+                    ],
                     conditions: {
                         Null: {
-                            'sagemaker:VpcSecurityGroupIds': 'false',
-                            'sagemaker:VpcSubnets': 'false',
-                            'sagemaker:VolumeKmsKey': 'false',
-                            ...requestTagsConditions,
+                            'sagemaker:VpcSecurityGroupIds': 'true',
+                            'sagemaker:VpcSubnets': 'true',
+                            'sagemaker:VolumeKmsKey': 'true',
+                            ...invertedBooleanConditions(requestTagsConditions),
                         },
                     },
                 }),
                 // Transform Permissions
                 new PolicyStatement({
-                    effect: Effect.ALLOW,
+                    effect: Effect.DENY,
                     actions: ['sagemaker:CreateTransformJob'],
                     resources: [
                         `arn:${partition}:sagemaker:${region}:${this.account}:transform-job/*`,
                     ],
                     conditions: {
                         Null: {
-                            'sagemaker:VolumeKmsKey': 'false',
-                            ...requestTagsConditions,
+                            'sagemaker:VolumeKmsKey': 'true',
+                            ...invertedBooleanConditions(requestTagsConditions),
                         },
                     },
                 }),
@@ -397,10 +406,69 @@ export class IAMStack extends Stack {
             return statements;
         };
 
+        /*
+         * WARNING: Changing this method will cause any policy statement created by this to be regenerated. This will cause
+         * any changes to this policy (like dynamic policy updates for app configuration changes) to be lost until the app
+         * configuration is updated and it updates this policy with the expected values.
+         */
+        const instanceConstraintPolicyStatement = (partition: string, region: string, actionResourcePair: {[key: string]: string}) => {
+            const [actions, resources] = Object.entries(actionResourcePair).reduce(([actionAccumulator, resourcesAccumulator], [action, resource]) => {
+                return [[...actionAccumulator, `sagemaker:${action}`], [...resourcesAccumulator, `arn:${partition}:sagemaker:${region}:${this.account}:${resource}/*`]];
+            }, [[] as string[], [] as string[]]);
+
+            return [
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions,
+                    resources,
+                    conditions: {
+                        'ForAnyValue:StringEquals': {
+                            'sagemaker:InstanceTypes': [],
+                        },
+                    },
+                }),
+            ];
+        };
+
         const notebookPolicy = new ManagedPolicy(this, 'mlspace-notebook-policy', {
             statements: notebookPolicyStatements(this.partition, Aws.REGION),
             description: 'Enables general MLSpace actions in notebooks and across the entire application.'
         });
+        const notebookManagedPolicies: IManagedPolicy[] = [notebookPolicy];      
+
+        if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
+            if (props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN) {
+                this.mlspaceEndpointConfigInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-endpoint-config-instance-constraint', props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN);
+            } else {
+                /*
+                 * WARNING: @see instanceConstraintPolicyStatement
+                 */
+                this.mlspaceEndpointConfigInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-endpoint-config-instance-constraint', {
+                    managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-endpoint-instance-constraint`,
+                    statements: instanceConstraintPolicyStatement(this.partition, Aws.REGION, {CreateEndpointConfig: 'endpoint-config'})
+                });
+            }
+    
+            if (props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN) {
+                this.mlspaceJobInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-job-instance-constraint', props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN);
+            } else {
+                /*
+                 * WARNING: @see instanceConstraintPolicyStatement
+                 */
+                this.mlspaceJobInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-job-instance-constraint', {
+                    managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-job-instance-constraint`,
+                    statements: [
+                        instanceConstraintPolicyStatement(this.partition, Aws.REGION, {
+                            CreateHyperParameterTuningJob: 'hyper-parameter-tuning-job',
+                            CreateTrainingJob: 'training-job'
+                        })[0],
+                        instanceConstraintPolicyStatement(this.partition, Aws.REGION, {CreateTransformJob: 'transform-job'})[0]
+                    ]
+                });
+            }
+
+            notebookManagedPolicies.push(this.mlspaceEndpointConfigInstanceConstraintPolicy, this.mlspaceJobInstanceConstraintPolicy);
+        }
 
         // If roles are manually created use the existing role
         if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
@@ -409,7 +477,7 @@ export class IAMStack extends Stack {
                 'mlspace-notebook-role',
                 props.mlspaceConfig.NOTEBOOK_ROLE_ARN
             );
-        } else {
+        } else {    
             // If roles are managed by CDK, create the notebook role
             const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
             // Translate Permissions Principles
@@ -423,12 +491,11 @@ export class IAMStack extends Stack {
             this.mlSpaceNotebookRole = new Role(this, 'mlspace-notebook-role', {
                 roleName: mlSpaceNotebookRoleName,
                 assumedBy: notebookPolicyAllowPrinciples,
-                managedPolicies: [notebookPolicy],
+                managedPolicies: notebookManagedPolicies,
                 description:
                     'Allows SageMaker Notebooks within ML Space to access necessary AWS services (S3, SQS, DynamoDB, ...)',
             });
         }
-
 
         /**
          * PERMISSIONS BOUNDARY SECTION
