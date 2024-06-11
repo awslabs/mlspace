@@ -824,7 +824,8 @@ policy. From the IAM Service page click "Policies" on the left hand side.
         {
             "Action": [
                 "elasticmapreduce:RunJobFlow",
-                "elasticmapreduce:ListClusters"
+                "elasticmapreduce:ListClusters",
+                "elasticmapreduce:ListReleaseLabels"
             ],
             "Resource": "*",
             "Effect": "Allow"

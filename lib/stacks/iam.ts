@@ -50,6 +50,9 @@ export class IAMStack extends Stack {
     public mlSpacePermissionsBoundary?: IManagedPolicy;
     public emrServiceRoleName: string;
     public emrEC2RoleName: string;
+    public mlspaceEndpointConfigInstanceConstraintPolicy?: IManagedPolicy;
+    public mlspaceJobInstanceConstraintPolicy?: IManagedPolicy;
+    public mlSpaceSystemRole: IRole;
 
     constructor (parent: App, name: string, props: IAMStackProp) {
         super(parent, name, {
@@ -82,6 +85,10 @@ export class IAMStack extends Stack {
         const privateSubnetArnList = props.mlSpaceVPC.privateSubnets.map(
             (s) => `${ec2ArnBase}:subnet/${s.subnetId}`
         );
+
+        const invertedBooleanConditions = (conditions: {[key: string]: string}) => Object.fromEntries(Object.entries(conditions).map(([key, value]) => {
+            return [key, value === 'true' ? 'false' : 'true'];
+        }));
 
         /**
          * NOTEBOOK POLICY & ROLE SECTION
@@ -195,15 +202,15 @@ export class IAMStack extends Stack {
                 }),
                 // Endpoint Configuration Permissions
                 new PolicyStatement({
-                    effect: Effect.ALLOW,
+                    effect: Effect.DENY,
                     actions: ['sagemaker:CreateEndpointConfig'],
                     resources: [
                         `arn:${partition}:sagemaker:${region}:${this.account}:endpoint-config/*`,
                     ],
                     conditions: {
                         Null: {
-                            'sagemaker:VolumeKmsKey': 'false',
-                            ...requestTagsConditions,
+                            'sagemaker:VolumeKmsKey': 'true',
+                            ...invertedBooleanConditions(requestTagsConditions),
                         },
                     },
                 }),
@@ -211,7 +218,7 @@ export class IAMStack extends Stack {
                 new PolicyStatement({
                     effect: Effect.ALLOW,
                     actions: ['sagemaker:CreateModel'],
-                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
+                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:model/*`],
                     conditions: {
                         Null: {
                             'sagemaker:VpcSecurityGroupIds': 'false',
@@ -222,32 +229,35 @@ export class IAMStack extends Stack {
                 }),
                 // HPO Permissions
                 new PolicyStatement({
-                    effect: Effect.ALLOW,
+                    effect: Effect.DENY,
                     actions: [
                         'sagemaker:CreateHyperParameterTuningJob',
                         'sagemaker:CreateTrainingJob',
                     ],
-                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
+                    resources: [
+                        `arn:${partition}:sagemaker:${region}:${this.account}:training-job/*`,
+                        `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-training-job/*`
+                    ],
                     conditions: {
                         Null: {
-                            'sagemaker:VpcSecurityGroupIds': 'false',
-                            'sagemaker:VpcSubnets': 'false',
-                            'sagemaker:VolumeKmsKey': 'false',
-                            ...requestTagsConditions,
+                            'sagemaker:VpcSecurityGroupIds': 'true',
+                            'sagemaker:VpcSubnets': 'true',
+                            'sagemaker:VolumeKmsKey': 'true',
+                            ...invertedBooleanConditions(requestTagsConditions),
                         },
                     },
                 }),
                 // Transform Permissions
                 new PolicyStatement({
-                    effect: Effect.ALLOW,
+                    effect: Effect.DENY,
                     actions: ['sagemaker:CreateTransformJob'],
                     resources: [
                         `arn:${partition}:sagemaker:${region}:${this.account}:transform-job/*`,
                     ],
                     conditions: {
                         Null: {
-                            'sagemaker:VolumeKmsKey': 'false',
-                            ...requestTagsConditions,
+                            'sagemaker:VolumeKmsKey': 'true',
+                            ...invertedBooleanConditions(requestTagsConditions),
                         },
                     },
                 }),
@@ -396,10 +406,69 @@ export class IAMStack extends Stack {
             return statements;
         };
 
+        /*
+         * WARNING: Changing this method will cause any policy statement created by this to be regenerated. This will cause
+         * any changes to this policy (like dynamic policy updates for app configuration changes) to be lost until the app
+         * configuration is updated and it updates this policy with the expected values.
+         */
+        const instanceConstraintPolicyStatement = (partition: string, region: string, actionResourcePair: {[key: string]: string}) => {
+            const [actions, resources] = Object.entries(actionResourcePair).reduce(([actionAccumulator, resourcesAccumulator], [action, resource]) => {
+                return [[...actionAccumulator, `sagemaker:${action}`], [...resourcesAccumulator, `arn:${partition}:sagemaker:${region}:${this.account}:${resource}/*`]];
+            }, [[] as string[], [] as string[]]);
+
+            return [
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions,
+                    resources,
+                    conditions: {
+                        'ForAnyValue:StringEquals': {
+                            'sagemaker:InstanceTypes': [],
+                        },
+                    },
+                }),
+            ];
+        };
+
         const notebookPolicy = new ManagedPolicy(this, 'mlspace-notebook-policy', {
             statements: notebookPolicyStatements(this.partition, Aws.REGION),
             description: 'Enables general MLSpace actions in notebooks and across the entire application.'
         });
+        const notebookManagedPolicies: IManagedPolicy[] = [notebookPolicy];      
+
+        if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
+            if (props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN) {
+                this.mlspaceEndpointConfigInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-endpoint-config-instance-constraint', props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN);
+            } else {
+                /*
+                 * WARNING: @see instanceConstraintPolicyStatement
+                 */
+                this.mlspaceEndpointConfigInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-endpoint-config-instance-constraint', {
+                    managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-endpoint-instance-constraint`,
+                    statements: instanceConstraintPolicyStatement(this.partition, Aws.REGION, {CreateEndpointConfig: 'endpoint-config'})
+                });
+            }
+    
+            if (props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN) {
+                this.mlspaceJobInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-job-instance-constraint', props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN);
+            } else {
+                /*
+                 * WARNING: @see instanceConstraintPolicyStatement
+                 */
+                this.mlspaceJobInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-job-instance-constraint', {
+                    managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-job-instance-constraint`,
+                    statements: [
+                        instanceConstraintPolicyStatement(this.partition, Aws.REGION, {
+                            CreateHyperParameterTuningJob: 'hyper-parameter-tuning-job',
+                            CreateTrainingJob: 'training-job'
+                        })[0],
+                        instanceConstraintPolicyStatement(this.partition, Aws.REGION, {CreateTransformJob: 'transform-job'})[0]
+                    ]
+                });
+            }
+
+            notebookManagedPolicies.push(this.mlspaceEndpointConfigInstanceConstraintPolicy, this.mlspaceJobInstanceConstraintPolicy);
+        }
 
         // If roles are manually created use the existing role
         if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
@@ -408,7 +477,7 @@ export class IAMStack extends Stack {
                 'mlspace-notebook-role',
                 props.mlspaceConfig.NOTEBOOK_ROLE_ARN
             );
-        } else {
+        } else {    
             // If roles are managed by CDK, create the notebook role
             const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
             // Translate Permissions Principles
@@ -422,12 +491,11 @@ export class IAMStack extends Stack {
             this.mlSpaceNotebookRole = new Role(this, 'mlspace-notebook-role', {
                 roleName: mlSpaceNotebookRoleName,
                 assumedBy: notebookPolicyAllowPrinciples,
-                managedPolicies: [notebookPolicy],
+                managedPolicies: notebookManagedPolicies,
                 description:
                     'Allows SageMaker Notebooks within ML Space to access necessary AWS services (S3, SQS, DynamoDB, ...)',
             });
         }
-
 
         /**
          * PERMISSIONS BOUNDARY SECTION
@@ -529,237 +597,230 @@ export class IAMStack extends Stack {
          * - App Deny Services policy - Denies access to disabled services
          * - service-role/AWSLambdaVPCAccessExecutionRole - AWS managed role
          */
-        if (props.mlspaceConfig.APP_ROLE_ARN) {
-            this.mlSpaceAppRole = Role.fromRoleArn(this, 'mlspace-app-role', props.mlspaceConfig.APP_ROLE_ARN);
-        } else {
-            // ML Space Application role
-            const mlSpaceAppRoleName = 'mlspace-app-role';
-
-            const appPolicy = new ManagedPolicy(this, 'mlspace-app-policy', {
-                statements: [
-                    // General Permissions - Additional KMS permission unique to the app role to retire grants
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['kms:RetireGrant'],
-                        resources: [props.encryptionKey.keyArn],
-                    }),
-                    /**
-                     * General Permissions
-                     * Additional permissions necessary to display logs for the various SageMaker
-                     * resources, EMR clusters, and other entities via the logs lambda.
-                     */
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['logs:FilterLogEvents'],
-                        resources: ['*'],
-                    }),
-                    // General Permissions
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['iam:PassRole', 'iam:ListRoleTags'],
-                        resources: [
-                            /**
-                             * When this stack is folded back into the IAM stack we need to switch
-                             * these to be dynamic. At the moment though we have a weird dependency
-                             * order with the two stacks being split.
-                             */
-                            `arn:${this.partition}:iam::${this.account}:role/EMR_DefaultRole`,
-                            `arn:${this.partition}:iam::${this.account}:role/EMR_EC2_DefaultRole`,
-                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceAppRoleName}`,
-                        ],
-                    }),
-                    // General Permissions - DynamoDB permissions
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: [
-                            'dynamodb:GetItem',
-                            'dynamodb:PutItem',
-                            'dynamodb:Scan',
-                            'dynamodb:DeleteItem',
-                            'dynamodb:Query',
-                            'dynamodb:UpdateItem',
-                        ],
-                        resources: [
-                            `arn:${this.partition}:dynamodb:${Aws.REGION}:${this.account}:table/mlspace-*`,
-                        ],
-                    }),
-                    /**
-                     * EMR Permissions
-                     * EMR specific permission to allow communication between notebook instances and
-                     * EMR clusters
-                     */
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['ec2:AuthorizeSecurityGroupIngress'],
-                        resources: [`${ec2ArnBase}:security-group/*`],
-                    }),
-                    /**
-                     * Various Permissions
-                     * 
-                     * Additional EC2 permissions required for the application role. Most of the
-                     * permissions are covered in the attached mlspace-notebook-policy policy. This
-                     * block includes some additional permissions are required for EMR functionality as
-                     * well as generic metadata operations needed by notebooks.
-                     */
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: [
-                            // EMR Permissions
-                            'ec2:DescribeInstances',
-                            'ec2:DescribeRouteTables',
-                            /**
-                             * General Permissions
-                             * EC2 permission necessary to list available instance types for endpoints,
-                             * notebooks, training jobs, and others
-                             */
-                            'ec2:DescribeInstanceTypeOfferings',
-                            /**
-                             * Notebook Permissions
-                             * Additional EC2 permission needed to start/stop/delete SageMaker Notebook
-                             * Instances (see StartNotebookInstance section for additional details
-                             * https://docs.aws.amazon.com/sagemaker/latest/dg/api-permissions-reference.html)
-                             */
-                            'ec2:DescribeVpcEndpoints',
-                        ],
-                        resources: ['*'],
-                    }),
-                    /**
-                     * General Permissions
-                     * S3 permissions related to CRUD operations for datasets, as well as SageMaker job
-                     * input/output, reading of static web app content, notebook and emr cluster
-                     * configuration and sample notebooks/data.
-                     */
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: [
-                            's3:List*',
-                            's3:Get*',
-                            's3:PutObject',
-                            's3:PutObjectTagging',
-                            's3:DeleteObject',
-                            's3:PutBucketNotification',
-                        ],
-                        resources: [`arn:${this.partition}:s3:::*`],
-                    }),
-                    /**
-                     * Notebook Permissions
-                     * Additional SageMaker permissions that the application role uses that the default
-                     * notebook policy does not support - primarily the ability to create Notebook
-                     * Instances and actions related to those notebooks.
-                     */
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['sagemaker:CreateNotebookInstance'],
-                        resources: [
-                            `arn:${this.partition}:sagemaker:${Aws.REGION}:${this.account}:notebook-instance/*`,
-                        ],
-                        conditions: {
-                            StringEquals: {
-                                'sagemaker:DirectInternetAccess': 'Disabled',
-                                'sagemaker:RootAccess': 'Disabled',
-                            },
-                            Null: {
-                                'sagemaker:VpcSecurityGroupIds': 'false',
-                                'sagemaker:VpcSubnets': 'false',
-                                'sagemaker:VolumeKmsKey': 'false',
-                                ...requestTagsConditions,
-                            },
+        const appPolicyAndStatements = (partition: string, region: string, roleName: string) => {
+            const statements = [
+                // General Permissions - Additional KMS permission unique to the app role to retire grants
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['kms:RetireGrant'],
+                    resources: [props.encryptionKey.keyArn],
+                }),
+                /**
+                 * General Permissions
+                 * Additional permissions necessary to display logs for the various SageMaker
+                 * resources, EMR clusters, and other entities via the logs lambda.
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['logs:FilterLogEvents'],
+                    resources: ['*'],
+                }),
+                // General Permissions
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['iam:PassRole', 'iam:ListRoleTags'],
+                    resources: [
+                        /**
+                         * When this stack is folded back into the IAM stack we need to switch
+                         * these to be dynamic. At the moment though we have a weird dependency
+                         * order with the two stacks being split.
+                         */
+                        `arn:${this.partition}:iam::${this.account}:role/EMR_DefaultRole`,
+                        `arn:${this.partition}:iam::${this.account}:role/EMR_EC2_DefaultRole`,
+                        `arn:${this.partition}:iam::${this.account}:role/${roleName}`,
+                    ],
+                }),
+                // General Permissions - DynamoDB permissions
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        'dynamodb:GetItem',
+                        'dynamodb:PutItem',
+                        'dynamodb:Scan',
+                        'dynamodb:DeleteItem',
+                        'dynamodb:Query',
+                        'dynamodb:UpdateItem',
+                    ],
+                    resources: [
+                        `arn:${this.partition}:dynamodb:${Aws.REGION}:${this.account}:table/mlspace-*`,
+                    ],
+                }),
+                /**
+                 * EMR Permissions
+                 * EMR specific permission to allow communication between notebook instances and
+                 * EMR clusters
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['ec2:AuthorizeSecurityGroupIngress'],
+                    resources: [`${ec2ArnBase}:security-group/*`],
+                }),
+                /**
+                 * Various Permissions
+                 * 
+                 * Additional EC2 permissions required for the application role. Most of the
+                 * permissions are covered in the attached mlspace-notebook-policy policy. This
+                 * block includes some additional permissions are required for EMR functionality as
+                 * well as generic metadata operations needed by notebooks.
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        // EMR Permissions
+                        'ec2:DescribeInstances',
+                        'ec2:DescribeRouteTables',
+                        /**
+                         * General Permissions
+                         * EC2 permission necessary to list available instance types for endpoints,
+                         * notebooks, training jobs, and others
+                         */
+                        'ec2:DescribeInstanceTypeOfferings',
+                        /**
+                         * Notebook Permissions
+                         * Additional EC2 permission needed to start/stop/delete SageMaker Notebook
+                         * Instances (see StartNotebookInstance section for additional details
+                         * https://docs.aws.amazon.com/sagemaker/latest/dg/api-permissions-reference.html)
+                         */
+                        'ec2:DescribeVpcEndpoints',
+                    ],
+                    resources: ['*'],
+                }),
+                /**
+                 * General Permissions
+                 * S3 permissions related to CRUD operations for datasets, as well as SageMaker job
+                 * input/output, reading of static web app content, notebook and emr cluster
+                 * configuration and sample notebooks/data.
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        's3:List*',
+                        's3:Get*',
+                        's3:PutObject',
+                        's3:PutObjectTagging',
+                        's3:DeleteObject',
+                        's3:PutBucketNotification',
+                    ],
+                    resources: [`arn:${this.partition}:s3:::*`],
+                }),
+                /**
+                 * Notebook Permissions
+                 * Additional SageMaker permissions that the application role uses that the default
+                 * notebook policy does not support - primarily the ability to create Notebook
+                 * Instances and actions related to those notebooks.
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['sagemaker:CreateNotebookInstance'],
+                    resources: [
+                        `arn:${this.partition}:sagemaker:${Aws.REGION}:${this.account}:notebook-instance/*`,
+                    ],
+                    conditions: {
+                        StringEquals: {
+                            'sagemaker:DirectInternetAccess': 'Disabled',
+                            'sagemaker:RootAccess': 'Disabled',
                         },
-                    }),
-                    // Notebook Permissions
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: [
-                            'sagemaker:CreateNotebookInstanceLifecycleConfig',
-                            'sagemaker:UpdateNotebookInstanceLifecycleConfig',
-                            'sagemaker:DeleteNotebookInstanceLifecycleConfig',
-                            'sagemaker:DescribeNotebookInstanceLifecycleConfig',
-                        ],
-                        resources: [
-                            `arn:${this.partition}:sagemaker:${Aws.REGION}:${this.account}:notebook-instance-lifecycle-config/*`,
-                        ],
-                    }),
-                    // Notebook Permissions
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: [
-                            'sagemaker:DeleteNotebookInstance',
-                            'sagemaker:DescribeNotebookInstance',
-                            'sagemaker:StartNotebookInstance',
-                            'sagemaker:StopNotebookInstance',
-                            'sagemaker:UpdateNotebookInstance',
-                        ],
-                        resources: [
-                            `arn:${this.partition}:sagemaker:${Aws.REGION}:${this.account}:notebook-instance/*`,
-                        ],
-                        conditions: {
-                            Null: {
-                                ...resourceTagsConditions,
-                            },
+                        Null: {
+                            'sagemaker:VpcSecurityGroupIds': 'false',
+                            'sagemaker:VpcSubnets': 'false',
+                            'sagemaker:VolumeKmsKey': 'false',
+                            ...requestTagsConditions,
                         },
-                    }),
-                    /**
-                     * Notebook Permissions
-                     * Must be separate from above due to resource tag conditions not applying
-                     */
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['sagemaker:CreatePresignedNotebookInstanceUrl'],
-                        resources: [
-                            `arn:${this.partition}:sagemaker:${Aws.REGION}:${this.account}:notebook-instance/*`,
-                        ],
-                    }),
-                    // Notebook Permissions - Not bound by identifier
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: [
-                            'sagemaker:ListNotebookInstanceLifecycleConfigs',
-                            'sagemaker:ListNotebookInstances',
-                        ],
-                        // SageMaker list actions that are not bound by resource identifier
-                        resources: ['*'],
-                    }),
-                    // General Permissions - Allows the invocation of MLSpace lambda functions
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['lambda:InvokeFunction'],
-                        resources: [
-                            `arn:${this.partition}:lambda:${Aws.REGION}:${this.account}:function:mls-lambda-*`,
-                        ],
-                    }),
-                    /**
-                     * EMR Permissions
-                     * Policy actions required for launching, terminating, and managing EMR clusters
-                     * within MLSpace
-                     */
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['elasticmapreduce:RunJobFlow', 'elasticmapreduce:ListClusters'],
-                        resources: ['*'],
-                    }),
-                    // EMR Permissions
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: [
-                            'elasticmapreduce:DescribeCluster',
-                            'elasticmapreduce:ListInstances',
-                            'elasticmapreduce:AddTags',
-                            'elasticmapreduce:TerminateJobFlows',
-                            'elasticmapreduce:SetTerminationProtection',
-                        ],
-                        resources: [
-                            `arn:${this.partition}:elasticmapreduce:${Aws.REGION}:${this.account}:cluster/*`,
-                        ],
-                    }),
-                ],
-            });
+                    },
+                }),
+                // Notebook Permissions
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        'sagemaker:CreateNotebookInstanceLifecycleConfig',
+                        'sagemaker:UpdateNotebookInstanceLifecycleConfig',
+                        'sagemaker:DeleteNotebookInstanceLifecycleConfig',
+                        'sagemaker:DescribeNotebookInstanceLifecycleConfig',
+                    ],
+                    resources: [
+                        `arn:${this.partition}:sagemaker:${Aws.REGION}:${this.account}:notebook-instance-lifecycle-config/*`,
+                    ],
+                }),
+                // Notebook Permissions
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        'sagemaker:DeleteNotebookInstance',
+                        'sagemaker:DescribeNotebookInstance',
+                        'sagemaker:StartNotebookInstance',
+                        'sagemaker:StopNotebookInstance',
+                        'sagemaker:UpdateNotebookInstance',
+                    ],
+                    resources: [
+                        `arn:${this.partition}:sagemaker:${Aws.REGION}:${this.account}:notebook-instance/*`,
+                    ],
+                    conditions: {
+                        Null: {
+                            ...resourceTagsConditions,
+                        },
+                    },
+                }),
+                /**
+                 * Notebook Permissions
+                 * Must be separate from above due to resource tag conditions not applying
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['sagemaker:CreatePresignedNotebookInstanceUrl'],
+                    resources: [
+                        `arn:${this.partition}:sagemaker:${Aws.REGION}:${this.account}:notebook-instance/*`,
+                    ],
+                }),
+                // Notebook Permissions - Not bound by identifier
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        'sagemaker:ListNotebookInstanceLifecycleConfigs',
+                        'sagemaker:ListNotebookInstances',
+                    ],
+                    // SageMaker list actions that are not bound by resource identifier
+                    resources: ['*'],
+                }),
+                // General Permissions - Allows the invocation of MLSpace lambda functions
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['lambda:InvokeFunction'],
+                    resources: [
+                        `arn:${this.partition}:lambda:${Aws.REGION}:${this.account}:function:mls-lambda-*`,
+                    ],
+                }),
+                /**
+                 * EMR Permissions
+                 * Policy actions required for launching, terminating, and managing EMR clusters
+                 * within MLSpace
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: ['elasticmapreduce:RunJobFlow', 'elasticmapreduce:ListClusters'],
+                    resources: ['*'],
+                }),
+                // EMR Permissions
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        'elasticmapreduce:DescribeCluster',
+                        'elasticmapreduce:ListInstances',
+                        'elasticmapreduce:AddTags',
+                        'elasticmapreduce:TerminateJobFlows',
+                        'elasticmapreduce:SetTerminationProtection',
+                    ],
+                    resources: [
+                        `arn:${this.partition}:elasticmapreduce:${Aws.REGION}:${this.account}:cluster/*`,
+                    ],
+                }),
+            ];
 
             if (props.mlspaceConfig.MANAGE_IAM_ROLES && this.mlSpacePermissionsBoundary) {
                 /**
                  * General Permissions - Dynamic Roles IAM Permissions
                  * All of the following statements are required when using managed IAM roles
                  */
-                appPolicy.addStatements(
+                statements.push(
                     new PolicyStatement({
                         effect: Effect.ALLOW,
                         actions: ['iam:CreateRole'],
@@ -854,14 +915,14 @@ export class IAMStack extends Stack {
             }
 
             if (props.enableTranslate) {
-                appPolicy.addStatements(
+                statements.push(
                     new PolicyStatement({
                         effect: Effect.ALLOW,
                         actions: ['iam:PassRole'],
                         // We don't *currently* run these jobs using the user IAM roles so we can
                         // specify a specific role here
                         resources: [
-                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceAppRoleName}`,
+                            `arn:${this.partition}:iam::${this.account}:role/${roleName}`,
                         ],
                         conditions: {
                             StringEquals: {
@@ -871,6 +932,18 @@ export class IAMStack extends Stack {
                     })
                 );
             }
+            return statements;
+        };
+
+        if (props.mlspaceConfig.APP_ROLE_ARN) {
+            this.mlSpaceAppRole = Role.fromRoleArn(this, 'mlspace-app-role', props.mlspaceConfig.APP_ROLE_ARN);
+        } else {
+            // ML Space Application role
+            const mlSpaceAppRoleName = 'mlspace-app-role';
+
+            const appPolicy = new ManagedPolicy(this, 'mlspace-app-policy', {
+                statements: appPolicyAndStatements(this.partition, Aws.REGION, mlSpaceAppRoleName)
+            });
 
             const appPolicyAllowPrinciples = props.enableTranslate
                 ? new CompositePrincipal(
@@ -888,6 +961,39 @@ export class IAMStack extends Stack {
                 ],
                 description:
                     'Allows ML Space Application to access necessary AWS services (S3, SQS, DynamoDB, ...)',
+            });
+        }
+
+        /**
+         * System Permissions Role
+         * This role will provision permissions to the MLSpace system to perform actions independently of what
+         * users are capable of doing. Ex: a service like EMR may be disabled, but this role will allow the system 
+         * to terminate EMR clusters even though users can't perform any EMR actions.
+         * These actions include cleaning up resources for deleted projects and suspended users.
+         */
+        if (props.mlspaceConfig.SYSTEM_ROLE_ARN) {
+            this.mlSpaceSystemRole = Role.fromRoleArn(this, 'mlspace-system-role', props.mlspaceConfig.SYSTEM_ROLE_ARN);
+        } else {
+            const mlSpaceSystemRoleName = 'mlspaceSystemRole';
+            const systemPolicy = new ManagedPolicy(this, 'mlspace-system-policy', {
+                statements: appPolicyAndStatements(this.partition, Aws.REGION, mlSpaceSystemRoleName),
+            });
+            const systemPolicyAllowPrinciples = props.enableTranslate
+                ? new CompositePrincipal(
+                    new ServicePrincipal('lambda.amazonaws.com'),
+                    new ServicePrincipal('translate.amazonaws.com')
+                )
+                : new ServicePrincipal('lambda.amazonaws.com');
+            this.mlSpaceSystemRole = new Role(this, 'mlspace-system-role', {
+                roleName: mlSpaceSystemRoleName,
+                assumedBy: systemPolicyAllowPrinciples,
+                managedPolicies: [
+                    systemPolicy,
+                    notebookPolicy,
+                    ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')
+                ],
+                description:
+                    'Allows ML Space System to access necessary AWS services (S3, DynamoDB, Sagemaker services, ...)',
             });
         }
 

@@ -23,7 +23,7 @@ import {
 } from './notebook.reducer';
 import { Button, ButtonDropdown, SpaceBetween } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../config/store';
-import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
+import { Action, Dispatch, ThunkDispatch, isFulfilled } from '@reduxjs/toolkit';
 import NotificationService from '../../shared/layout/notification/notification.service';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
 import { openNotebookInstance } from './notebook.service';
@@ -166,6 +166,12 @@ const NotebookActionHandler = async (
                     projectName: projectName!,
                 })
             );
+            if (isFulfilled(response)) {
+                notificationService.generateNotification(
+                    `Successfully stopped notebook instance ${notebook.resourceId}`,
+                    'success'
+                );
+            }
             break;
         case 'start':
             response = await dispatch(
@@ -174,6 +180,12 @@ const NotebookActionHandler = async (
                     projectName: projectName!,
                 })
             );
+            if (isFulfilled(response)) {
+                notificationService.generateNotification(
+                    `Successfully started notebook instance ${notebook.resourceId}`,
+                    'success'
+                );
+            }
             break;
         case 'update_settings':
             nav(`${basePath}/notebook/${notebook.resourceId}/edit`);
@@ -191,16 +203,10 @@ const NotebookActionHandler = async (
             );
             break;
     }
-
-    if (response) {
-        const success = response.type.endsWith('/fulfilled');
+    if (response && !isFulfilled(response)) {
         notificationService.generateNotification(
-            `${success ? 'Successfully' : 'Failed to'} ${e.detail.id}${
-                e.detail.id === 'stop' ? 'p' : ''
-            }${success ? 'ing' : ''} notebook instance ${notebook.resourceId}${
-                success ? '.' : ` because: ${response.data}`
-            } `,
-            success ? 'success' : 'error'
+            `Failed to ${e.detail.id} notebook instance ${notebook.resourceId} because: ${response.payload}`,
+            'error'
         );
     }
 };
