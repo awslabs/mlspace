@@ -31,7 +31,7 @@ import _ from 'lodash';
 export type ConfirmConfigurationChangesModalProps = {
     visible: boolean;
     setVisible: (boolean) => void;
-    setFields: (any) => void;
+    setFields: (SetFieldsFunction) => void;
     isSubmitting: boolean;
     difference: {object};
     changeReason: string;
@@ -63,52 +63,48 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
     }
 
     return (
-        <>
-            <Modal
-                visible={props.visible}
-                onDismiss={() => props.setVisible(false)}
-                header={<Header>Confirm changes</Header>}
-                footer={
-                    <Box float='right'>
-                        <SpaceBetween direction='horizontal' size='xs'>
-                            <Button onClick={() => props.setVisible(false)}>Cancel</Button>
-                            <Button
-                                variant='primary'
-                                loading={props.isSubmitting}
-                                disabled={_.isEmpty(props.difference)}
-                                onClick={async () => {
-                                    await props.submit();
-                                    props.setVisible(false);
-                                }
-                                }>Save</Button>
-                        </SpaceBetween>
-                    </Box>
-                }
-            >
-                <SpaceBetween size={'s'}>
-                    <Container>
-                        <TextContent>
-                            {_.isEmpty(props.difference) ? <p>No changes detected</p> : jsonToOutline(props.difference)}
-                        </TextContent>
-                    </Container>
-
-
-                    <FormField
-                        label='Change reason'
-                    >
-                        <Input
-                            value={props.changeReason}
-                            onChange={(event) => {
-                                props.setFields({ 'changeReason': event.detail.value });
-                            }}
+        <Modal
+            visible={props.visible}
+            onDismiss={() => props.setVisible(false)}
+            header={<Header>Confirm changes</Header>}
+            footer={
+                <Box float='right'>
+                    <SpaceBetween direction='horizontal' size='xs'>
+                        <Button onClick={() => props.setVisible(false)}>Cancel</Button>
+                        <Button
+                            variant='primary'
+                            loading={props.isSubmitting}
                             disabled={_.isEmpty(props.difference)}
-                        />
-                    </FormField>
+                            onClick={async () => {
+                                await props.submit();
+                                props.setVisible(false);
+                            }
+                            }>Save</Button>
+                    </SpaceBetween>
+                </Box>
+            }
+        >
+            <SpaceBetween size={'s'}>
+                <Container>
+                    <TextContent>
+                        {_.isEmpty(props.difference) ? <p>No changes detected</p> : jsonToOutline(props.difference)}
+                    </TextContent>
+                </Container>
 
-                </SpaceBetween>
 
-            </Modal>
-        </>
+                <FormField
+                    label='Change reason'
+                >
+                    <Input
+                        value={props.changeReason}
+                        onChange={(event) => {
+                            props.setFields({ 'changeReason': event.detail.value });
+                        }}
+                        disabled={_.isEmpty(props.difference)}
+                    />
+                </FormField>
+            </SpaceBetween>
+        </Modal>
     );
 }
 

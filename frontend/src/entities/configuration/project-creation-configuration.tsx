@@ -23,37 +23,35 @@ import {
 import React from 'react';
 
 export type ProjectCreationConfigurationProps = {
-    setFields: (any) => void;
+    setFields: (SetFieldsFunction) => void;
     isAdminOnly: boolean;
 };
 
 export function ProjectCreationConfiguration (props: ProjectCreationConfigurationProps) {
     return (
-        <>
-            <Container
-                header={
-                    <Header variant='h2'
-                        description='All users can create new projects in MLSpace. Restrict project creation to users with Admin permissions by activating “Admin Only.”'
-                    >
-                        Project Creation
-                    </Header>
-                }>
-                <Grid gridDefinition={[{ colspan: 2 }]}>
-                    <div style={{display: 'grid', textAlign: 'center'}}>
-                        <div style={{display: 'grid', justifyContent: 'center'}}>
-                            <Toggle
-                                onChange={({detail}) => {
-                                    props.setFields({'configuration.ProjectCreation.isAdminOnly': detail.checked});
-                                }}
-                                checked={props.isAdminOnly}
-                            >
-                            </Toggle>
-                        </div>
-                        <p>Admin Only</p>
+        <Container
+            header={
+                <Header variant='h2'
+                    description='All users can create new projects in MLSpace. Restrict project creation to users with Admin permissions by activating “Admin Only.”'
+                >
+                    Project Creation
+                </Header>
+            }>
+            <Grid gridDefinition={[{ colspan: 2 }]}>
+                <div style={{display: 'grid', textAlign: 'center'}}>
+                    <div style={{display: 'grid', justifyContent: 'center'}}>
+                        <Toggle
+                            onChange={({detail}) => {
+                                props.setFields({'configuration.ProjectCreation.isAdminOnly': detail.checked});
+                            }}
+                            checked={props.isAdminOnly}
+                        >
+                        </Toggle>
                     </div>
-                </Grid>
-            </Container>
-        </>
+                    <p>Admin Only</p>
+                </div>
+            </Grid>
+        </Container>
     );
 }
 

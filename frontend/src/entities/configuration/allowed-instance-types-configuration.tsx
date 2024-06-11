@@ -23,9 +23,9 @@ import React, { useMemo } from 'react';
 import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-dropdown';
 
 export type AllowedInstanceTypesConfigurationProps = {
-    setFields: (any) => void;
-    expandedSections: {object};
-    setExpandedSections: (any) => void;
+    setFields: (SetFieldsFunction) => void;
+    expandedSections: {[key: string]: boolean};
+    setExpandedSections: (expandedSections:{[key: string]: boolean}) => void;
     enabledNotebookInstanceTypes: string[];
     enabledTrainingInstanceTypes;
     enabledTransformInstanceTypes;
@@ -66,54 +66,52 @@ export function AllowedInstanceTypesConfiguration (props: AllowedInstanceTypesCo
     }), [props.enabledEndpointInstanceTypes]);
 
     return (
-        <>
-            <Container
-                header={
-                    <Header variant='h2'
-                        description='Modify the Amazon EC2 instance types that you wish to make available to users within the following resources: Notebook instance, Training and HPO jobs, Transform jobs, and Endpoints.'
-                    >
-                        Allowed Instance Types
-                    </Header>
-                }
-            >
-                <ExpandableSection headerText='Notebook instances' variant='default' expanded={props.expandedSections.notebookInstances} onChange={({ detail }) =>
-                    props.setExpandedSections({...props.expandedSections, notebookInstances: detail.expanded})
-                }>
-                    <InstanceTypeMultiSelector
-                        selectedOptions={selectedNotebookInstanceOptions}
-                        onChange={({ detail }) => props.setFields({ 'configuration.EnabledInstanceTypes.notebook': detail.selectedOptions.map((option) => option.value)})}
-                        instanceTypeCategory='InstanceType'
-                    />
-                </ExpandableSection>
-                <ExpandableSection headerText='Training and HPO jobs' variant='default' expanded={props.expandedSections.trainingAndHpo} onChange={({ detail }) =>
-                    props.setExpandedSections({...props.expandedSections, trainingAndHpo: detail.expanded})
-                }>
-                    <InstanceTypeMultiSelector
-                        selectedOptions={selectedTrainingJobInstanceOptions}
-                        onChange={({ detail }) => props.setFields({ 'configuration.EnabledInstanceTypes.trainingJob': detail.selectedOptions.map((option) => option.value)})}
-                        instanceTypeCategory='TrainingInstanceType'
-                    />
-                </ExpandableSection>
-                <ExpandableSection headerText='Transform jobs' variant='default' expanded={props.expandedSections.transform} onChange={({ detail }) =>
-                    props.setExpandedSections({...props.expandedSections, transform: detail.expanded})
-                }>
-                    <InstanceTypeMultiSelector
-                        selectedOptions={selectedTransformJobInstanceOptions}
-                        onChange={({ detail }) => props.setFields({ 'configuration.EnabledInstanceTypes.transformJob': detail.selectedOptions.map((option) => option.value)})}
-                        instanceTypeCategory='TransformInstanceType'
-                    />
-                </ExpandableSection>
-                <ExpandableSection headerText='Endpoints' variant='default' expanded={props.expandedSections.endpoints} onChange={({ detail }) =>
-                    props.setExpandedSections({...props.expandedSections, endpoints: detail.expanded})
-                }>
-                    <InstanceTypeMultiSelector
-                        selectedOptions={selectedEndpointInstanceOptions}
-                        onChange={({ detail }) => props.setFields({ 'configuration.EnabledInstanceTypes.endpoint': detail.selectedOptions.map((option) => option.value)})}
-                        instanceTypeCategory='ProductionVariantInstanceType'
-                    />
-                </ExpandableSection>
-            </Container>
-        </>
+        <Container
+            header={
+                <Header variant='h2'
+                    description='Modify the Amazon EC2 instance types that you wish to make available to users within the following resources: Notebook instance, Training and HPO jobs, Transform jobs, and Endpoints.'
+                >
+                    Allowed Instance Types
+                </Header>
+            }
+        >
+            <ExpandableSection headerText='Notebook instances' variant='default' expanded={props.expandedSections.notebookInstances} onChange={({ detail }) =>
+                props.setExpandedSections({...props.expandedSections, notebookInstances: detail.expanded})
+            }>
+                <InstanceTypeMultiSelector
+                    selectedOptions={selectedNotebookInstanceOptions}
+                    onChange={({ detail }) => props.setFields({ 'configuration.EnabledInstanceTypes.notebook': detail.selectedOptions.map((option) => option.value)})}
+                    instanceTypeCategory='InstanceType'
+                />
+            </ExpandableSection>
+            <ExpandableSection headerText='Training and HPO jobs' variant='default' expanded={props.expandedSections.trainingAndHpo} onChange={({ detail }) =>
+                props.setExpandedSections({...props.expandedSections, trainingAndHpo: detail.expanded})
+            }>
+                <InstanceTypeMultiSelector
+                    selectedOptions={selectedTrainingJobInstanceOptions}
+                    onChange={({ detail }) => props.setFields({ 'configuration.EnabledInstanceTypes.trainingJob': detail.selectedOptions.map((option) => option.value)})}
+                    instanceTypeCategory='TrainingInstanceType'
+                />
+            </ExpandableSection>
+            <ExpandableSection headerText='Transform jobs' variant='default' expanded={props.expandedSections.transform} onChange={({ detail }) =>
+                props.setExpandedSections({...props.expandedSections, transform: detail.expanded})
+            }>
+                <InstanceTypeMultiSelector
+                    selectedOptions={selectedTransformJobInstanceOptions}
+                    onChange={({ detail }) => props.setFields({ 'configuration.EnabledInstanceTypes.transformJob': detail.selectedOptions.map((option) => option.value)})}
+                    instanceTypeCategory='TransformInstanceType'
+                />
+            </ExpandableSection>
+            <ExpandableSection headerText='Endpoints' variant='default' expanded={props.expandedSections.endpoints} onChange={({ detail }) =>
+                props.setExpandedSections({...props.expandedSections, endpoints: detail.expanded})
+            }>
+                <InstanceTypeMultiSelector
+                    selectedOptions={selectedEndpointInstanceOptions}
+                    onChange={({ detail }) => props.setFields({ 'configuration.EnabledInstanceTypes.endpoint': detail.selectedOptions.map((option) => option.value)})}
+                    instanceTypeCategory='ProductionVariantInstanceType'
+                />
+            </ExpandableSection>
+        </Container>
     );
 }
 

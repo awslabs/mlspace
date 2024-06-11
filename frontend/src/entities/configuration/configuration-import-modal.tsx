@@ -26,69 +26,66 @@ import {
 export type ConfigurationImportModalProps = {
     visible: boolean;
     selectedFile: File[];
-    setSelectedFile: (any) => void;
+    setSelectedFile: (selectedFile: File[]) => void;
     setVisible: (boolean) => void;
     upload: () => void;
 };
 
 export function ConfigurationImportModal (props: ConfigurationImportModalProps) {
     return (
-        <>
-            <Modal
-                visible={props.visible}
-                onDismiss={() => props.setVisible(false)}
-                header={<Header>Confirm changes</Header>}
-                footer={
-                    <Box float='right'>
-                        <SpaceBetween direction='horizontal' size='xs'>
-                            <Button onClick={() => props.setVisible(false)}>Cancel</Button>
-                            <Button
-                                variant='primary'
-                                disabled={props.selectedFile.length === 0}
-                                onClick={async () => {
-                                    props.upload();
-                                    props.setVisible(false);
-                                }
-                                }>
-                                Upload Configuration
-                            </Button>
-                        </SpaceBetween>
-                    </Box>
+        <Modal
+            visible={props.visible}
+            onDismiss={() => props.setVisible(false)}
+            header={<Header>Confirm changes</Header>}
+            footer={
+                <Box float='right'>
+                    <SpaceBetween direction='horizontal' size='xs'>
+                        <Button onClick={() => props.setVisible(false)}>Cancel</Button>
+                        <Button
+                            variant='primary'
+                            disabled={props.selectedFile.length === 0}
+                            onClick={async () => {
+                                props.upload();
+                                props.setVisible(false);
+                            }
+                            }>
+                            Upload Configuration
+                        </Button>
+                    </SpaceBetween>
+                </Box>
+            }
+        >
+            <Container
+                header={
+                    <Header
+                        variant='h3'
+                        description={`Upload a JSON configuration for ${window.env.APPLICATION_NAME}. This will be parsed for validity and then uploaded as the active configuraion. The import will fail if the provided configuration doesn't have the required values.`}
+                    >
+                        Import Configuration
+                    </Header>
                 }
             >
-                <Container
-                    header={
-                        <Header
-                            variant='h3'
-                            description={`Upload a JSON configuration for ${window.env.APPLICATION_NAME}. This will be parsed for validity and then uploaded as the active configuraion. The import will fail if the provided configuration doesn't have the required values.`}
-                        >
-                            Import Configuration
-                        </Header>
-                    }
-                >
-                    <SpaceBetween direction='vertical' size='s'>
-                        <FileUpload
-                            onChange={({ detail }) => {
-                                props.setSelectedFile([]); // ensure there's never more than one file
-                                props.setSelectedFile(detail.value);
-                            }}
-                            value={props.selectedFile}
-                            i18nStrings={{
-                                uploadButtonText: (e) =>
-                                    e ? 'Choose files' : 'Choose file',
-                                dropzoneText: (e) =>
-                                    e ? 'Drop files to upload' : 'Drop file to upload',
-                                removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
-                                limitShowFewer: 'Show fewer files',
-                                limitShowMore: 'Show more files',
-                                errorIconAriaLabel: 'Error uploading file'
-                            }}
-                        />
-                    </SpaceBetween>
-                </Container>
-
-            </Modal>
-        </>
+                <SpaceBetween direction='vertical' size='s'>
+                    <FileUpload
+                        onChange={({ detail }) => {
+                            props.setSelectedFile([]); // ensure there's never more than one file
+                            props.setSelectedFile(detail.value);
+                        }}
+                        value={props.selectedFile}
+                        i18nStrings={{
+                            uploadButtonText: (e) =>
+                                e ? 'Choose files' : 'Choose file',
+                            dropzoneText: (e) =>
+                                e ? 'Drop files to upload' : 'Drop file to upload',
+                            removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
+                            limitShowFewer: 'Show fewer files',
+                            limitShowMore: 'Show more files',
+                            errorIconAriaLabel: 'Error uploading file'
+                        }}
+                    />
+                </SpaceBetween>
+            </Container>
+        </Modal>
     );
 }
 

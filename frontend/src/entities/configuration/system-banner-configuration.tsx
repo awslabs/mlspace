@@ -26,94 +26,92 @@ import {
 import React from 'react';
 
 export type SystemBannerConfigurationProps = {
-    setFields: (any) => void;
+    setFields: (SetFieldsFunction) => void;
     textColor: string;
     backgroundColor: string;
     text: string;
     isEnabled: boolean;
-    touchFields: (any) => void;
+    touchFields: (TouchFieldsFunction) => void;
 };
 
 export function SystemBannerConfiguration (props: SystemBannerConfigurationProps) {
     return (
-        <>
-            <Container
-                header={
-                    <Header variant='h2'>
-                        System Banner
-                    </Header>
-                }>
-                <SpaceBetween direction='vertical' size='l'>
-                    <Grid gridDefinition={[{colspan: 4}, {colspan: 4}, {colspan: 4}]}>
+        <Container
+            header={
+                <Header variant='h2'>
+                    System Banner
+                </Header>
+            }>
+            <SpaceBetween direction='vertical' size='l'>
+                <Grid gridDefinition={[{colspan: 4}, {colspan: 4}, {colspan: 4}]}>
+                    <div style={{display: 'grid', textAlign: 'center'}}>
+                        <div style={{display: 'grid', justifyContent: 'center'}}>
+                            <Toggle
+                                onChange={({detail}) => {
+                                    props.setFields({'configuration.SystemBanner.isEnabled': detail.checked});
+                                }}
+                                checked={props.isEnabled!}
+                            >
+                            </Toggle>
+                        </div>
+                        <p>Activate System Banner</p>
+                    </div>
+                    <FormField>
                         <div style={{display: 'grid', textAlign: 'center'}}>
                             <div style={{display: 'grid', justifyContent: 'center'}}>
-                                <Toggle
-                                    onChange={({detail}) => {
-                                        props.setFields({'configuration.SystemBanner.isEnabled': detail.checked});
+                                <input
+                                    type='color'
+                                    onInput={(event) =>
+                                        props.setFields({'configuration.SystemBanner.textColor': event.target.value})
+                                    }
+                                    value={props.textColor}
+                                    disabled={!props.isEnabled}
+                                    style={{
+                                        border: '2px solid #7F8897',
+                                        borderRadius: '6px',
+                                        padding: '3px'
                                     }}
-                                    checked={props.isEnabled!}
-                                >
-                                </Toggle>
+                                />
                             </div>
-                            <p>Activate System Banner</p>
+                            <p>Text Color</p>
                         </div>
-                        <FormField>
-                            <div style={{display: 'grid', textAlign: 'center'}}>
-                                <div style={{display: 'grid', justifyContent: 'center'}}>
-                                    <input
-                                        type='color'
-                                        onInput={(event) =>
-                                            props.setFields({'configuration.SystemBanner.textColor': event.target.value})
-                                        }
-                                        value={props.textColor}
-                                        disabled={!props.isEnabled}
-                                        style={{
-                                            border: '2px solid #7F8897',
-                                            borderRadius: '6px',
-                                            padding: '3px'
-                                        }}
-                                    />
-                                </div>
-                                <p>Text Color</p>
-                            </div>
-                        </FormField>
-                        <FormField>
-                            <div style={{display: 'grid', textAlign: 'center'}}>
-                                <div style={{display: 'grid', justifyContent: 'center'}}>
-                                    <input
-                                        type='color'
-                                        onInput={(event) =>
-                                            props.setFields({'configuration.SystemBanner.backgroundColor': event.target.value})
-                                        }
-                                        value={props.backgroundColor}
-                                        disabled={!props.isEnabled}
-                                        style={{
-                                            border: '2px solid #7F8897',
-                                            borderRadius: '6px',
-                                            padding: '3px'
-                                        }}
-                                    />
-                                </div>
-                                <p>Background Color</p>
-                            </div>
-                        </FormField>
-                    </Grid>
-                    <FormField
-                        label='Banner Text'
-                    >
-                        <Input
-                            onChange={({detail}) => {
-                                props.setFields({'configuration.SystemBanner.text': detail.value});
-                            }}
-                            onBlur={() => props.touchFields(['configuration.SystemBanner.text'])}
-                            value={props.text}
-                            placeholder='Enter system banner text'
-                            disabled={!props.isEnabled}
-                        />
                     </FormField>
-                </SpaceBetween>
-            </Container>
-        </>
+                    <FormField>
+                        <div style={{display: 'grid', textAlign: 'center'}}>
+                            <div style={{display: 'grid', justifyContent: 'center'}}>
+                                <input
+                                    type='color'
+                                    onInput={(event) =>
+                                        props.setFields({'configuration.SystemBanner.backgroundColor': event.target.value})
+                                    }
+                                    value={props.backgroundColor}
+                                    disabled={!props.isEnabled}
+                                    style={{
+                                        border: '2px solid #7F8897',
+                                        borderRadius: '6px',
+                                        padding: '3px'
+                                    }}
+                                />
+                            </div>
+                            <p>Background Color</p>
+                        </div>
+                    </FormField>
+                </Grid>
+                <FormField
+                    label='Banner Text'
+                >
+                    <Input
+                        onChange={({detail}) => {
+                            props.setFields({'configuration.SystemBanner.text': detail.value});
+                        }}
+                        onBlur={() => props.touchFields(['configuration.SystemBanner.text'])}
+                        value={props.text}
+                        placeholder='Enter system banner text'
+                        disabled={!props.isEnabled}
+                    />
+                </FormField>
+            </SpaceBetween>
+        </Container>
     );
 }
 
