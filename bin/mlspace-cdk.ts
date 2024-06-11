@@ -93,8 +93,11 @@ iamStack.addDependency(kmsStack);
 stacks.push(iamStack);
 
 const mlSpaceNotebookRole = iamStack.mlSpaceNotebookRole;
+const mlspaceEndpointConfigInstanceConstraintPolicy = iamStack.mlspaceEndpointConfigInstanceConstraintPolicy;
+const mlspaceJobInstanceConstraintPolicy = iamStack.mlspaceJobInstanceConstraintPolicy;
 const mlSpaceAppRole = iamStack.mlSpaceAppRole;
 const websiteS3ReaderRole = iamStack.s3ReaderRole;
+const mlSpaceSystemRole = iamStack.mlSpaceSystemRole;
 
 const lambdaSourcePath = './backend/src/';
 const frontEndAssetsPath = './frontend/build/';
@@ -157,7 +160,10 @@ const apiStackProperties: ApiStackProperties = {
     configBucketName,
     cwlBucketName,
     applicationRole: mlSpaceAppRole,
+    systemRole: mlSpaceSystemRole,
     notebookInstanceRole: mlSpaceNotebookRole,
+    endpointConfigInstanceConstraintPolicy: mlspaceEndpointConfigInstanceConstraintPolicy,
+    jobInstanceConstraintPolicy: mlspaceJobInstanceConstraintPolicy,
     notebookParamFileKey: config.NOTEBOOK_PARAMETERS_FILE_NAME,
     deploymentEnvironmentName: 'mlspace',
     authorizer: restStack.mlspaceRequestAuthorizer,

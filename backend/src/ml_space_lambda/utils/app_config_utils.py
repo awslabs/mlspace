@@ -28,16 +28,12 @@ def get_app_config() -> AppConfigurationModel:
 
 def get_emr_application_list() -> list:
     return [
-        "Python",
-        "Scala",
-        "Delta",
         "Flink",
         "Ganglia",
         "HBase",
         "HCatalog",
         "Hadoop",
         "Hive",
-        "Hudi",
         "Hue",
         "JupyterHub",
         "Livy",

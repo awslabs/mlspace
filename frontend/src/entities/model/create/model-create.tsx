@@ -169,7 +169,7 @@ export function ModelCreate () {
                 })
                 .catch((err) => {
                     notificationService.generateNotification(
-                        `Failed to create endpoint with error: ${err.response.data}`,
+                        `Failed to create model because: ${err.response.data}`,
                         'error'
                     );
                 })

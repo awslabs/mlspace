@@ -24,18 +24,22 @@ from botocore.exceptions import ClientError
 from ml_space_lambda.enums import ServiceType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
-TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1"}
+TEST_ENV_CONFIG = {
+    "AWS_DEFAULT_REGION": "us-east-1",
+    "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::policy/job-instance-constraint",
+    "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::policy/job-instance-constraint",
+}
 
 mock_context = mock.Mock()
+mock_context.invoked_function_arn.split.return_value = "arn:aws:lambda:us-east-1:123456789010:function/some-lambda".split(":")
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.app_configuration.lambda_functions import update_configuration as lambda_handler
 
-
 mock_time = int(time.time())
 
 
-def generate_event(config_scope: str, version_id: int):
+def generate_event(config_scope: str, version_id: int, enabled_instances=None):
     return {
         "body": json.dumps(
             {
@@ -44,7 +48,8 @@ def generate_event(config_scope: str, version_id: int):
                 "changeReason": "Testing",
                 "createdAt": mock_time,
                 "configuration": {
-                    "EnabledInstanceTypes": {
+                    "EnabledInstanceTypes": enabled_instances
+                    or {
                         ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
                         ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
                         ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
@@ -110,8 +115,9 @@ def generate_event(config_scope: str, version_id: int):
         "update_config_project",
     ],
 )
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_success(mock_app_config_dao, config_scope: str):
+def test_update_config_success(mock_app_config_dao, update_instance_constraint_policies, config_scope: str):
     version_id = 1
     mock_event = generate_event(config_scope, version_id)
     mock_app_config_dao.create.return_value = None
@@ -134,8 +140,9 @@ def test_update_config_success(mock_app_config_dao, config_scope: str):
         "update_config_project_outdated",
     ],
 )
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_outdated(mock_app_config_dao, config_scope: str):
+def test_update_config_outdated(mock_app_config_dao, update_instance_constraint_policies, config_scope: str):
     version_id = 1
     mock_event = generate_event(config_scope, version_id)
 
@@ -153,8 +160,9 @@ def test_update_config_outdated(mock_app_config_dao, config_scope: str):
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_unexpected_exception(mock_app_config_dao):
+def test_update_config_unexpected_exception(mock_app_config_dao, update_instance_constraint_policies):
     version_id = 1
     mock_event = generate_event("global", version_id)
 
