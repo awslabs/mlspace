@@ -35,7 +35,7 @@ import {appConfig} from './configuration-reducer';
 export type EmrConfigurationProps = {
     setFields: (any) => void;
     touchFields: (any) => void;
-    expandedSections: any;
+    expandedSections: {object};
     setExpandedSections: (any) => void;
     errors: any;
     form: any;

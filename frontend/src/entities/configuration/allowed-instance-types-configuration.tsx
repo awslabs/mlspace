@@ -24,7 +24,7 @@ import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-d
 
 export type AllowedInstanceTypesConfigurationProps = {
     setFields: (any) => void;
-    expandedSections: any;
+    expandedSections: {object};
     setExpandedSections: (any) => void;
     enabledNotebookInstanceTypes: string[];
     enabledTrainingInstanceTypes;

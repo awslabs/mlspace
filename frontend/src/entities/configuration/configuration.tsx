@@ -66,13 +66,13 @@ export function Configuration () {
                             label: 'Dynamic Configuration',
                             id: 'dynamic-config',
                             content: <DynamicConfiguration/>,
-                            // disabled: true
+                            disabled: true
                         },
                         {
                             label: 'Dynamic Configuration History',
                             id: 'config-hist',
                             content: <ConfigurationHistoryTable/>,
-                            // disabled: true
+                            disabled: true
                         },
                         {
                             label: 'Deployment Configuration',
