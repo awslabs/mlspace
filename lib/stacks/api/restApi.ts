@@ -46,6 +46,7 @@ export type ApiStackProperties = {
     readonly dataBucketName: string;
     readonly cwlBucketName: string;
     readonly applicationRole: IRole;
+    readonly systemRole: IRole;
     readonly notebookInstanceRole: IRole;
     readonly endpointConfigInstanceConstraintPolicy?: IManagedPolicy,
     readonly jobInstanceConstraintPolicy?: IManagedPolicy,

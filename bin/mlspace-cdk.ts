@@ -97,6 +97,7 @@ const mlspaceEndpointConfigInstanceConstraintPolicy = iamStack.mlspaceEndpointCo
 const mlspaceJobInstanceConstraintPolicy = iamStack.mlspaceJobInstanceConstraintPolicy;
 const mlSpaceAppRole = iamStack.mlSpaceAppRole;
 const websiteS3ReaderRole = iamStack.s3ReaderRole;
+const mlSpaceSystemRole = iamStack.mlSpaceSystemRole;
 
 const lambdaSourcePath = './backend/src/';
 const frontEndAssetsPath = './frontend/build/';
@@ -159,6 +160,7 @@ const apiStackProperties: ApiStackProperties = {
     configBucketName,
     cwlBucketName,
     applicationRole: mlSpaceAppRole,
+    systemRole: mlSpaceSystemRole,
     notebookInstanceRole: mlSpaceNotebookRole,
     endpointConfigInstanceConstraintPolicy: mlspaceEndpointConfigInstanceConstraintPolicy,
     jobInstanceConstraintPolicy: mlspaceJobInstanceConstraintPolicy,
