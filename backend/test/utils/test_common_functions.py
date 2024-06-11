@@ -89,6 +89,30 @@ def test_generate_html_response(status_code, body):
                 "An error occurred (MissingParameter) when calling the TestClientCall operation: Dummy error message.",
             ),
         ),
+        (
+            {
+                "Error": {
+                    "Code": "ResourceInUse",
+                    "Message": "Cannot create a duplicate resource with the same name.",
+                }
+            },
+            generate_html_response(
+                400,
+                "The resource name you provided already exists. Please choose a different name. Full message: An error occurred (ResourceInUse) when calling the TestClientCall operation: Cannot create a duplicate resource with the same name.",
+            ),
+        ),
+        (
+            {
+                "Error": {
+                    "Code": "ResourceLimitExceeded",
+                    "Message": "You have reached the maximum allowed usage for this resource.",
+                }
+            },
+            generate_html_response(
+                400,
+                "You have reached the maximum allowed usage for this resource. Please contact your MLSpace administrator to increase the allowed usage limits. Full message: An error occurred (ResourceLimitExceeded) when calling the TestClientCall operation: You have reached the maximum allowed usage for this resource.",
+            ),
+        ),
     ],
 )
 def test_generate_exception_response(response, expected_response):
