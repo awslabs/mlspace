@@ -18,7 +18,8 @@ import React, { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { IAppConfiguration, defaultConfiguration } from '../../shared/model/app.configuration.model';
 import { appConfig, appConfigList, getConfiguration, listConfigurations, loadingAppConfigList, updateConfiguration } from './configuration-reducer';
-import { Box, Button, FormField, Header, Input, Modal, SpaceBetween, Table } from '@cloudscape-design/components';
+import { Box, Button, FormField, Header, Input, Modal, SpaceBetween } from '@cloudscape-design/components';
+import Table from '../../modules/table';
 import NotificationService from '../../shared/layout/notification/notification.service';
 
 export function ConfigurationHistoryTable () {
@@ -34,20 +35,23 @@ export function ConfigurationHistoryTable () {
     });
 
     useMemo(() => {
-        dispatch(listConfigurations({configScope: 'global', numVersions: 10}));
-    }, [dispatch]);
+        dispatch(listConfigurations({configScope: 'global', numVersions: applicationConfig.versionId + 1}));
+    }, [applicationConfig.versionId, dispatch]);
 
     const columnDefinition = [
         {
             header: 'Version',
+            sortingField: 'versionId',
             cell: (item) => item.versionId,
         },
         {
             header: 'Changed by',
+            sortingField: 'changedBy',
             cell: (item) => item.changedBy,
         },
         {
             header: 'Change reason',
+            sortingField: 'changeReason',
             cell: (item) => item.changeReason,
         },
         {
@@ -59,11 +63,12 @@ export function ConfigurationHistoryTable () {
     return (
         <>
             <Table
-                header={<Header> Configuration history </Header>}
+                tableName='Configuration history'
+                tableType='single'
+                itemNameProperty='versionId'
+                trackBy='versionId'
+                allItems={configList}
                 columnDefinitions={columnDefinition}
-                items={configList}
-                loading={loadingConfigList}
-                loadingText='Loading configurations'
             />
 
             <Modal 
