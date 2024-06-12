@@ -238,7 +238,8 @@ export class CoreStack extends Stack {
             environment: {
                 APP_CONFIG_TABLE: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
                 ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN,
-                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN
+                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN,
+                SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
             },
             layers: [commonLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,
