@@ -476,6 +476,7 @@ class IAMManager:
         expected_policy_version: int = None,
     ):
         prefixed_policy_name = f"{IAM_RESOURCE_PREFIX}-{policy_name}"
+        self._check_name_length(IAMResourceType.POLICY, prefixed_policy_name)
         policy_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{prefixed_policy_name}"
         logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
         # Create the policy if it doesn't exist

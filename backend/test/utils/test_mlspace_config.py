@@ -19,12 +19,13 @@ from io import BytesIO
 from unittest import mock
 
 import ml_space_lambda.utils.mlspace_config as mlspace_config
+from ml_space_lambda.enums import EnvVariable
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 TEST_ENV_CONFIG = {
-    "AWS_DEFAULT_REGION": "us-east-1",
-    "BUCKET": "testS3Bucket",
-    "S3_KEY": "testS3Key",
+    EnvVariable.AWS_DEFAULT_REGION: "us-east-1",
+    EnvVariable.BUCKET: "testS3Bucket",
+    EnvVariable.S3_KEY: "testS3Key",
 }
 
 
@@ -48,28 +49,30 @@ def test_environment_variables():
     mlspace_config.env_variables = {}
     with mock.patch.dict("os.environ", {"AWS_DEFAULT_REGION": "us-iso-east-1"}, clear=True):
         assert get_environment_variables() == {
-            "BUCKET": "mlspace-data-bucket",
-            "S3_KEY": "notebook-params.json",
-            "SYSTEM_TAG": "MLSpace",
-            "DATASETS_TABLE": "mlspace-datasets",
-            "PROJECTS_TABLE": "mlspace-projects",
-            "USERS_TABLE": "mlspace-users",
-            "PROJECT_USERS_TABLE": "mlspace-project-users",
-            "RESOURCE_SCHEDULE_TABLE": "mlspace-resource-schedule",
-            "RESOURCE_METADATA_TABLE": "mlspace-resource-metadata",
-            "APP_CONFIGURATION_TABLE": "mlspace-app-configuration",
-            "AWS_DEFAULT_REGION": "us-iso-east-1",
-            "DATA_BUCKET": "mlspace-data-bucket",
-            "EMR_CONFIG_BUCKET": "mlspace-emr-config-bucket",
-            "MANAGE_IAM_ROLES": "",
-            "LOG_BUCKET": "mlspace-log-bucket",
-            "DYNAMO_TABLE": "mlspace-project",
-            "EMR_EC2_ROLE_NAME": "EMR_EC2_DefaultRole",
-            "EMR_SERVICE_ROLE_NAME": "EMR_DefaultRole",
-            "EMR_SECURITY_CONFIGURATION": "MLSpace-EMR-SecurityConfig",
-            "EMR_EC2_SSH_KEY": "",
-            "NEW_USER_SUSPENSION_DEFAULT": "True",
-            "TRANSLATE_DATE_ROLE_ARN": "",
-            "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "",
-            "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "",
+            EnvVariable.APP_CONFIGURATION_TABLE: "mlspace-app-configuration",
+            EnvVariable.AWS_DEFAULT_REGION: "us-iso-east-1",
+            EnvVariable.BUCKET: "mlspace-data-bucket",
+            EnvVariable.DATA_BUCKET: "mlspace-data-bucket",
+            EnvVariable.DATASETS_TABLE: "mlspace-datasets",
+            EnvVariable.DYNAMO_TABLE: "mlspace-project",
+            EnvVariable.EMR_CONFIG_BUCKET: "mlspace-emr-config-bucket",
+            EnvVariable.EMR_EC2_ROLE_NAME: "EMR_EC2_DefaultRole",
+            EnvVariable.EMR_EC2_SSH_KEY: "",
+            EnvVariable.EMR_SERVICE_ROLE_NAME: "EMR_DefaultRole",
+            EnvVariable.EMR_SECURITY_CONFIGURATION: "MLSpace-EMR-SecurityConfig",
+            EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+            EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+            EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
+            EnvVariable.MANAGE_IAM_ROLES: "",
+            EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
+            EnvVariable.NOTEBOOK_ROLE_NAME: "",
+            EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
+            EnvVariable.PROJECTS_TABLE: "mlspace-projects",
+            EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",
+            EnvVariable.RESOURCE_METADATA_TABLE: "mlspace-resource-metadata",
+            EnvVariable.RESOURCE_SCHEDULE_TABLE: "mlspace-resource-schedule",
+            EnvVariable.S3_KEY: "notebook-params.json",
+            EnvVariable.SYSTEM_TAG: "MLSpace",
+            EnvVariable.TRANSLATE_DATE_ROLE_ARN: "",
+            EnvVariable.USERS_TABLE: "mlspace-users",
         }

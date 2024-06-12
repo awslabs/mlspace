@@ -14,12 +14,15 @@
 #   limitations under the License.
 #
 
+import json
+
 # Testing for the describe_config Lambda function
 from unittest import mock
 
 from botocore.exceptions import ClientError
 
 import ml_space_lambda.utils.mlspace_config as mlspace_config
+from ml_space_lambda.enums import EnvVariable
 from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
@@ -42,30 +45,32 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
 
     expected_body = {
         "environmentVariables": {
-            "APP_CONFIGURATION_TABLE": "mlspace-app-configuration",
-            "AWS_DEFAULT_REGION": "us-iso-east-1",
-            "BUCKET": "mlspace-data-bucket",
-            "DATA_BUCKET": "mlspace-data-bucket",
-            "DATASETS_TABLE": "mlspace-datasets",
-            "DYNAMO_TABLE": "mlspace-project",
-            "EMR_CONFIG_BUCKET": "mlspace-emr-config-bucket",
-            "EMR_EC2_ROLE_NAME": "EMR_EC2_DefaultRole",
-            "EMR_SERVICE_ROLE_NAME": "EMR_DefaultRole",
-            "EMR_SECURITY_CONFIGURATION": "MLSpace-EMR-SecurityConfig",
-            "EMR_EC2_SSH_KEY": "",
-            "LOG_BUCKET": "mlspace-log-bucket",
-            "MANAGE_IAM_ROLES": "",
-            "NEW_USER_SUSPENSION_DEFAULT": "True",
-            "PROJECT_USERS_TABLE": "mlspace-project-users",
-            "PROJECTS_TABLE": "mlspace-projects",
-            "RESOURCE_METADATA_TABLE": "mlspace-resource-metadata",
-            "RESOURCE_SCHEDULE_TABLE": "mlspace-resource-schedule",
-            "S3_KEY": "notebook-params.json",
-            "SYSTEM_TAG": "MLSpace",
-            "TRANSLATE_DATE_ROLE_ARN": "",
-            "USERS_TABLE": "mlspace-users",
-            "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "",
-            "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "",
+            EnvVariable.APP_CONFIGURATION_TABLE: "mlspace-app-configuration",
+            EnvVariable.AWS_DEFAULT_REGION: "us-iso-east-1",
+            EnvVariable.BUCKET: "mlspace-data-bucket",
+            EnvVariable.DATA_BUCKET: "mlspace-data-bucket",
+            EnvVariable.DATASETS_TABLE: "mlspace-datasets",
+            EnvVariable.DYNAMO_TABLE: "mlspace-project",
+            EnvVariable.EMR_CONFIG_BUCKET: "mlspace-emr-config-bucket",
+            EnvVariable.EMR_EC2_ROLE_NAME: "EMR_EC2_DefaultRole",
+            EnvVariable.EMR_SERVICE_ROLE_NAME: "EMR_DefaultRole",
+            EnvVariable.EMR_SECURITY_CONFIGURATION: "MLSpace-EMR-SecurityConfig",
+            EnvVariable.EMR_EC2_SSH_KEY: "",
+            EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
+            EnvVariable.MANAGE_IAM_ROLES: "",
+            EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
+            EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",
+            EnvVariable.PROJECTS_TABLE: "mlspace-projects",
+            EnvVariable.RESOURCE_METADATA_TABLE: "mlspace-resource-metadata",
+            EnvVariable.RESOURCE_SCHEDULE_TABLE: "mlspace-resource-schedule",
+            EnvVariable.S3_KEY: "notebook-params.json",
+            EnvVariable.SYSTEM_TAG: "MLSpace",
+            EnvVariable.TRANSLATE_DATE_ROLE_ARN: "",
+            EnvVariable.USERS_TABLE: "mlspace-users",
+            EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+            EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+            EnvVariable.NOTEBOOK_ROLE_NAME: "",
+            EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
         },
         "s3ParamFile": {
             "pSMSKMSKeyId": "example_key_id",
@@ -92,7 +97,7 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
     }
 
     with mock.patch.dict("os.environ", {"AWS_DEFAULT_REGION": "us-iso-east-1"}, clear=True):
-        assert describe({}, mock_context) == expected_response
+        assert json.loads(describe({}, mock_context)["body"]) == json.loads(expected_response["body"])
 
     mock_sagemaker.describe_notebook_instance_lifecycle_config.assert_called_with(
         NotebookInstanceLifecycleConfigName="fakeLifecycleConfig"

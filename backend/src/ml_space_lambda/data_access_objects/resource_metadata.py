@@ -112,7 +112,7 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
         fetch_all: Optional[bool] = False,
         filter_expression: Optional[str] = None,
         filter_values: Optional[Dict[str, Any]] = None,
-        expression_names: Optional[str] = None,
+        expression_names: Optional[Dict[str, Any]] = None,
     ) -> PagedMetadataResults:
         expression_values: Dict[str, Any] = {":project": project, ":resourceType": type}
         if filter_expression and filter_values:
@@ -189,16 +189,18 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
         expression_values: Dict[str, Any] = {":resourceType": type}
         key_condition_expressions = ["resourceType = :resourceType"]
 
-        # Update with provided project
-        if project is not None:
+        if project is not None and user is not None:
+            raise ValueError(
+                "Can't use both the 'project' and 'user' parameters. Provide the key_condition as the input parameter and the other as a part of the filter expression and values"
+            )
+        elif project is not None:
             expression_values[":project"] = project
-            if index_name == "ProjectResources":
-                key_condition_expressions.append("project = :project")
-
-        if user is not None:
+            index_name = "ProjectResources"
+            key_condition_expressions.append("project = :project")
+        elif user is not None:
             expression_values[":user"] = user
-            if index_name == "UserResources":
-                key_condition_expressions.append("user = :user")
+            index_name = "UserResources"
+            key_condition_expressions.append("user = :user")
 
         if filter_expression and filter_values:
             if ":resourceType" in filter_values:
@@ -207,7 +209,7 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
 
         # Assemble the key condition expression
         if len(key_condition_expressions) > 1:
-            key_condition_expression = key_condition_expressions.join(" and ")
+            key_condition_expression = " and ".join(key_condition_expressions)
         else:
             key_condition_expression = key_condition_expressions[0]
 
