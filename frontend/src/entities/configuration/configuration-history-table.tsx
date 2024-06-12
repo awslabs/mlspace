@@ -36,7 +36,7 @@ export function ConfigurationHistoryTable () {
 
     useMemo(() => {
         dispatch(listConfigurations({configScope: 'global', numVersions: applicationConfig.versionId + 1}));
-    }, [applicationConfig.versionId, dispatch]);
+    }, [dispatch, applicationConfig.versionId]);
 
     const columnDefinition = [
         {
@@ -64,7 +64,6 @@ export function ConfigurationHistoryTable () {
         <>
             <Table
                 tableName='Configuration history'
-                tableType='single'
                 itemNameProperty='versionId'
                 trackBy='versionId'
                 allItems={configList}
