@@ -97,7 +97,7 @@ export default function EMRClusterCreate () {
             options: {
                 customAmiId: '',
                 emrSize: 'Small',
-                emrRelease: releaseLabels[0],
+                emrRelease: releaseLabels ? releaseLabels[0] : '',
             },
             Instances: {
                 Ec2SubnetId: ''
@@ -279,7 +279,7 @@ export default function EMRClusterCreate () {
                                             'options.emrRelease': detail.selectedOption.value,
                                         });
                                     }}
-                                    options={releaseLabels.map((release) => {
+                                    options={releaseLabels?.map((release) => {
                                         return {
                                             value: release,
                                         };
