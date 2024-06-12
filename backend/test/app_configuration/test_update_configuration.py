@@ -35,7 +35,7 @@ TEST_ENV_CONFIG = {
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     import ml_space_lambda.app_configuration.lambda_functions as lambda_function
     from ml_space_lambda.app_configuration.lambda_functions import update_configuration as lambda_handler
-    from ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy import ActiveServicePolicyManager
+    from ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager import ActiveServicePolicyManager
     from ml_space_lambda.utils.common_functions import generate_html_response
 
     lambda_function.env_variables = TEST_ENV_CONFIG
@@ -150,7 +150,7 @@ def test_update_config_success(
 
 # @mock.pathc("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
 @mock.patch(
-    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+    "ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager.ActiveServicePolicyManager.update_activated_services_policy"
 )
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
@@ -171,7 +171,7 @@ def test_update_config_success_with_suspend_resources_issues(
 
 # @mock.pathc("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
 @mock.patch(
-    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+    "ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager.ActiveServicePolicyManager.update_activated_services_policy"
 )
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
@@ -197,7 +197,7 @@ def test_update_config_instances_policy_update_issues(
 
 # @mock.pathc("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
 @mock.patch(
-    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+    "ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager.ActiveServicePolicyManager.update_activated_services_policy"
 )
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
@@ -232,7 +232,7 @@ def test_update_config_services_policy_update_issues(
     ],
 )
 @mock.patch(
-    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+    "ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager.ActiveServicePolicyManager.update_activated_services_policy"
 )
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
@@ -258,7 +258,7 @@ def test_update_config_outdated(
 
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.AppConfigurationModel")
 @mock.patch(
-    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+    "ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager.ActiveServicePolicyManager.update_activated_services_policy"
 )
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")

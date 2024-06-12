@@ -79,8 +79,8 @@ export function Configuration () {
                         },
                     ]}
                 />   
-            </div> 
-                    
+            </div>
+            
         </ContentLayout>
     );
 }

@@ -155,8 +155,7 @@ class ActiveServicePolicyManager:
             if not enabled_services_dict[service] and service in self.SERVICE_DEACTIVATE_PROPERTIES:
                 if "ResourceType" in self.SERVICE_DEACTIVATE_PROPERTIES[service]:
                     resource_types_to_suspend.append(self.SERVICE_DEACTIVATE_PROPERTIES[service]["ResourceType"])
-                if "Statements" in self.SERVICE_DEACTIVATE_PROPERTIES[service]:
-                    deny_policy_statements.extend(self.SERVICE_DEACTIVATE_PROPERTIES[service]["Statements"])
+                deny_policy_statements.extend(self.SERVICE_DEACTIVATE_PROPERTIES[service]["Statements"])
 
         # Check for permissions associated with multiple services
         for group in self.SERVICE_GROUP_DEACTIVATE_PROPERTIES:

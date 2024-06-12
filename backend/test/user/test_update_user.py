@@ -21,11 +21,6 @@ import pytest
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
-    # Fake cred info for MOTO
-    "AWS_ACCESS_KEY_ID": "testing",
-    "AWS_SECRET_ACCESS_KEY": "testing",
-    "AWS_SECURITY_TOKEN": "testing",
-    "AWS_SESSION_TOKEN": "testing",
 }
 MOCK_USERNAME = "jdoe@amazon.com"
 MOCK_DISPLAY_NAME = "John Doe"

@@ -454,20 +454,6 @@ class IAMManager:
     def _generate_user_hash(self, username: str) -> str:
         return hashlib.sha256(username.encode()).hexdigest()
 
-    """
-    Generates a policy from the provided template and variable replacments
-
-    Inputs:
-    policy_template: str - A template that includes variables of the form $VAR_NAME
-    replacments: list[list[str]] - A list of str tuples that are to be replaced of the form ["$VAR_NAME", "var value"]
-    """
-
-    def _generate_policy_from_template_string(self, policy_template: str, replacements: list[list[str]]):
-        policy = policy_template.replace("\n", "")
-        for replacement in replacements:
-            policy = policy.replace(replacement[0], replacement[1])
-        return policy
-
     def generate_policy(self, statements: list):
         if len(statements) > 0:
             return {"Version": "2012-10-17", "Statement": statements}

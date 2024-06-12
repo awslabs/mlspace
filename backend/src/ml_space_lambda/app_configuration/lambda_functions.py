@@ -20,7 +20,7 @@ import time
 
 import boto3
 
-from ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy import ActiveServicePolicyManager
+from ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager import ActiveServicePolicyManager
 from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -54,12 +54,12 @@ def update_configuration(event, context):
     version_id = request["versionId"] + 1  # increment so this will be the latest version
     resource_types_to_suspend = []
 
-    updated_configuration = SettingsModel.from_dict(request["configuration"])
+    new_configuration = SettingsModel.from_dict(request["configuration"])
 
     app_configuration = AppConfigurationModel(
         configScope=configScope,
         version_id=version_id,
-        configuration=updated_configuration,
+        configuration=new_configuration,
         changed_by=event["requestContext"]["authorizer"]["principalId"],
         change_reason=request["changeReason"],
         created_at=time.time(),
