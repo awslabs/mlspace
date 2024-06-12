@@ -25,7 +25,6 @@ import {
     Input,
     Container,
     Select,
-    ContentLayout,
     Popover,
     StatusIndicator,
     Alert,
@@ -52,6 +51,7 @@ import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-brows
 import { DatasetResourceObject } from '../../../modules/dataset/dataset-browser.reducer';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useUsername } from '../../../shared/util/auth-utils';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 const formSchema = z.object({
     name: z

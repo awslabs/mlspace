@@ -17,7 +17,6 @@
 import {
     Alert,
     Container,
-    ContentLayout,
     Grid,
     Header,
     SpaceBetween,
@@ -26,6 +25,7 @@ import {
 } from '@cloudscape-design/components';
 import React from 'react';
 import {SetFieldsFunction} from '../../shared/validation';
+import ContentLayout from '../../shared/layout/content-layout';
 
 const configurableServices = {
     batchTranslate: 'Amazon Translate batch',
