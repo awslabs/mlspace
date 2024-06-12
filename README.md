@@ -75,6 +75,7 @@ If you answered yes you will be prompted for:
 - Bucket Deployment Role ARN: ARN of an existing IAM role to use for deploying to the static website S3 bucket
 - Notebook Role ARN: ARN of an existing IAM role to associate with all notebooks created in MLSpace
 - App Role ARN: ARN of an existing IAM role to use for executing the MLSpace lambdas
+- System Role ARN: ARN of an existing IAM role to use for executing the MLSpace system lambdas (cleanup and configuration)
 - EMR Default Role ARN: ARN of an existing IAM role that will be used as the 'ServiceRole' for all EMR clusters
 - EMR EC2 Instance Role ARN: ARN of an existing role that will be used as the 'JobFlowRole' and 'AutoScalingRole' for all EMR clusters
 
@@ -93,7 +94,7 @@ Configure MLSpace using Option 2 if:
 - you wish to have your configuration changes in a file that's committed to git
 - will have to resolve conflicts when upgrading MLSpace
 
-If you are pre-creating roles you will need to ensure that the required role arns (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
+If you are pre-creating roles you will need to ensure that the required role arns (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`, `SYSTSTEM_ROLE_ARN`, `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN`, `JOB_INSTANCE_CONSTRAINT_POLICY_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
 
 You will also need to set `OIDC_URL` and `OIDC_CLIENT_NAME` with the correct values based on your chosen IdP. These property must be set prior to deploying MLSpace.
 
@@ -163,7 +164,7 @@ If the config-helper doesn't provide the level of customization you need for you
 | NOTEBOOK_PARAMETERS_FILE_NAME |  Filename of the default notebook parameters that is generated as part of the CDK deployment  | `mlspace-website` |
 | PERMISSIONS_BOUNDARY_POLICY_NAME | Name of the managed policy used as a permissions boundary for dynamically created MLSpace roles. If this is not set the default permissions boundary will be created and used | - |
 | KEY_MANAGER_ROLE_NAME | Name of the IAM role with permissions to manage the KMS Key. If this property is set you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
-| EXISTING_KMS_MASTER_KEY_ARN | ARN of existing KMS key to use with MLSpace. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. |
+| EXISTING_KMS_MASTER_KEY_ARN | ARN of existing KMS key to use with MLSpace. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN`, `APP_ROLE_ARN`, `SYSTEM_ROLE_ARN`, `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN`, and `JOB_INSTANCE_CONSTRAINT_POLICY_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. | - |
 | SYSTEM_TAG | Tag which will be applied to all MLSpace resources created with the AWS account to which MLSpace is deployed | `MLSpace` |
 | IAM_RESOURCE_PREFIX | Value preprended to MLSpace dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
 | MANAGE_IAM_ROLES | This setting determines whether or not MLSpace will dynamically create unique roles per project/user combinations. | `true` |
@@ -173,6 +174,9 @@ If the config-helper doesn't provide the level of customization you need for you
 | EXISTING_VPC_DEFAULT_SECURITY_GROUP | If MLSpace is being deployed into an existing VPC this should be the default security group of that VPC | - |
 | APP_ROLE_ARN | Arn of an existing IAM role to use for executing the MLSpace lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
 | NOTEBOOK_ROLE_ARN | Arn of an existing IAM role to associate with all notebooks created in MLSpace. If using dynamic roles based on project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| SYSTEM_ROLE_ARN | Arn of an existing IAM role to use for executing the MLSpace system lambdas. System lambdas are responsible for maintaining the MLSpace system by cleaning up resources when a project is suspended or deleted, when a user is suspended, or when services are activated/deactivated. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN | TODO | - |
+| JOB_INSTANCE_CONSTRAINT_POLICY_ARN | TODO | - |
 | S3_READER_ROLE_ARN | Arn of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
 | EMR_DEFAULT_ROLE_ARN | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | EMR_EC2_INSTANCE_ROLE_ARN | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
