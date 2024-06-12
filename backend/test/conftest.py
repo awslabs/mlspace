@@ -28,6 +28,11 @@ from ml_space_lambda.enums import DatasetType
 def pytest_generate_tests(metafunc):
     # Provides the location of the LAMBDA_TASK_ROOT which is used by the 'retrieve' function to identify built-in training algorithms
     os.environ["LAMBDA_TASK_ROOT"] = "./src/"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
 
 
 @pytest.fixture
