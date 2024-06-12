@@ -401,13 +401,10 @@ class TestIAMSupport(TestCase):
         )
         attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
         assert len(attached_policies_response["AttachedPolicies"]) == 2
-        assert (
-            self.iam_client.get_policy(
-                PolicyArn=account_utils.account_arn_from_example_arn(
-                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
-                )
+        assert self.iam_client.get_policy(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
             )
-            is not None
         )
 
         # Test updating the policy
@@ -421,14 +418,11 @@ class TestIAMSupport(TestCase):
         )
         attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
         assert len(attached_policies_response["AttachedPolicies"]) == 2
-        assert (
-            self.iam_client.get_policy_version(
-                PolicyArn=account_utils.account_arn_from_example_arn(
-                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
-                ),
-                VersionId="v2",
-            )
-            is not None
+        assert self.iam_client.get_policy_version(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v2",
         )
 
         # Test invalid update to policy (same version as before)
@@ -459,14 +453,11 @@ class TestIAMSupport(TestCase):
         )
         attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
         assert len(attached_policies_response["AttachedPolicies"]) == 2
-        assert (
-            self.iam_client.get_policy_version(
-                PolicyArn=account_utils.account_arn_from_example_arn(
-                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
-                ),
-                VersionId="v3",
-            )
-            is not None
+        assert self.iam_client.get_policy_version(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v3",
         )
 
     def test_create_dynamic_policy_not_attached(self):
@@ -476,13 +467,10 @@ class TestIAMSupport(TestCase):
         )
         attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
         assert len(attached_policies_response["AttachedPolicies"]) == 1
-        assert (
-            self.iam_client.get_policy(
-                PolicyArn=account_utils.account_arn_from_example_arn(
-                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
-                )
+        assert self.iam_client.get_policy(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
             )
-            is not None
         )
 
         # Test updating the policy

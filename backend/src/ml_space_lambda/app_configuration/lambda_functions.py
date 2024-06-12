@@ -95,7 +95,7 @@ def update_configuration(event, context):
             if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
                 e.response["ResponseMetadata"]["HTTPStatusCode"] = 429
             e.response["Error"]["Message"] = "Failed when updating the app configuration." + (
-                " " + e.response["Error"]["Message"] if e.response["Error"]["Message"] is not None else ""
+                " " + e.response["Error"]["Message"] if e.response["Error"]["Message"] else ""
             )
             execution_error = e
             status_code = 500
@@ -109,7 +109,7 @@ def update_configuration(event, context):
                 response_message = f"Successfully updated configuration for {configScope}, version {version_id}, but issues were encountered when suspending resources for a deactivated service. Please contact your system administrator for assistance in suspending resources for deactivated services."
 
     # If an irrecoverable error occurred
-    if execution_error is not None:
+    if execution_error:
         if env_variables[EnvVariable.MANAGE_IAM_ROLES] and configScope == "global":
             # Get the current app-config
             stable_app_config = AppConfigurationModel.from_dict(app_configuration_dao.get("global")[0])

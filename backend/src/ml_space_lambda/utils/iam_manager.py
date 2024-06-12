@@ -192,6 +192,7 @@ class IAMManager:
         env_variables = get_environment_variables()
         self.data_bucket = env_variables["DATA_BUCKET"]
         self.system_tag = env_variables["SYSTEM_TAG"]
+        self.app_role_name = os.getenv("APP_ROLE_NAME", "")
         self.notebook_role_name = os.getenv("NOTEBOOK_ROLE_NAME", "")
         self.default_notebook_role_policy_arns = []
         self.permissions_boundary_arn = os.getenv("PERMISSIONS_BOUNDARY_ARN", "")
@@ -462,7 +463,7 @@ class IAMManager:
 
     def generate_policy_string(self, statements: list):
         policy = self.generate_policy(statements)
-        return json.dumps(policy) if policy is not None else None
+        return json.dumps(policy) if policy else None
 
     # If the provided policy doesn't exist, it will be created
     def update_dynamic_policy(
@@ -472,6 +473,7 @@ class IAMManager:
         policy_type: str,
         policy_type_identifier: str,
         on_create_attach_to_notebook_role: bool = False,
+        on_create_attach_to_app_role: bool = False,
         expected_policy_version: int = None,
     ):
         aws_account = self.sts_client.get_caller_identity()["Account"]
@@ -481,7 +483,7 @@ class IAMManager:
         logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
         # Create the policy if it doesn't exist
         existing_policy_version = self._get_policy_version(policy_arn)
-        if existing_policy_version is None and policy is not None:
+        if existing_policy_version is None and policy:
             logger.info(f"Creating a new {policy_name} dynamic policy")
             policy_arn = self._create_iam_policy(
                 prefixed_policy_name,
@@ -494,6 +496,9 @@ class IAMManager:
             # Attaches the policy to the notebook role so it will get attached to new dynamic roles
             if on_create_attach_to_notebook_role:
                 self.iam_client.attach_role_policy(RoleName=self.notebook_role_name, PolicyArn=policy_arn)
+
+            if on_create_attach_to_app_role:
+                self.iam_client.attach_role_policy(RoleName=self.app_role_name, PolicyArn=policy_arn)
 
         # If the policy does exist, then update it
         elif expected_policy_version is None or existing_policy_version < expected_policy_version:

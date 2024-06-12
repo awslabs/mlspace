@@ -127,7 +127,7 @@ class ActiveServicePolicyManager:
         }
 
         # Instead of deleting the policy (which requires unattaching from all roles) assign a filler non-impactful statement
-        self.FILTER_DENY_STATEMENTS = [
+        self.FILLER_DENY_STATEMENTS = [
             {
                 IAMStatementProperty.EFFECT: IAMEffect.DENY,
                 IAMStatementProperty.ACTION: ["dynamodb:CreateTable"],
@@ -151,7 +151,7 @@ class ActiveServicePolicyManager:
 
         # Check each service
         for service in enabled_services_dict.keys():
-            # If the service is deactivated and has instructions on how to deny the service in 'service_disable_permissions'
+            # If the service is deactivated add the deny statements to the deny policy
             if not enabled_services_dict[service] and service in self.SERVICE_DEACTIVATE_PROPERTIES:
                 if "ResourceType" in self.SERVICE_DEACTIVATE_PROPERTIES[service]:
                     resource_types_to_suspend.append(self.SERVICE_DEACTIVATE_PROPERTIES[service]["ResourceType"])
@@ -173,7 +173,7 @@ class ActiveServicePolicyManager:
         # When all services are activated, apply a filler statement so that the policy does not need to be unattached and deleted
         # Unattaching from all roles could cause throttling and will require re-attaching to all dynamic roles later
         if len(deny_policy_statements) == 0:
-            deny_policy_statements.extend(self.FILTER_DENY_STATEMENTS)
+            deny_policy_statements.extend(self.FILLER_DENY_STATEMENTS)
 
         # Will create, update the current deny services policy with the new permissions
         iam_manager.update_dynamic_policy(
@@ -182,6 +182,7 @@ class ActiveServicePolicyManager:
             "services",
             "deny",
             on_create_attach_to_notebook_role=True,
+            on_create_attach_to_app_role=True,
         )
 
         return resource_types_to_suspend

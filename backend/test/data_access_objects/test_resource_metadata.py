@@ -259,7 +259,7 @@ class TestResourceMetadataDAO(TestCase):
         # DemoProject
         test_project_notebooks = []
         results = self.resource_metadata_dao.get_all_for_project_by_type(TEST_PROJECT_NAME, ResourceType.NOTEBOOK, limit=10)
-        assert results.next_token is not None
+        assert results.next_token
         test_project_notebooks.extend(results.records)
         results = self.resource_metadata_dao.get_all_for_project_by_type(
             TEST_PROJECT_NAME,
@@ -301,7 +301,7 @@ class TestResourceMetadataDAO(TestCase):
         results = self.resource_metadata_dao.get_all_of_type_with_filters(
             ResourceType.NOTEBOOK, project=TEST_PROJECT_NAME, limit=10
         )
-        assert results.next_token is not None
+        assert results.next_token
         test_project_notebooks.extend(results.records)
         results = self.resource_metadata_dao.get_all_of_type_with_filters(
             ResourceType.NOTEBOOK,
@@ -407,7 +407,7 @@ class TestResourceMetadataDAO(TestCase):
         user_notebooks = []
         results = self.resource_metadata_dao.get_all_for_user_by_type(TEST_USER_NAME, ResourceType.NOTEBOOK, limit=10)
 
-        assert results.next_token is not None
+        assert results.next_token
         user_notebooks.extend(results.records)
         results = self.resource_metadata_dao.get_all_for_user_by_type(
             TEST_USER_NAME, ResourceType.NOTEBOOK, next_token=results.next_token
@@ -421,7 +421,7 @@ class TestResourceMetadataDAO(TestCase):
         user_notebooks = []
         results = self.resource_metadata_dao.get_all_of_type_with_filters(ResourceType.NOTEBOOK, user=TEST_USER_NAME, limit=10)
 
-        assert results.next_token is not None
+        assert results.next_token
         user_notebooks.extend(results.records)
         results = self.resource_metadata_dao.get_all_of_type_with_filters(
             ResourceType.NOTEBOOK, user=TEST_USER_NAME, next_token=results.next_token
@@ -672,7 +672,7 @@ class TestResourceMetadataDAO(TestCase):
         notebooks = []
         results = self.resource_metadata_dao.get_all_of_type_with_filters(ResourceType.NOTEBOOK, limit=10)
 
-        assert results.next_token is not None
+        assert results.next_token
         notebooks.extend(results.records)
         results = self.resource_metadata_dao.get_all_of_type_with_filters(ResourceType.NOTEBOOK, next_token=results.next_token)
         assert not results.next_token

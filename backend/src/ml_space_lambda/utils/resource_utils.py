@@ -69,7 +69,7 @@ resource_handling = {
         ResourceHandlingProperty.FILTER_EXPRESSION: "#m.#s IN (:clusterStatus)",
         ResourceHandlingProperty.FILTER_VALUES: {":clusterStatus": "WAITING"},
         ResourceHandlingProperty.FILTER_NAMES: {"#m": "metadata", "#s": "Status"},
-        # If EMR would be stopped, terminate it instead. It is an expensive resources and can't be stopped or suspended
+        # If EMR would be stopped, terminate it instead. It is an expensive resource and can't be stopped or suspended
         ResourceHandlingProperty.STOP_FUNCTION: delete_emr_cluster,
         ResourceHandlingProperty.DELETE_FUNCTION: delete_emr_cluster,
     },

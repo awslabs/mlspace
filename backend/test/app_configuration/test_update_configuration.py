@@ -301,13 +301,14 @@ def test_update_active_services_all_active_success(
 
     assert lambda_handler(mock_event, mock_context) == expected_response
     mock_active_service_policy_manager = ActiveServicePolicyManager(mock_context)
-    mock_iam_manager.generate_policy_string.assert_called_with(mock_active_service_policy_manager.FILTER_DENY_STATEMENTS)
+    mock_iam_manager.generate_policy_string.assert_called_with(mock_active_service_policy_manager.FILLER_DENY_STATEMENTS)
     mock_iam_manager.update_dynamic_policy.assert_called_with(
         mock_iam_manager.generate_policy_string(),
         "app-denied-services",
         "services",
         "deny",
         on_create_attach_to_notebook_role=True,
+        on_create_attach_to_app_role=True,
     )
 
 
@@ -366,6 +367,7 @@ def test_update_active_services_single_deny_success(
         "services",
         "deny",
         on_create_attach_to_notebook_role=True,
+        on_create_attach_to_app_role=True,
     )
     if "resource_type" in type_info:
         mock_suspend_all_of_type.assert_called_with(type_info["resource_type"])
@@ -420,5 +422,6 @@ def test_update_active_services_group_deny_success(
         "services",
         "deny",
         on_create_attach_to_notebook_role=True,
+        on_create_attach_to_app_role=True,
     )
     mock_suspend_all_of_type.assert_called_with(ResourceType.BATCH_TRANSLATE_JOB)

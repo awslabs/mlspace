@@ -73,6 +73,7 @@ export function registerAPIEndpoint (
             SYSTEM_TAG: mlspaceConfig.SYSTEM_TAG,
             MANAGE_IAM_ROLES: mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
             NOTEBOOK_ROLE_NAME: notebookRoleName,
+            APP_ROLE_NAME: role.roleName,
             PERMISSIONS_BOUNDARY_ARN: permissionsBoundaryArn || '',
             ...funcDef.environment,
             ...mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,

@@ -598,6 +598,7 @@ export class IAMStack extends Stack {
          * - App Deny Services policy - Denies access to disabled services
          * - service-role/AWSLambdaVPCAccessExecutionRole - AWS managed role
          */
+        const mlSpaceAppRoleName = 'mlspace-app-role';
         const appPolicyAndStatements = (partition: string, region: string, roleName: string) => {
             const statements = [
                 // General Permissions - Additional KMS permission unique to the app role to retire grants
@@ -854,11 +855,31 @@ export class IAMStack extends Stack {
                         // This needs to match the IAM_RESOURCE_PREFIX prefix in iam_manager.py
                         resources: [
                             `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
-                            // This is needed for the deny services policy to be attached to the notebook role
-                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceNotebookRoleName}`,
                         ],
                         conditions: {
                             StringEqualsIgnoreCase: {
+                                'iam:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
+                            },
+                        },
+                    }),
+                    // Only certain policies should be allowed to attach to the notebook and app roles
+                    new PolicyStatement({
+                        effect: Effect.ALLOW,
+                        actions: [
+                            'iam:AttachRolePolicy',
+                            'iam:DetachRolePolicy',
+                        ],
+                        // This needs to match the IAM_RESOURCE_PREFIX prefix in iam_manager.py
+                        resources: [
+                            // This is needed for the deny services policy to be attached to the notebook and app roles
+                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceAppRoleName}`,
+                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceNotebookRoleName}`,
+                            `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
+                        ],
+                        conditions: {
+                            StringEqualsIgnoreCase: {
+                                // Only allow dynamic attachment for the deny services policy
+                                'iam:PolicyARN': `arn:${this.partition}:iam::${this.account}:policy/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-app-denied-services`,
                                 'iam:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
                             },
                         },
@@ -946,7 +967,7 @@ export class IAMStack extends Stack {
             this.mlSpaceAppRole = Role.fromRoleArn(this, 'mlspace-app-role', props.mlspaceConfig.APP_ROLE_ARN);
         } else {
             // ML Space Application role
-            const mlSpaceAppRoleName = 'mlspace-app-role';
+
 
             const appPolicy = new ManagedPolicy(this, 'mlspace-app-policy', {
                 statements: appPolicyAndStatements(this.partition, Aws.REGION, mlSpaceAppRoleName)
