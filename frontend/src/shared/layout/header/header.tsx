@@ -118,7 +118,7 @@ export default function Header () {
                             }
                         }}
                     >
-                        Greetings {auth.user?.profile.name}!
+                        Greetings, {auth.user?.profile.name}!
                     </ButtonDropdown>
                 </Condition>
             }

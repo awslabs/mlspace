@@ -14,7 +14,7 @@
   limitations under the License.
 */
 import React from 'react';
-import { Button, ExpandableSection, FormField, Input, SpaceBetween } from '@cloudscape-design/components';
+import {Button, Container, FormField, Input, SpaceBetween, Grid, Header} from '@cloudscape-design/components';
 import { ClusterType, IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { FormProps } from '../jobs/form-props';
 import { prefixedSetFields, prefixedTouchFields } from '../../shared/validation';
@@ -29,44 +29,49 @@ export function ClusterTypeConfiguration (props: ClusterTypesProps) {
 
     return (
         <SpaceBetween direction='vertical' size='s'>
-            {item.configuration.EMRConfig.clusterTypes.map((clusterType, index) => {
-                return (
-                    <ExpandableSection
-                        headerText={`Cluster Type ${index + 1}: ${clusterType.name}`}
-                        headingTagOverride='h4'
-                    >
-                        <SpaceBetween direction='vertical' size='s'>
-                            <ClusterTypeField
-                                item={clusterType}
-                                setFields={prefixedSetFields(
-                                    `configuration.EMRConfig.clusterTypes[${index}]`,
-                                    setFields
-                                )}
-                                touchFields={prefixedTouchFields(
-                                    `configuration.EMRConfig.clusterTypes[${index}]`,
-                                    touchFields
-                                )}
-                                formErrors={formErrors?.configuration?.EMRConfig?.clusterTypes?.[index]}
-                            />
-                            <Condition condition={item.configuration.EMRConfig.clusterTypes.length > 1}>
-                                <Button
-                                    variant='normal'
-                                    iconName='close'
-                                    onClick={() => {
-                                        setFields({
-                                            'configuration.EMRConfig.clusterTypes': item.configuration.EMRConfig.clusterTypes.filter(
-                                                (element) => element !== clusterType
-                                            ),
-                                        });
-                                    }}
-                                >
-                                    Remove {`'${clusterType.name}'`}
-                                </Button>
-                            </Condition>
-                        </SpaceBetween>
-                    </ExpandableSection>
-                );
-            })}
+            <Grid gridDefinition={item.configuration.EMRConfig.clusterTypes.map(() => ({colspan: 6}))}>
+                {item.configuration.EMRConfig.clusterTypes.map((clusterType, index) => {
+                    return (
+                        <Container
+                            header={
+                                <Header variant='h3'>
+                                    {`Cluster Type ${index + 1}: ${clusterType.name}`}
+                                </Header>
+                            }
+                        >
+                            <SpaceBetween direction='vertical' size='s'>
+                                <ClusterTypeField
+                                    item={clusterType}
+                                    setFields={prefixedSetFields(
+                                        `configuration.EMRConfig.clusterTypes[${index}]`,
+                                        setFields
+                                    )}
+                                    touchFields={prefixedTouchFields(
+                                        `configuration.EMRConfig.clusterTypes[${index}]`,
+                                        touchFields
+                                    )}
+                                    formErrors={formErrors?.configuration?.EMRConfig?.clusterTypes?.[index]}
+                                />
+                                <Condition condition={item.configuration.EMRConfig.clusterTypes.length > 1}>
+                                    <Button
+                                        variant='normal'
+                                        iconName='close'
+                                        onClick={() => {
+                                            setFields({
+                                                'configuration.EMRConfig.clusterTypes': item.configuration.EMRConfig.clusterTypes.filter(
+                                                    (element) => element !== clusterType
+                                                ),
+                                            });
+                                        }}
+                                    >
+                                        Remove
+                                    </Button>
+                                </Condition>
+                            </SpaceBetween>
+                        </Container>
+                    );
+                })}
+            </Grid>
             <Condition condition={item.configuration.EMRConfig.clusterTypes.length < 20}>
                 <SpaceBetween direction='vertical' size='s'>
                     <hr />
@@ -96,7 +101,7 @@ function ClusterTypeField (props: ClusterTypeProps) {
             <FormField 
                 label='Name' 
                 errorText={formErrors?.name} 
-                description='The name used to describe this cluster. Ex: "Small", "Medium GPU", "Large Compute Optimized".'
+                description='The cluster types name is visible to users. Ex: “Small,” “Medium GPU,” or “Large Compute Optimized.”'
             >
                 <Input
                     value={item.name}
