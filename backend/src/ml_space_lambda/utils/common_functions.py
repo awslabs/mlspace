@@ -199,6 +199,7 @@ def generate_html_response(status_code, response_body):
 
 
 def generate_exception_response(e, status_code=400):
+    error_msg = str(e)
     if hasattr(e, "response"):  # i.e. validate the exception was from an API call
         metadata = e.response.get("ResponseMetadata")
         if metadata:

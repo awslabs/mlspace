@@ -58,7 +58,7 @@ def test_get_config_success(mock_app_config_dao):
 
 
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_update_config_unexpected_exception(mock_app_config_dao):
+def test_get_config_unexpected_exception(mock_app_config_dao):
     config_scope = "global"
     mock_event = generate_event(config_scope)
 

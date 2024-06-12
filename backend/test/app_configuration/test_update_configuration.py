@@ -252,11 +252,12 @@ def test_update_config_outdated(
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.AppConfigurationModel")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_activated_services_policy")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_unexpected_exception(
-    mock_app_config_dao, mock_update_instance_constraint_policies, mock_update_activated_services_policy
+    mock_app_config_dao, mock_update_instance_constraint_policies, mock_update_activated_services_policy, mock_app_config_model
 ):
     version_id = 1
     mock_event = generate_event("global", version_id)
@@ -272,7 +273,7 @@ def test_update_config_unexpected_exception(
     )
 
     mock_app_config_dao.create.side_effect = ClientError(error_msg, "PutItem")
-    mock_app_config_dao.get.return_value = None
+    mock_app_config_model.from_dict.return_value = "dummy-value"
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
