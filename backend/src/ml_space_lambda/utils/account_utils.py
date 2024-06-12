@@ -14,22 +14,16 @@
 #   limitations under the License.
 #
 
-import boto3
 
-from ml_space_lambda.utils.common_functions import retry_config
-
-sts_client = boto3.client("sts", config=retry_config)
-aws_partition = boto3.Session().get_partition_for_region(boto3.Session().region_name)
-aws_account = sts_client.get_caller_identity()["Account"]
+# Structure of a context: https://docs.aws.amazon.com/lambda/latest/dg/python-context.html
+def account_arn_from_context(lambda_context, service, resource):
+    return account_arn_from_example_arn(lambda_context.invoked_function_arn, service, resource)
 
 
-def get_account_id() -> str:
-    return aws_account
+def account_arn_from_example_arn(example_arn, service, resource):
+    components = example_arn.split(":")
+    partition = components[1]
+    region = components[3]
+    account_id = components[4]
 
-
-def get_partition() -> str:
-    return aws_partition
-
-
-def get_account_arn(service: str, resource: str, region: str = "") -> str:
-    return f"arn:{aws_partition}:{service}:{region}:{aws_account}:{resource}"
+    return f"arn:{partition}:{service}:{region}:{account_id}:{resource}"

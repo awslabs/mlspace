@@ -35,11 +35,7 @@ TEST_ENV_CONFIG = {
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     import ml_space_lambda.app_configuration.lambda_functions as lambda_function
     from ml_space_lambda.app_configuration.lambda_functions import update_configuration as lambda_handler
-    from ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy import (
-        FILTER_DENY_STATEMENTS,
-        SERVICE_DEACTIVATE_PROPERTIES,
-        SERVICE_GROUP_DEACTIVATE_PROPERTIES,
-    )
+    from ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy import ActiveServicePolicyManager
     from ml_space_lambda.utils.common_functions import generate_html_response
 
     lambda_function.env_variables = TEST_ENV_CONFIG
@@ -153,7 +149,9 @@ def test_update_config_success(
 
 
 # @mock.pathc("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_activated_services_policy")
+@mock.patch(
+    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+)
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_success_with_suspend_resources_issues(
@@ -172,7 +170,9 @@ def test_update_config_success_with_suspend_resources_issues(
 
 
 # @mock.pathc("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_activated_services_policy")
+@mock.patch(
+    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+)
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_instances_policy_update_issues(
@@ -196,7 +196,9 @@ def test_update_config_instances_policy_update_issues(
 
 
 # @mock.pathc("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_activated_services_policy")
+@mock.patch(
+    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+)
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_services_policy_update_issues(
@@ -229,7 +231,9 @@ def test_update_config_services_policy_update_issues(
         "update_config_project_outdated",
     ],
 )
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_activated_services_policy")
+@mock.patch(
+    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+)
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_outdated(
@@ -253,7 +257,9 @@ def test_update_config_outdated(
 
 
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.AppConfigurationModel")
-@mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_activated_services_policy")
+@mock.patch(
+    "ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy.ActiveServicePolicyManager.update_activated_services_policy"
+)
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_unexpected_exception(
@@ -294,7 +300,8 @@ def test_update_active_services_all_active_success(
     expected_response = generate_html_response(200, success_response)
 
     assert lambda_handler(mock_event, mock_context) == expected_response
-    mock_iam_manager.generate_policy_string.assert_called_with(FILTER_DENY_STATEMENTS)
+    mock_active_service_policy_manager = ActiveServicePolicyManager(mock_context)
+    mock_iam_manager.generate_policy_string.assert_called_with(mock_active_service_policy_manager.FILTER_DENY_STATEMENTS)
     mock_iam_manager.update_dynamic_policy.assert_called_with(
         mock_iam_manager.generate_policy_string(),
         "app-denied-services",
@@ -349,8 +356,9 @@ def test_update_active_services_single_deny_success(
     expected_response = generate_html_response(200, success_response)
 
     assert lambda_handler(mock_event, mock_context) == expected_response
+    mock_active_service_policy_manager = ActiveServicePolicyManager(mock_context)
     mock_iam_manager.generate_policy_string.assert_called_with(
-        SERVICE_DEACTIVATE_PROPERTIES[type_info["service_type"]]["Statements"]
+        mock_active_service_policy_manager.SERVICE_DEACTIVATE_PROPERTIES[type_info["service_type"]]["Statements"]
     )
     mock_iam_manager.update_dynamic_policy.assert_called_with(
         mock_iam_manager.generate_policy_string(),
@@ -400,10 +408,11 @@ def test_update_active_services_group_deny_success(
     expected_response = generate_html_response(200, success_response)
 
     assert lambda_handler(mock_event, mock_context) == expected_response
+    mock_active_service_policy_manager = ActiveServicePolicyManager(mock_context)
     mock_iam_manager.generate_policy_string.assert_called_with(
-        SERVICE_DEACTIVATE_PROPERTIES[ServiceType.REALTIME_TRANSLATE]["Statements"]
-        + SERVICE_DEACTIVATE_PROPERTIES[ServiceType.BATCH_TRANSLATE]["Statements"]
-        + SERVICE_GROUP_DEACTIVATE_PROPERTIES[0]["Statements"]
+        mock_active_service_policy_manager.SERVICE_DEACTIVATE_PROPERTIES[ServiceType.REALTIME_TRANSLATE]["Statements"]
+        + mock_active_service_policy_manager.SERVICE_DEACTIVATE_PROPERTIES[ServiceType.BATCH_TRANSLATE]["Statements"]
+        + mock_active_service_policy_manager.SERVICE_GROUP_DEACTIVATE_PROPERTIES[0]["Statements"]
     )
     mock_iam_manager.update_dynamic_policy.assert_called_with(
         mock_iam_manager.generate_policy_string(),

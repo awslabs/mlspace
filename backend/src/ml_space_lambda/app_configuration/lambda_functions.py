@@ -20,7 +20,7 @@ import time
 
 import boto3
 
-from ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy import update_activated_services_policy
+from ml_space_lambda.app_configuration.policy_helper.deactivate_services_policy import ActiveServicePolicyManager
 from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel, SettingsModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -46,6 +46,7 @@ iam_manager = IAMManager()
 
 @event_wrapper
 def update_configuration(event, context):
+    active_service_policy_manager = ActiveServicePolicyManager(context)
     status_code = 200
     execution_error = None
     request = json.loads(event["body"])
@@ -67,7 +68,9 @@ def update_configuration(event, context):
     if env_variables[EnvVariable.MANAGE_IAM_ROLES] and configScope == "global":
         # Update the deactivated services permissions with an updated deny policy
         try:
-            resource_types_to_suspend = update_activated_services_policy(app_configuration, iam_manager=iam_manager)
+            resource_types_to_suspend = active_service_policy_manager.update_activated_services_policy(
+                app_configuration, iam_manager=iam_manager
+            )
         except Exception as e:
             logging.exception(f"Failed to update the denied services policy {str(e)}")
             execution_error = e
@@ -113,7 +116,7 @@ def update_configuration(event, context):
 
             # Update the deactivated services permissions with an updated deny policy
             try:
-                update_activated_services_policy(stable_app_config, iam_manager=iam_manager)
+                active_service_policy_manager.update_activated_services_policy(stable_app_config, iam_manager=iam_manager)
             except Exception as e:
                 logging.exception(f"Failed to update the denied services policy {str(e)}")
 

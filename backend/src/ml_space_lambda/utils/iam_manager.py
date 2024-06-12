@@ -17,12 +17,12 @@
 import hashlib
 import json
 import logging
+import os
 from typing import List, Optional
 
 import boto3
 
-from ml_space_lambda.enums import EnvVariable, IAMResourceType
-from ml_space_lambda.utils.account_utils import get_account_arn, get_account_id, get_partition
+from ml_space_lambda.enums import IAMResourceType
 from ml_space_lambda.utils.common_functions import generate_tags, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -36,17 +36,10 @@ PROJECT_POLICY_VERSION = 1
 
 
 class IAMManager:
-    def __init__(self, iam_client=None):
-        self.aws_partition = get_partition()
+    def __init__(self, iam_client=None, sts_client=None):
+        self.sts_client = sts_client if sts_client else boto3.client("sts", config=retry_config)
+        self.aws_partition = boto3.Session().get_partition_for_region(boto3.Session().region_name)
         self.iam_client = iam_client if iam_client else boto3.client("iam", config=retry_config)
-
-        env_variables = get_environment_variables()
-        self.data_bucket = env_variables[EnvVariable.DATA_BUCKET]
-        self.system_tag = env_variables[EnvVariable.SYSTEM_TAG]
-        self.notebook_role_name = env_variables[EnvVariable.NOTEBOOK_ROLE_NAME]
-        self.default_notebook_role_policy_arns = []
-        self.permissions_boundary_arn = env_variables[EnvVariable.PERMISSIONS_BOUNDARY_ARN]
-        self.aws_account = get_account_id()
 
         # If you update this you need to increment the PROJECT_POLICY_VERSION value
         self.project_policy = """{
@@ -110,12 +103,7 @@ class IAMManager:
                 }
             ]
         }
-        """.replace(
-            "$BUCKET_NAME", self.data_bucket
-        ).replace(
-            "$PARTITION", self.aws_partition
-        )
-
+        """
         # If you update this you need to increment the USER_POLICY_VERSION value
         self.user_policy = """{
             "Version": "2012-10-17",
@@ -199,11 +187,14 @@ class IAMManager:
                 }
             ]
         }
-        """.replace(
-            "$BUCKET_NAME", self.data_bucket
-        ).replace(
-            "$PARTITION", self.aws_partition
-        )
+        """
+
+        env_variables = get_environment_variables()
+        self.data_bucket = env_variables["DATA_BUCKET"]
+        self.system_tag = env_variables["SYSTEM_TAG"]
+        self.notebook_role_name = os.getenv("NOTEBOOK_ROLE_NAME", "")
+        self.default_notebook_role_policy_arns = []
+        self.permissions_boundary_arn = os.getenv("PERMISSIONS_BOUNDARY_ARN", "")
 
     def add_iam_role(self, project_name: str, username: str) -> str:
         iam_role_name = self._generate_iam_role_name(username, project_name)
@@ -217,8 +208,9 @@ class IAMManager:
         project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{project_name}"
         user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
 
-        project_policy_arn = get_account_arn("iam", f"policy/{project_policy_name}")
-        user_policy_arn = get_account_arn("iam", f"policy/{user_policy_name}")
+        aws_account = self.sts_client.get_caller_identity()["Account"]
+        project_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
+        user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
 
         # Confirm policy name lengths are compliant
         self._check_name_length(IAMResourceType.POLICY, user_policy_name)
@@ -230,7 +222,7 @@ class IAMManager:
         if existing_project_policy_version is None:
             project_policy_arn = self._create_iam_policy(
                 project_policy_name,
-                self._generate_policy_from_template_string(self.project_policy, [["$PROJECT_NAME", project_name]]),
+                self._generate_project_policy(project_name),
                 "Project",
                 project_name,
                 PROJECT_POLICY_VERSION,
@@ -240,9 +232,7 @@ class IAMManager:
             self._delete_unused_policy_versions(project_policy_arn)
             self.iam_client.create_policy_version(
                 PolicyArn=project_policy_arn,
-                PolicyDocument=self._generate_policy_from_template_string(
-                    self.project_policy, [["$PROJECT_NAME", project_name]]
-                ),
+                PolicyDocument=self._generate_project_policy(project_name),
                 SetAsDefault=True,
             )
             self.iam_client.tag_policy(
@@ -259,7 +249,7 @@ class IAMManager:
         if existing_user_policy_version is None:
             user_policy_arn = self._create_iam_policy(
                 user_policy_name,
-                self._generate_policy_from_template_string(self.user_policy, [["$USER_NAME", username]]),
+                self._generate_user_policy(username),
                 "User",
                 username,
                 USER_POLICY_VERSION,
@@ -269,7 +259,7 @@ class IAMManager:
             self._delete_unused_policy_versions(user_policy_arn)
             self.iam_client.create_policy_version(
                 PolicyArn=user_policy_arn,
-                PolicyDocument=self._generate_policy_from_template_string(self.user_policy, [["$USER_NAME", username]]),
+                PolicyDocument=self._generate_user_policy(username),
                 SetAsDefault=True,
             )
             self.iam_client.tag_policy(
@@ -334,6 +324,7 @@ class IAMManager:
     # Removes the passed in roles and deletes any detached user specific policies. If a
     # project is passed in then the project policy is removed as well.
     def remove_project_user_roles(self, role_identifiers: List[str], project: str = None) -> None:
+        aws_account = self.sts_client.get_caller_identity()["Account"]
         for role_identifier in role_identifiers:
             # This may be a friendly role name alredy if we're doing user cleanup
             # spliting this way supports both arns and freindly role names
@@ -346,7 +337,9 @@ class IAMManager:
 
         if project:
             project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{project}"
-            self.iam_client.delete_policy(PolicyArn=get_account_arn("iam", f"policy/{project_policy_name}"))
+            self.iam_client.delete_policy(
+                PolicyArn=f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
+            )
 
     # Removes all roles for the given user and deletes user specific policies
     def remove_all_user_roles(self, username: str, projects: List[str]) -> None:
@@ -357,8 +350,9 @@ class IAMManager:
 
         self.remove_project_user_roles(roles_to_delete)
         # Delete user policy
+        aws_account = self.sts_client.get_caller_identity()["Account"]
         user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
-        user_policy_arn = get_account_arn("iam", f"policy/{user_policy_name}")
+        user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
         self.iam_client.delete_policy(PolicyArn=user_policy_arn)
 
     # Creates the IAM role for the MLSpace user/project context
@@ -441,6 +435,25 @@ class IAMManager:
 
         return detached_iam_policies
 
+    def _generate_project_policy(self, project: str) -> str:
+        return (
+            self.project_policy.replace("\n", "")
+            .replace("$PROJECT_NAME", project)
+            .replace("$BUCKET_NAME", self.data_bucket)
+            .replace("$PARTITION", self.aws_partition)
+        )
+
+    def _generate_user_policy(self, user: str) -> str:
+        return (
+            self.user_policy.replace("\n", "")
+            .replace("$USER_NAME", user)
+            .replace("$BUCKET_NAME", self.data_bucket)
+            .replace("$PARTITION", self.aws_partition)
+        )
+
+    def _generate_user_hash(self, username: str) -> str:
+        return hashlib.sha256(username.encode()).hexdigest()
+
     """
     Generates a policy from the provided template and variable replacments
 
@@ -475,9 +488,10 @@ class IAMManager:
         on_create_attach_to_notebook_role: bool = False,
         expected_policy_version: int = None,
     ):
+        aws_account = self.sts_client.get_caller_identity()["Account"]
         prefixed_policy_name = f"{IAM_RESOURCE_PREFIX}-{policy_name}"
         self._check_name_length(IAMResourceType.POLICY, prefixed_policy_name)
-        policy_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{prefixed_policy_name}"
+        policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{prefixed_policy_name}"
         logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
         # Create the policy if it doesn't exist
         existing_policy_version = self._get_policy_version(policy_arn)

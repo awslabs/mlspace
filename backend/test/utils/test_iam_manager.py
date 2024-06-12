@@ -35,6 +35,8 @@ IAM_RESOURCE_PREFIX = "MLSpace"
 TEST_DYNAMIC_POLICY_NAME = "test-dynamic-policy"
 EXPECTED_TEST_DYNAMIC_POLICY_NAME = f"{IAM_RESOURCE_PREFIX}-{TEST_DYNAMIC_POLICY_NAME}"
 
+TEST_PERMISSIONS_BOUNDARY_ARN = "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary"
+
 TEST_ENV_CONFIG = {
     # Moto doesn't work with iso regions...
     "AWS_DEFAULT_REGION": "us-east-1",
@@ -44,7 +46,7 @@ TEST_ENV_CONFIG = {
     "AWS_SECURITY_TOKEN": "testing",
     "AWS_SESSION_TOKEN": "testing",
     "NOTEBOOK_ROLE_NAME": NOTEBOOK_ROLE_NAME,
-    "PERMISSIONS_BOUNDARY_ARN": "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary",
+    "PERMISSIONS_BOUNDARY_ARN": TEST_PERMISSIONS_BOUNDARY_ARN,
 }
 
 
@@ -401,7 +403,9 @@ class TestIAMSupport(TestCase):
         assert len(attached_policies_response["AttachedPolicies"]) == 2
         assert (
             self.iam_client.get_policy(
-                PolicyArn=account_utils.get_account_arn("iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}")
+                PolicyArn=account_utils.account_arn_from_example_arn(
+                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+                )
             )
             is not None
         )
@@ -419,7 +423,10 @@ class TestIAMSupport(TestCase):
         assert len(attached_policies_response["AttachedPolicies"]) == 2
         assert (
             self.iam_client.get_policy_version(
-                PolicyArn=account_utils.get_account_arn("iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"), VersionId="v2"
+                PolicyArn=account_utils.account_arn_from_example_arn(
+                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+                ),
+                VersionId="v2",
             )
             is not None
         )
@@ -437,7 +444,10 @@ class TestIAMSupport(TestCase):
         assert len(attached_policies_response["AttachedPolicies"]) == 2
         with pytest.raises(self.iam_client.exceptions.NoSuchEntityException):
             self.iam_client.get_policy_version(
-                PolicyArn=account_utils.get_account_arn("iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"), VersionId="v3"
+                PolicyArn=account_utils.account_arn_from_example_arn(
+                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+                ),
+                VersionId="v3",
             )
 
         # Test update to the policy with no expected version
@@ -451,7 +461,10 @@ class TestIAMSupport(TestCase):
         assert len(attached_policies_response["AttachedPolicies"]) == 2
         assert (
             self.iam_client.get_policy_version(
-                PolicyArn=account_utils.get_account_arn("iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"), VersionId="v3"
+                PolicyArn=account_utils.account_arn_from_example_arn(
+                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+                ),
+                VersionId="v3",
             )
             is not None
         )
@@ -465,7 +478,9 @@ class TestIAMSupport(TestCase):
         assert len(attached_policies_response["AttachedPolicies"]) == 1
         assert (
             self.iam_client.get_policy(
-                PolicyArn=account_utils.get_account_arn("iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}")
+                PolicyArn=account_utils.account_arn_from_example_arn(
+                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+                )
             )
             is not None
         )
@@ -481,5 +496,8 @@ class TestIAMSupport(TestCase):
         attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
         assert len(attached_policies_response["AttachedPolicies"]) == 1
         assert self.iam_client.get_policy_version(
-            PolicyArn=account_utils.get_account_arn("iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"), VersionId="v2"
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v2",
         )
