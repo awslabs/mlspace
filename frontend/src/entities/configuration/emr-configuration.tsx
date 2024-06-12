@@ -31,11 +31,11 @@ import {Application, IAppConfiguration} from '../../shared/model/app.configurati
 import {useAppSelector} from '../../config/store';
 import {emrApplications} from '../emr/emr.reducer';
 import {appConfig} from './configuration-reducer';
-import {ValidationFormActionMethod, ValidationTouchActionMethod} from '../../shared/validation';
+import {SetFieldsFunction, TouchFieldsFunction} from '../../shared/validation';
 
 export type EmrConfigurationProps = {
-    setFields: (values: { [key: string]: any }, method?: ValidationFormActionMethod) => void;
-    touchFields: (fields: string[], method?: ValidationTouchActionMethod) => void;
+    setFields: SetFieldsFunction;
+    touchFields: TouchFieldsFunction;
     expandedSections: {[key: string]: boolean};
     setExpandedSections: (expandedSections:{[key: string]: boolean}) => void;
     errors: any;

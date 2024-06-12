@@ -23,10 +23,10 @@ import {
     SpaceBetween
 } from '@cloudscape-design/components';
 import React from 'react';
-import {ValidationFormActionMethod} from '../../shared/validation';
+import {SetFieldsFunction} from '../../shared/validation';
 
 export type ProjectCreationConfigurationProps = {
-    setFields: (values: { [key: string]: any }, method?: ValidationFormActionMethod) => void;
+    setFields: SetFieldsFunction;
     isAdminOnly: boolean;
 };
 

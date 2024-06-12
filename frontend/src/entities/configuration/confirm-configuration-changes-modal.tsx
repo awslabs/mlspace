@@ -27,12 +27,12 @@ import {
 } from '@cloudscape-design/components';
 import React, {useEffect, useMemo, useState} from 'react';
 import _ from 'lodash';
-import {ValidationFormActionMethod} from '../../shared/validation';
+import {SetFieldsFunction} from '../../shared/validation';
 
 export type ConfirmConfigurationChangesModalProps = {
     visible: boolean;
     setVisible: (boolean) => void;
-    setFields: (values: { [key: string]: any }, method?: ValidationFormActionMethod) => void;
+    setFields: SetFieldsFunction;
     isSubmitting: boolean;
     submit: () => void;
     appConfiguration: {object};

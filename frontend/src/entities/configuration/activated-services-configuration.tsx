@@ -25,7 +25,7 @@ import {
     Box
 } from '@cloudscape-design/components';
 import React from 'react';
-import {ValidationFormActionMethod} from '../../shared/validation';
+import {SetFieldsFunction} from '../../shared/validation';
 
 const configurableServices = {
     batchTranslate: 'Amazon Translate batch',
@@ -35,8 +35,8 @@ const configurableServices = {
 };
 
 export type ActivatedServicesConfigurationProps = {
-    setFields: (values: { [key: string]: any }, method?: ValidationFormActionMethod) => void;
-    enabledServices: any;
+    setFields: SetFieldsFunction;
+    enabledServices: {[key: string]: boolean};
 };
 
 export function ActivatedServicesConfiguration (props: ActivatedServicesConfigurationProps) {
