@@ -217,6 +217,7 @@ class TestIAMSupport(TestCase):
         policy_version_tags = 0
         user_tags = 0
         project_tags = 0
+        dynamic_user_role = 0
 
         for arn in policy_arns:
             policy_versions = self.iam_client.list_policy_versions(
@@ -230,8 +231,8 @@ class TestIAMSupport(TestCase):
             policy_tags = self.iam_client.list_policy_tags(
                 PolicyArn=arn,
             )
-            # Should have system, policyVersion, and user or project
-            assert len(policy_tags["Tags"]) == 3
+            # Should have system, policyVersion, and project or user & dynamic-user-role
+
             policy_type = None
             mls_policy_version = None
             for tag in policy_tags["Tags"]:
@@ -245,17 +246,23 @@ class TestIAMSupport(TestCase):
                     system_tags += 1
                 elif tag["Key"] == "policyVersion":
                     mls_policy_version = int(tag["Value"])
+                elif tag["Key"] == "dynamic-user-role":
+                    dynamic_user_role += 1
 
             if policy_type == "user" and mls_policy_version == USER_POLICY_VERSION:
                 policy_version_tags += 1
+                assert len(policy_tags["Tags"]) == 4
+
             if policy_type == "project" and mls_policy_version == PROJECT_POLICY_VERSION:
                 policy_version_tags += 1
+                assert len(policy_tags["Tags"]) == 3
 
         assert policies_updated == 2
         assert policy_version_tags == 2
         assert system_tags == 2
         assert user_tags == 1
         assert project_tags == 1
+        assert dynamic_user_role == 1
 
     def test_remove_project_user_roles_single_user(self):
         # Add a new user

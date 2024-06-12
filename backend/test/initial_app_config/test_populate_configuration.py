@@ -54,9 +54,10 @@ MOCK_COMPUTE_TYPES = {
 }
 
 
+@mock.patch("ml_space_lambda.initial_app_config.lambda_function.update_dynamic_roles")
 @mock.patch("ml_space_lambda.initial_app_config.lambda_function.get_compute_types")
 @mock.patch("ml_space_lambda.initial_app_config.lambda_function.app_configuration_dao")
-def test_initial_config_success(mock_app_config_dao, mock_compute_types):
+def test_initial_config_success(mock_app_config_dao, mock_compute_types, update_dynamic_roles):
     mock_app_config_dao.get.return_value = [generate_config()]
     mock_app_config_dao.update.return_value = None
     mock_compute_types.return_value = MOCK_COMPUTE_TYPES

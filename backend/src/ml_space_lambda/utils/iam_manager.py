@@ -386,15 +386,20 @@ class IAMManager:
         policy_identifier: str,
         policy_version: int,
     ) -> str:
+        tags = [
+            {"Key": policy_type.lower(), "Value": policy_identifier},
+            {"Key": "policyVersion", "Value": str(policy_version)},
+            {"Key": "system", "Value": self.system_tag},
+        ]
+
+        if policy_type.lower() == "user":
+            tags.append({"Key": "dynamic-user-role", "Value": "true"})
+
         iam_policy_creation_response = self.iam_client.create_policy(
             PolicyName=policy_name,
             PolicyDocument=policy_contents,
             Description=f"MLSpace::{policy_type}::{policy_identifier}",
-            Tags=[
-                {"Key": policy_type.lower(), "Value": policy_identifier},
-                {"Key": "policyVersion", "Value": str(policy_version)},
-                {"Key": "system", "Value": self.system_tag},
-            ],
+            Tags=tags,
         )
         return iam_policy_creation_response["Policy"]["Arn"]
 

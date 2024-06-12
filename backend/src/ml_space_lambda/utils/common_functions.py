@@ -247,6 +247,33 @@ def generate_tags(user_name: str, project_name: str, system_tag: str) -> list:
     ]
 
 
+def has_tags(tags: list, user_name: str = None, project_name: str = None, system_tag: str = None) -> bool:
+    """
+    Checks if the common tags (as created by generate_tags exist in the list of tags.
+
+    Optionally you can provide specific values required for the tags instead of just looking
+    for their existence.
+    """
+    has_user = False
+    has_project = False
+    has_system = False
+
+    for tag in tags:
+        if tag["Key"] == "user":
+            if user_name is None or tag["Value"] == user_name:
+                has_user = True
+
+        if tag["Key"] == "project":
+            if project_name is None or tag["Value"] == project_name:
+                has_project = True
+
+        if tag["Key"] == "system":
+            if system_tag is None or tag["Value"] == system_tag:
+                has_system = True
+
+    return has_user & has_project & has_system
+
+
 def serialize_permissions(permissions: Optional[List[Permission]]) -> List[str]:
     if permissions:
         return [entry.value for entry in permissions]

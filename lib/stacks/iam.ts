@@ -869,6 +869,7 @@ export class IAMStack extends Stack {
                             'iam:ListAttachedRolePolicies',
                             'iam:GetRole',
                             'iam:GetPolicy',
+                            'iam:ListRoleTags',
                         ],
                         resources: ['*'],
                     }),
@@ -888,7 +889,7 @@ export class IAMStack extends Stack {
                     }),
                     new PolicyStatement({
                         effect: Effect.ALLOW,
-                        actions: ['iam:SimulatePrincipalPolicy', 'iam:TagRole'],
+                        actions: ['iam:SimulatePrincipalPolicy', 'iam:TagRole', 'iam:AttachRolePolicy'],
                         resources: [
                             `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
                         ],
