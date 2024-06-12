@@ -21,9 +21,10 @@ import {
 } from '@cloudscape-design/components';
 import React, { useMemo } from 'react';
 import { InstanceTypeMultiSelector } from '../../shared/metadata/instance-type-dropdown';
+import {ValidationFormActionMethod} from '../../shared/validation';
 
 export type AllowedInstanceTypesConfigurationProps = {
-    setFields: (SetFieldsFunction) => void;
+    setFields: (values: { [key: string]: any }, method?: ValidationFormActionMethod) => void;
     expandedSections: {[key: string]: boolean};
     setExpandedSections: (expandedSections:{[key: string]: boolean}) => void;
     enabledNotebookInstanceTypes: string[];

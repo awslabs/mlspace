@@ -25,14 +25,15 @@ import {
     Box
 } from '@cloudscape-design/components';
 import React from 'react';
+import {ValidationFormActionMethod, ValidationTouchActionMethod} from '../../shared/validation';
 
 export type SystemBannerConfigurationProps = {
-    setFields: (SetFieldsFunction) => void;
+    setFields: (values: { [key: string]: any }, method?: ValidationFormActionMethod) => void;
     textColor: string;
     backgroundColor: string;
     text: string;
     isEnabled: boolean;
-    touchFields: (TouchFieldsFunction) => void;
+    touchFields: (fields: string[], method?: ValidationTouchActionMethod) => void;
 };
 
 export function SystemBannerConfiguration (props: SystemBannerConfigurationProps) {
