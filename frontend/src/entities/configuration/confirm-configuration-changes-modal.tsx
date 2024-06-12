@@ -25,7 +25,7 @@ import {
     Input,
     Modal
 } from '@cloudscape-design/components';
-import React, {useEffect} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import _ from 'lodash';
 
 export type ConfirmConfigurationChangesModalProps = {
@@ -39,6 +39,8 @@ export type ConfirmConfigurationChangesModalProps = {
 };
 
 export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationChangesModalProps) {
+    const [changeReason, setChangeReason] = useState('');
+
     /**
      * Converts a JSON object into an outline structure represented as React nodes.
      *
@@ -92,11 +94,20 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
         return output;
     }
 
-    const changesDiff = getJsonDifference(props.appConfiguration, props.inMemoryConfiguration);
+    const changesDiff = useMemo(() => {
+        return getJsonDifference(props.appConfiguration, props.inMemoryConfiguration);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [props.appConfiguration, props.inMemoryConfiguration]);
 
     useEffect(() => {
-        props.setFields({ 'changeReason': `Changes to: ${Object.keys(changesDiff)}` });
-    }, [changesDiff, props]);
+        props.setFields({ 'changeReason': changeReason });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [changeReason]);
+
+    useEffect(() => {
+        setChangeReason(`Changes to: ${Object.keys(changesDiff)}`);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [props.visible]);
 
     return (
         <Modal
@@ -132,9 +143,9 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
                     label='Change reason'
                 >
                     <Input
-                        value={`Changes to: ${Object.keys(changesDiff)}`}
+                        value={changeReason}
                         onChange={(event) => {
-                            props.setFields({ 'changeReason': event.detail.value });
+                            setChangeReason(event.detail.value);
                         }}
                         disabled={_.isEmpty(changesDiff)}
                     />

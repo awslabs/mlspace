@@ -65,7 +65,6 @@ export function ConfigurationHistoryTable () {
         <>
             <Table
                 tableName='Configuration history'
-                tableType='single'
                 itemNameProperty='versionId'
                 trackBy='versionId'
                 allItems={configList}

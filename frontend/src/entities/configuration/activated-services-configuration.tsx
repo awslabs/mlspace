@@ -40,45 +40,43 @@ export type ActivatedServicesConfigurationProps = {
 
 export function ActivatedServicesConfiguration (props: ActivatedServicesConfigurationProps) {
     return (
-        <>
-            <Container
-                header={
-                    <Header variant='h2'>
-                        Activated Services
-                    </Header>
-                }>
-                <ContentLayout>
-                    <SpaceBetween direction='vertical' size='m'>
-                        <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services
-                            within MLSpace. IAM permissions that control access to these services within the
-                            MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated
-                            services will no longer appear within the MLSpace user interface. Deactivating
-                            services will terminate all active corresponding jobs and instances associated with
-                            the service.</Alert>
-                        <Grid gridDefinition={Object.keys(configurableServices).map(() => ({colspan: 3}))}>
-                            {Object.keys(configurableServices).map((service) => {
-                                return (
-                                    <Box textAlign='center'>
-                                        <SpaceBetween alignItems='center' size='xs'>
-                                            <Toggle
-                                                onChange={({detail}) => {
-                                                    const updatedField = {};
-                                                    updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
-                                                    props.setFields(updatedField);
-                                                }}
-                                                checked={props.enabledServices[service]}
-                                            >
-                                            </Toggle>
-                                        </SpaceBetween>
-                                        <p>{configurableServices[service]}</p>
-                                    </Box>
-                                );
-                            })}
-                        </Grid>
-                    </SpaceBetween>
-                </ContentLayout>
-            </Container>
-        </>
+        <Container
+            header={
+                <Header variant='h2'>
+                    Activated Services
+                </Header>
+            }>
+            <ContentLayout>
+                <SpaceBetween direction='vertical' size='m'>
+                    <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services
+                        within MLSpace. IAM permissions that control access to these services within the
+                        MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated
+                        services will no longer appear within the MLSpace user interface. Deactivating
+                        services will terminate all active corresponding jobs and instances associated with
+                        the service.</Alert>
+                    <Grid gridDefinition={Object.keys(configurableServices).map(() => ({colspan: 3}))}>
+                        {Object.keys(configurableServices).map((service) => {
+                            return (
+                                <Box textAlign='center'>
+                                    <SpaceBetween alignItems='center' size='xs'>
+                                        <Toggle
+                                            onChange={({detail}) => {
+                                                const updatedField = {};
+                                                updatedField[`configuration.EnabledServices.${service}`] = detail.checked;
+                                                props.setFields(updatedField);
+                                            }}
+                                            checked={props.enabledServices[service]}
+                                        >
+                                        </Toggle>
+                                    </SpaceBetween>
+                                    <p>{configurableServices[service]}</p>
+                                </Box>
+                            );
+                        })}
+                    </Grid>
+                </SpaceBetween>
+            </ContentLayout>
+        </Container>
     );
 }
 
