@@ -17,7 +17,6 @@
 import React, { ReactNode, useEffect } from 'react';
 import {
     Container,
-    ContentLayout,
     SpaceBetween,
     Header,
     Button,
@@ -39,6 +38,7 @@ import DetailsContainer from '../../../modules/details-container';
 import DatasetBrowser from '../../../modules/dataset/dataset-browser';
 import { DatasetBrowserActions } from '../dataset.actions';
 import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-browser.types';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function DatasetDetail () {
     const { projectName, scope, name } = useParams();

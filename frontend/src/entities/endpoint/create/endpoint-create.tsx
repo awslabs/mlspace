@@ -25,7 +25,6 @@ import {
     Input,
     Container,
     Tiles,
-    ContentLayout,
     Alert,
 } from '@cloudscape-design/components';
 import { useAppDispatch } from '../../../config/store';
@@ -42,6 +41,7 @@ import { scrollToInvalid, useValidationState } from '../../../shared/validation'
 import { z } from 'zod';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 export function EndpointCreate () {
     const [endpoint, setEndpoint] = useState(defaultEndpoint as IEndpoint);
