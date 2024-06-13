@@ -19,7 +19,8 @@ import {
     Container,
     Button,
     ButtonDropdown,
-    Grid
+    Grid,
+    Alert
 } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -201,17 +202,17 @@ export function DynamicConfiguration () {
                 }
             >
                 <SpaceBetween direction='vertical' size='xl'>
-                    <AllowedInstanceTypesConfiguration
+                    { window.env.MANAGE_IAM_ROLES && <AllowedInstanceTypesConfiguration
                         setFields={setFields}
                         expandedSections={expandedSections}
                         setExpandedSections={setExpandedSections}
                         enabledNotebookInstanceTypes={state.form.configuration.EnabledInstanceTypes.notebook}
                         enabledTrainingInstanceTypes={state.form.configuration.EnabledInstanceTypes.trainingJob}
                         enabledTransformInstanceTypes={state.form.configuration.EnabledInstanceTypes.transformJob}
-                        enabledEndpointInstanceTypes={state.form.configuration.EnabledInstanceTypes.endpoint} />
-                    <ActivatedServicesConfiguration
+                        enabledEndpointInstanceTypes={state.form.configuration.EnabledInstanceTypes.endpoint} /> }
+                    { window.env.MANAGE_IAM_ROLES && <ActivatedServicesConfiguration
                         setFields={setFields}
-                        enabledServices={state.form.configuration.EnabledServices} />
+                        enabledServices={state.form.configuration.EnabledServices} /> }
                     <EmrConfiguration
                         expandedSections={expandedSections}
                         setExpandedSections={setExpandedSections}
@@ -239,6 +240,11 @@ export function DynamicConfiguration () {
                         text={state.form.configuration.SystemBanner.text}
                         backgroundColor={state.form.configuration.SystemBanner.backgroundColor}
                         textColor={state.form.configuration.SystemBanner.textColor} />
+                    { !window.env.MANAGE_IAM_ROLES && 
+                        <Alert statusIconAriaLabel='Info'>
+                            {window.env.APPLICATION_NAME} has the ability to configure which services are available and what instance types are available if dynamic roles are enabled
+                        </Alert>
+                    }
                     <SpaceBetween alignItems='end' direction='vertical'>
                         <Button
                             iconAlt='Update dynamic configuration'
