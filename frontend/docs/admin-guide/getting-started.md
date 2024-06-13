@@ -176,7 +176,7 @@ that project. The partition key is `resourceType` and the sort key is `resourcei
 
 #### Application Configuration Table
 
-The app config table contains dynamic configuration settings for {{ $params.APPLICATION_NAME }}. The table is populated with default values the first time it is deployed, and then admins can modify the dynamic configurations for {{ $params.APPLICATION_NAME }} by navigating to the `configuration` page accessible only to admins.
+The app configuration table contains dynamic configuration settings for {{ $params.APPLICATION_NAME }}. The table is populated with default values the first time it is deployed, and then admins can modify the dynamic configurations for {{ $params.APPLICATION_NAME }} by navigating to the `Configuration` page accessible only to admins.
 
 |Attribute|Type|Description|
 |--|--|--|
