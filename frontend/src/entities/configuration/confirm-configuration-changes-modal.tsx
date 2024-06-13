@@ -139,9 +139,10 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
         >
             <SpaceBetween size={'s'}>
                 <Alert statusIconAriaLabel='Warning' visible={isDeactivatingService} type='warning'>
-                    You are about to deactivate a service: Deactivated services will no longer appear
-                    within the MLSpace user interface. Deactivating services will terminate all active
-                    corresponding jobs and instances associated with the service.
+                    You are about to deactivate a service. Deactivated services will no longer appear
+                    within the MLSpace user interface or be available for use within Notebooks.
+                    Deactivating services will suspend all active corresponding jobs and instances
+                    associated with the service.
                 </Alert>
                 <Container>
                     <TextContent>

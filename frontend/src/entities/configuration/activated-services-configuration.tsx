@@ -52,9 +52,9 @@ export function ActivatedServicesConfiguration (props: ActivatedServicesConfigur
                     <Alert statusIconAriaLabel='Info'>Activated Services: Activate or deactivate services
                         within MLSpace. IAM permissions that control access to these services within the
                         MLSpace user interface and Jupyter Notebooks will automatically update. Deactivated
-                        services will no longer appear within the MLSpace user interface. Deactivating
-                        services will terminate all active corresponding jobs and instances associated with
-                        the service.</Alert>
+                        services will no longer appear within the MLSpace user interface or be available for
+                        use within Notebooks. Deactivating services will suspend all active corresponding jobs
+                        and instances associated with the service.</Alert>
                     <Grid gridDefinition={Object.keys(configurableServices).map(() => ({colspan: 3}))}>
                         {Object.keys(configurableServices).map((service) => {
                             return (
