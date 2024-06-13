@@ -202,6 +202,14 @@ export function DynamicConfiguration () {
                 }
             >
                 <SpaceBetween direction='vertical' size='xl'>
+                    { !window.env.MANAGE_IAM_ROLES && 
+                        <Alert 
+                            statusIconAriaLabel='Warning'
+                            type='warning'
+                        >
+                            Dynamic Roles are not currently configured. We highly recommend using Dynamic Roles for the most secure configuration. Please see documentation for details. By default, all instance types and services are activated in {window.env.APPLICATION_NAME} when Dynamic Roles are not in use.
+                        </Alert>
+                    }
                     { window.env.MANAGE_IAM_ROLES && <AllowedInstanceTypesConfiguration
                         setFields={setFields}
                         expandedSections={expandedSections}
@@ -240,11 +248,6 @@ export function DynamicConfiguration () {
                         text={state.form.configuration.SystemBanner.text}
                         backgroundColor={state.form.configuration.SystemBanner.backgroundColor}
                         textColor={state.form.configuration.SystemBanner.textColor} />
-                    { !window.env.MANAGE_IAM_ROLES && 
-                        <Alert statusIconAriaLabel='Info'>
-                            {window.env.APPLICATION_NAME} has the ability to configure which services are available and what instance types are available if dynamic roles are enabled
-                        </Alert>
-                    }
                     <SpaceBetween alignItems='end' direction='vertical'>
                         <Button
                             iconAlt='Update dynamic configuration'
