@@ -3,7 +3,7 @@ outline: deep
 ---
 
 # Using AWS Cognito
-{{ $params.APPLICATION_NAME }} requires an OIDC IdP, if you don't have an existing IdP to integrate with you can setup a new
+{{ $params.APPLICATION_NAME }} requires an OIDC identity provider (IdP), if you don't have an existing IdP to integrate with you can setup a new
 Cognito User Pool or, if you are already using Cognito, you can create a new application integration
 for your existing user pool.
 
