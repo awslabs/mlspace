@@ -26,9 +26,13 @@ At the bottom of this page is a "Save Changes" button. Upon clicking this, the u
 
 Modify the Amazon EC2 instance types that you wish to make available to users within the following resources: Notebook instance, Training and HPO jobs, Transform jobs, and Endpoints. IAM permissions that control access to these instance types within the {{ $params.APPLICATION_NAME }} user interface and Jupyter Notebooks will automatically update.
 
+Note: if Dynamic IAM Roles are not being used (MANAGE_IAM_ROLES is set to false) then all instance types will always be allowed and this feature will be unavailable.
+
 ### Activated Services
 
-Activate or deactivate services within {{ $params.APPLICATION_NAME }}. IAM permissions that control access to these services within the {{ $params.APPLICATION_NAME }} user interface and Jupyter Notebooks will automatically update. Deactivated services will no longer appear within the {{ $params.APPLICATION_NAME }} user interface. Deactivating services will terminate all active corresponding jobs and instances associated with the service.
+Activate or deactivate services within {{ $params.APPLICATION_NAME }}. IAM permissions that control access to these services within the {{ $params.APPLICATION_NAME }} user interface and Jupyter Notebooks will automatically update. Deactivated services will no longer appear within the {{ $params.APPLICATION_NAME }} user interface or be available for use within Notebooks. Deactivating services will suspend all active corresponding jobs and instances associated with the service.
+
+Note: if Dynamic IAM Roles are not being used (MANAGE_IAM_ROLES is set to false) then all services will always be active and this feature will be unavailable.
 
 ### EMR Config
 
