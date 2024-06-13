@@ -45,12 +45,12 @@ def lambda_handler(event, context):
     ]
 
     app_configuration_dao.update(config)
-    update_dynamic_roles()
+    update_dynamic_roles_with_notebook_policies()
 
     generate_html_response(200, "Successfully updated app config")
 
 
-def update_dynamic_roles():
+def update_dynamic_roles_with_notebook_policies():
     env_vars = get_environment_variables()
 
     if env_vars["MANAGE_IAM_ROLES"] == "false":

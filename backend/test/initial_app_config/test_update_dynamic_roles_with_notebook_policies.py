@@ -29,7 +29,7 @@ mock_context = mock.Mock()
 mock_event = mock.Mock()
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.initial_app_config.lambda_function import update_dynamic_roles
+    from ml_space_lambda.initial_app_config.lambda_function import update_dynamic_roles_with_notebook_policies
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
@@ -59,7 +59,7 @@ def test_initial_config_success(mock_iam):
         },
     ]
 
-    update_dynamic_roles()
+    update_dynamic_roles_with_notebook_policies()
 
     mock_iam.attach_role_policy.assert_has_calls(
         [
