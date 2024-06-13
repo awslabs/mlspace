@@ -24,7 +24,6 @@ import {
     FormField,
     Input,
     Container,
-    ContentLayout,
 } from '@cloudscape-design/components';
 import { useAppDispatch } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -49,6 +48,7 @@ import { z } from 'zod';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { setTableAnnouncement } from '../../../shared/util/table-utils';
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 type EndpointConfigCreateOptions = {
     createConfigCallback?: (endpointConfig: IEndpointConfig, createdNew: boolean) => void;

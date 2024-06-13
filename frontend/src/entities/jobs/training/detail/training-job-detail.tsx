@@ -22,7 +22,6 @@ import {
     SpaceBetween,
     Header,
     Button,
-    ContentLayout,
     Table,
     StatusIndicator,
     Link,
@@ -48,6 +47,7 @@ import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { LogsComponent } from '../../../../shared/util/log-utils';
 import { createModelFromTrainingJob } from '../training-job.actions';
 import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 export function TrainingJobDetail () {
     const { projectName, trainingJobName } = useParams();

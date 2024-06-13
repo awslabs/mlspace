@@ -21,7 +21,7 @@ In order to build and deploy {{ $params.APPLICATION_NAME }} to your AWS account 
 In addition to the required software you will also need to have the following information:
 
 - AWS account Id and region you'll be deploying {{ $params.APPLICATION_NAME }} into (you'll need admin credentials or similar)
-- IdP information including the OIDC endpoint and client name
+- Identity provider (IdP) information including the OIDC endpoint and client name
 
 ### EMR Roles
 
@@ -1305,12 +1305,12 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `EXISTING_VPC_NAME` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`) | - |
 | `EXISTING_VPC_ID` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`) | - |
 | `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the default security group of that VPC | - |
-| `APP_ROLE_ARN` | Arn of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| `NOTEBOOK_ROLE_ARN` | Arn of an existing IAM role to associate with all notebooks created in {{ $params.APPLICATION_NAME }}. If using dynamic roles based on  project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| `SYSTEM_ROLE_ARN` | Arn of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} system lambdas. System lambdas are responsible for maintaining the {{ $params.APPLICATION_NAME }} system by cleaning up resources when a project is suspended or deleted, when a user is suspended, or when services are activated/deactivated. | - |
+| `APP_ROLE_ARN` | ARN of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| `NOTEBOOK_ROLE_ARN` | ARN of an existing IAM role to associate with all notebooks created in {{ $params.APPLICATION_NAME }}. If using dynamic roles based on  project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| `SYSTEM_ROLE_ARN` | ARN of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} system lambdas. System lambdas are responsible for maintaining the {{ $params.APPLICATION_NAME }} system by cleaning up resources when a project is suspended or deleted, when a user is suspended, or when services are activated/deactivated. | - |
 | `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN` | ARN for policy constraining the instance size that can be used when creating Endpoint configurations from a notebook. | - |
 | `JOB_INSTANCE_CONSTRAINT_POLICY_ARN` | ARN for policy constraining the instance size that can be used when creating HPO/Training/Transform jobs from a notebook. | - |
-| `S3_READER_ROLE_ARN` | Arn of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
+| `S3_READER_ROLE_ARN` | ARN of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
 | `EMR_DEFAULT_ROLE_ARN` | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | `EMR_EC2_INSTANCE_ROLE_ARN` | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
 | `ENABLE_ACCESS_LOGGING` | Whether or not to enable access logging for S3 and APIGW in {{ $params.APPLICATION_NAME }} | `true` |

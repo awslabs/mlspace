@@ -18,7 +18,6 @@ import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import React, { ReactNode, useEffect, useState } from 'react';
 import {
-    ContentLayout,
     SpaceBetween,
     Header,
     Button,
@@ -41,6 +40,7 @@ import NotificationService from '../../../shared/layout/notification/notificatio
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { getDownloadUrl } from '../../dataset/dataset.service';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function BatchTranslateDetail () {
     const { projectName, jobId } = useParams();

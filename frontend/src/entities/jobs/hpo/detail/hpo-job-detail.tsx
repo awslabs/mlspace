@@ -20,7 +20,6 @@ import {
     Button,
     ColumnLayout,
     Container,
-    ContentLayout,
     Grid,
     Header,
     SpaceBetween,
@@ -47,6 +46,7 @@ import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import NotificationService from '../../../../shared/layout/notification/notification.service';
 import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 export function HPOJobDetail () {
     const { projectName, jobName } = useParams();

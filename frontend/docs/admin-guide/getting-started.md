@@ -6,7 +6,7 @@ outline: deep
 
 What is {{ $params.APPLICATION_NAME }}?
 
-- {{ $params.APPLICATION_NAME }} is an auto-provision system that enables users with valid IdP credentials to securely interact with Amazon AI/ML APIs through a custom AWS console-like UI without needing direct access to the AWS console.
+- {{ $params.APPLICATION_NAME }} is an auto-provision system that enables users with valid identity provider (IdP) credentials to securely interact with Amazon AI/ML APIs through a custom AWS console-like UI without needing direct access to the AWS console.
 - {{ $params.APPLICATION_NAME }} creates secure data science environments and allows users to self organize and collaborate via projects
 - {{ $params.APPLICATION_NAME }} allows the creation of Notebooks instances (traditionally backed by AWS Sagemaker) which are machine learning optimized compute instances to conduct analysis and experimentation. For big data and compute intensive workloads these instances can also be attached to AWS EMR clusters.
 

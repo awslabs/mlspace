@@ -3,7 +3,7 @@ outline: deep
 ---
 
 # Configuring a GroundTruth OIDC Workforce using Keycloak
-SageMaker GroundTruth supports using an [OIDC based workforce](https://docs.aws.amazon.com/sagemaker/latest/dg/sms-workforce-create-private-oidc.html) for labeling jobs. {{ $params.APPLICATION_NAME }} requires an existing GroundTruth workforce in order to create labeling jobs. This workforce must be created by someone with access to the AWS console and may require additional configuration of the OIDC identity provider. This guide provides the steps necessary to create a private workforce using [Keycloak](https://www.keycloak.org) an open source identity and access management solution.
+SageMaker GroundTruth supports using an [OIDC based workforce](https://docs.aws.amazon.com/sagemaker/latest/dg/sms-workforce-create-private-oidc.html) for labeling jobs. {{ $params.APPLICATION_NAME }} requires an existing GroundTruth workforce in order to create labeling jobs. This workforce must be created by someone with access to the AWS console and may require additional configuration of the OIDC identity provider (IdP). This guide provides the steps necessary to create a private workforce using [Keycloak](https://www.keycloak.org) an open source identity and access management solution.
 
 ## Configuring Keycloak
 In order to connect an OIDC provider to GroundTruth a [number of claims](https://docs.aws.amazon.com/sagemaker/latest/dg/sms-workforce-create-private-oidc.html#sms-workforce-create-private-oidc-configure-idp) must be provided by the IdP. In Keycloak you can configure the claims at the realm level on the [Client scopes](https://www.keycloak.org/docs/latest/server_admin/#_client_scopes) page. The following scopes will need to be added:
