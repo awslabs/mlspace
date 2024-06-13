@@ -61,12 +61,13 @@ export class AppConfigurationApiStack extends Stack {
             },
         ];
 
+        const system_permissions = ['update_configuration'];
         apis.forEach((f) => {
             registerAPIEndpoint(
                 this,
                 restApi,
                 props.authorizer,
-                props.applicationRole,
+                system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],

@@ -18,7 +18,6 @@ import React, { useEffect, useState } from 'react';
 import {
     Button,
     Container,
-    ContentLayout,
     ExpandableSection,
     Form,
     FormField,
@@ -67,6 +66,7 @@ import { InstanceTypeSelector } from '../../../shared/metadata/instance-type-dro
 import { convertDailyStopTime, timezoneDisplayString } from '../../../shared/util/date-utils';
 import { EMRResourceMetadata } from '../../../shared/model/resource-metadata.model';
 import { ServiceTypes } from '../../../shared/model/app.configuration.model';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 export type NotebookCreateProps = {
     update?: boolean;

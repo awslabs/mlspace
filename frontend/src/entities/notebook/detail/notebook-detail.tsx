@@ -15,7 +15,7 @@
 */
 
 import React, { ReactNode, useEffect, useState } from 'react';
-import { SpaceBetween, Header, Button, ContentLayout } from '@cloudscape-design/components';
+import { SpaceBetween, Header, Button } from '@cloudscape-design/components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../config/store';
 import { INotebook } from '../../../shared/model/notebook.model';
@@ -45,6 +45,7 @@ import { selectCurrentUser } from '../../user/user.reducer';
 import { hasPermission, isAdminOrProjectOwner } from '../../../shared/util/permission-utils';
 import { deletionDescription } from '../../../shared/util/form-utils';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function NotebookDetail () {
     const { projectName, name } = useParams();

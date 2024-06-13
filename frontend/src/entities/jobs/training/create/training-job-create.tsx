@@ -24,7 +24,6 @@ import {
     Grid,
     Button,
     Form,
-    ContentLayout,
     Header,
     AttributeEditor,
 } from '@cloudscape-design/components';
@@ -77,6 +76,7 @@ import { useUsername } from '../../../../shared/util/auth-utils';
 import '../../../../shared/validation/helpers/uri';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 import { ServiceTypes } from '../../../../shared/model/app.configuration.model';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 const ALGORITHMS: { [key: string]: Algorithm } = {};
 ML_ALGORITHMS.filter((algorithm) => algorithm.defaultHyperParameters.length > 0).map(

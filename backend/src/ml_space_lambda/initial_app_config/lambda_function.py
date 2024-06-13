@@ -29,7 +29,7 @@ app_configuration_dao = AppConfigurationDAO()
 
 def lambda_handler(event, context):
     instances = get_compute_types()
-    resp = app_configuration_dao.get("global", 1)
+    resp = app_configuration_dao.get("global")
     config = resp[0]
 
     config["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK.value] = instances["InstanceTypes"]["InstanceType"]

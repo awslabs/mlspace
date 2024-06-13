@@ -15,7 +15,7 @@
 */
 
 import React, { ReactNode, useEffect, useState } from 'react';
-import { ContentLayout, SpaceBetween, Header, Container, ColumnLayout, StatusIndicator, Grid, Box, Link, Icon, Button} from '@cloudscape-design/components';
+import { SpaceBetween, Header, Container, ColumnLayout, StatusIndicator, Grid, Box, Link, Icon, Button} from '@cloudscape-design/components';
 import { IProject } from '../../../shared/model/project.model';
 import { ResourceType } from '../../../shared/model/resource-metadata.model';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
@@ -41,6 +41,7 @@ import _ from 'lodash';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
 import { IAppConfiguration } from '../../../shared/model/app.configuration.model';
 import { appConfig } from '../../configuration/configuration-reducer';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function ProjectDetail () {
     const { projectName } = useParams();

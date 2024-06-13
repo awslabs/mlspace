@@ -17,7 +17,6 @@
 import hashlib
 import json
 import logging
-import os
 from typing import List, Optional
 
 import boto3
@@ -192,9 +191,10 @@ class IAMManager:
         env_variables = get_environment_variables()
         self.data_bucket = env_variables["DATA_BUCKET"]
         self.system_tag = env_variables["SYSTEM_TAG"]
-        self.notebook_role_name = os.getenv("NOTEBOOK_ROLE_NAME", "")
+        self.app_role_name = env_variables["APP_ROLE_NAME"]
+        self.notebook_role_name = env_variables["NOTEBOOK_ROLE_NAME"]
         self.default_notebook_role_policy_arns = []
-        self.permissions_boundary_arn = os.getenv("PERMISSIONS_BOUNDARY_ARN", "")
+        self.permissions_boundary_arn = env_variables["PERMISSIONS_BOUNDARY_ARN"]
 
     def add_iam_role(self, project_name: str, username: str) -> str:
         iam_role_name = self._generate_iam_role_name(username, project_name)
@@ -218,7 +218,7 @@ class IAMManager:
         self._check_name_length(IAMResourceType.ROLE, iam_role_name)
 
         # Check if the project policy exists
-        existing_project_policy_version = self._get_policy_verison(project_policy_arn)
+        existing_project_policy_version = self._get_policy_version(project_policy_arn)
         if existing_project_policy_version is None:
             project_policy_arn = self._create_iam_policy(
                 project_policy_name,
@@ -245,7 +245,7 @@ class IAMManager:
             )
 
         # Check if the user policy exists
-        existing_user_policy_version = self._get_policy_verison(user_policy_arn)
+        existing_user_policy_version = self._get_policy_version(user_policy_arn)
         if existing_user_policy_version is None:
             user_policy_arn = self._create_iam_policy(
                 user_policy_name,
@@ -410,7 +410,7 @@ class IAMManager:
         except self.iam_client.exceptions.NoSuchEntityException:
             return None
 
-    def _get_policy_verison(self, resource_identifier: str) -> Optional[int]:
+    def _get_policy_version(self, resource_identifier: str) -> Optional[int]:
         try:
             existing_policy = self.iam_client.get_policy(PolicyArn=resource_identifier)
             # Grab policy version from tags otherwise return a version of -1 if the policy exists
@@ -450,6 +450,80 @@ class IAMManager:
             .replace("$BUCKET_NAME", self.data_bucket)
             .replace("$PARTITION", self.aws_partition)
         )
+
+    def _generate_user_hash(self, username: str) -> str:
+        return hashlib.sha256(username.encode()).hexdigest()
+
+    def generate_policy(self, statements: list):
+        if len(statements) > 0:
+            return {"Version": "2012-10-17", "Statement": statements}
+        else:
+            return None
+
+    def generate_policy_string(self, statements: list):
+        policy = self.generate_policy(statements)
+        return json.dumps(policy) if policy else None
+
+    # If the provided policy doesn't exist, it will be created
+    def update_dynamic_policy(
+        self,
+        policy: str,
+        policy_name: str,
+        policy_type: str,
+        policy_type_identifier: str,
+        on_create_attach_to_notebook_role: bool = False,
+        on_create_attach_to_app_role: bool = False,
+        expected_policy_version: int = None,
+    ):
+        aws_account = self.sts_client.get_caller_identity()["Account"]
+        prefixed_policy_name = f"{IAM_RESOURCE_PREFIX}-{policy_name}"
+        self._check_name_length(IAMResourceType.POLICY, prefixed_policy_name)
+        policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{prefixed_policy_name}"
+        logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
+        # Create the policy if it doesn't exist
+        existing_policy_version = self._get_policy_version(policy_arn)
+        if existing_policy_version is None and policy:
+            logger.info(f"Creating a new {policy_name} dynamic policy")
+            policy_arn = self._create_iam_policy(
+                prefixed_policy_name,
+                policy,
+                policy_type,
+                policy_type_identifier,
+                1 if expected_policy_version is None else expected_policy_version,
+            )
+
+            # Attaches the policy to the notebook role so it will get attached to new dynamic roles
+            if on_create_attach_to_notebook_role:
+                self.iam_client.attach_role_policy(RoleName=self.notebook_role_name, PolicyArn=policy_arn)
+
+            if on_create_attach_to_app_role:
+                self.iam_client.attach_role_policy(RoleName=self.app_role_name, PolicyArn=policy_arn)
+
+        # If the policy does exist, then update it
+        elif expected_policy_version is None or existing_policy_version < expected_policy_version:
+            logger.info(f"Updating the existing {policy_name} dynamic policy")
+            # Remove unused versions of the policy making room for the new policy if needed
+            self._delete_unused_policy_versions(policy_arn)
+            self.iam_client.create_policy_version(
+                PolicyArn=policy_arn,
+                PolicyDocument=policy,
+                SetAsDefault=True,
+            )
+            self.iam_client.tag_policy(
+                PolicyArn=policy_arn,
+                Tags=[
+                    {"Key": policy_type, "Value": policy_type_identifier},
+                    {
+                        "Key": "policyVersion",
+                        "Value": str(
+                            (existing_policy_version + 1) if expected_policy_version is None else expected_policy_version
+                        ),
+                    },
+                    {"Key": "system", "Value": self.system_tag},
+                ],
+            )
+        else:
+            logger.info(f"Provided inputs didn't meet criteria for updating or creating a new policy")
 
     def _generate_user_hash(self, username: str) -> str:
         return hashlib.sha256(username.encode()).hexdigest()

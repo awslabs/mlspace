@@ -86,6 +86,10 @@ export class IAMStack extends Stack {
             (s) => `${ec2ArnBase}:subnet/${s.subnetId}`
         );
 
+        // Role names
+        const mlspaceSystemRoleName = 'mlspace-system-role';
+        const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
+
         const invertedBooleanConditions = (conditions: {[key: string]: string}) => Object.fromEntries(Object.entries(conditions).map(([key, value]) => {
             return [key, value === 'true' ? 'false' : 'true'];
         }));
@@ -474,12 +478,12 @@ export class IAMStack extends Stack {
         if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
             this.mlSpaceNotebookRole = Role.fromRoleArn(
                 this,
-                'mlspace-notebook-role',
+                mlSpaceNotebookRoleName,
                 props.mlspaceConfig.NOTEBOOK_ROLE_ARN
             );
         } else {    
             // If roles are managed by CDK, create the notebook role
-            const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
+            
             // Translate Permissions Principles
             const notebookPolicyAllowPrinciples = props.enableTranslate
                 ? new CompositePrincipal(
@@ -488,7 +492,7 @@ export class IAMStack extends Stack {
                 )
                 : new ServicePrincipal('sagemaker.amazonaws.com');
 
-            this.mlSpaceNotebookRole = new Role(this, 'mlspace-notebook-role', {
+            this.mlSpaceNotebookRole = new Role(this, mlSpaceNotebookRoleName, {
                 roleName: mlSpaceNotebookRoleName,
                 assumedBy: notebookPolicyAllowPrinciples,
                 managedPolicies: notebookManagedPolicies,
@@ -597,6 +601,7 @@ export class IAMStack extends Stack {
          * - App Deny Services policy - Denies access to disabled services
          * - service-role/AWSLambdaVPCAccessExecutionRole - AWS managed role
          */
+        const mlSpaceAppRoleName = 'mlspace-app-role';
         const appPolicyAndStatements = (partition: string, region: string, roleName: string) => {
             const statements = [
                 // General Permissions - Additional KMS permission unique to the app role to retire grants
@@ -860,6 +865,28 @@ export class IAMStack extends Stack {
                             },
                         },
                     }),
+                    // Only certain policies should be allowed to attach to the notebook and app roles
+                    new PolicyStatement({
+                        effect: Effect.ALLOW,
+                        actions: [
+                            'iam:AttachRolePolicy',
+                            'iam:DetachRolePolicy',
+                        ],
+                        // This needs to match the IAM_RESOURCE_PREFIX prefix in iam_manager.py
+                        resources: [
+                            // This is needed for the deny services policy to be attached to the notebook and app roles
+                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceAppRoleName}`,
+                            `arn:${this.partition}:iam::${this.account}:role/${mlSpaceNotebookRoleName}`,
+                            `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
+                        ],
+                        conditions: {
+                            StringEqualsIgnoreCase: {
+                                // Only allow dynamic attachment for the deny services policy
+                                'iam:PolicyARN': `arn:${this.partition}:iam::${this.account}:policy/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-app-denied-services`,
+                                'iam:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
+                            },
+                        },
+                    }),
                     new PolicyStatement({
                         effect: Effect.ALLOW,
                         actions: [
@@ -943,7 +970,7 @@ export class IAMStack extends Stack {
             this.mlSpaceAppRole = Role.fromRoleArn(this, 'mlspace-app-role', props.mlspaceConfig.APP_ROLE_ARN);
         } else {
             // ML Space Application role
-            const mlSpaceAppRoleName = 'mlspace-app-role';
+
 
             const appPolicy = new ManagedPolicy(this, 'mlspace-app-policy', {
                 statements: appPolicyAndStatements(this.partition, Aws.REGION, mlSpaceAppRoleName)
@@ -976,7 +1003,7 @@ export class IAMStack extends Stack {
          * These actions include cleaning up resources for deleted projects and suspended users.
          */
         if (props.mlspaceConfig.SYSTEM_ROLE_ARN) {
-            this.mlSpaceSystemRole = Role.fromRoleArn(this, 'mlspace-system-role', props.mlspaceConfig.SYSTEM_ROLE_ARN);
+            this.mlSpaceSystemRole = Role.fromRoleArn(this, mlspaceSystemRoleName, props.mlspaceConfig.SYSTEM_ROLE_ARN);
         } else {
             const mlSpaceSystemRoleName = 'mlspaceSystemRole';
             const systemPolicy = new ManagedPolicy(this, 'mlspace-system-policy', {
@@ -988,7 +1015,7 @@ export class IAMStack extends Stack {
                     new ServicePrincipal('translate.amazonaws.com')
                 )
                 : new ServicePrincipal('lambda.amazonaws.com');
-            this.mlSpaceSystemRole = new Role(this, 'mlspace-system-role', {
+            this.mlSpaceSystemRole = new Role(this, mlspaceSystemRoleName, {
                 roleName: mlSpaceSystemRoleName,
                 assumedBy: systemPolicyAllowPrinciples,
                 managedPolicies: [

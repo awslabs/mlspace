@@ -111,11 +111,17 @@ export function DynamicConfiguration () {
                 }
             } else {
                 dispatch(getConfiguration({configScope: 'global'}));
-                notificationService.generateNotification(
-                    'Successfully updated configuration.',
-                    'success'
-                );
-                // Increment the versionId so subsequent changes don't fail from "stale" config
+                if (responseStatus === 207) {
+                    notificationService.generateNotification(
+                        resp.payload.data,
+                        'warning'
+                    );
+                } else {
+                    notificationService.generateNotification(
+                        'Successfully updated configuration.',
+                        'success'
+                    );
+                }
                 setFields({ 'versionId': state.form.versionId + 1});
             }
         } else {

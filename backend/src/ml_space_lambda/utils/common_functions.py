@@ -198,14 +198,18 @@ def generate_html_response(status_code, response_body):
     }
 
 
-def generate_exception_response(e):
-    status_code = 400
+def generate_exception_response(e, status_code=400):
     error_msg = str(e)
     if hasattr(e, "response"):  # i.e. validate the exception was from an API call
         metadata = e.response.get("ResponseMetadata")
         if metadata:
             status_code = metadata.get("HTTPStatusCode", 400)
 
+        """
+        Codes (required) - What codes to alert on 
+        MatchStrings (optional) - What strings to look for in addition to the code. If no match strings are provided, then just the code is used
+        FriendlyMessage (required) - Message replacment for the existing error 
+        """
         ERROR_DICT = [
             {
                 "Codes": ["ResourceInUse", "ValidationException"],
@@ -214,14 +218,17 @@ def generate_exception_response(e):
             },
             {
                 "Codes": ["ResourceLimitExceeded"],
-                "MatchStrings": [""],
                 "FriendlyMessage": "You have reached the maximum allowed usage for this resource. Please contact your MLSpace administrator to increase the allowed usage limits.",
+            },
+            {
+                "Codes": ["AccessDeniedException"],
+                "FriendlyMessage": "An administrator or owner has restricted access to this resource. If you need access, please contact a system administrator or owner of the resource for assistance",
             },
         ]
 
         for errorType in ERROR_DICT:
-            if e.response["Error"]["Code"] in errorType["Codes"] and any(
-                error in error_msg for error in errorType["MatchStrings"]
+            if e.response["Error"]["Code"] in errorType["Codes"] and (
+                "MatchStrings" not in errorType or any(error in error_msg for error in errorType["MatchStrings"])
             ):
                 e = f"{errorType['FriendlyMessage']} Full message: {error_msg}"
                 break

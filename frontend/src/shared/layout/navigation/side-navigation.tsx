@@ -31,6 +31,7 @@ import { colorTextBodyDefault } from '@cloudscape-design/design-tokens';
 import Logo from '../logo/logo';
 import { appConfig } from '../../../entities/configuration/configuration-reducer';
 import { IAppConfiguration } from '../../model/app.configuration.model';
+import HorizontalLine from '../horizontal-line';
 
 export default function SideNavigation () {
     const items: SideNavigationProps.Item[] = useAppSelector((state) => state.navigation.navItems);
@@ -143,8 +144,9 @@ export default function SideNavigation () {
                         </span>
                     </a>
                 </Header>
+                <HorizontalLine/>
             </div>
-            <hr style={{ opacity: 0.2 }} />
+            
             <div style={{ paddingLeft: '28px', paddingRight: '26px', paddingTop: '12px' }}>
                 <FormField label='Current Project'>
                     <Select

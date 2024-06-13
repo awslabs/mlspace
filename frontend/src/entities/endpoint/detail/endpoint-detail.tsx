@@ -16,7 +16,6 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
 import {
-    ContentLayout,
     SpaceBetween,
     Header,
     Container,
@@ -48,6 +47,7 @@ import { selectCurrentUser } from '../../user/user.reducer';
 import { setResourceScheduleModal } from '../../../modules/modal/modal.reducer';
 import { modifyResourceTerminationSchedule } from '../../../shared/util/resource-schedule.service';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function EndpointDetail () {
     const { projectName, name } = useParams();
