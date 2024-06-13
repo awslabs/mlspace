@@ -19,7 +19,6 @@ import { setBreadcrumbs } from '../../shared/layout/navigation/navigation.reduce
 import { useAppDispatch } from '../../config/store';
 import {
     Header,
-    SpaceBetween,
     Tabs
 } from '@cloudscape-design/components';
 import React, { useEffect } from 'react';
@@ -29,6 +28,7 @@ import DeploymentConfiguration from './deployment-configuration';
 import DynamicConfiguration from './dynamic-configuration';
 import { ConfigurationHistoryTable } from './configuration-history-table';
 import ContentLayout from '../../shared/layout/content-layout';
+import { borderRadiusContainer, colorBackgroundContainerContent } from '@cloudscape-design/design-tokens';
 
 export function Configuration () {
     const dispatch = useAppDispatch();
@@ -59,30 +59,28 @@ export function Configuration () {
                 </Header>
             }
         >
-            <SpaceBetween direction='vertical' size='xl'>
+            <div style={{ borderRadius: borderRadiusContainer, background: colorBackgroundContainerContent, padding: '5px' }}>
                 <Tabs
                     tabs={[
                         {
                             label: 'Dynamic Configuration',
                             id: 'dynamic-config',
-                            content: <DynamicConfiguration/>,
-                            disabled: true
+                            content: <DynamicConfiguration />,
                         },
                         {
                             label: 'Dynamic Configuration History',
                             id: 'config-hist',
-                            content: <ConfigurationHistoryTable/>,
-                            disabled: true
+                            content: <ConfigurationHistoryTable />,
                         },
                         {
                             label: 'Deployment Configuration',
                             id: 'deployment-config',
-                            content: <DeploymentConfiguration/>
+                            content: <DeploymentConfiguration />
                         },
                     ]}
                 />
-            </SpaceBetween>
-            
+            </div>
+
         </ContentLayout>
     );
 }
