@@ -22,9 +22,10 @@ import { IEndpointConfig } from '../../../shared/model/endpoint-config.model';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Container, ContentLayout, Header, StatusIndicator } from '@cloudscape-design/components';
+import { Container, Header, StatusIndicator } from '@cloudscape-design/components';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle } from '../../../../src/shared/doc';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function EndpointConfigDetail () {
     const { projectName, name } = useParams();

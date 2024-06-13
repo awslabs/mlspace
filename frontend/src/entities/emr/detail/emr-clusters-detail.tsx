@@ -17,7 +17,7 @@
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import React, { ReactNode, useEffect, useState } from 'react';
-import { ContentLayout, SpaceBetween, Header, Button } from '@cloudscape-design/components';
+import { SpaceBetween, Header, Button } from '@cloudscape-design/components';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -33,6 +33,7 @@ import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function EMRDetail () {
     const { projectName, clusterId, clusterName } = useParams();

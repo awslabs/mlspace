@@ -22,7 +22,6 @@ import {
     Box,
     ColumnLayout,
     Button,
-    ContentLayout,
     Alert,
     StatusIndicator,
 } from '@cloudscape-design/components';
@@ -42,6 +41,7 @@ import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import DetailsContainer from '../../../../modules/details-container';
 import { LogsComponent } from '../../../../shared/util/log-utils';
 import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 function TransformDetail () {
     const { projectName, name } = useParams();

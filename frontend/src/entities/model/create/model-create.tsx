@@ -21,7 +21,6 @@ import Form from '@cloudscape-design/components/form';
 import {
     Button,
     Container,
-    ContentLayout,
     FormField,
     Header,
     Input,
@@ -46,6 +45,7 @@ import { AttributeEditorSchema } from '../../../modules/environment-variables/en
 import { NetworkSettings } from '../../jobs/hpo/create/training-definitions/network-settings';
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
 import '../../../shared/validation/helpers/uri';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 export function ModelCreate () {
     const dispatch = useAppDispatch();

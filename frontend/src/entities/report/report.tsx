@@ -18,7 +18,6 @@ import {
     Button,
     ButtonDropdown,
     Container,
-    ContentLayout,
     Form,
     FormField,
     Header,
@@ -46,6 +45,7 @@ import User from '../user/user';
 import { ReportActionHandler } from './report.actions';
 import { reportColumns, resourceTypeOptions, scopeOptions, visibleReportColumns } from './report.columns';
 import { ReportScope, createReport, downloadReport, listReports } from './report.service';
+import ContentLayout from '../../shared/layout/content-layout';
 
 export function Report () {
     const dispatch = useAppDispatch();
