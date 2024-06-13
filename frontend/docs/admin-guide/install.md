@@ -1308,8 +1308,8 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `APP_ROLE_ARN` | Arn of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
 | `NOTEBOOK_ROLE_ARN` | Arn of an existing IAM role to associate with all notebooks created in {{ $params.APPLICATION_NAME }}. If using dynamic roles based on  project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
 | `SYSTEM_ROLE_ARN` | Arn of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} system lambdas. System lambdas are responsible for maintaining the {{ $params.APPLICATION_NAME }} system by cleaning up resources when a project is suspended or deleted, when a user is suspended, or when services are activated/deactivated. | - |
-| `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN` | TODO | - |
-| `JOB_INSTANCE_CONSTRAINT_POLICY_ARN` | TODO | - |
+| `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN` | ARN for policy constraining the instance size that can be used when creating Endpoint configurations from a notebook. | - |
+| `JOB_INSTANCE_CONSTRAINT_POLICY_ARN` | ARN for policy constraining the instance size that can be used when creating HPO/Training/Transform jobs from a notebook. | - |
 | `S3_READER_ROLE_ARN` | Arn of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
 | `EMR_DEFAULT_ROLE_ARN` | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | `EMR_EC2_INSTANCE_ROLE_ARN` | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
