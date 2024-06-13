@@ -26,6 +26,36 @@ from ml_space_lambda.utils.common_functions import retry_config
 param_file = {}
 env_variables = {}
 
+ENV_DEFAULTS = {
+    EnvVariable.APP_CONFIGURATION_TABLE: "mlspace-app-configuration",
+    EnvVariable.APP_ROLE_NAME: "mlspace-app-role",
+    EnvVariable.AWS_DEFAULT_REGION: "us-iso-east-1",
+    EnvVariable.BUCKET: "mlspace-data-bucket",
+    EnvVariable.DATA_BUCKET: "mlspace-data-bucket",
+    EnvVariable.DATASETS_TABLE: "mlspace-datasets",
+    EnvVariable.DYNAMO_TABLE: "mlspace-project",
+    EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+    EnvVariable.EMR_CONFIG_BUCKET: "mlspace-emr-config-bucket",
+    EnvVariable.EMR_EC2_ROLE_NAME: "EMR_EC2_DefaultRole",
+    EnvVariable.EMR_EC2_SSH_KEY: "",
+    EnvVariable.EMR_SERVICE_ROLE_NAME: "EMR_DefaultRole",
+    EnvVariable.EMR_SECURITY_CONFIGURATION: "MLSpace-EMR-SecurityConfig",
+    EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+    EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
+    EnvVariable.MANAGE_IAM_ROLES: "",
+    EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
+    EnvVariable.NOTEBOOK_ROLE_NAME: "",
+    EnvVariable.RESOURCE_METADATA_TABLE: "mlspace-resource-metadata",
+    EnvVariable.RESOURCE_SCHEDULE_TABLE: "mlspace-resource-schedule",
+    EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
+    EnvVariable.PROJECTS_TABLE: "mlspace-projects",
+    EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",
+    EnvVariable.S3_KEY: "notebook-params.json",
+    EnvVariable.SYSTEM_TAG: "MLSpace",
+    EnvVariable.TRANSLATE_DATE_ROLE_ARN: "",
+    EnvVariable.USERS_TABLE: "mlspace-users",
+}
+
 
 def pull_config_from_s3() -> dict:
     global param_file
@@ -43,37 +73,6 @@ def pull_config_from_s3() -> dict:
 def get_environment_variables() -> dict:
     global env_variables
     if not env_variables:
-        env_variables = {
-            EnvVariable.APP_CONFIGURATION_TABLE: os.getenv(EnvVariable.APP_CONFIGURATION_TABLE, "mlspace-app-configuration"),
-            EnvVariable.AWS_DEFAULT_REGION: os.getenv(EnvVariable.AWS_DEFAULT_REGION, "us-iso-east-1"),
-            EnvVariable.BUCKET: os.getenv(EnvVariable.BUCKET, "mlspace-data-bucket"),
-            EnvVariable.DATA_BUCKET: os.getenv(EnvVariable.DATA_BUCKET, "mlspace-data-bucket"),
-            EnvVariable.DATASETS_TABLE: os.getenv(EnvVariable.DATASETS_TABLE, "mlspace-datasets"),
-            EnvVariable.DYNAMO_TABLE: os.getenv(EnvVariable.DYNAMO_TABLE, "mlspace-project"),
-            EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: os.getenv(
-                EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN, ""
-            ),
-            EnvVariable.EMR_CONFIG_BUCKET: os.getenv(EnvVariable.EMR_CONFIG_BUCKET, "mlspace-emr-config-bucket"),
-            EnvVariable.EMR_EC2_ROLE_NAME: os.getenv(EnvVariable.EMR_EC2_ROLE_NAME, "EMR_EC2_DefaultRole"),
-            EnvVariable.EMR_EC2_SSH_KEY: os.getenv(EnvVariable.EMR_EC2_SSH_KEY, ""),
-            EnvVariable.EMR_SERVICE_ROLE_NAME: os.getenv(EnvVariable.EMR_SERVICE_ROLE_NAME, "EMR_DefaultRole"),
-            EnvVariable.EMR_SECURITY_CONFIGURATION: os.getenv(
-                EnvVariable.EMR_SECURITY_CONFIGURATION, "MLSpace-EMR-SecurityConfig"
-            ),
-            EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN: os.getenv(EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN, ""),
-            EnvVariable.LOG_BUCKET: os.getenv(EnvVariable.LOG_BUCKET, "mlspace-log-bucket"),
-            EnvVariable.MANAGE_IAM_ROLES: os.getenv(EnvVariable.MANAGE_IAM_ROLES, ""),
-            EnvVariable.NEW_USER_SUSPENSION_DEFAULT: os.getenv(EnvVariable.NEW_USER_SUSPENSION_DEFAULT, "True"),
-            EnvVariable.NOTEBOOK_ROLE_NAME: os.getenv(EnvVariable.NOTEBOOK_ROLE_NAME, ""),
-            EnvVariable.RESOURCE_METADATA_TABLE: os.getenv(EnvVariable.RESOURCE_METADATA_TABLE, "mlspace-resource-metadata"),
-            EnvVariable.RESOURCE_SCHEDULE_TABLE: os.getenv(EnvVariable.RESOURCE_SCHEDULE_TABLE, "mlspace-resource-schedule"),
-            EnvVariable.PERMISSIONS_BOUNDARY_ARN: os.getenv(EnvVariable.PERMISSIONS_BOUNDARY_ARN, ""),
-            EnvVariable.PROJECTS_TABLE: os.getenv(EnvVariable.PROJECTS_TABLE, "mlspace-projects"),
-            EnvVariable.PROJECT_USERS_TABLE: os.getenv(EnvVariable.PROJECT_USERS_TABLE, "mlspace-project-users"),
-            EnvVariable.S3_KEY: os.getenv(EnvVariable.S3_KEY, "notebook-params.json"),
-            EnvVariable.SYSTEM_TAG: os.getenv(EnvVariable.SYSTEM_TAG, "MLSpace"),
-            EnvVariable.TRANSLATE_DATE_ROLE_ARN: os.getenv(EnvVariable.TRANSLATE_DATE_ROLE_ARN, ""),
-            EnvVariable.USERS_TABLE: os.getenv(EnvVariable.USERS_TABLE, "mlspace-users"),
-        }
+        env_variables = dict((env_var, os.getenv(env_var, ENV_DEFAULTS[env_var])) for env_var in ENV_DEFAULTS)
 
     return env_variables

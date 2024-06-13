@@ -21,20 +21,7 @@ import boto3
 import moto
 import pytest
 
-import ml_space_lambda.utils.account_utils as account_utils
-import ml_space_lambda.utils.mlspace_config as mlspace_config
-from ml_space_lambda.enums import IAMEffect, IAMStatementProperty
-from ml_space_lambda.utils.common_functions import generate_tags
-from ml_space_lambda.utils.iam_manager import PROJECT_POLICY_VERSION, USER_POLICY_VERSION
-
 NOTEBOOK_ROLE_NAME = "MLSpace-notebook-role"
-DEFAULT_NOTEBOOK_POLICY_NAME = "MLSpace-notebook-policy"
-SYSTEM_TAG = "MLSpace"
-IAM_RESOURCE_PREFIX = "MLSpace"
-
-TEST_DYNAMIC_POLICY_NAME = "test-dynamic-policy"
-EXPECTED_TEST_DYNAMIC_POLICY_NAME = f"{IAM_RESOURCE_PREFIX}-{TEST_DYNAMIC_POLICY_NAME}"
-
 TEST_PERMISSIONS_BOUNDARY_ARN = "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary"
 
 TEST_ENV_CONFIG = {
@@ -49,6 +36,22 @@ TEST_ENV_CONFIG = {
     "PERMISSIONS_BOUNDARY_ARN": TEST_PERMISSIONS_BOUNDARY_ARN,
 }
 
+with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
+    import ml_space_lambda.utils.account_utils as account_utils
+    import ml_space_lambda.utils.mlspace_config as mlspace_config
+
+    mlspace_config.env_variables = {}
+    from ml_space_lambda.enums import IAMEffect, IAMStatementProperty
+    from ml_space_lambda.utils.common_functions import generate_tags
+    from ml_space_lambda.utils.iam_manager import PROJECT_POLICY_VERSION, USER_POLICY_VERSION
+
+
+DEFAULT_NOTEBOOK_POLICY_NAME = "MLSpace-notebook-policy"
+SYSTEM_TAG = "MLSpace"
+IAM_RESOURCE_PREFIX = "MLSpace"
+
+TEST_DYNAMIC_POLICY_NAME = "test-dynamic-policy"
+EXPECTED_TEST_DYNAMIC_POLICY_NAME = f"{IAM_RESOURCE_PREFIX}-{TEST_DYNAMIC_POLICY_NAME}"
 
 MOCK_PROJECT_NAME = "example_project"
 MOCK_USER_NAME = "jdoe"

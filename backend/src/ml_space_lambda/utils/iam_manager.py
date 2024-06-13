@@ -17,7 +17,6 @@
 import hashlib
 import json
 import logging
-import os
 from typing import List, Optional
 
 import boto3
@@ -192,10 +191,10 @@ class IAMManager:
         env_variables = get_environment_variables()
         self.data_bucket = env_variables["DATA_BUCKET"]
         self.system_tag = env_variables["SYSTEM_TAG"]
-        self.app_role_name = os.getenv("APP_ROLE_NAME", "")
-        self.notebook_role_name = os.getenv("NOTEBOOK_ROLE_NAME", "")
+        self.app_role_name = env_variables["APP_ROLE_NAME"]
+        self.notebook_role_name = env_variables["NOTEBOOK_ROLE_NAME"]
         self.default_notebook_role_policy_arns = []
-        self.permissions_boundary_arn = os.getenv("PERMISSIONS_BOUNDARY_ARN", "")
+        self.permissions_boundary_arn = env_variables["PERMISSIONS_BOUNDARY_ARN"]
 
     def add_iam_role(self, project_name: str, username: str) -> str:
         iam_role_name = self._generate_iam_role_name(username, project_name)

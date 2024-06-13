@@ -45,6 +45,7 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
 
     expected_body = {
         "environmentVariables": {
+            EnvVariable.APP_ROLE_NAME: "mlspace-app-role",
             EnvVariable.APP_CONFIGURATION_TABLE: "mlspace-app-configuration",
             EnvVariable.AWS_DEFAULT_REGION: "us-iso-east-1",
             EnvVariable.BUCKET: "mlspace-data-bucket",

@@ -49,6 +49,7 @@ def test_environment_variables():
     mlspace_config.env_variables = {}
     with mock.patch.dict("os.environ", {"AWS_DEFAULT_REGION": "us-iso-east-1"}, clear=True):
         assert get_environment_variables() == {
+            EnvVariable.APP_ROLE_NAME: "mlspace-app-role",
             EnvVariable.APP_CONFIGURATION_TABLE: "mlspace-app-configuration",
             EnvVariable.AWS_DEFAULT_REGION: "us-iso-east-1",
             EnvVariable.BUCKET: "mlspace-data-bucket",
