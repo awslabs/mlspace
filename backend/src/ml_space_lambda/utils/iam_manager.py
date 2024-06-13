@@ -357,6 +357,9 @@ class IAMManager:
 
     # Creates the IAM role for the MLSpace user/project context
     def _create_iam_role(self, iam_role_name: str, project_name: str, username: str) -> str:
+        tags = generate_tags(username, project_name, self.system_tag)
+        tags.append({"Key": "dynamic-user-role", "Value": "true"})
+
         iam_role_response = self.iam_client.create_role(
             RoleName=iam_role_name,
             AssumeRolePolicyDocument=json.dumps(
@@ -372,7 +375,7 @@ class IAMManager:
                 }
             ),
             Description=f"Default SageMaker Notebook role for Project: {project_name} - User: {username}",
-            Tags=generate_tags(username, project_name, self.system_tag),
+            Tags=tags,
             PermissionsBoundary=self.permissions_boundary_arn,
         )
         return iam_role_response["Role"]["Arn"]
@@ -386,20 +389,15 @@ class IAMManager:
         policy_identifier: str,
         policy_version: int,
     ) -> str:
-        tags = [
-            {"Key": policy_type.lower(), "Value": policy_identifier},
-            {"Key": "policyVersion", "Value": str(policy_version)},
-            {"Key": "system", "Value": self.system_tag},
-        ]
-
-        if policy_type.lower() == "user":
-            tags.append({"Key": "dynamic-user-role", "Value": "true"})
-
         iam_policy_creation_response = self.iam_client.create_policy(
             PolicyName=policy_name,
             PolicyDocument=policy_contents,
             Description=f"MLSpace::{policy_type}::{policy_identifier}",
-            Tags=tags,
+            Tags=[
+                {"Key": policy_type.lower(), "Value": policy_identifier},
+                {"Key": "policyVersion", "Value": str(policy_version)},
+                {"Key": "system", "Value": self.system_tag},
+            ],
         )
         return iam_policy_creation_response["Policy"]["Arn"]
 
