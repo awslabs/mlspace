@@ -19,7 +19,7 @@ In order to build and deploy MLSpace to your AWS account you will need the follo
 In addition to the required software you will also need to have the following information:
 
 - AWS account Id and region you'll be deploying MLSpace into (you'll need admin credentials or similar)
-- IdP information including the OIDC endpoint and client name
+- Identity provider (IdP) information including the OIDC endpoint and client name
 
 ## Configuring MLSpace
 
@@ -171,9 +171,9 @@ If the config-helper doesn't provide the level of customization you need for you
 | EXISTING_VPC_NAME | If MLSpace is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`) | - |
 | EXISTING_VPC_ID | If MLSpace is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`) | - |
 | EXISTING_VPC_DEFAULT_SECURITY_GROUP | If MLSpace is being deployed into an existing VPC this should be the default security group of that VPC | - |
-| APP_ROLE_ARN | Arn of an existing IAM role to use for executing the MLSpace lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| NOTEBOOK_ROLE_ARN | Arn of an existing IAM role to associate with all notebooks created in MLSpace. If using dynamic roles based on project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| S3_READER_ROLE_ARN | Arn of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
+| APP_ROLE_ARN | ARN of an existing IAM role to use for executing the MLSpace lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| NOTEBOOK_ROLE_ARN | ARN of an existing IAM role to associate with all notebooks created in MLSpace. If using dynamic roles based on project/user combinations the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
+| S3_READER_ROLE_ARN | ARN of an existing IAM role to use for reading from the static website S3 bucket. If not specified a new role with the correct privileges will be created | - |
 | EMR_DEFAULT_ROLE_ARN | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | EMR_EC2_INSTANCE_ROLE_ARN | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
 | ENABLE_ACCESS_LOGGING | Whether or not to enable access logging for S3 and APIGW in MLSpace | `true` |

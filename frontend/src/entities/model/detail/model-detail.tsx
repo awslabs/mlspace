@@ -17,7 +17,6 @@
 import React, { ReactNode, useEffect } from 'react';
 import {
     Container,
-    ContentLayout,
     Header,
     SpaceBetween,
     StatusIndicator,
@@ -33,6 +32,7 @@ import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { formatDate } from '../../../shared/util/date-utils';
 import { formatDisplayBoolean } from '../../../shared/util/form-utils';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function ModelDetail () {
     const { projectName, modelName } = useParams();

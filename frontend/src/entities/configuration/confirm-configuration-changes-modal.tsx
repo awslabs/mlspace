@@ -23,7 +23,8 @@ import {
     TextContent,
     FormField,
     Input,
-    Modal
+    Modal,
+    Alert
 } from '@cloudscape-design/components';
 import React, {useEffect, useMemo, useState} from 'react';
 import _ from 'lodash';
@@ -100,6 +101,10 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.appConfiguration, props.inMemoryConfiguration]);
 
+    const isDeactivatingService = !_.isEmpty(changesDiff) &&
+        Object.keys(changesDiff).includes('EnabledServices') &&
+        Object.values(changesDiff['EnabledServices']).includes(false);
+
     useEffect(() => {
         props.setFields({ 'changeReason': changeReason });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,6 +138,12 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
             }
         >
             <SpaceBetween size={'s'}>
+                <Alert statusIconAriaLabel='Warning' visible={isDeactivatingService} type='warning'>
+                    You are about to deactivate a service. Deactivated services will no longer appear
+                    within the MLSpace user interface or be available for use within Notebooks.
+                    Deactivating services will suspend all active corresponding jobs and instances
+                    associated with the service.
+                </Alert>
                 <Container>
                     <TextContent>
                         {_.isEmpty(changesDiff) ? <p>No changes detected</p> : jsonToOutline(changesDiff)}

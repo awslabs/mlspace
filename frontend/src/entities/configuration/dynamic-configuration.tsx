@@ -19,7 +19,8 @@ import {
     Container,
     Button,
     ButtonDropdown,
-    Grid
+    Grid,
+    Alert
 } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../config/store';
@@ -110,11 +111,17 @@ export function DynamicConfiguration () {
                 }
             } else {
                 dispatch(getConfiguration({configScope: 'global'}));
-                notificationService.generateNotification(
-                    'Successfully updated configuration.',
-                    'success'
-                );
-                // Increment the versionId so subsequent changes don't fail from "stale" config
+                if (responseStatus === 207) {
+                    notificationService.generateNotification(
+                        resp.payload.data,
+                        'warning'
+                    );
+                } else {
+                    notificationService.generateNotification(
+                        'Successfully updated configuration.',
+                        'success'
+                    );
+                }
                 setFields({ 'versionId': state.form.versionId + 1});
             }
         } else {
@@ -201,17 +208,25 @@ export function DynamicConfiguration () {
                 }
             >
                 <SpaceBetween direction='vertical' size='xl'>
-                    <AllowedInstanceTypesConfiguration
+                    { !window.env.MANAGE_IAM_ROLES && 
+                        <Alert 
+                            statusIconAriaLabel='Warning'
+                            type='warning'
+                        >
+                            Dynamic Roles are not currently configured. We highly recommend using Dynamic Roles for the most secure configuration. Please see documentation for details. By default, all instance types and services are activated in {window.env.APPLICATION_NAME} when Dynamic Roles are not in use.
+                        </Alert>
+                    }
+                    { window.env.MANAGE_IAM_ROLES && <AllowedInstanceTypesConfiguration
                         setFields={setFields}
                         expandedSections={expandedSections}
                         setExpandedSections={setExpandedSections}
                         enabledNotebookInstanceTypes={state.form.configuration.EnabledInstanceTypes.notebook}
                         enabledTrainingInstanceTypes={state.form.configuration.EnabledInstanceTypes.trainingJob}
                         enabledTransformInstanceTypes={state.form.configuration.EnabledInstanceTypes.transformJob}
-                        enabledEndpointInstanceTypes={state.form.configuration.EnabledInstanceTypes.endpoint} />
-                    <ActivatedServicesConfiguration
+                        enabledEndpointInstanceTypes={state.form.configuration.EnabledInstanceTypes.endpoint} /> }
+                    { window.env.MANAGE_IAM_ROLES && <ActivatedServicesConfiguration
                         setFields={setFields}
-                        enabledServices={state.form.configuration.EnabledServices} />
+                        enabledServices={state.form.configuration.EnabledServices} /> }
                     <EmrConfiguration
                         expandedSections={expandedSections}
                         setExpandedSections={setExpandedSections}

@@ -28,7 +28,6 @@ import {
     Grid,
     ExpandableSection,
     SelectProps,
-    ContentLayout,
 } from '@cloudscape-design/components';
 import { AssembleWith, BatchStrategy, CompressionType, ITransform, S3DataType, SplitType, defaultValue } from '../../../../shared/model/transform.model';
 import { useAppDispatch, useAppSelector } from '../../../../config/store';
@@ -63,6 +62,7 @@ import DatasetResourceSelector from '../../../../modules/dataset/dataset-selecto
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 import { DatasetResourceSelectorSelectableItems } from '../../../../modules/dataset/dataset-selector.types';
 import { ServiceTypes } from '../../../../shared/model/app.configuration.model';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 export function TransformCreate () {
     const [s3DataTypes, setS3DataTypes] = useState([] as SelectProps.Option[]);

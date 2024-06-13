@@ -18,7 +18,6 @@ import React, { useEffect, useMemo } from 'react';
 import {
     Button,
     Container,
-    ContentLayout,
     ExpandableSection,
     Form,
     FormField,
@@ -46,6 +45,7 @@ import { Subnet } from '../../../shared/model/vpc.config';
 import { LoadingStatus } from '../../../shared/loading-status';
 import { ClusterType, IAppConfiguration } from '../../../shared/model/app.configuration.model';
 import { appConfig } from '../../configuration/configuration-reducer';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 enum ClusterAmi {
     BUILT_IN = 'built-in',
