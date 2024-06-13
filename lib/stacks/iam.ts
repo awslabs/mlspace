@@ -60,7 +60,6 @@ export class IAMStack extends Stack {
             ...props,
         });
 
-        const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
         /**
          * Comprehend Permissions
          * Translate Permissions
@@ -86,6 +85,10 @@ export class IAMStack extends Stack {
         const privateSubnetArnList = props.mlSpaceVPC.privateSubnets.map(
             (s) => `${ec2ArnBase}:subnet/${s.subnetId}`
         );
+
+        // Role names
+        const mlspaceSystemRoleName = 'mlspace-system-role';
+        const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
 
         const invertedBooleanConditions = (conditions: {[key: string]: string}) => Object.fromEntries(Object.entries(conditions).map(([key, value]) => {
             return [key, value === 'true' ? 'false' : 'true'];
@@ -1000,7 +1003,7 @@ export class IAMStack extends Stack {
          * These actions include cleaning up resources for deleted projects and suspended users.
          */
         if (props.mlspaceConfig.SYSTEM_ROLE_ARN) {
-            this.mlSpaceSystemRole = Role.fromRoleArn(this, 'mlspace-system-role', props.mlspaceConfig.SYSTEM_ROLE_ARN);
+            this.mlSpaceSystemRole = Role.fromRoleArn(this, mlspaceSystemRoleName, props.mlspaceConfig.SYSTEM_ROLE_ARN);
         } else {
             const mlSpaceSystemRoleName = 'mlspaceSystemRole';
             const systemPolicy = new ManagedPolicy(this, 'mlspace-system-policy', {
@@ -1012,7 +1015,7 @@ export class IAMStack extends Stack {
                     new ServicePrincipal('translate.amazonaws.com')
                 )
                 : new ServicePrincipal('lambda.amazonaws.com');
-            this.mlSpaceSystemRole = new Role(this, 'mlspace-system-role', {
+            this.mlSpaceSystemRole = new Role(this, mlspaceSystemRoleName, {
                 roleName: mlSpaceSystemRoleName,
                 assumedBy: systemPolicyAllowPrinciples,
                 managedPolicies: [
