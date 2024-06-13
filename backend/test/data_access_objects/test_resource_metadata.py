@@ -259,7 +259,7 @@ class TestResourceMetadataDAO(TestCase):
         # DemoProject
         test_project_notebooks = []
         results = self.resource_metadata_dao.get_all_for_project_by_type(TEST_PROJECT_NAME, ResourceType.NOTEBOOK, limit=10)
-        assert results.next_token is not None
+        assert results.next_token
         test_project_notebooks.extend(results.records)
         results = self.resource_metadata_dao.get_all_for_project_by_type(
             TEST_PROJECT_NAME,
@@ -286,6 +286,52 @@ class TestResourceMetadataDAO(TestCase):
         assert not results.next_token
 
         results = self.resource_metadata_dao.get_all_for_project_by_type(DEMO_PROJECT_NAME, ResourceType.BATCH_TRANSLATE_JOB)
+        assert_resources(
+            results.records,
+            4,
+            ResourceType.BATCH_TRANSLATE_JOB,
+            expected_project=DEMO_PROJECT_NAME,
+        )
+        assert not results.next_token
+
+    def test_get_resources_by_type_for_project(self):
+        # 20 of the total 29 notebooks should be for TestProject and the other 9 should be for
+        # DemoProject
+        test_project_notebooks = []
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(
+            ResourceType.NOTEBOOK, project=TEST_PROJECT_NAME, limit=10
+        )
+        assert results.next_token
+        test_project_notebooks.extend(results.records)
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(
+            ResourceType.NOTEBOOK,
+            project=TEST_PROJECT_NAME,
+            next_token=results.next_token,
+        )
+        assert not results.next_token
+        test_project_notebooks.extend(results.records)
+        assert_resources(test_project_notebooks, 20, ResourceType.NOTEBOOK, expected_project=TEST_PROJECT_NAME)
+
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(ResourceType.NOTEBOOK, project=DEMO_PROJECT_NAME)
+        assert not results.next_token
+        assert_resources(results.records, 9, ResourceType.NOTEBOOK, expected_project=DEMO_PROJECT_NAME)
+
+        # There are a total of 10 batch jobs 4 of them are associated with the DemoProject,
+        # i = 0, 15, 30, 45. The other 6 are associated with the TestProject
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(
+            ResourceType.BATCH_TRANSLATE_JOB, project=TEST_PROJECT_NAME
+        )
+        assert_resources(
+            results.records,
+            6,
+            ResourceType.BATCH_TRANSLATE_JOB,
+            expected_project=TEST_PROJECT_NAME,
+        )
+        assert not results.next_token
+
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(
+            ResourceType.BATCH_TRANSLATE_JOB, project=DEMO_PROJECT_NAME
+        )
         assert_resources(
             results.records,
             4,
@@ -351,14 +397,34 @@ class TestResourceMetadataDAO(TestCase):
             expected_status="Completed",
         )
 
+    def test_get_resources_for_project_error_protected_expression_name(self):
+        with pytest.raises(ValueError):
+            self.resource_metadata_dao.get_all_for_project_by_type(
+                FILTER_TEST_PROJECT_NAME, ResourceType.TRAINING_JOB, expression_names={"#p": "anything"}
+            )
+
     def test_get_resources_for_user(self):
         user_notebooks = []
         results = self.resource_metadata_dao.get_all_for_user_by_type(TEST_USER_NAME, ResourceType.NOTEBOOK, limit=10)
 
-        assert results.next_token is not None
+        assert results.next_token
         user_notebooks.extend(results.records)
         results = self.resource_metadata_dao.get_all_for_user_by_type(
             TEST_USER_NAME, ResourceType.NOTEBOOK, next_token=results.next_token
+        )
+        assert not results.next_token
+        user_notebooks.extend(results.records)
+
+        assert_resources(user_notebooks, 12, ResourceType.NOTEBOOK, expected_user=TEST_USER_NAME)
+
+    def test_get_resources_by_type_for_user(self):
+        user_notebooks = []
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(ResourceType.NOTEBOOK, user=TEST_USER_NAME, limit=10)
+
+        assert results.next_token
+        user_notebooks.extend(results.records)
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(
+            ResourceType.NOTEBOOK, user=TEST_USER_NAME, next_token=results.next_token
         )
         assert not results.next_token
         user_notebooks.extend(results.records)
@@ -601,3 +667,100 @@ class TestResourceMetadataDAO(TestCase):
             filter_values={":user": "InProgress"},
         )
         assert len(results.records) > 0
+
+    def test_get_resources_for_type(self):
+        notebooks = []
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(ResourceType.NOTEBOOK, limit=10)
+
+        assert results.next_token
+        notebooks.extend(results.records)
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(ResourceType.NOTEBOOK, next_token=results.next_token)
+        assert not results.next_token
+        notebooks.extend(results.records)
+
+        assert_resources(notebooks, 29, ResourceType.NOTEBOOK)
+
+    def test_get_resources_for_type_filtered(self):
+        # 11 training jobs. 4 - InProgress, 6 Completed, 2 Fake. Limit 10 = 2 pages
+        all_project_resources = dynamodb_json.loads(
+            self.ddb.query(
+                TableName=self.TEST_TABLE,
+                KeyConditionExpression="resourceType = :resourceType",
+                ExpressionAttributeValues={
+                    ":resourceType": {"S": ResourceType.TRAINING_JOB},
+                },
+            )
+        )
+        expected_in_progress = 0
+        expected_complete = 0
+
+        for item in dynamodb_json.loads(all_project_resources["Items"]):
+            status = item["metadata"]["ResourceStatus"]
+            if status == "InProgress":
+                expected_in_progress += 1
+            if status == "Completed":
+                expected_complete += 1
+
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(
+            ResourceType.TRAINING_JOB,
+            limit=10,
+            filter_expression="metadata.ResourceStatus = :resourceStatus",
+            filter_values={":resourceStatus": "InProgress"},
+        )
+
+        assert results.next_token
+        # Since there are more records than can fit on a page, get pages until complete
+        records = results.records
+        while results.next_token:
+            results = self.resource_metadata_dao.get_all_of_type_with_filters(
+                ResourceType.TRAINING_JOB,
+                limit=10,
+                filter_expression="metadata.ResourceStatus = :resourceStatus",
+                filter_values={":resourceStatus": "InProgress"},
+                next_token=results.next_token,
+            )
+            records += results.records
+        assert_resources(
+            records,
+            expected_in_progress,
+            ResourceType.TRAINING_JOB,
+            expected_status="InProgress",
+        )
+
+        results = self.resource_metadata_dao.get_all_of_type_with_filters(
+            ResourceType.TRAINING_JOB,
+            limit=10,
+            filter_expression="metadata.ResourceStatus = :resourceStatus",
+            filter_values={":resourceStatus": "Completed"},
+        )
+
+        assert results.next_token
+        # Since there are more records than can fit on a page, get pages until complete
+        records = results.records
+        while results.next_token:
+            results = self.resource_metadata_dao.get_all_of_type_with_filters(
+                ResourceType.TRAINING_JOB,
+                limit=10,
+                filter_expression="metadata.ResourceStatus = :resourceStatus",
+                filter_values={":resourceStatus": "Completed"},
+                next_token=results.next_token,
+            )
+            records += results.records
+        assert_resources(
+            records,
+            expected_complete,
+            ResourceType.TRAINING_JOB,
+            expected_status="Completed",
+        )
+
+    def test_get_all_for_type_error_parameter_conflict(self):
+        with pytest.raises(ValueError):
+            self.resource_metadata_dao.get_all_of_type_with_filters(
+                ResourceType.TRAINING_JOB, user="bob", project="bob-project"
+            )
+
+    def test_get_all_for_type_error_protected_filter_value(self):
+        with pytest.raises(ValueError):
+            self.resource_metadata_dao.get_all_of_type_with_filters(
+                ResourceType.TRAINING_JOB, filter_expression="not an expression", filter_values={":resourceType": "anything"}
+            )

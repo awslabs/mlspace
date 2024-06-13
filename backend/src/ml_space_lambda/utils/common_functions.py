@@ -198,8 +198,7 @@ def generate_html_response(status_code, response_body):
     }
 
 
-def generate_exception_response(e):
-    status_code = 400
+def generate_exception_response(e, status_code=400):
     error_msg = str(e)
     if hasattr(e, "response"):  # i.e. validate the exception was from an API call
         metadata = e.response.get("ResponseMetadata")
@@ -207,9 +206,9 @@ def generate_exception_response(e):
             status_code = metadata.get("HTTPStatusCode", 400)
 
         """
-        Codes - What codes to alert on (required)
-        MatchStrings - What strings to look for in addition to the code. If no match strings are provided, then just the code is used (optional)
-        FriendlyMessage - Message replacment for the existing error
+        Codes (required) - What codes to alert on 
+        MatchStrings (optional) - What strings to look for in addition to the code. If no match strings are provided, then just the code is used
+        FriendlyMessage (required) - Message replacment for the existing error 
         """
         ERROR_DICT = [
             {
@@ -219,7 +218,6 @@ def generate_exception_response(e):
             },
             {
                 "Codes": ["ResourceLimitExceeded"],
-                "MatchStrings": [""],
                 "FriendlyMessage": "You have reached the maximum allowed usage for this resource. Please contact your MLSpace administrator to increase the allowed usage limits.",
             },
             {

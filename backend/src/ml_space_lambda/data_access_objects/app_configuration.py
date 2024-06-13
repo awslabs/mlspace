@@ -383,7 +383,7 @@ class AppConfigurationDAO(DynamoDBObjectStore):
             config.to_dict(), condition_expression="attribute_not_exists(configScope) AND attribute_not_exists(versionId)"
         )
 
-    def get(self, configScope: str, num_versions: int) -> List[dict]:
+    def get(self, configScope: str, num_versions: int = 1) -> List[dict]:
         json_response = self._query(
             key_condition_expression="#s = :configScope",
             expression_names={"#s": "configScope"},

@@ -21,13 +21,8 @@ import boto3
 import moto
 import pytest
 
-from ml_space_lambda.utils.common_functions import generate_tags
-from ml_space_lambda.utils.iam_manager import PROJECT_POLICY_VERSION, USER_POLICY_VERSION
-
 NOTEBOOK_ROLE_NAME = "MLSpace-notebook-role"
-DEFAULT_NOTEBOOK_POLICY_NAME = "MLSpace-notebook-policy"
-SYSTEM_TAG = "MLSpace"
-IAM_RESOURCE_PREFIX = "MLSpace"
+TEST_PERMISSIONS_BOUNDARY_ARN = "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary"
 
 TEST_ENV_CONFIG = {
     # Moto doesn't work with iso regions...
@@ -38,12 +33,34 @@ TEST_ENV_CONFIG = {
     "AWS_SECURITY_TOKEN": "testing",
     "AWS_SESSION_TOKEN": "testing",
     "NOTEBOOK_ROLE_NAME": NOTEBOOK_ROLE_NAME,
-    "PERMISSIONS_BOUNDARY_ARN": "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary",
+    "PERMISSIONS_BOUNDARY_ARN": TEST_PERMISSIONS_BOUNDARY_ARN,
 }
 
+with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
+    import ml_space_lambda.utils.account_utils as account_utils
+    import ml_space_lambda.utils.mlspace_config as mlspace_config
+
+    mlspace_config.env_variables = {}
+    from ml_space_lambda.enums import IAMEffect, IAMStatementProperty
+    from ml_space_lambda.utils.common_functions import generate_tags
+    from ml_space_lambda.utils.iam_manager import PROJECT_POLICY_VERSION, USER_POLICY_VERSION
+
+
+DEFAULT_NOTEBOOK_POLICY_NAME = "MLSpace-notebook-policy"
+SYSTEM_TAG = "MLSpace"
+IAM_RESOURCE_PREFIX = "MLSpace"
+
+TEST_DYNAMIC_POLICY_NAME = "test-dynamic-policy"
+EXPECTED_TEST_DYNAMIC_POLICY_NAME = f"{IAM_RESOURCE_PREFIX}-{TEST_DYNAMIC_POLICY_NAME}"
 
 MOCK_PROJECT_NAME = "example_project"
 MOCK_USER_NAME = "jdoe"
+
+DENY_TRANSLATE_STATEMENT = {
+    IAMStatementProperty.EFFECT: IAMEffect.DENY,
+    IAMStatementProperty.ACTION: ["translate:*"],
+    IAMStatementProperty.RESOURCE: "*",
+}
 
 mock.patch.TEST_PREFIX = (
     "test",
@@ -59,9 +76,10 @@ class TestIAMSupport(TestCase):
     def setUp(self):
         from ml_space_lambda.utils.common_functions import retry_config
         from ml_space_lambda.utils.iam_manager import IAMManager
-        from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
-        get_environment_variables()
+        mlspace_config.env_variables = {}
+        account_utils.aws_partition = "aws"
+        account_utils.aws_account = "123456789012"
         self.iam_client = boto3.client("iam", config=retry_config)
         self.sts_client = boto3.client("sts", config=retry_config)
 
@@ -99,7 +117,7 @@ class TestIAMSupport(TestCase):
             Description="MLSpace Notebook Policy",
         )
         self.iam_client.attach_role_policy(RoleName=NOTEBOOK_ROLE_NAME, PolicyArn=notebook_policy_response["Policy"]["Arn"])
-        self.iam_manager = IAMManager(self.iam_client, self.sts_client)
+        self.iam_manager = IAMManager(self.iam_client)
 
     def tearDown(self):
         self.iam_client = None
@@ -362,3 +380,115 @@ class TestIAMSupport(TestCase):
         # should not have been deleted as the projects were not deleted.
         response = self.iam_client.list_policies(Scope="Local")
         assert initial_role_count + 4 == len(response["Policies"])
+
+    def test_generate_policy(self):
+        policy = self.iam_manager.generate_policy_string([DENY_TRANSLATE_STATEMENT])
+        assert (
+            policy
+            == '{"Version": "2012-10-17", "Statement": [{"Effect": "Deny", "Action": ["translate:*"], "Resource": "*"}]}'
+        )
+
+        policy = self.iam_manager.generate_policy([])
+        assert policy == None
+
+    def test_update_dynamic_policy(self):
+        # Test creating a brand new role
+        policy = self.iam_manager.generate_policy_string([DENY_TRANSLATE_STATEMENT])
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+            on_create_attach_to_notebook_role=True,
+            expected_policy_version="2",
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+        assert self.iam_client.get_policy(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            )
+        )
+
+        # Test updating the policy
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+            on_create_attach_to_notebook_role=True,
+            expected_policy_version=3,
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+        assert self.iam_client.get_policy_version(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v2",
+        )
+
+        # Test invalid update to policy (same version as before)
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+            on_create_attach_to_notebook_role=True,
+            expected_policy_version=3,
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+        with pytest.raises(self.iam_client.exceptions.NoSuchEntityException):
+            self.iam_client.get_policy_version(
+                PolicyArn=account_utils.account_arn_from_example_arn(
+                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+                ),
+                VersionId="v3",
+            )
+
+        # Test update to the policy with no expected version
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+        assert self.iam_client.get_policy_version(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v3",
+        )
+
+    def test_create_dynamic_policy_not_attached(self):
+        policy = self.iam_manager.generate_policy_string([DENY_TRANSLATE_STATEMENT])
+        self.iam_manager.update_dynamic_policy(
+            policy, TEST_DYNAMIC_POLICY_NAME, "test-type", "test-type-1", expected_policy_version=2
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 1
+        assert self.iam_client.get_policy(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            )
+        )
+
+        # Test updating the policy
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+            on_create_attach_to_notebook_role=True,
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 1
+        assert self.iam_client.get_policy_version(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v2",
+        )

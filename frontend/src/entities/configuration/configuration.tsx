@@ -78,9 +78,9 @@ export function Configuration () {
                             content: <DeploymentConfiguration />
                         },
                     ]}
-                />
+                />   
             </div>
-
+            
         </ContentLayout>
     );
 }
