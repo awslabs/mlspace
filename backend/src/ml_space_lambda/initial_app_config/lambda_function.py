@@ -52,6 +52,10 @@ def lambda_handler(event, context):
 
 def update_dynamic_roles():
     env_vars = get_environment_variables()
+
+    if env_vars["MANAGE_IAM_ROLES"] == "false":
+        return
+
     paginator = iam.get_paginator("list_roles")
     pages = paginator.paginate()
 
