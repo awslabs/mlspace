@@ -17,8 +17,7 @@ associated with the suspended user.
 
 ## Configuration
 
-Administrators can view the current configurations for {{ $params.APPLICATION_NAME }}. If configuration settings need to be changed,
-a system admin developer will need to make those modifications.
+See the [configuration page documentation](./configuration.md).
 
 ## Reports
 
