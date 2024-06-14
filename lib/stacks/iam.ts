@@ -87,7 +87,7 @@ export class IAMStack extends Stack {
         );
 
         // Role names
-        const mlspaceSystemRoleName = 'mlspaceSystemRole';
+        const mlspaceSystemRoleName = 'mlspace-system-role';
         const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
 
         const invertedBooleanConditions = (conditions: {[key: string]: string}) => Object.fromEntries(Object.entries(conditions).map(([key, value]) => {
