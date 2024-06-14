@@ -6,9 +6,9 @@ outline: deep
 
 Users with Administrator permission can access {{ $params.APPLICATION_NAME }}’s Configuration page. This page is divided into three sections:
 
-1. Dynamic Configuration
-2. Dynamic Configuration History
-3. Deployment Configuration
+1. [Dynamic Configuration](#dynamic-configuration)
+2. [Dynamic Configuration History](#dynamic-configuration-history)
+3. [Deployment Configuration](#deployment-configuration)
 
 ## Dynamic Configuration
 

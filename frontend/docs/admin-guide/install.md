@@ -973,8 +973,8 @@ policy. From the IAM Service page click "Policies" on the left hand side.
 
 1. The example below assumes you've created the permission boundary policy above in the [App Role](App Role) section and named the policy `mlspace-project-user-permission-boundary`. If you've named it something different
 you'll need to update the `"iam:PermissionsBoundary` condition in the `iam:CreateRole` statement below.
-2. After the permission boundary policy has been created you are now ready to create the application
-policy. From the IAM Service page click "Policies" on the left hand side.
+2. After the permission boundary policy has been created you are now ready to create the system
+policy. From the IAM Service page click "Policies" on the left hand side. **Note**: alternatively, you can re-use the policy you created in the prior section for the App Role as well as the notebook policy you created in the Notebook Role section. If you do so, you may skip to step 6. Alternatively if you wish to create a policy with least-privilege, proceed to step 3.
 3. Create a new policy using the JSON editor and paste the following in the text area (after replacing the placeholder variables):
 
 ```JSON
@@ -1043,13 +1043,6 @@ policy. From the IAM Service page click "Policies" on the left hand side.
             "Effect": "Allow"
         },
         {
-            "Action": [
-                "sagemaker:UpdateNotebookInstanceLifecycleConfig"
-            ],
-            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:notebook-instance-lifecycle-config/*",
-            "Effect": "Allow"
-        },
-        {
             "Condition": {
                 "Null": {
                     "aws:ResourceTag/project": "false",
@@ -1058,6 +1051,7 @@ policy. From the IAM Service page click "Policies" on the left hand side.
                 }
             },
             "Action": [
+                "sagemaker:UpdateNotebookInstance",
                 "sagemaker:DeleteNotebookInstance",
                 "sagemaker:DescribeNotebookInstance",
                 "sagemaker:StopNotebookInstance"
@@ -1067,6 +1061,7 @@ policy. From the IAM Service page click "Policies" on the left hand side.
         },
         {
             "Action": [
+                "sagemaker:UpdateNotebookInstanceLifecycleConfig",
                 "sagemaker:DeleteNotebookInstanceLifecycleConfig",
                 "sagemaker:DescribeNotebookInstanceLifecycleConfig"
             ],
@@ -1088,7 +1083,7 @@ policy. From the IAM Service page click "Policies" on the left hand side.
         },
         {
             "Action": [
-                "elasticmapreduce:ListClusters",
+                "elasticmapreduce:ListClusters"
             ],
             "Resource": "*",
             "Effect": "Allow"
@@ -1107,7 +1102,7 @@ policy. From the IAM Service page click "Policies" on the left hand side.
             "Action": [
                 "translate:StopTextTranslationJob",
                 "translate:ListTextTranslationJobs",
-                "translate:DescribeTextTranslationJob",
+                "translate:DescribeTextTranslationJob"
             ],
             "Resource": "*",
             "Effect": "Allow"
@@ -1119,9 +1114,10 @@ policy. From the IAM Service page click "Policies" on the left hand side.
                 }
             },
             "Action": [
+                "iam:AttachRolePolicy",
                 "iam:DetachRolePolicy",
                 "iam:DeleteRole",
-                "iam:DeleteRolePolicy",
+                "iam:DeleteRolePolicy"
             ],
             "Resource": "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/MLSpace*",
             "Effect": "Allow"
@@ -1133,15 +1129,114 @@ policy. From the IAM Service page click "Policies" on the left hand side.
                 "iam:ListPolicyVersions",
                 "iam:ListAttachedRolePolicies",
                 "iam:GetRole",
-                "iam:GetPolicy"
+                "iam:GetPolicy",
+                "cloudwatch:PutMetricData",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents"
             ],
             "Resource": "*",
             "Effect": "Allow"
         },
         {
             "Action": [
+                "kms:Decrypt",
+                "kms:DescribeKey",
+                "kms:Encrypt",
+                "kms:GenerateDataKey"
+            ],
+            "Resource": "arn:{AWS_PARTITION}:kms:{AWS_REGION}:{AWS_ACCOUNT}:key/{MLSPACE_KMS_KEY_ID}",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "Bool": {
+                    "kms:GrantIsForAWSResource": "true"
+                }
+            },
+            "Action": "kms:CreateGrant",
+            "Resource": "arn:{AWS_PARTITION}:kms:{AWS_REGION}:{AWS_ACCOUNT}:key/{MLSPACE_KMS_KEY_ID}",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:DeleteNetworkInterface",
+                "ec2:DeleteNetworkInterfacePermission"
+            ],
+            "Resource": [
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:subnet/{MLSPACE_PRIVATE_SUBNET_1}",
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:subnet/{MLSPACE_PRIVATE_SUBNET_2}",
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:subnet/{MLSPACE_PRIVATE_SUBNET_3}",
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:security-group/{MLSPACE_VPC_SECURITY_GROUP}",
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:network-interface/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeDhcpOptions",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeVpcs"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "sagemaker:DescribeWorkteam",
+                "sagemaker:ListEndpointConfigs",
+                "sagemaker:ListEndpoints",
+                "sagemaker:ListLabelingJobs",
+                "sagemaker:ListModels",
+                "sagemaker:ListTags",
+                "sagemaker:ListTrainingJobs",
+                "sagemaker:ListTransformJobs",
+                "sagemaker:ListHyperParameterTuningJobs",
+                "sagemaker:ListTrainingJobsForHyperParameterTuningJob"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "aws:ResourceTag/project": "false",
+                    "aws:ResourceTag/system": "false",
+                    "aws:ResourceTag/user": "false"
+                }
+            },
+            "Action": [
+                "sagemaker:DescribeTrainingJob",
+                "sagemaker:StopTrainingJob",
+                "sagemaker:DescribeTransformJob",
+                "sagemaker:StopTransformJob",
+                "sagemaker:DescribeModel",
+                "sagemaker:DeleteModel",
+                "sagemaker:DescribeHyperParameterTuningJob",
+                "sagemaker:StopHyperParameterTuningJob",
+                "sagemaker:DescribeEndpoint",
+                "sagemaker:DeleteEndpoint",
+                "sagemaker:InvokeEndpoint",
+                "sagemaker:UpdateEndpoint",
+                "sagemaker:UpdateEndpointWeightsAndCapacities",
+                "sagemaker:DescribeEndpointConfig",
+                "sagemaker:DeleteEndpointConfig",
+                "sagemaker:DescribeLabelingJob",
+                "sagemaker:StopLabelingJob"
+            ],
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "iam:CreatePolicy",
+                "iam:CreatePolicyVersion",
+                "iam:TagPolicy",
                 "iam:DeletePolicy",
-                "iam:DeletePolicyVersion",
+                "iam:DeletePolicyVersion"
             ],
             "Resource": "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:policy/MLSpace*",
             "Effect": "Allow"
@@ -1191,7 +1286,7 @@ policy. From the IAM Service page click "Policies" on the left hand side.
 }
 ```
 
-9. Click the next button and then select the checkbox next to the name of the policy you created in step 5 above. You will also need to attach the default notebook policy you previously created as well as the AWS managed policy `AWSLambdaVPCAccessExecutionRole`. In total you should have 3 policies attached to the role.
+9. Click the next button and then select the checkbox next to the name of the policy you created in step 5 above (or the app policy and notebook policy if re-using those). You will also need to attach the AWS managed policy `AWSLambdaVPCAccessExecutionRole`. In total you should have 3 policies attached to the role.
 10. After selecting the 3 policies click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags and then click "Create role"
 11. Once the role has been created record the role ARN as we'll need to use it later.
 

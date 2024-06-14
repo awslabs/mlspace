@@ -17,7 +17,9 @@ associated with the suspended user.
 
 ## Configuration
 
-See the [configuration page documentation](./configuration.md).
+Adminstrators can update the dynamic configuration of the application, see the dynamic configuration history, rollback to prior versions of the dynamic configuration, import/export the dynamic configuration, and see the deployment configuration.
+
+For more information, see the [configuration page documentation](./configuration.md).
 
 ## Reports
 
