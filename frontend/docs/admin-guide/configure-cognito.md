@@ -69,7 +69,7 @@ The value for User Pool ID should be combined with the correct region endpoint f
 export const OIDC_URL = 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_oUmWoN1YP';
 ```
 
-Once both values have been updated, you can build and deploy {{ $params.APPLICATION_NAME }}, and it will use Cognito as the IdP. Once {{ $params.APPLICATION_NAME }} is deployed, you will have to update your Cognito app client to add the {{ $params.APPLICATION_NAME }} API Gateway endpoint to the list of "Allowed callback URLs". You can do this by navigating to the App Client details page, scrolling down to the hosted UI, and clicking the edit button. From there, you will need to add your custom domain or the {{ $params.APPLICATION_NAME }} API Gateway endpoint to the URL list. If you aren't using a custom domain, that value should be something similar to `https://<api id>.execute-api.<region>.amazonaws.com/Prod`.
+Once both values have been updated, you can build and deploy {{ $params.APPLICATION_NAME }}, and it will use Cognito as the IdP. Once {{ $params.APPLICATION_NAME }} is deployed, you will have to update your Cognito app client to add the {{ $params.APPLICATION_NAME }} API Gateway endpoint to the list of "Allowed callback URLs". You can do this by navigating to the App Client details page, scrolling down to the hosted UI, and clicking the edit button. From there, you will need to add your custom domain or the {{ $params.APPLICATION_NAME }} API Gateway endpoint to the URL list. If you aren't using a custom domain, that value should be something similar to `https://<api id>.execute-api.<region>.amazonaws.com/Prod/`.
 
 ## Troubleshooting
 
