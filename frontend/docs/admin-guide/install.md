@@ -96,6 +96,250 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
 1. Login to your AWS account and go to the Policies section of the IAM Service in the AWS Console
 2. Create a new policy with using the JSON editor and paste the following in the text area (after replacing the placeholder variables):
 
+:::tabs
+== Dynamic Roles Enabled
+```JSON
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Condition": {
+                "Bool": {
+                    "kms:GrantIsForAWSResource": "true"
+                }
+            },
+            "Action": "kms:CreateGrant",
+            "Resource": "arn:{AWS_PARTITION}:kms:{AWS_REGION}:{AWS_ACCOUNT}:key/{MLSPACE_KMS_KEY_ID}",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:CreateNetworkInterface",
+                "ec2:CreateNetworkInterfacePermission",
+                "ec2:DeleteNetworkInterface",
+                "ec2:DeleteNetworkInterfacePermission"
+            ],
+            "Resource": [
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:subnet/{MLSPACE_PRIVATE_SUBNET_1}",
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:subnet/{MLSPACE_PRIVATE_SUBNET_2}",
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:subnet/{MLSPACE_PRIVATE_SUBNET_3}",
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:security-group/{MLSPACE_VPC_SECURITY_GROUP}",
+                "arn:{AWS_PARTITION}:ec2:{AWS_REGION}:{AWS_ACCOUNT}:network-interface/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "kms:Decrypt",
+                "kms:DescribeKey",
+                "kms:Encrypt",
+                "kms:GenerateDataKey"
+            ],
+            "Resource": "arn:{AWS_PARTITION}:kms:{AWS_REGION}:{AWS_ACCOUNT}:key/{MLSPACE_KMS_KEY_ID}",
+            "Effect": "Allow"
+        },
+        {
+            "Action": "sagemaker:AddTags",
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeDhcpOptions",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeVpcs"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "sagemaker:DescribeWorkteam",
+                "sagemaker:ListEndpointConfigs",
+                "sagemaker:ListEndpoints",
+                "sagemaker:ListLabelingJobs",
+                "sagemaker:ListModels",
+                "sagemaker:ListTags",
+                "sagemaker:ListTrainingJobs",
+                "sagemaker:ListTransformJobs",
+                "sagemaker:ListHyperParameterTuningJobs",
+                "sagemaker:ListTrainingJobsForHyperParameterTuningJob"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "iam:GetRole",
+                "cloudwatch:PutMetricData",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "aws:RequestTag/user": "false",
+                    "aws:RequestTag/system": "false",
+                    "aws:RequestTag/project": "false"
+                }
+            },
+            "Action": "sagemaker:CreateEndpoint",
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:endpoint/*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": "sagemaker:CreateEndpoint",
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:endpoint-config/*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "aws:RequestTag/user": "true",
+                    "aws:RequestTag/system": "true",
+                    "aws:RequestTag/project": "true",
+                    "sagemaker:VolumeKmsKey": "true"
+                }
+            },
+            "Action": "sagemaker:CreateEndpointConfig",
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:endpoint-config/*",
+            "Effect": "Deny"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "sagemaker:VpcSubnets": "true",
+                    "aws:RequestTag/user": "true",
+                    "aws:RequestTag/system": "true",
+                    "aws:RequestTag/project": "true",
+                    "sagemaker:VpcSecurityGroupIds": "true"
+                }
+            },
+            "Action": "sagemaker:CreateModel",
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:*",
+            "Effect": "Deny"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "sagemaker:VpcSubnets": "true",
+                    "aws:RequestTag/user": "true",
+                    "aws:RequestTag/system": "true",
+                    "aws:RequestTag/project": "true",
+                    "sagemaker:VpcSecurityGroupIds": "true",
+                    "sagemaker:VolumeKmsKey": "true"
+                }
+            },
+            "Action": [
+                "sagemaker:CreateHyperParameterTuningJob",
+                "sagemaker:CreateTrainingJob"
+            ],
+            "Resource": [
+                "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:training-job/*",
+                "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:hyper-parameter-training-job/*",
+            ],
+            "Effect": "Deny"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "aws:RequestTag/user": "true",
+                    "aws:RequestTag/system": "true",
+                    "aws:RequestTag/project": "true",
+                    "sagemaker:VolumeKmsKey": "true"
+                }
+            },
+            "Action": "sagemaker:CreateTransformJob",
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:transform-job/*",
+            "Effect": "Deny"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "aws:RequestTag/user": "false",
+                    "aws:RequestTag/system": "false",
+                    "aws:RequestTag/project": "false",
+                    "sagemaker:VolumeKmsKey": "false"
+                }
+            },
+            "Action": "sagemaker:CreateLabelingJob",
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:labeling-job/*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "aws:ResourceTag/project": "false",
+                    "aws:ResourceTag/system": "false",
+                    "aws:ResourceTag/user": "false"
+                }
+            },
+            "Action": [
+                "sagemaker:DescribeTrainingJob",
+                "sagemaker:StopTrainingJob",
+                "sagemaker:DescribeTransformJob",
+                "sagemaker:StopTransformJob",
+                "sagemaker:DescribeModel",
+                "sagemaker:DeleteModel",
+                "sagemaker:DescribeHyperParameterTuningJob",
+                "sagemaker:StopHyperParameterTuningJob",
+                "sagemaker:DescribeEndpoint",
+                "sagemaker:DeleteEndpoint",
+                "sagemaker:InvokeEndpoint",
+                "sagemaker:UpdateEndpoint",
+                "sagemaker:UpdateEndpointWeightsAndCapacities",
+                "sagemaker:DescribeEndpointConfig",
+                "sagemaker:DeleteEndpointConfig",
+                "sagemaker:DescribeLabelingJob",
+                "sagemaker:StopLabelingJob"
+            ],
+            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "comprehend:Detect*",
+                "comprehend:BatchDetect*",
+                "translate:TranslateText"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "s3:GetObject",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:{AWS_PARTITION}:s3:::mlspace-config-{AWS_ACCOUNT}",
+                "arn:{AWS_PARTITION}:s3:::mlspace-config-{AWS_ACCOUNT}/*",
+                "arn:{AWS_PARTITION}:s3:::sagemaker-sample-files",
+                "arn:{AWS_PARTITION}:s3:::sagemaker-sample-files/*",
+                "arn:{AWS_PARTITION}:s3:::mlspace-data-{AWS_ACCOUNT}/global-read-only/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringLike": {
+                    "s3:prefix": "global-read-only/*"
+                }
+            },
+            "Action": "s3:ListBucket",
+            "Resource": "arn:{AWS_PARTITION}:s3:::mlspace-data-{AWS_ACCOUNT}",
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+== Dynamic Roles Disabled
 ```JSON
 {
     "Version": "2012-10-17",
@@ -334,6 +578,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
     ]
 }
 ```
+:::
 
 3. Click next and optionally add tags to this policy
 4. Click next again and enter a name for this policy. You can name the policy whatever you'd like but ensure you remember it as you'll need it when creating the role.
