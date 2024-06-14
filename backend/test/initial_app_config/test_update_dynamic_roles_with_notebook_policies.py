@@ -17,6 +17,7 @@
 from unittest import mock
 
 from ml_space_lambda.utils import mlspace_config
+from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
@@ -39,7 +40,16 @@ def test_initial_config_success(mock_iam):
     mlspace_config.env_variables = {}
 
     paginator = mock.Mock()
-    paginator.paginate.return_value = [{"Roles": [{"RoleName": "role1"}, {"RoleName": "role2"}, {"RoleName": "role3"}]}]
+    paginator.paginate.return_value = [
+        {
+            "Roles": [
+                {"RoleName": "MLSpace-myproject1-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"},
+                {"RoleName": "MLSpace-myproject2-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"},
+                {"RoleName": "MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"},
+                {"RoleName": "MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"},
+            ]
+        }
+    ]
     mock_iam.get_paginator.return_value = paginator
     mock_iam.list_role_tags.side_effect = [
         {"Tags": []},
@@ -47,25 +57,49 @@ def test_initial_config_success(mock_iam):
             "Tags": [
                 {"Key": "user", "Value": "MLSpaceApplication"},
                 {"Key": "system", "Value": "MLSpace"},
-                {"Key": "project", "Value": "project"},
+                {"Key": "project", "Value": "myproject2"},
             ]
         },
         {
             "Tags": [
-                {"Key": "user", "Value": "user"},
+                {"Key": "user", "Value": "someuser"},
                 {"Key": "system", "Value": "MLSpace"},
-                {"Key": "project", "Value": "project"},
+                {"Key": "project", "Value": "myproject3"},
             ]
         },
+        {"Tags": [DYNAMIC_USER_ROLE_TAG]},
     ]
 
     update_dynamic_roles_with_notebook_policies()
 
     mock_iam.attach_role_policy.assert_has_calls(
         [
-            mock.call(RoleName="role3", PolicyArn=TEST_ENV_CONFIG["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"]),
-            mock.call(RoleName="role3", PolicyArn=TEST_ENV_CONFIG["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"]),
+            mock.call(
+                RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
+                PolicyArn=TEST_ENV_CONFIG["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"],
+            ),
+            mock.call(
+                RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
+                PolicyArn=TEST_ENV_CONFIG["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
+            ),
+            mock.call(
+                RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
+                PolicyArn=TEST_ENV_CONFIG["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"],
+            ),
+            mock.call(
+                RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
+                PolicyArn=TEST_ENV_CONFIG["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
+            ),
         ]
     )
 
-    mock_iam.tag_role.assert_has_calls([mock.call(RoleName="role3", Tags=[{"Key": "dynamic-user-role", "Value": "true"}])])
+    mock_iam.tag_role.assert_has_calls(
+        [
+            mock.call(
+                RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa", Tags=[DYNAMIC_USER_ROLE_TAG]
+            ),
+            mock.call(
+                RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa", Tags=[DYNAMIC_USER_ROLE_TAG]
+            ),
+        ]
+    )

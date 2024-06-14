@@ -24,6 +24,8 @@ import pytest
 from ml_space_lambda.utils.common_functions import generate_tags
 from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG, PROJECT_POLICY_VERSION, USER_POLICY_VERSION
 
+DYNAMIC_USER_ROLE_NAME = "MLSpace-myproject1-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"
+UNTAGGED_DYNAMIC_USER_ROLE_NAME = "MLSpace-myproject2-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"
 NOTEBOOK_ROLE_NAME = "MLSpace-notebook-role"
 TEST_PERMISSIONS_BOUNDARY_ARN = "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary"
 
@@ -50,6 +52,7 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 
 
 DEFAULT_NOTEBOOK_POLICY_NAME = "MLSpace-notebook-policy"
+DEFAULT_DYNAMIC_USER_POLICY_NAME = "MLSpace-dynamic-user-policy"
 SYSTEM_TAG = "MLSpace"
 IAM_RESOURCE_PREFIX = "MLSpace"
 
@@ -120,6 +123,58 @@ class TestIAMSupport(TestCase):
             Description="MLSpace Notebook Policy",
         )
         self.iam_client.attach_role_policy(RoleName=NOTEBOOK_ROLE_NAME, PolicyArn=notebook_policy_response["Policy"]["Arn"])
+        self.iam_client.create_role(
+            RoleName=DYNAMIC_USER_ROLE_NAME,
+            AssumeRolePolicyDocument=json.dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"Service": "sagemaker.amazonaws.com"},
+                            "Action": "sts:AssumeRole",
+                        }
+                    ],
+                }
+            ),
+            Description="Some Dynamic User Role",
+            Tags=generate_tags("someuser", "myproject1", "MLSpace", [DYNAMIC_USER_ROLE_TAG]),
+        )
+        dynamic_user_role_policy_response = self.iam_client.create_policy(
+            PolicyName=DEFAULT_DYNAMIC_USER_POLICY_NAME,
+            PolicyDocument="""{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": ["sagemaker:*"],
+                        "Resource": "*"
+                    }
+                ]
+            }
+            """,
+            Description="Some Dynamic User Policy",
+        )
+        self.iam_client.attach_role_policy(
+            RoleName=DYNAMIC_USER_ROLE_NAME, PolicyArn=dynamic_user_role_policy_response["Policy"]["Arn"]
+        )
+        self.iam_client.create_role(
+            RoleName=UNTAGGED_DYNAMIC_USER_ROLE_NAME,
+            AssumeRolePolicyDocument=json.dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"Service": "sagemaker.amazonaws.com"},
+                            "Action": "sts:AssumeRole",
+                        }
+                    ],
+                }
+            ),
+            Description="Some Dynamic User Role",
+            Tags=generate_tags("someuser", "myproject2", "MLSpace"),
+        )
         self.iam_manager = IAMManager(self.iam_client)
 
     def tearDown(self):
@@ -384,7 +439,7 @@ class TestIAMSupport(TestCase):
         # Ensure all policies were cleaned up as expected. Project policies
         # should not have been deleted as the projects were not deleted.
         response = self.iam_client.list_policies(Scope="Local")
-        assert initial_role_count + 4 == len(response["Policies"])
+        assert initial_policy_count + 4 == len(response["Policies"])
 
     def test_generate_policy(self):
         policy = self.iam_manager.generate_policy_string([DENY_TRANSLATE_STATEMENT])
@@ -414,6 +469,8 @@ class TestIAMSupport(TestCase):
                 TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
             )
         )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=DYNAMIC_USER_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
 
         # Test updating the policy
         self.iam_manager.update_dynamic_policy(
@@ -467,6 +524,13 @@ class TestIAMSupport(TestCase):
             ),
             VersionId="v3",
         )
+
+    def test_find_dynamic_user_roles(self):
+        dynamic_roles = self.iam_manager.find_dynamic_user_roles()
+        assert len(dynamic_roles) == 2
+
+        all_roles = self.iam_client.list_roles()
+        assert len(dynamic_roles) < len(all_roles)
 
     def test_create_dynamic_policy_not_attached(self):
         policy = self.iam_manager.generate_policy_string([DENY_TRANSLATE_STATEMENT])

@@ -22,7 +22,7 @@ from typing import List, Optional
 import boto3
 
 from ml_space_lambda.enums import IAMResourceType
-from ml_space_lambda.utils.common_functions import generate_tags, retry_config
+from ml_space_lambda.utils.common_functions import generate_tags, has_tags, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 logger = logging.getLogger(__name__)
@@ -358,8 +358,6 @@ class IAMManager:
 
     # Creates the IAM role for the MLSpace user/project context
     def _create_iam_role(self, iam_role_name: str, project_name: str, username: str) -> str:
-        tags = generate_tags(username, project_name, self.system_tag, [DYNAMIC_USER_ROLE_TAG])
-
         iam_role_response = self.iam_client.create_role(
             RoleName=iam_role_name,
             AssumeRolePolicyDocument=json.dumps(
@@ -375,7 +373,7 @@ class IAMManager:
                 }
             ),
             Description=f"Default SageMaker Notebook role for Project: {project_name} - User: {username}",
-            Tags=tags,
+            Tags=generate_tags(username, project_name, self.system_tag, [DYNAMIC_USER_ROLE_TAG]),
             PermissionsBoundary=self.permissions_boundary_arn,
         )
         return iam_role_response["Role"]["Arn"]
@@ -502,6 +500,8 @@ class IAMManager:
             if on_create_attach_to_app_role:
                 self.iam_client.attach_role_policy(RoleName=self.app_role_name, PolicyArn=policy_arn)
 
+            self.attach_policies_to_dynamic_user_roles([policy_arn])
+
         # If the policy does exist, then update it
         elif expected_policy_version is None or existing_policy_version < expected_policy_version:
             logger.info(f"Updating the existing {policy_name} dynamic policy")
@@ -527,6 +527,47 @@ class IAMManager:
             )
         else:
             logger.info(f"Provided inputs didn't meet criteria for updating or creating a new policy")
+
+    def find_dynamic_user_roles(self) -> list[str]:
+        paginator = self.iam_client.get_paginator("list_roles")
+        role_names = []
+
+        for page in paginator.paginate():
+            if "Roles" not in page:
+                continue
+
+            for role in page["Roles"]:
+                tags = self.iam_client.list_role_tags(RoleName=role["RoleName"])
+
+                if "Tags" not in tags:
+                    continue
+
+                # try the simple case first
+                if DYNAMIC_USER_ROLE_TAG in tags["Tags"]:
+                    role_names.append(role["RoleName"])
+                    continue
+
+                # make sure all expected tags exist to try and ensure this is an MLSpace role
+                if not has_tags(tags["Tags"], system_tag=self.system_tag):
+                    continue
+
+                # convert to simple dict
+                tags = dict((tag["Key"], tag["Value"]) for tag in tags["Tags"])
+
+                # some application roles would be tagged properly but should be skipped
+                if tags["user"] == "MLSpaceApplication":
+                    continue
+
+                expected_role_name = self._generate_iam_role_name(tags["user"], tags["project"])
+                if expected_role_name == role["RoleName"]:
+                    role_names.append(role["RoleName"])
+
+        return role_names
+
+    def attach_policies_to_dynamic_user_roles(self, policy_arns: list[str], role_names: list[str] = None):
+        for role_name in role_names or self.find_dynamic_user_roles():
+            for policy_arn in policy_arns:
+                self._attach_iam_policy(role_name, policy_arn)
 
     def _generate_user_hash(self, username: str) -> str:
         return hashlib.sha256(username.encode()).hexdigest()

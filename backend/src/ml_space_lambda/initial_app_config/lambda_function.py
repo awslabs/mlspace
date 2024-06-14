@@ -19,7 +19,8 @@ import boto3
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO
 from ml_space_lambda.enums import ServiceType
 from ml_space_lambda.metadata.lambda_functions import get_compute_types
-from ml_space_lambda.utils.common_functions import generate_html_response, has_tags
+from ml_space_lambda.utils.common_functions import generate_html_response
+from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG, IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
 
 log = logging.getLogger(__name__)
@@ -56,23 +57,13 @@ def update_dynamic_roles_with_notebook_policies():
     if env_vars["MANAGE_IAM_ROLES"] == "false":
         return
 
-    paginator = iam.get_paginator("list_roles")
-    pages = paginator.paginate()
+    iam_manager = IAMManager(iam)
+    role_names = iam_manager.find_dynamic_user_roles()
+    policy_arns = [
+        env_vars["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"],
+        env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
+    ]
+    iam_manager.attach_policies_to_dynamic_user_roles(policy_arns, role_names)
 
-    for page in pages:
-        if "Roles" in page:
-            for role in page["Roles"]:
-                tags = iam.list_role_tags(RoleName=role["RoleName"])
-
-                # make sure all expected tags exist to try and ensure this is an MLSpace role
-                if "Tags" in tags and has_tags(tags["Tags"], system_tag=env_vars["SYSTEM_TAG"]):
-                    # some system roles are tagged properly but with MLSpaceApplication as the user
-                    if not has_tags(tags["Tags"], user_name="MLSpaceApplication", system_tag=env_vars["SYSTEM_TAG"]):
-                        policies = [
-                            env_vars["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"],
-                            env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
-                        ]
-                        for policy_arn in policies:
-                            iam.attach_role_policy(PolicyArn=policy_arn, RoleName=role["RoleName"])
-
-                        iam.tag_role(RoleName=role["RoleName"], Tags=[{"Key": "dynamic-user-role", "Value": "true"}])
+    for role_name in role_names:
+        iam.tag_role(RoleName=role_name, Tags=[DYNAMIC_USER_ROLE_TAG])
