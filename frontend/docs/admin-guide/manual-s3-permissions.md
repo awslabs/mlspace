@@ -27,7 +27,7 @@ To do this through the AWS console:
 - In the 'Buckets' table on the S3 main page, search for the bucket to be shared.
 - Click on the name link for the desired bucket.
 - On the bucket's details page, click on the "Permissions" tab.
-- Scroll down to the "Bucket policy" section and click "Edit."
+- Scroll down to the "Bucket policy" section and click "Edit".
 - Create a policy that shares the bucket with the {{ $params.APPLICATION_NAME }} account [like the example provided below](#example-bucket-policy).
 
 #### Update Bucket Policy Through AWS CLI
@@ -97,13 +97,13 @@ Follow these steps to update the permissions boundary to allow access to the buc
 
 - Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions.
 - Search for and go to the IAM service.
-- In the side-navigation, click "Policies."
+- In the side-navigation, click "Policies".
 - Search for the name of the permissions boundary policy.
   - This policy is configured during the [{{ $params.APPLICATION_NAME }} install](./install.md#default-app-policy-and-role), and the recommended name is `mlspace-project-user-permission-boundary.`
 - Click on the name link for the policy.
 - On the Policy page, click on "Edit" in the "Permissions defined in this policy" section.
 - Follow the instructions from the [Updating The IAM Policy Permissions section](#updating-the-iam-policy-permissions) for the policy and then resume these instructions.
-- At the bottom of the edit page, click "Next."
+- At the bottom of the edit page, click "Next".
 - On the confirmation page, click the "Save changes" button.
 
 ### Examples For Allowing Permissions Configured With Dynamic Roles
@@ -126,13 +126,13 @@ If access to the bucket should be scoped to only specific projects, those projec
 
 - Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions.
 - Search for and go to the IAM service.
-- In the side-navigation, click "Policies."
+- In the side-navigation, click "Policies".
 - Search for the name of the project that should have access to the bucket.
   - In the results, identify the policy with a name like `MLSpace-project-<ProjectName>.`
 - Click on the name link for the policy.
 - On the Policy page, click on "Edit" in the "Permissions defined in this policy" section.
 - Follow the instructions from the [Updating The IAM Policy Permissions section](#updating-the-iam-policy-permissions) for the policy and then resume these instructions.
-- At the bottom of the edit page, click "Next."
+- At the bottom of the edit page, click "Next".
 - On the confirmation page, click the "Save changes" button.
 
 After completing this step, all users for the project will now have the assigned permission access to the bucket.
@@ -147,13 +147,13 @@ If access to a bucket should be limited to certain users, user-specific policy u
 
 - Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions.
 - Search for and go to the IAM service.
-- In the side-navigation, click "Policies."
+- In the side-navigation, click "Policies".
 - Search for the name of the user that should have access to the bucket.
   - In the results, identify the policy with a name like `MLSpace-user-<UserName>.`
 - Click on the name link for the policy.
 - On the Policy page, click on "Edit" in the "Permissions defined in this policy" section.
 - Follow the instructions from the [Updating The IAM Policy Permissions section](#updating-the-iam-policy-permissions) for the policy and then resume these instructions.
-- At the bottom of the edit page, click "Next."
+- At the bottom of the edit page, click "Next".
 - On the confirmation page, click the "Save changes" button.
 
 After this step is completed, the designated user will now have the assigned permission access to the bucket on all of their projects.
@@ -176,13 +176,13 @@ Perform the following instructions for the desired policy:
 
 - Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions.
 - Search for and go to the IAM service.
-- In the side-navigation, click "Policies."
+- In the side-navigation, click "Policies".
 - Search for the name of the user that should have access to the bucket.
   - In the results, identify the policy with a name like `MLSpace-user-<UserName>.`
 - Click on the name link for the policy.
 - On the Policy page, click on "Edit" in the "Permissions defined in this policy" section.
 - Follow the instructions from the [Updating The IAM Policy Permissions section](#updating-the-iam-policy-permissions) for the policy and then resume these instructions.
-- At the bottom of the edit page, click "Next."
+- At the bottom of the edit page, click "Next".
 - On the confirmation page, click the "Save changes" button.
 
 Once the permissions have been updated, they should immediately take effect for the services that policy applies to.

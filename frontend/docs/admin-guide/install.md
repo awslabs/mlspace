@@ -76,17 +76,17 @@ or make any additional changes required for your environment.
 
 | Variable | Expected Value | Example |
 |----------|----------------|---------|
-| `{AWS_PARTITION}` | The partition into which {{ $params.APPLICATION_NAME }} is being deployed. | `aws` |
-| `{AWS_REGION}` | The region into which {{ $params.APPLICATION_NAME }} is being deployed. | `us-east-1` |
-| `{AWS_ACCOUNT}` | The account number of the account into which {{ $params.APPLICATION_NAME }} is being deployed. | `123456789012` |
-| `{MLSPACE_KMS_KEY_ID}` | The ID of the KMS Key which is being used to encrypt data in {{ $params.APPLICATION_NAME }}. | `eeecf0d8-44f3-4b29-8b78-55de1b5dc153` |
-| `{MLSPACE_PRIVATE_SUBNET_1}` | The subnet ID of one of the {{ $params.APPLICATION_NAME }} VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
-| `{MLSPACE_PRIVATE_SUBNET_2}` | The subnet ID of one of the {{ $params.APPLICATION_NAME }} VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
-| `{MLSPACE_PRIVATE_SUBNET_3}` | The subnet ID of one of the {{ $params.APPLICATION_NAME }} VPC private subnets. | `subnet-0a11b2c3333dd44e5` |
-| `{MLSPACE_VPC_SECURITY_GROUP}` | The ID of the default security group for the {{ $params.APPLICATION_NAME }} VPC. | `sg-903004f8` |
-| `{EMR_DEFAULT_ROLE_ARN}` | The ARN of the role that will be used as the "ServiceRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }}. | `arn:aws:iam::123456789012:role/EMR_DefaultRole` |
-| `{EMR_EC2_INSTANCE_ROLE_ARN}` | The ARN of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }}. | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole` |
-| `{MLSPACE_APP_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} application role. | `mlspace-app-role` |
+| `{AWS_PARTITION}` | The partition into which {{ $params.APPLICATION_NAME }} is being deployed | `aws` |
+| `{AWS_REGION}` | The region into which {{ $params.APPLICATION_NAME }} is being deployed | `us-east-1` |
+| `{AWS_ACCOUNT}` | The account number of the account into which {{ $params.APPLICATION_NAME }} is being deployed | `123456789012` |
+| `{MLSPACE_KMS_KEY_ID}` | The ID of the KMS Key which is being used to encrypt data in {{ $params.APPLICATION_NAME }} | `eeecf0d8-44f3-4b29-8b78-55de1b5dc153` |
+| `{MLSPACE_PRIVATE_SUBNET_1}` | The subnet ID of one of the {{ $params.APPLICATION_NAME }} VPC private subnets | `subnet-0a11b2c3333dd44e5` |
+| `{MLSPACE_PRIVATE_SUBNET_2}` | The subnet ID of one of the {{ $params.APPLICATION_NAME }} VPC private subnets | `subnet-0a11b2c3333dd44e5` |
+| `{MLSPACE_PRIVATE_SUBNET_3}` | The subnet ID of one of the {{ $params.APPLICATION_NAME }} VPC private subnets | `subnet-0a11b2c3333dd44e5` |
+| `{MLSPACE_VPC_SECURITY_GROUP}` | The ID of the default security group for the {{ $params.APPLICATION_NAME }} VPC | `sg-903004f8` |
+| `{EMR_DEFAULT_ROLE_ARN}` | The ARN of the role that will be used as the "ServiceRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_DefaultRole` |
+| `{EMR_EC2_INSTANCE_ROLE_ARN}` | The ARN of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole` |
+| `{MLSPACE_APP_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} application role | `mlspace-app-role` |
 
 #### Notebook Role
 
@@ -337,7 +337,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
 3. Click next and optionally add tags to this policy.
 4. Click next again and enter a name for this policy. You can name the policy whatever you'd like, but ensure you remember it as you'll need it when creating the role.
 5. After the policy has been created, you are now ready to create the role. From the IAM Service page, click "Roles" on the left-hand side.
-6. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type."
+6. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 7. Copy and paste the following content into the "Custom trust policy" text area: 
 
 ```JSON
@@ -356,7 +356,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
 ```
 
 8. Click the next button and then select the checkbox next to the name of the policy you created in step 4 above.
-9. After selecting the checkbox for the policy, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role."
+9. After selecting the checkbox for the policy, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role".
 10. Once the role has been created, record the role ARN as we'll need to use it later.
 
 #### App Role
@@ -947,7 +947,7 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
 7. Click next and optionally add tags to this policy.
 8. Click next again and enter a name for this policy. You can name the policy whatever you'd like, but ensure you remember it as you'll need it when creating the role.
 9. After the policy has been created, you are now ready to create the role. From the IAM Service page, click "Roles" on the left-hand side.
-10. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type."
+10. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 11. Copy and paste the following content into the "Custom trust policy" text area:
 
 ```JSON
@@ -966,7 +966,7 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
 ```
 
 12. Click the next button and then select the checkbox next to the name of the policy you created in step 8 above. You will also need to attach the default notebook policy you previously created, as well as the AWS managed policy `AWSLambdaVPCAccessExecutionRole`. In total, you should have 3 policies attached to the role.
-13. After selecting the 3 policies, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role."
+13. After selecting the 3 policies, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role".
 14. Once the role has been created, record the role ARN as we'll need to use it later.
 
 #### S3 Reader Role
@@ -990,7 +990,7 @@ The {{ $params.APPLICATION_NAME }} React app is hosted statically in S3 and acce
 3. Click next and optionally add tags to this policy.
 4. Click next again and enter a name for this policy. You can name the policy whatever you'd like, but ensure you remember it as you'll need it when creating the role.
 5. After the policy has been created, you are now ready to create the role. From the IAM Service page, click "Roles" on the left-hand side.
-6. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type."
+6. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 7. Copy and paste the following content into the "Custom trust policy" text area:
 
 ```JSON
@@ -1009,7 +1009,7 @@ The {{ $params.APPLICATION_NAME }} React app is hosted statically in S3 and acce
 ```
 
 8. Click the next button and then select the checkbox next to the name of the policy you created in step 4 above.
-9. After selecting the policy, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role."
+9. After selecting the policy, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role".
 10. Once the role has been created, record the role ARN as you'll need to update `constants.ts` to use it.
 
 #### API Gateway CloudWatch Role
@@ -1017,7 +1017,7 @@ The {{ $params.APPLICATION_NAME }} React app is hosted statically in S3 and acce
 When `ENABLE_ACCESS_LOGGING` is set to `true`, [API Gateway uses a single role account-wide](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html#set-up-access-logging-permissions) for interacting with CloudWatch. If you would like to provide that role to {{ $params.APPLICATION_NAME }}, you can set the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts`. Otherwise, the role will be automatically created during deployment. To create the API Gateway CloudWatch role manually, you can follow these steps:
 
 1. Log in to your AWS account and go to the Roles section of the IAM Service in the AWS Console.
-2. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type."
+2. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
 3. Copy and paste the following content into the "Custom trust policy" text area:
 
 ```JSON
@@ -1036,7 +1036,7 @@ When `ENABLE_ACCESS_LOGGING` is set to `true`, [API Gateway uses a single role a
 ```
 
 4. Click the next button and then select the checkbox next to the AWS managed policy `AmazonAPIGatewayPushToCloudWatchLogs`.
-5. After selecting the managed policy, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role."
+5. After selecting the managed policy, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role".
 6. Once the role has been created, record the role ARN and update the `APIGATEWAY_CLOUDWATCH_ROLE_ARN` property in `constants.ts` to use the ARN of the newly created role.
 
 ### Deployment Parameters
@@ -1045,54 +1045,54 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 
 | Variable   |      Description      |  Default |
 |----------|:-------------|------:|
-| `AWS_ACCOUNT` | The account number that {{ $params.APPLICATION_NAME }} is being deployed into. Used to disambiguate S3 buckets within a region. | - |
-| `AWS_REGION` | The region that {{ $params.APPLICATION_NAME }} is being deployed into. This is only needed when you are using an existing VPC or KMS key and `EXISTING_KMS_MASTER_KEY_ARN` or `EXISTING_VPC_ID` is set. | - |
-| `IDP_ENDPOINT_SSM_PARAM` | If set, {{ $params.APPLICATION_NAME }} will use the value of this parameter as the `OIDC_URL`. During deployment, the value of this parameter will be read from SSM. This value takes precedence over `OIDC_URL` if both are set. | - |
-| `OIDC_URL` | The OIDC endpoint that will be used for {{ $params.APPLICATION_NAME }} authentication. | - |
-| `OIDC_CLIENT_NAME` | The OIDC client name that should be used by {{ $params.APPLICATION_NAME }} for authentication. | `web-client` |
-| `OIDC_REDIRECT_URL` | The redirect URL that should be used after successfully authenticating with the OIDC provider. This will default to the API gateway URL generated by the CDK deployment but can be manually set if you're using custom DNS. | `undefined` |
-| `OIDC_VERIFY_SSL` | Whether or not calls to the OIDC endpoint specified in the `OIDC_URL` environment variable should validate the server certificate. | `True` |
-| `OIDC_VERIFY_SIGNATURE` | Whether or not the lambda authorizer should verify the JWT token signature. | `True` |
-| `ADDITIONAL_LAMBDA_ENVIRONMENT_VARS` | A map of key-value pairs which will be set as environment variables on every {{ $params.APPLICATION_NAME }} lambda. | `{}` |
-| `SYSTEM_BANNER_TEXT` | The text to display on the system banner displayed at the top and bottom of the {{ $params.APPLICATION_NAME }} web application. If set to a blank string, no banner will be displayed. | `` |
-| `SYSTEM_BANNER_BACKGROUND_COLOR` | The background color of the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and RGB values. | `black` |
-| `SYSTEM_BANNER_TEXT_COLOR` | The color of the text displayed in the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and RGB values. | `white` |
-| `RESOURCE_TERMINATION_INTERVAL` | Interval (in minutes) to run the resource termination cleanup lambda. | `60` |
-| `DATASETS_TABLE_NAME` | DynamoDB table to hold dataset-related metadata. | `mlspace-datasets` |
-| `PROJECTS_TABLE_NAME` | DynamoDB table to hold project-related metadata. | `mlspace-projects` |
-| `PROJECT_USERS_TABLE_NAME` | DynamoDB table to hold project membership-related metadata. Including permissions and project/user-specific IAM role data. | `mlspace-project-users` |
-| `USERS_TABLE_NAME` | DynamoDB table to hold user-related metadata. | `mlspace-users` |
-| `APP_CONFIGURATION_TABLE_NAME` | DynamoDB table to hold dynamic configuration settings. These are settings that can be modified after the app has been deployed. | `mlspace-app-configuration` |
-| `CONFIG_BUCKET_NAME` | S3 bucket used to store {{ $params.APPLICATION_NAME }} configuration files (notebook lifecycle configs, notebook params, etc.). | `mlspace-config` |
-| `DATA_BUCKET_NAME` | S3 bucket used to store user uploaded dataset files. | `mlspace-datasets` |
-| `LOGS_BUCKET_NAME` | S3 bucket used to store logs from EMR clusters launched in {{ $params.APPLICATION_NAME }} and, if configured, {{ $params.APPLICATION_NAME }} cloudtrail events. | `mlspace-logs` |
-| `ACCESS_LOGS_BUCKET_NAME` | S3 bucket which will store access logs if `ENABLE_ACCESS_LOGGING` is `true`. | `mlspace-access-logs` |
-| `WEBSITE_BUCKET_NAME` | S3 bucket used to store the static {{ $params.APPLICATION_NAME }} website. | `mlspace-website` |
-| `MLSPACE_LIFECYCLE_CONFIG_NAME` | Name of the default lifecycle config that should be used with {{ $params.APPLICATION_NAME }} notebooks (will be generated as part of the CDK deployment). | `mlspace-notebook-lifecycle-config` |
+| `AWS_ACCOUNT` | The account number that {{ $params.APPLICATION_NAME }} is being deployed into. Used to disambiguate S3 buckets within a region | - |
+| `AWS_REGION` | The region that {{ $params.APPLICATION_NAME }} is being deployed into. This is only needed when you are using an existing VPC or KMS key and `EXISTING_KMS_MASTER_KEY_ARN` or `EXISTING_VPC_ID` is set | - |
+| `IDP_ENDPOINT_SSM_PARAM` | If set, {{ $params.APPLICATION_NAME }} will use the value of this parameter as the `OIDC_URL`. During deployment, the value of this parameter will be read from SSM. This value takes precedence over `OIDC_URL` if both are set | - |
+| `OIDC_URL` | The OIDC endpoint that will be used for {{ $params.APPLICATION_NAME }} authentication | - |
+| `OIDC_CLIENT_NAME` | The OIDC client name that should be used by {{ $params.APPLICATION_NAME }} for authentication | `web-client` |
+| `OIDC_REDIRECT_URL` | The redirect URL that should be used after successfully authenticating with the OIDC provider. This will default to the API gateway URL generated by the CDK deployment but can be manually set if you're using custom DNS | `undefined` |
+| `OIDC_VERIFY_SSL` | Whether or not calls to the OIDC endpoint specified in the `OIDC_URL` environment variable should validate the server certificate | `True` |
+| `OIDC_VERIFY_SIGNATURE` | Whether or not the lambda authorizer should verify the JWT token signature | `True` |
+| `ADDITIONAL_LAMBDA_ENVIRONMENT_VARS` | A map of key-value pairs which will be set as environment variables on every {{ $params.APPLICATION_NAME }} lambda | `{}` |
+| `SYSTEM_BANNER_TEXT` | The text to display on the system banner displayed at the top and bottom of the {{ $params.APPLICATION_NAME }} web application. If set to a blank string, no banner will be displayed | `` |
+| `SYSTEM_BANNER_BACKGROUND_COLOR` | The background color of the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and RGB values | `black` |
+| `SYSTEM_BANNER_TEXT_COLOR` | The color of the text displayed in the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and RGB values | `white` |
+| `RESOURCE_TERMINATION_INTERVAL` | Interval (in minutes) to run the resource termination cleanup lambda | `60` |
+| `DATASETS_TABLE_NAME` | DynamoDB table to hold dataset-related metadata | `mlspace-datasets` |
+| `PROJECTS_TABLE_NAME` | DynamoDB table to hold project-related metadata | `mlspace-projects` |
+| `PROJECT_USERS_TABLE_NAME` | DynamoDB table to hold project membership-related metadata. Including permissions and project/user-specific IAM role data | `mlspace-project-users` |
+| `USERS_TABLE_NAME` | DynamoDB table to hold user-related metadata | `mlspace-users` |
+| `APP_CONFIGURATION_TABLE_NAME` | DynamoDB table to hold dynamic configuration settings. These are settings that can be modified after the app has been deployed | `mlspace-app-configuration` |
+| `CONFIG_BUCKET_NAME` | S3 bucket used to store {{ $params.APPLICATION_NAME }} configuration files (notebook lifecycle configs, notebook params, etc.) | `mlspace-config` |
+| `DATA_BUCKET_NAME` | S3 bucket used to store user uploaded dataset files | `mlspace-datasets` |
+| `LOGS_BUCKET_NAME` | S3 bucket used to store logs from EMR clusters launched in {{ $params.APPLICATION_NAME }} and, if configured, {{ $params.APPLICATION_NAME }} cloudtrail events | `mlspace-logs` |
+| `ACCESS_LOGS_BUCKET_NAME` | S3 bucket which will store access logs if `ENABLE_ACCESS_LOGGING` is `true` | `mlspace-access-logs` |
+| `WEBSITE_BUCKET_NAME` | S3 bucket used to store the static {{ $params.APPLICATION_NAME }} website | `mlspace-website` |
+| `MLSPACE_LIFECYCLE_CONFIG_NAME` | Name of the default lifecycle config that should be used with {{ $params.APPLICATION_NAME }} notebooks (will be generated as part of the CDK deployment) | `mlspace-notebook-lifecycle-config` |
 | `NOTEBOOK_PARAMETERS_FILE_NAME` | Filename of the default notebook parameters that is generated
 
- as part of the CDK deployment. | `mlspace-website` |
-| `PERMISSIONS_BOUNDARY_POLICY_NAME` | Name of the managed policy used as a permissions boundary for dynamically created {{ $params.APPLICATION_NAME }} roles. | `mlspace-project-user-permission-boundary` |
-| `KEY_MANAGER_ROLE_NAME` | Name of the IAM role with permissions to manage the KMS Key. If this property is set, you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
-| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with {{ $params.APPLICATION_NAME }}. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set, you _do not_ need to set `KEY_MANAGER_ROLE_NAME`. |
-| `SYSTEM_TAG` | Tag which will be applied to all {{ $params.APPLICATION_NAME }} resources created with the AWS account to which {{ $params.APPLICATION_NAME }} is deployed. | `MLSpace` |
-| `IAM_RESOURCE_PREFIX` | Value prepended to {{ $params.APPLICATION_NAME }} dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true`. | `MLSpace` |
-| `MANAGE_IAM_ROLES` | This setting determines whether or not {{ $params.APPLICATION_NAME }} will dynamically create unique roles per project/user combinations. | `true` |
-| `EXISTING_VPC_NAME` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`). | - |
-| `EXISTING_VPC_ID` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`). | - |
-| `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the default security group of that VPC. | - |
-| `APP_ROLE_ARN` | ARN of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} lambdas. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| `NOTEBOOK_ROLE_ARN` | ARN of an existing IAM role to associate with all notebooks created in {{ $params.APPLICATION_NAME }}. If using dynamic roles based on project/user combinations, the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one. | - |
-| `S3_READER_ROLE_ARN` | ARN of an existing IAM role to use for reading from the static website S3 bucket. If not specified, a new role with the correct privileges will be created. | - |
-| `EMR_DEFAULT_ROLE_ARN` | Role that will be used as the "ServiceRole" for all EMR clusters. | - |
-| `EMR_EC2_INSTANCE_ROLE_ARN` | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters. | - |
-| `ENABLE_ACCESS_LOGGING` | Whether or not to enable access logging for S3 and APIGW in {{ $params.APPLICATION_NAME }}. | `true` |
-| `APIGATEWAY_CLOUDWATCH_ROLE_ARN` | If API Gateway access logging is enabled (`ENABLE_ACCESS_LOGGING` is true) then this is the ARN of the role that will be used to push those access logs. | - |
-| `CREATE_MLSPACE_CLOUDTRAIL_TRAIL` | Whether or not to create an {{ $params.APPLICATION_NAME }} trail within the account. | `true` |
-| `NEW_USERS_SUSPENDED` | Whether or not new user accounts will be created in a suspended state by default. | `true` |
-| `ENABLE_TRANSLATE` | Whether or not translate capabilities will be deployed/enabled in {{ $params.APPLICATION_NAME }}. If translate is not available in the region you are deploying to you should set this to `false`. | `true` |
-| `LAMBDA_RUNTIME` | The lambda runtime to use for {{ $params.APPLICATION_NAME }} lambda functions and layers. This needs to be a python runtime available in the region in which {{ $params.APPLICATION_NAME }} is being deployed. | Python 3.11 |
-| `LAMBDA_ARCHITECTURE` | The architecture on which to deploy the {{ $params.APPLICATION_NAME }} lambda functions. All lambda layers will also need to be built for the selected architecture. You can do this by ensuring you run the `cdk deploy` command from a machine with the same architecture you're targeting. | x86 |
+ as part of the CDK deployment | `mlspace-website` |
+| `PERMISSIONS_BOUNDARY_POLICY_NAME` | Name of the managed policy used as a permissions boundary for dynamically created {{ $params.APPLICATION_NAME }} roles | `mlspace-project-user-permission-boundary` |
+| `KEY_MANAGER_ROLE_NAME` | Name of the IAM role with permissions to manage the KMS Key. If this property is set, you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN` | - |
+| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with {{ $params.APPLICATION_NAME }}. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN` and `APP_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set, you _do not_ need to set `KEY_MANAGER_ROLE_NAME` |
+| `SYSTEM_TAG` | Tag which will be applied to all {{ $params.APPLICATION_NAME }} resources created with the AWS account to which {{ $params.APPLICATION_NAME }} is deployed | `MLSpace` |
+| `IAM_RESOURCE_PREFIX` | Value prepended to {{ $params.APPLICATION_NAME }} dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
+| `MANAGE_IAM_ROLES` | This setting determines whether or not {{ $params.APPLICATION_NAME }} will dynamically create unique roles per project/user combinations | `true` |
+| `EXISTING_VPC_NAME` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the name of that VPC (must also set `EXISTING_VPC_ID`) | - |
+| `EXISTING_VPC_ID` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the id of that VPC (must also set `EXISTING_VPC_NAME`) | - |
+| `EXISTING_VPC_DEFAULT_SECURITY_GROUP` | If {{ $params.APPLICATION_NAME }} is being deployed into an existing VPC this should be the default security group of that VPC | - |
+| `APP_ROLE_ARN` | ARN of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} lambdas. This value must be set to an existing role because the default CDK deployment will not create one | - |
+| `NOTEBOOK_ROLE_ARN` | ARN of an existing IAM role to associate with all notebooks created in {{ $params.APPLICATION_NAME }}. If using dynamic roles based on project/user combinations, the specific combination role will be used instead. This value must be set to an existing role because the default CDK deployment will not create one | - |
+| `S3_READER_ROLE_ARN` | ARN of an existing IAM role to use for reading from the static website S3 bucket. If not specified, a new role with the correct privileges will be created | - |
+| `EMR_DEFAULT_ROLE_ARN` | Role that will be used as the "ServiceRole" for all EMR clusters | - |
+| `EMR_EC2_INSTANCE_ROLE_ARN` | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
+| `ENABLE_ACCESS_LOGGING` | Whether or not to enable access logging for S3 and APIGW in {{ $params.APPLICATION_NAME }} | `true` |
+| `APIGATEWAY_CLOUDWATCH_ROLE_ARN` | If API Gateway access logging is enabled (`ENABLE_ACCESS_LOGGING` is true) then this is the ARN of the role that will be used to push those access logs | - |
+| `CREATE_MLSPACE_CLOUDTRAIL_TRAIL` | Whether or not to create an {{ $params.APPLICATION_NAME }} trail within the account | `true` |
+| `NEW_USERS_SUSPENDED` | Whether or not new user accounts will be created in a suspended state by default | `true` |
+| `ENABLE_TRANSLATE` | Whether or not translate capabilities will be deployed/enabled in {{ $params.APPLICATION_NAME }}. If translate is not available in the region you are deploying to you should set this to `false` | `true` |
+| `LAMBDA_RUNTIME` | The lambda runtime to use for {{ $params.APPLICATION_NAME }} lambda functions and layers. This needs to be a python runtime available in the region in which {{ $params.APPLICATION_NAME }} is being deployed | Python 3.11 |
+| `LAMBDA_ARCHITECTURE` | The architecture on which to deploy the {{ $params.APPLICATION_NAME }} lambda functions. All lambda layers will also need to be built for the selected architecture. You can do this by ensuring you run the `cdk deploy` command from a machine with the same architecture you're targeting | x86 |
 
 ### Production Web App
 

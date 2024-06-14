@@ -102,7 +102,7 @@ export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
 // Whether or not translate functionality should be include in the deployment
 export const ENABLE_TRANSLATE = true;
 
-// Whether or not GroundTruth labeling functionality should be include in the deployment
+// Whether or not Ground Truth labeling functionality should be include in the deployment
 export const ENABLE_GROUNDTRUTH = true;
 
 // The default name for the application

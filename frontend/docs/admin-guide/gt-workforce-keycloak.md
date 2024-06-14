@@ -12,10 +12,10 @@ To connect an OIDC provider to Ground Truth, a [number of claims](https://docs.a
 
 | Name | Description | Example |
 |--|--|--|
-|`sagemaker:groups` or `sagemaker-groups`| Assigns a worker to one or more groups. Groups are used to map the worker into work teams. | `["teamA", "teamB"]` or `"teamA"`|
-|`sagemaker:sub` or `sagemaker-sub`| A unique id to track a worker identity inside the Ground Truth platform for auditing and to identify tasks worked on by that worker.| UUID, userId, etc. |
-|`sagemaker:client_id` or `sagemaker-client_id`| A client ID. All tokens must be issued for this client ID.| `client-123` |
-| `sagemaker:name` or `sagemaker-name` | The worker name to be displayed in the worker portal. | `Jane Doe` |
+|`sagemaker:groups` or `sagemaker-groups`| Assigns a worker to one or more groups. Groups are used to map the worker into work teams | `["teamA", "teamB"]` or `"teamA"`|
+|`sagemaker:sub` or `sagemaker-sub`| A unique id to track a worker identity inside the Ground Truth platform for auditing and to identify tasks worked on by that worker| UUID, userId, etc |
+|`sagemaker:client_id` or `sagemaker-client_id`| A client ID. All tokens must be issued for this client ID| `client-123` |
+| `sagemaker:name` or `sagemaker-name` | The worker name to be displayed in the worker portal | `Jane Doe` |
 
 The `name`, `groups`, and `sub` scopes should all be created using mappers to link the values to existing properties managed within Keycloak. Each of the scopes will also need to have the `Include in token scope` toggle set to `On`.
 

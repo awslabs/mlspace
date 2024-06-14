@@ -74,11 +74,11 @@ The above block should serve as a reference only. Depending on the use case, not
 Follow these steps to update the permissions boundary to allow access to the ECR:
 1. Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions.
 2. Search for and go to the IAM service.
-3. In the side-navigation, click "Policies."
+3. In the side-navigation, click "Policies".
 4. Search for the name of the permissions boundary policy.
 5. This policy is configured during the [{{ $params.APPLICATION_NAME }} install](./install.md#default-app-policy-and-role), and the recommended name is `mlspace-project-user-permission-boundary.`
 6. Click on the name link for the policy.
 7. On the Policy page, click "Edit" in the "Permissions defined in this policy" section.
 8. Depending on the desired ECR abilities (read only vs. mutating), add the appropriate actions from the above examples to the policy.
-9. At the bottom of the edit page, click "Next."
+9. At the bottom of the edit page, click "Next".
 10. On the confirmation page, click the "Save changes" button.

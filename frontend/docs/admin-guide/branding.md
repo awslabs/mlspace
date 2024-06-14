@@ -8,11 +8,11 @@ Use the guide below to customize MLSpace to reflect your organization's unique b
 
 ## Display Name
 
-Easily change the MLSpace name to align with your program or organization. This name is set in one place using the `APPLICATION_NAME` variable in the 'env.js' file. This value is generated during deployment and is updated in the `constants.ts` file in the CDK project files. By default, the value is "MLSpace."
+Easily change the MLSpace name to align with your program or organization. This name is set in one place using the `APPLICATION_NAME` variable in the 'env.js' file. This value is generated during deployment and is updated in the `constants.ts` file in the CDK project files. By default, the value is "MLSpace".
 
-When the `APPLICATION_NAME` is changed, the new name will appear to users everywhere MLSpace is used in the front-end of the application. The updated name will not be reflected in any backend resources, and no references to "MLSpace" in the source code will be changed.
+When the `APPLICATION_NAME` is changed, the new name will appear to users everywhere MLSpace is used in the front-end of the application and the documentation. The updated name will not be reflected in any backend resources, and no references to "MLSpace" in the source code will be changed.
 
-In the example below, `APPLICATION_NAME` was set to "Demo Space."
+In the example below, `APPLICATION_NAME` was set to "Demo Space".
 
 ![Demo Space Branding](../img/branding/demospace-branding.png)
 
