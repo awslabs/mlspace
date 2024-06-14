@@ -16,14 +16,14 @@
 
 
 # Structure of a context: https://docs.aws.amazon.com/lambda/latest/dg/python-context.html
-def account_arn_from_context(lambda_context, service, resource):
-    return account_arn_from_example_arn(lambda_context.invoked_function_arn, service, resource)
+def account_arn_from_context(lambda_context, service, resource, omit_region=False):
+    return account_arn_from_example_arn(lambda_context.invoked_function_arn, service, resource, omit_region=omit_region)
 
 
-def account_arn_from_example_arn(example_arn, service, resource):
+def account_arn_from_example_arn(example_arn, service, resource, omit_region=False):
     components = example_arn.split(":")
     partition = components[1]
-    region = components[3]
+    region = components[3] if not omit_region else ""
     account_id = components[4]
 
     return f"arn:{partition}:{service}:{region}:{account_id}:{resource}"
