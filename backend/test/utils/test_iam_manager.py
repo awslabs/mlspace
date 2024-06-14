@@ -21,6 +21,9 @@ import boto3
 import moto
 import pytest
 
+from ml_space_lambda.utils.common_functions import generate_tags
+from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG, PROJECT_POLICY_VERSION, USER_POLICY_VERSION
+
 NOTEBOOK_ROLE_NAME = "MLSpace-notebook-role"
 TEST_PERMISSIONS_BOUNDARY_ARN = "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary"
 
@@ -286,9 +289,7 @@ class TestIAMSupport(TestCase):
         role_lookup_response = self.iam_client.get_role(RoleName=new_role_arn.split("/")[-1])
         existing_role = role_lookup_response["Role"]
         # Ensure role was tagged up appropriately
-        tags = generate_tags(test_user, MOCK_PROJECT_NAME, SYSTEM_TAG)
-        tags.append({"Key": "dynamic-user-role", "Value": "true"})
-        assert existing_role["Tags"] == tags
+        assert existing_role["Tags"] == generate_tags(test_user, MOCK_PROJECT_NAME, SYSTEM_TAG, [DYNAMIC_USER_ROLE_TAG])
 
         response = self.iam_client.list_attached_role_policies(RoleName=existing_role["RoleName"])
         user_policy_arn = ""

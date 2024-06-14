@@ -246,12 +246,17 @@ def generate_exception_response(e, status_code=400):
     return generate_html_response(status_code, e)
 
 
-def generate_tags(user_name: str, project_name: str, system_tag: str) -> list:
-    return [
+def generate_tags(user_name: str, project_name: str, system_tag: str, additional_tags: list = None) -> list:
+    tags = [
         {"Key": "user", "Value": user_name},
         {"Key": "project", "Value": project_name},
         {"Key": "system", "Value": system_tag},
     ]
+
+    if additional_tags:
+        tags.extend(additional_tags)
+
+    return tags
 
 
 def has_tags(tags: list, user_name: str = None, project_name: str = None, system_tag: str = None) -> bool:

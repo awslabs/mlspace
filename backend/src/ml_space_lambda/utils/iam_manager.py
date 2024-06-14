@@ -32,6 +32,7 @@ IAM_ROLE_NAME_MAX_LENGTH = 64
 IAM_POLICY_NAME_MAX_LENGTH = 128
 USER_POLICY_VERSION = 1
 PROJECT_POLICY_VERSION = 1
+DYNAMIC_USER_ROLE_TAG = {"Key": "dynamic-user-role", "Value": "true"}
 
 
 class IAMManager:
@@ -357,8 +358,7 @@ class IAMManager:
 
     # Creates the IAM role for the MLSpace user/project context
     def _create_iam_role(self, iam_role_name: str, project_name: str, username: str) -> str:
-        tags = generate_tags(username, project_name, self.system_tag)
-        tags.append({"Key": "dynamic-user-role", "Value": "true"})
+        tags = generate_tags(username, project_name, self.system_tag, [DYNAMIC_USER_ROLE_TAG])
 
         iam_role_response = self.iam_client.create_role(
             RoleName=iam_role_name,
