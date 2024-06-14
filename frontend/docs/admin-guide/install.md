@@ -88,6 +88,9 @@ or make any additional changes required for your environment.
 | `{EMR_EC2_INSTANCE_ROLE_ARN}` | The ARN of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole` |
 | `{MLSPACE_APP_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} application role | `mlspace-app-role` |
 | `{MLSPACE_SYSTEM_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} system role | `mlspace-system-role` |
+| `{MLSPACE_NOTEBOOK_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} notebook role | `mlspace-notebook-role` |
+| `{ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN}` | ARN for policy constraining the instance size that can be used when creating Endpoint configurations from a notebook. | - |
+| `{JOB_INSTANCE_CONSTRAINT_POLICY_ARN}` | ARN for policy constraining the instance size that can be used when creating HPO/Training/Transform jobs from a notebook. | - |
 
 #### Notebook Role
 
@@ -1005,7 +1008,9 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
         {
             "Action": [
                 "sagemaker:CreateNotebookInstanceLifecycleConfig",
-                "sagemaker:UpdateNotebookInstanceLifecycleConfig"
+                "sagemaker:UpdateNotebookInstanceLifecycleConfig",
+                "sagemaker:DeleteNotebookInstanceLifecycleConfig",
+                "sagemaker:DescribeNotebookInstanceLifecycleConfig"
             ],
             "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:notebook-instance-lifecycle-config/*",
             "Effect": "Allow"
@@ -1022,7 +1027,8 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
                 "sagemaker:DeleteNotebookInstance",
                 "sagemaker:DescribeNotebookInstance",
                 "sagemaker:StartNotebookInstance",
-                "sagemaker:StopNotebookInstance"
+                "sagemaker:StopNotebookInstance",
+                "sagemaker:UpdateNotebookInstance"
             ],
             "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:notebook-instance/*",
             "Effect": "Allow"
@@ -1032,26 +1038,6 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
                 "sagemaker:CreatePresignedNotebookInstanceUrl"
             ],
             "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:notebook-instance/*",
-            "Effect": "Allow"
-        },
-        {
-            "Condition": {
-                "Null": {
-                    "aws:ResourceTag/user": "false",
-                    "aws:ResourceTag/system": "false",
-                    "aws:ResourceTag/project": "false"
-                }
-            },
-            "Action": "sagemaker:UpdateNotebookInstance",
-            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:notebook-instance/*",
-            "Effect": "Allow"
-        },
-        {
-            "Action": [
-                "sagemaker:DeleteNotebookInstanceLifecycleConfig",
-                "sagemaker:DescribeNotebookInstanceLifecycleConfig"
-            ],
-            "Resource": "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:notebook-instance-lifecycle-config/*",
             "Effect": "Allow"
         },
         {
@@ -1085,11 +1071,6 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
                 "elasticmapreduce:SetTerminationProtection"
             ],
             "Resource": "arn:{AWS_PARTITION}:elasticmapreduce:{AWS_REGION}:{AWS_ACCOUNT}:cluster/*",
-            "Effect": "Allow"
-        },
-        {
-            "Action": "comprehend:DetectDominantLanguage",
-            "Resource": "*",
             "Effect": "Allow"
         },
         {
@@ -1134,6 +1115,30 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
             ],
             "Resource": "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/MLSpace*",
             "Effect": "Allow"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy",
+            ],
+            "Resource": [
+                "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/{MLSPACE_APP_ROLE_NAME}",
+                "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/{MLSPACE_NOTEBOOK_ROLE_NAME}",
+                "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/MLSpace*",
+            ],
+            "Condition": {
+                "StringEqualsIgnoreCase": {
+                    "iam:ResourceTag/system": "MLSpace"
+                },
+                "ForAnyValue:StringLike": {
+                    "iam:PolicyARN": [
+                        "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:policy/MLSpace-app-denied-services",
+                        "{ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN}",
+                        "{JOB_INSTANCE_CONSTRAINT_POLICY_ARN}"
+                    ]
+                }
+            },
         },
         {
             "Action": [
