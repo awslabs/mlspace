@@ -87,6 +87,7 @@ or make any additional changes required for your environment.
 |`{EMR_DEFAULT_ROLE_ARN}` | The ARN of the role that will be used as the "ServiceRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_DefaultRole`|
 |`{EMR_EC2_INSTANCE_ROLE_ARN}` | The ARN of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole`|
 | `{MLSPACE_APP_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} application role | `mlspace-app-role` |
+| `{MLSPACE_SYSTEM_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} system role | `mlspace-system-role` |
 
 #### Notebook Role
 
@@ -999,7 +1000,7 @@ policy. From the IAM Service page click "Policies" on the left hand side. **Note
             "Resource": [
                 "{EMR_DEFAULT_ROLE_ARN}",
                 "{EMR_EC2_INSTANCE_ROLE_ARN}",
-                "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/{MLSPACE_APP_ROLE_NAME}"
+                "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/{MLSPACE_SYSTEM_ROLE_NAME}"
             ],
             "Effect": "Allow"
         },
@@ -1258,7 +1259,7 @@ policy. From the IAM Service page click "Policies" on the left hand side. **Note
                 }
             },
             "Action": "iam:PassRole",
-            "Resource": "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/{MLSPACE_APP_ROLE_NAME}",
+            "Resource": "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/{MLSPACE_SYSTEM_ROLE_NAME}",
             "Effect": "Allow"
         }
     ]

@@ -1002,10 +1002,10 @@ export class IAMStack extends Stack {
          * to terminate EMR clusters even though users can't perform any EMR actions.
          * These actions include cleaning up resources for deleted projects and suspended users.
          */
+        const mlSpaceSystemRoleName = 'mlspace-system-role';
         if (props.mlspaceConfig.SYSTEM_ROLE_ARN) {
             this.mlSpaceSystemRole = Role.fromRoleArn(this, mlspaceSystemRoleName, props.mlspaceConfig.SYSTEM_ROLE_ARN);
         } else {
-            const mlSpaceSystemRoleName = 'mlspaceSystemRole';
             const systemPolicy = new ManagedPolicy(this, 'mlspace-system-policy', {
                 statements: appPolicyAndStatements(this.partition, Aws.REGION, mlSpaceSystemRoleName),
             });
