@@ -226,6 +226,7 @@ export class ProjectsApiStack extends Stack {
                 restApi,
                 props.authorizer,
                 system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
+                props.applicationRole.roleName,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],
