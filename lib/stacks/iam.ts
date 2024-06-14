@@ -87,7 +87,7 @@ export class IAMStack extends Stack {
         );
 
         // Role names
-        const mlspaceSystemRoleName = 'mlspace-system-role';
+        const mlspaceSystemRoleName = 'mlspaceSystemRole';
         const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
 
         const invertedBooleanConditions = (conditions: {[key: string]: string}) => Object.fromEntries(Object.entries(conditions).map(([key, value]) => {
@@ -1006,9 +1006,8 @@ export class IAMStack extends Stack {
         if (props.mlspaceConfig.SYSTEM_ROLE_ARN) {
             this.mlSpaceSystemRole = Role.fromRoleArn(this, mlspaceSystemRoleName, props.mlspaceConfig.SYSTEM_ROLE_ARN);
         } else {
-            const mlSpaceSystemRoleName = 'mlspaceSystemRole';
             const systemPolicy = new ManagedPolicy(this, 'mlspace-system-policy', {
-                statements: appPolicyAndStatements(this.partition, Aws.REGION, mlSpaceSystemRoleName),
+                statements: appPolicyAndStatements(this.partition, Aws.REGION, mlspaceSystemRoleName),
             });
             const systemPolicyAllowPrinciples = props.enableTranslate
                 ? new CompositePrincipal(
@@ -1017,7 +1016,7 @@ export class IAMStack extends Stack {
                 )
                 : new ServicePrincipal('lambda.amazonaws.com');
             this.mlSpaceSystemRole = new Role(this, mlspaceSystemRoleName, {
-                roleName: mlSpaceSystemRoleName,
+                roleName: mlspaceSystemRoleName,
                 assumedBy: systemPolicyAllowPrinciples,
                 managedPolicies: [
                     systemPolicy,

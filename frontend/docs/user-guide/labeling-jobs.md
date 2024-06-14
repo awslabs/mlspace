@@ -3,12 +3,15 @@ outline: deep
 ---
 
 # Gound Truth Labeling Jobs
+
 Ground Truth helps you build high-quality training datasets for your machine learning models. With Ground Truth in {{ $params.APPLICATION_NAME }}, you can use workers from an internal, private workforce along with machine learning to enable you to create a labeled dataset. You can use the labeled dataset output from Ground Truth to train your own models. You can also use the output as a training dataset for an Amazon SageMaker model.
 
 ## Create a Labeling Job
+
 All labeling jobs in {{ $params.APPLICATION_NAME }} must be associated with a project. From the labeling jobs list within the context of a project, users can create new labeling jobs by clicking the "Create new labeling job" button. Labeling job creation is presented as a multi-step workflow with both required and optional settings. Before creating a new labeling job, you will need access to a private workforce. For assistance, reach out to an {{ $params.APPLICATION_NAME }} Administrator. You will reference this workforce in step 2 of the multi step workflow.
 
 In the first step of the workflow, input the Amazon S3 bucket URI where the manifest file is stored and configure the parameters for the job. For more information about storing data in an Amazon S3 bucket through {{ $params.APPLICATION_NAME }}, see [Create a Dataset](./datasets.html#create-a-dataset).
+
 - Manifest files are in JSON lines format where each line is a complete JSON object representing the labeling information for an image. There are different formats for image classification and image segmentation. Manifest files must be encoded using UTF-8 encoding.
 - Documentation for manifest files can be found [here](https://docs.aws.amazon.com/lookout-for-vision/latest/developer-guide/manifest-files.html).
 

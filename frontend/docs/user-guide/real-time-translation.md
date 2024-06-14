@@ -17,11 +17,13 @@ source language is unknown. If automatic detection of the source language is not
 {{ $params.APPLICATION_NAME }} has the proper IAM permissions for `comprehend:DetectDominantLanguage`.
 
 ## Text Translation
+
 Translate provided text to a target language using either a designated source language or an auto-detected source
 language. A new translation is performed whenever settings are updated or with a half-second delay when
 typing into the "Enter text" field.
 
 ## Document Translation
+
 Translate a single uploaded document. The document must be one of the supported file types
 (.txt, .html, and .docx). After the user submits the document for translation and the request completes, the
 resulting document is downloaded automatically. The name of the translated document will be the original filename
@@ -29,6 +31,7 @@ with the TargetLanguageCode added as a prefix. For example, 'translate.txt'
 translated into Spanish would be translated and then downloaded onto the user's machine as 'es.translate.txt'.
 
 ## Additional Settings
+
 Users have additional settings they can use to customize their translation.
 
  - **Custom Terminology**

@@ -17,8 +17,9 @@ associated with the suspended user.
 
 ## Configuration
 
-Administrators can view the current configurations for {{ $params.APPLICATION_NAME }}. If configuration settings need to be changed,
-a system admin developer will need to make those modifications.
+Adminstrators can update the dynamic configuration of the application, see the dynamic configuration history, rollback to prior versions of the dynamic configuration, import/export the dynamic configuration, and see the deployment configuration.
+
+For more information, see the [configuration page documentation](./configuration.md).
 
 ## Reports
 

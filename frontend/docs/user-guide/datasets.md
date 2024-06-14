@@ -5,6 +5,7 @@ outline: deep
 # Datasets
 
 ## Create a Dataset
+
 Global and Private datasets can be created outside the scope of a project by selecting "Datasets"
 in the left sidebar navigation. In order to create a project dataset you need to first select a
 project using either the project switcher at the top of the left sidebar navigation or by navigating
@@ -26,6 +27,7 @@ right of the "Files" table. After selecting all the files you'd like to upload c
 button which will upload the files to S3 and persist the dataset metadata.
 
 ## Managing a Dataset
+
 For global datasets any user in the system can upload additional files but only the owner can update
 the dataset metadata. For project datasets any user in the project can upload additional files but
 only the dataset owner can update the dataset metadata. Private datasets can only be managed by the
@@ -38,19 +40,23 @@ associated with the dataset. Depending on the scope of the dataset and the curre
 privileges clicking the "Edit" button will allow updating metadata and/or uploading additional files.
 
 ### Downloading And Accessing Files
+
 From the file list on the dataset details page, files can be downloaded by clicking on the file name.
 The S3 URI can also be copied from the 3rd column in order to reference the file.
 
 ### Editing a Dataset
+
 A dataset can be edited by clicking the update button on the details page. From the update form
 it is possible to modify the description and it is possible to upload or delete
 files from the dataset.
 
 ## Deleting a Dataset
+
 Deleting a dataset will remove all files associated with the dataset including any generated data
 (training output, etc) associated with the dataset.
 
 ## Bring Your Own Data!
+
 Through {{ $params.APPLICATION_NAME }}, users will not have direct console access to Amazon Simple Storage Service (S3).
 Instead, users may upload their datasets via the “Bring Your Own Data (BYOD)” console. Users may
 select between three levels of privacy for a dataset — global datasets are visible to everyone
