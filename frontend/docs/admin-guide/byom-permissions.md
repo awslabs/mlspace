@@ -3,22 +3,14 @@ outline: deep
 ---
 
 # Enabling Access To Custom Algorithms
-{{ $params.APPLICATION_NAME }} users can create SageMaker resources using custom algorithm containers. When creating resources
-(Training jobs, HPO jobs, Batch Transform jobs, and Models) users have the option of selecting a
-built-in algorithm or specifying the ECR path to a custom container image. If users will be leveraging
-ECR images in their resources then the {{ $params.APPLICATION_NAME }} IAM policies must be modified to grant the necessary
-permissions. These policies can be scoped as necessary for your specific environment and use-case.
-If users will not be developing their own algorithms and merely need access to existing algorithms
-defined in custom images then they will not need any of the mutating actions. If users will be
-developing new algorithms and publishing those containers for use by others then additional actions
-will need to be granted. Each of these actions can also be restricted to specific named repositories
-or they can be made less restrictive depending on the needs of your organization.
+
+{{ $params.APPLICATION_NAME }} users can create SageMaker resources using custom algorithm containers. When creating resources (Training jobs, HPO jobs, Batch Transform jobs, and Models), users have the option of selecting a built-in algorithm or specifying the ECR path to a custom container image. If users will be leveraging ECR images in their resources, then the {{ $params.APPLICATION_NAME }} IAM policies must be modified to grant the necessary permissions. These policies can be scoped as necessary for your specific environment and use case. If users will not be developing their own algorithms and merely need access to existing algorithms defined in custom images, then they will not need any of the mutating actions. If users will be developing new algorithms and publishing those containers for use by others, then additional actions will need to be granted. Each of these actions can also be restricted to specific named repositories, or they can be made less restrictive depending on the needs of your organization.
 
 ## Read Only Policy
-In order to allow users to leverage custom images in their SageMaker resources the following policy
-will need to be added to the {{ $params.APPLICATION_NAME }} App Policy, the {{ $params.APPLICATION_NAME }} Notebook Policy, and the {{ $params.APPLICATION_NAME }}
-Permission Boundary:
-```
+
+To allow users to leverage custom images in their SageMaker resources, the following policy will need to be added to the {{ $params.APPLICATION_NAME }} App Policy, the {{ $params.APPLICATION_NAME }} Notebook Policy, and the {{ $params.APPLICATION_NAME }} Permission Boundary:
+
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -45,15 +37,14 @@ Permission Boundary:
     ]
 }
 ```
-The example above is scoped to specific repositories which may or may not make sense in your
-environment. You will also need to substitute in the appropriate region and partition if you opt to
-restrict the actions to specific repositories.
+
+The example above is scoped to specific repositories, which may or may not make sense in your environment. You will also need to substitute the appropriate region and partition if you opt to restrict the actions to specific repositories.
 
 ## Write Policy
-In order to allow users to create their own custom images from within their Notebook Instances the
-some combination of the following policy will need to be added to the {{ $params.APPLICATION_NAME }} Notebook Policy, and
-the {{ $params.APPLICATION_NAME }} Permission Boundary in addition to the Read actions above:
-```
+
+To allow users to create their own custom images from within their Notebook Instances, some combination of the following policy will need to be added to the {{ $params.APPLICATION_NAME }} Notebook Policy and the {{ $params.APPLICATION_NAME }} Permission Boundary in addition to the Read actions above:
+
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -68,27 +59,26 @@ the {{ $params.APPLICATION_NAME }} Permission Boundary in addition to the Read a
                 "ecr:InitiateLayerUpload",
                 "ecr:DeleteRepository",
                 "ecr:PutImage",
-                "ecr:CreateRepository",
+                "ecr:CreateRepository"
             ],
             "Resource": "*"
         }
     ]
 }
 ```
-The above block should serve as a reference only. Depending on the use-case not all actions will be
-appropriate in all environments. If users should only be pushing to specific repositories or if they
-should not have the ability to create new repositories the related actions can be more tightly scoped
-or removed from the policy.
+
+The above block should serve as a reference only. Depending on the use case, not all actions will be appropriate in all environments. If users should only be pushing to specific repositories or if they should not have the ability to create new repositories, the related actions can be more tightly scoped or removed from the policy.
 
 ## Updating The Permissions Boundary Policy
+
 Follow these steps to update the permissions boundary to allow access to the ECR:
-- Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions
-- Search for and go to the IAM service
-- In the side-navigation click "Policies"
-- Search for the name of permissions boundary policy
-- This policy is configured during the [{{ $params.APPLICATION_NAME }} install](./install.md#default-app-policy-and-role) and the recommended name is `mlspace-project-user-permission-boundary`
-- Click on the name link for the policy
-- On the Policy page click on "Edit" in the "Permissions defined in this policy" section
-- Depending on the desired ECR abilities (read only vs mutating) add the appropriate actions from the above examples to the policy
-- At the bottom of the edit page click "Next"
-- On the confirmation page click the "Save changes" button
+1. Open the AWS console for the {{ $params.APPLICATION_NAME }} Account with a role that can modify IAM permissions.
+2. Search for and go to the IAM service.
+3. In the side-navigation, click "Policies."
+4. Search for the name of the permissions boundary policy.
+5. This policy is configured during the [{{ $params.APPLICATION_NAME }} install](./install.md#default-app-policy-and-role), and the recommended name is `mlspace-project-user-permission-boundary.`
+6. Click on the name link for the policy.
+7. On the Policy page, click "Edit" in the "Permissions defined in this policy" section.
+8. Depending on the desired ECR abilities (read only vs. mutating), add the appropriate actions from the above examples to the policy.
+9. At the bottom of the edit page, click "Next."
+10. On the confirmation page, click the "Save changes" button.
