@@ -87,7 +87,7 @@ or make any additional changes required for your environment.
 |`{EMR_DEFAULT_ROLE_ARN}` | The ARN of the role that will be used as the "ServiceRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_DefaultRole`|
 |`{EMR_EC2_INSTANCE_ROLE_ARN}` | The ARN of the role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR Clusters created via {{ $params.APPLICATION_NAME }} | `arn:aws:iam::123456789012:role/EMR_EC2_DefaultRole`|
 | `{MLSPACE_APP_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} application role | `mlspace-app-role` |
-| `{MLSPACE_SYSTEM_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} system role | `mlspaceSystemRole` |
+| `{MLSPACE_SYSTEM_ROLE_NAME}` | The name of the {{ $params.APPLICATION_NAME }} system role | `mlspace-system-role` |
 
 #### Notebook Role
 
