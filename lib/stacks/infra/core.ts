@@ -240,7 +240,7 @@ export class CoreStack extends Stack {
                 ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN,
                 JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN,
                 SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
-                MANAGE_IAM_ROLES: String(props.mlspaceConfig.MANAGE_IAM_ROLES)
+                MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
             },
             layers: [commonLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,

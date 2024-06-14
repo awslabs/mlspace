@@ -500,7 +500,8 @@ class IAMManager:
             if on_create_attach_to_app_role:
                 self.iam_client.attach_role_policy(RoleName=self.app_role_name, PolicyArn=policy_arn)
 
-            self.attach_policies_to_dynamic_user_roles([policy_arn])
+            dynamic_role_names = self.find_dynamic_user_roles()
+            self.attach_policies_to_roles([policy_arn], dynamic_role_names)
 
         # If the policy does exist, then update it
         elif expected_policy_version is None or existing_policy_version < expected_policy_version:
@@ -564,8 +565,8 @@ class IAMManager:
 
         return role_names
 
-    def attach_policies_to_dynamic_user_roles(self, policy_arns: list[str], role_names: list[str] = None):
-        for role_name in role_names or self.find_dynamic_user_roles():
+    def attach_policies_to_roles(self, policy_arns: list[str], role_names: list[str]):
+        for role_name in role_names:
             for policy_arn in policy_arns:
                 self._attach_iam_policy(role_name, policy_arn)
 

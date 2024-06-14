@@ -54,7 +54,7 @@ def lambda_handler(event, context):
 def update_dynamic_roles_with_notebook_policies():
     env_vars = get_environment_variables()
 
-    if env_vars["MANAGE_IAM_ROLES"] == "false":
+    if env_vars["MANAGE_IAM_ROLES"]:
         return
 
     iam_manager = IAMManager(iam)
@@ -63,7 +63,7 @@ def update_dynamic_roles_with_notebook_policies():
         env_vars["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"],
         env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
     ]
-    iam_manager.attach_policies_to_dynamic_user_roles(policy_arns, role_names)
+    iam_manager.attach_policies_to_roles(policy_arns, role_names)
 
     for role_name in role_names:
         iam.tag_role(RoleName=role_name, Tags=[DYNAMIC_USER_ROLE_TAG])
