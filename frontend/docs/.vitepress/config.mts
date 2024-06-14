@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitepress';
 import { APPLICATION_NAME } from '../../../lib/constants';
+import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 
 const docItems = [
     {
@@ -74,5 +75,10 @@ export default defineConfig({
         var stringified = JSON.stringify(pageData.frontmatter).replace(regex, APPLICATION_NAME);
 
         pageData.frontmatter = JSON.parse(stringified);
-    }
+    },
+    markdown: {
+        config(md) {
+          md.use(tabsMarkdownPlugin)
+        },
+      }
 })

@@ -94,7 +94,7 @@ The frontend leverages a number of open-source libraries to both speed up develo
 
 ### DynamoDB
 
-There are 6 DynamoDB tables used to persist various types of metadata for {{ $params.APPLICATION_NAME }}.
+There are 7 DynamoDB tables used to persist various types of metadata for {{ $params.APPLICATION_NAME }}.
 
 #### Users Table
 
@@ -102,13 +102,13 @@ The users table contains user metadata pulled from the IdP as well as additional
 
 |Attribute|Type|Description|
 |--|--|--|
-| username | String | Pulled from IdP “preferred_username”. This is treated as a unique identifier for each user |
-| displayName | String | Pulled from IdP “name”. This is assumed to be a friendly display name which is used in various places in the UI |
-| email | String | Pulled from IdP “email”. This could be the same as the username. While it’s displayed in the UI, there are no default capabilities to email users |
-| suspended | Boolean | Whether or not the user is currently suspended from the system. Suspended users are unable to launch resources or log in to the system |
-| lastLogin | Number | Timestamp of the last time a user logged into the system |
-| permissions | List | Array of the system-level permissions a user has in {{ $params.APPLICATION_NAME }}. Currently, the only system-level permission available to users is “ADMIN”. **NOTE:** Permissions are not pulled from the IdP |
-| createdAt | Number | Timestamp of when the user account was created in {{ $params.APPLICATION_NAME }} (initial login when using default configuration) |
+| username | String | Pulled from IdP “preferred_username”. This is treated as a unique identifier for each user. |
+| displayName | String | Pulled from IdP “name”. This is assumed to be a friendly display name which is used in various places in the UI. |
+| email | String | Pulled from IdP “email”. This could be the same as the username. While it’s displayed in the UI, there are no default capabilities to email users. |
+| suspended | Boolean | Whether or not the user is currently suspended from the system. Suspended users are unable to launch resources or log in to the system. |
+| lastLogin | Number | Timestamp of the last time a user logged into the system. |
+| permissions | List | Array of the system-level permissions a user has in {{ $params.APPLICATION_NAME }}. Currently, the only system-level permission available to users is “ADMIN”. **NOTE:** Permissions are not pulled from the IdP. |
+| createdAt | Number | Timestamp of when the user account was created in {{ $params.APPLICATION_NAME }} (initial login when using default configuration). |
 
 #### Projects Table
 
@@ -116,12 +116,12 @@ The projects table contains project-level metadata such as project name, descrip
 
 |Attribute|Type|Description|
 |--|--|--|
-| name | String | Display name for the project. This is treated as a unique identifier for each project|
-| description | String | Text describing the project. This is displayed in the UI to help users identify a project and the potential use cases associated with that project|
-| createdBy | String | The username of the user who initially created the project|
-| suspended | Boolean | Whether or not the project is currently suspended from the system. Suspended projects retain resources, but those resources will only exist in a stopped/suspended state|
-| lastUpdatedAt | Number | Timestamp of the last time the project was updated. Currently, this is only changed when a user modifies the project description|
-| createdAt | Number | Timestamp of when the project was created in {{ $params.APPLICATION_NAME }}|
+| name | String | Display name for the project. This is treated as a unique identifier for each project.|
+| description | String | Text describing the project. This is displayed in the UI to help users identify a project and the potential use cases associated with that project.|
+| createdBy | String | The username of the user who initially created the project.|
+| suspended | Boolean | Whether or not the project is currently suspended from the system. Suspended projects retain resources, but those resources will only exist in a stopped/suspended state.|
+| lastUpdatedAt | Number | Timestamp of the last time the project was updated. Currently, this is only changed when a user modifies the project description.|
+| createdAt | Number | Timestamp of when the project was created in {{ $params.APPLICATION_NAME }}.|
 
 #### Project Users Table
 
@@ -129,10 +129,10 @@ The project users table serves as a mapping table between projects and users. Ad
 
 |Attribute|Type|Description|
 |--|--|--|
-| project | String | Unique identifier of the project a particular record pertains to|
-| user | String | Unique identifier of the user a particular record pertains to |
-| permissions | List | Array of the project-level permissions a user has for the associated project. Currently, the only relevant project-level permission is “MO” which is “ownership” level permissions. “CO” or collaborator is also supported as a legacy permission but does not currently have any significance|
-| role | String | ARN of the dynamic project user role for a particular record. If dynamic roles are disabled, this attribute will be an empty string|
+| project | String | Unique identifier of the project a particular record pertains to.|
+| user | String | Unique identifier of the user a particular record pertains to. |
+| permissions | List | Array of the project-level permissions a user has for the associated project. Currently, the only relevant project-level permission is “MO” which is “ownership” level permissions. “CO” or collaborator is also supported as a legacy permission but does not currently have any significance.|
+| role | String | ARN of the dynamic project user role for a particular record. If dynamic roles are disabled, this attribute will be an empty string.|
 
 #### Datasets Table
 
@@ -140,14 +140,14 @@ The datasets table contains metadata for datasets in {{ $params.APPLICATION_NAME
 
 |Attribute|Type|Description|
 |--|--|--|
-| name | String | User specified name associated with a dataset|
-| scope | String | Scope will depend on type. If it’s a global dataset, then scope will also be “global”. If the type of dataset is “project”, then scope will be the project name. If the type of dataset is “private”, then scope will be the username|
-| type | String | Can be “global”, which means that all {{ $params.APPLICATION_NAME }} users can access the data; “project”, which means that only members in the same project creating/using resources in that project can access the data; or “private”, meaning that only the user who created the dataset can access the data |
-| description | String | User provided description for the files contained within the dataset|
-| location | String | The S3 URI of the dataset|
-| createdBy | String | Unique identifier of the user who created the dataset|
-| createdAt | Number | Timestamp of when the dataset was created in {{ $params.APPLICATION_NAME }} (based on timestamp of object detection)|
-| lastUpdatedAt | Number | Timestamp of when the dataset metadata was last updated in {{ $params.APPLICATION_NAME }} |
+| name | String | User specified name associated with a dataset.|
+| scope | String | Scope will depend on type. If it’s a global dataset, then scope will also be “global”. If the type of dataset is “project”, then scope will be the project name. If the type of dataset is “private”, then scope will be the username.|
+| type | String | Can be “global”, which means that all {{ $params.APPLICATION_NAME }} users can access the data; “project”, which means that only members in the same project creating/using resources in that project can access the data; or “private”, meaning that only the user who created the dataset can access the data. |
+| description | String | User provided description for the files contained within the dataset.|
+| location | String | The S3 URI of the dataset.|
+| createdBy | String | Unique identifier of the user who created the dataset.|
+| createdAt | Number | Timestamp of when the dataset was created in {{ $params.APPLICATION_NAME }} (based on timestamp of object detection).|
+| lastUpdatedAt | Number | Timestamp of when the dataset metadata was last updated in {{ $params.APPLICATION_NAME }}. |
 
 #### Resource Schedule Table
 
@@ -155,10 +155,10 @@ The resource schedule table contains metadata for terminating and pausing resour
 
 |Attribute|Type|Description|
 |--|--|--|
-| resourceId | String | The unique identifier for the resource, usually name |
-| resourceType | String | The type of resource to be acted upon |
-| project | String | The project the resource is associated with |
-| terminationTime | Number | Timestamp of when the resource should be paused or terminated |
+| resourceId | String | The unique identifier for the resource, usually name. |
+| resourceType | String | The type of resource to be acted upon. |
+| project | String | The project the resource is associated with. |
+| terminationTime | Number | Timestamp of when the resource should be paused or terminated. |
 
 #### Resource Metadata Table
 
@@ -166,11 +166,24 @@ The resource metadata table contains metadata for resources in {{ $params.APPLIC
 
 |Attribute|Type|Description|
 |--|--|--|
-| resourceType | String | The type of resource to be acted upon |
-| resourceId | String | The unique identifier for the resource, usually name |
-| metadata | Map | Metadata associated with the resource such as current status, last updated timestamp, etc |
-| project | String | The project the resource is associated with |
-| user | String | The user who created the resource |
+| resourceType | String | The type of resource to be acted upon. |
+| resourceId | String | The unique identifier for the resource, usually name. |
+| metadata | Map | Metadata associated with the resource such as current status, last updated timestamp, etc. |
+| project | String | The project the resource is associated with. |
+| user | String | The user who created the resource. |
+
+#### Application Configuration Table
+
+The app configuration table contains dynamic configuration settings for {{ $params.APPLICATION_NAME }}. The table is populated with default values the first time it is deployed, and then admins can modify the dynamic configurations for {{ $params.APPLICATION_NAME }} by navigating to the `Configuration` page accessible only to admins.
+
+|Attribute|Type|Description|
+|--|--|--|
+| configScope | String | Determines the scope of the configuration. Currently the only scope supported is 'global', which means it has an effect over the entire application. |
+| versionId | Number | The version ID of this configuration. Starts at 0 and increments with each update to the config. Configs are never overwritten or deleted so they are always around for rollbacks and auditing. |
+| changedBy | String | The user who made an update to the config. |
+| changeReason | String | The user-provided reason for changing the config. |
+| configuration | Map | Configuration settings such as active/inactive services, system banner, allowed instance types, and more. |
+| createdAt | Number | Epoch in seconds for when the config was created. |
 
 ### S3
 
@@ -178,13 +191,11 @@ The resource metadata table contains metadata for resources in {{ $params.APPLIC
 
 | Bucket Name | Purpose | Access |
 |--|--|--|
-| mlspace-access-logs | If access logging is enabled, this bucket will contain all S3 bucket access logs as well as API Gateway access logs | No external access by default |
-| mlspace-logs | This bucket contains log exports generated by users of {{ $params.APPLICATION_NAME }} | Access is given to the {{ $params.APPLICATION_NAME }} app role, which then generates presigned S3 URLs for downstream users |
-| mlspace-config | Contains dynamic configuration files generated by CDK at deploy time, which are used by the {{ $params.APPLICATION_NAME }} app. This includes the default notebook lifecycle configuration, default notebook parameters file, etc | Access is given to the {{ $params.APPLICATION_NAME }} app role. Users do not have direct access, but in some cases (notebook params file), the lambdas may expose the data directly to users |
-| mlspace-website | Contains static assets used for the {{ $params.APPLICATION_NAME }} web application | Access is only given to the {{ $params.APPLICATION_NAME }} app role. These assets are proxied by API
-
- Gateway to end users |
-| mlspace-data | Contains user-generated “datasets” as well as global sample data such as sample notebooks | Access is managed at a prefix level. Data within “global” folders is readable by all {{ $params.APPLICATION_NAME }} roles. Data within “project” and “private” folders has read/write access restricted to the associated roles |
+| mlspace-access-logs | If access logging is enabled, this bucket will contain all S3 bucket access logs as well as API Gateway access logs. | No external access by default |
+| mlspace-logs | This bucket contains log exports generated by users of {{ $params.APPLICATION_NAME }}. | Access is given to the {{ $params.APPLICATION_NAME }} app role, which then generates presigned S3 URLs for downstream users. |
+| mlspace-config | Contains dynamic configuration files generated by CDK at deploy time, which are used by the {{ $params.APPLICATION_NAME }} app. This includes the default notebook lifecycle configuration, default notebook parameters file, etc. | Access is given to the {{ $params.APPLICATION_NAME }} app role. Users do not have direct access, but in some cases (notebook params file), the lambdas may expose the data directly to users. |
+| mlspace-website | Contains static assets used for the {{ $params.APPLICATION_NAME }} web application. | Access is only given to the {{ $params.APPLICATION_NAME }} app role. These assets are proxied by API Gateway to end users. |
+| mlspace-data | Contains user-generated “datasets” as well as global sample data such as sample notebooks. | Access is managed at a prefix level. Data within “global” folders is readable by all {{ $params.APPLICATION_NAME }} roles. Data within “project” and “private” folders has read/write access restricted to the associated roles. |
 
 ### API Gateway
 
@@ -238,7 +249,7 @@ Listed below are security best practices and design principles implemented by th
 - Each corresponding {{ $params.APPLICATION_NAME }} API includes the KMS CMK in the Boto3 request to SageMaker.
 
 **Use SageMaker-specific condition keys in your identity-based policies to:**
-- Allow the creation of SageMaker resources.
+- Allow the creation of SageMaker resources
   - There are explicit denies for SageMaker API create requests that don’t include the following parameters:
     - CreateHyperParameterTuningJob
       - Tags (project/user), VpcSubnets, VpcSecurityGroupIds, VolumeKmsKey
@@ -254,17 +265,17 @@ Listed below are security best practices and design principles implemented by th
       - Tags (project/user), VolumeKmsKey
     - CreateEndpoint
       - Tags (project/user)
-- Restrict training jobs to a VPC.
-  - CreateTrainingJob requests that do not include VpcSubnets and VpcSecurityGroupIds parameters are explicitly denied, which enforces the attachment of compute resources to a customer-managed VPC.
-- Enforce encryption of input data when creating training, tuning, and labeling jobs.
-  - The data bucket created during {{ $params.APPLICATION_NAME }} deployment has server-side encryption using AWS KMS CMKs (SSE-KMS) set by default. As a result, input data provided to SageMaker is encrypted at rest prior to being loaded onto an encrypted EBS volume attached to the compute instance.
-  - CreateNotebookInstance requests made by the {{ $params.APPLICATION_NAME }} application are explicitly denied by IAM policy if they do not include a VolumeKmsKey, which ensures input data from the notebook instance is encrypted.
-- Enforce encryption of Notebook instance storage volumes.
-  - CreateNotebookInstance requests made by the {{ $params.APPLICATION_NAME }} application are explicitly denied by IAM policy if they do not include a VolumeKmsKey.
-- Enforce disabling of “Internet” access and root access when creating notebook instances.
-  - CreateNotebookInstance requests made by the {{ $params.APPLICATION_NAME }} application are explicitly denied by IAM policy if `sagemaker:DirectInternetAccess` or `sagemaker:RootAccess` are set to enabled.
-- Restrict access to SageMaker API and runtime to calls within your VPC.
-  - **This restriction is not currently enforced via IAM policy.** However, the system architecture currently satisfies this requirement. The {{ $params.APPLICATION_NAME }} application is driven by AWS Lambda functions, which are all attached to a customer-managed VPC. SageMaker notebook instances must also be attached to a customer-managed VPC, per IAM policy, and effectively interact with Amazon SageMaker from within that VPC.
+- Restrict training jobs to a VPC
+  - CreateTrainingJob requests that do not include VpcSubnets and VpcSecurityGroupIds parameters are explicitly denied which enforces the attachment of compute resources to a customer-managed VPC.
+- Enforce encryption of input data when creating training, tuning, and labeling jobs
+  - The data bucket created during {{ $params.APPLICATION_NAME }} deployment has server-side encryption using AWS KMS CMKs (SSE-KMS) set by default. As a result, input data provided to SageMaker is encrypted at rest prior to being loaded on to an encrypted EBS volume attached to the compute instance.
+  - CreateNotebookInstance requests made by the {{ $params.APPLICATION_NAME }} application are explicitly denied by IAM policy if they do not include a VolumeKmsKey which ensures input data from the notebook instance is encrypted.
+- Enforce encryption of Notebook instance storage volumes
+  - CreateNotebookInstance requests made by the {{ $params.APPLICATION_NAME }} application are explicitly denied by IAM policy if they do not include a VolumeKmsKey
+- Enforce disabling of “Internet” access and root access when creating notebook instances
+  - CreateNotebookInstance requests made by the {{ $params.APPLICATION_NAME }} application are explicitly denied by IAM policy if 'sagemaker:DirectInternetAccess' or 'sagemaker:RootAccess' are set to enabled.
+- Restrict access to SageMaker API and runtime to calls within your VPC
+  - **This restriction is not currently enforced via IAM policy.** However, the system architecture currently satisfies this requirement. The {{ $params.APPLICATION_NAME }} application is driven by AWS Lambda functions which are all attached to a customer-managed VPC. SageMaker notebook instances must also be attached to a customer-managed VPC, per IAM policy, and effectively interact with Amazon SageMaker from within that VPC.
 
 **Use Interface VPC Endpoints (where supported):**
 - CDK deployment includes a VPC endpoints stack which provisions the SageMaker API, runtime, and notebook interface VPC endpoints that are utilized by the {{ $params.APPLICATION_NAME }} application and SageMaker notebook instances.

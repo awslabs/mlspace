@@ -100,9 +100,17 @@ export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = true;
 export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
 
 // Whether or not translate functionality should be include in the deployment
+/**
+ * @deprecated This constant will be removed in the next release. Activating and deactivating the Translate service
+ * is now handled by the app config feature.
+ */
 export const ENABLE_TRANSLATE = true;
 
 // Whether or not Ground Truth labeling functionality should be include in the deployment
+/**
+ * @deprecated This constant will be removed in the next release. Activating and deactivating the GroundTruth service
+ * is now handled by the app config feature.
+ */
 export const ENABLE_GROUNDTRUTH = true;
 
 // The default name for the application

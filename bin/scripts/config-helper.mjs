@@ -188,6 +188,11 @@ async function askRoleQuestions () {
         },
         {
             type: 'input',
+            name: 'SYSTEM_ROLE_ARN',
+            message: 'System Role ARN: arn of an existing IAM role to use for executing the MLSpace system lambdas. This value must be set to an existing role because the default CDK deployment will not create one.',
+        },
+        {
+            type: 'input',
             name: 'EMR_DEFAULT_ROLE_ARN',
             message: 'EMR Default Role ARN: arn of an existing IAM role that will be used as the \'ServiceRole\' for all EMR clusters',
         },
