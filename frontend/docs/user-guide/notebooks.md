@@ -62,10 +62,12 @@ notebook stop time overrides, then the user will be able to modify the auto-stop
 Stop times are approximate and will execute when the next stop workflow runs at a configured time interval.
 
 ### Creating Resources In A Notebook
+
 When using a Sagemaker Notebook instance users can only create resources if they use the proper tags that allow
 them to be tracked by {{ $params.APPLICATION_NAME }}. Failure to use the proper tags will result in an explicit deny error.
 
 Tags must be applied when creating the following resources within a notebook instance:
+
 - Model
 - Endpoint Config
 - Endpoint
@@ -136,6 +138,7 @@ vpc_config = {
 See the {{ $params.APPLICATION_NAME }} example notebook “xgboost_mnist.ipynb” for reference. It can be found under the “global-resources” folder.
 
 ## Additional documentation
+
 - [Jupyter Notebooks](https://jupyter-notebook.readthedocs.io/en/latest/)
 - [Jupyter Lab](https://jupyterlab.readthedocs.io/en/stable/)
 - [Amazon Sagemaker Notebook Instances](https://docs.aws.amazon.com/sagemaker/latest/dg/nbi.html)

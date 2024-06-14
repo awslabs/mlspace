@@ -3,11 +3,14 @@ outline: deep
 ---
 
 # Grant Admin Permissions to Initial Admin
+
 By default users are created without any elevated privileges and, depending on the value set for `NEW_USERS_SUSPENDED`, will be created in a suspended state unable to interact with the application. In order to grant the inital Admin elevated privileges you'll need to modify the user record in Dynamo DB. Subsequent users can have permissions/suspension state managed directly in the {{ $params.APPLICATION_NAME }} UI by any user with the `PMO` permission.
+
 ## Using the AWS CLI
 
 You can use the aws CLI to make the necessary update, be sure to set the correct region and username. If you’ve updated the table name from the default you’ll also need to ensure that is correct.
-```
+
+```bash
 aws dynamodb --region us-east-1 update-item \
     --table-name mlspace-users \
     --key '{ "username": {"S": "<username here>"}}' \
@@ -16,7 +19,6 @@ aws dynamodb --region us-east-1 update-item \
     --expression-attribute-values '{":newval":{"L":[{"S":"PMO"}]}, ":boolval":{"BOOL":false}}' \
     --return-values ALL_NEW
 ```
-
 
 ## Using the AWS console
 
