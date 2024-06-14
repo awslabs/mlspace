@@ -87,7 +87,7 @@ export class IAMStack extends Stack {
         );
 
         // Role names
-        const mlspaceSystemRoleName = 'mlspace-system-role';
+        const mlspaceSystemRoleName = 'mlspaceSystemRole';
         const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
 
         const invertedBooleanConditions = (conditions: {[key: string]: string}) => Object.fromEntries(Object.entries(conditions).map(([key, value]) => {
@@ -1002,12 +1002,11 @@ export class IAMStack extends Stack {
          * to terminate EMR clusters even though users can't perform any EMR actions.
          * These actions include cleaning up resources for deleted projects and suspended users.
          */
-        const mlSpaceSystemRoleName = 'mlspace-system-role';
         if (props.mlspaceConfig.SYSTEM_ROLE_ARN) {
             this.mlSpaceSystemRole = Role.fromRoleArn(this, mlspaceSystemRoleName, props.mlspaceConfig.SYSTEM_ROLE_ARN);
         } else {
             const systemPolicy = new ManagedPolicy(this, 'mlspace-system-policy', {
-                statements: appPolicyAndStatements(this.partition, Aws.REGION, mlSpaceSystemRoleName),
+                statements: appPolicyAndStatements(this.partition, Aws.REGION, mlspaceSystemRoleName),
             });
             const systemPolicyAllowPrinciples = props.enableTranslate
                 ? new CompositePrincipal(
@@ -1016,7 +1015,7 @@ export class IAMStack extends Stack {
                 )
                 : new ServicePrincipal('lambda.amazonaws.com');
             this.mlSpaceSystemRole = new Role(this, mlspaceSystemRoleName, {
-                roleName: mlSpaceSystemRoleName,
+                roleName: mlspaceSystemRoleName,
                 assumedBy: systemPolicyAllowPrinciples,
                 managedPolicies: [
                     systemPolicy,
