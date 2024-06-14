@@ -237,6 +237,10 @@ export class CoreStack extends Stack {
             role: props.mlSpaceAppRole,
             environment: {
                 APP_CONFIG_TABLE: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
+                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN,
+                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN,
+                SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
+                MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
             },
             layers: [commonLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,
@@ -454,7 +458,7 @@ export class CoreStack extends Stack {
             role: props.mlSpaceAppRole
         });
 
-        new AwsCustomResource(this, 'populate-allowed-instance-types', {
+        new AwsCustomResource(this, 'initial-app-config-deployment-001', {
             onCreate: {
                 service: 'Lambda',
                 action: 'invoke',
