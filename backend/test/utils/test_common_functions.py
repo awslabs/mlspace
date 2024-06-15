@@ -26,6 +26,7 @@ from ml_space_lambda.utils.common_functions import (
     generate_exception_response,
     generate_html_response,
     generate_tags,
+    has_tags,
     list_custom_terminologies_for_project,
 )
 
@@ -134,6 +135,131 @@ def test_generate_tags(user_name: str, project_name: str, system_tag: str):
     ]
     return_value = generate_tags(user_name, project_name, system_tag)
     assert return_value == expected_tags
+
+
+@pytest.mark.parametrize(
+    "tags,user_name,project_name,system_tag",
+    [
+        (
+            [{"Key": "user", "Value": None}, {"Key": "project", "Value": None}, {"Key": "system", "Value": None}],
+            None,
+            None,
+            None,
+        ),
+        (
+            [{"Key": "user", "Value": "some_user"}, {"Key": "project", "Value": None}, {"Key": "system", "Value": None}],
+            None,
+            None,
+            None,
+        ),
+        (
+            [{"Key": "user", "Value": None}, {"Key": "project", "Value": "my_project"}, {"Key": "system", "Value": None}],
+            None,
+            None,
+            None,
+        ),
+        (
+            [{"Key": "user", "Value": None}, {"Key": "project", "Value": None}, {"Key": "system", "Value": "my_system"}],
+            None,
+            None,
+            None,
+        ),
+        (
+            [
+                {"Key": "user", "Value": "some_user"},
+                {"Key": "project", "Value": "my_project"},
+                {"Key": "system", "Value": "my_system"},
+            ],
+            None,
+            None,
+            None,
+        ),
+        (
+            [
+                {"Key": "user", "Value": "some_user"},
+                {"Key": "project", "Value": "my_project"},
+                {"Key": "system", "Value": None},
+            ],
+            "some_user",
+            None,
+            None,
+        ),
+        (
+            [
+                {"Key": "user", "Value": "some_user"},
+                {"Key": "project", "Value": "my_project"},
+                {"Key": "system", "Value": None},
+            ],
+            None,
+            "my_project",
+            None,
+        ),
+        (
+            [
+                {"Key": "user", "Value": "some_user"},
+                {"Key": "project", "Value": None},
+                {"Key": "system", "Value": "my_system"},
+            ],
+            None,
+            None,
+            "my_system",
+        ),
+        (
+            [
+                {"Key": "user", "Value": "some_user"},
+                {"Key": "project", "Value": "my_project"},
+                {"Key": "system", "Value": "my_system"},
+            ],
+            "some_user",
+            "my_project",
+            "my_system",
+        ),
+    ],
+)
+def test_has_tags_true(tags, user_name, project_name, system_tag):
+    assert has_tags(tags, user_name, project_name, system_tag)
+
+
+@pytest.mark.parametrize(
+    "tags,user_name,project_name,system_tag",
+    [
+        ([{"Key": "project", "Value": None}, {"Key": "system", "Value": None}], None, None, None),
+        ([{"Key": "user", "Value": "some_user"}, {"Key": "system", "Value": None}], None, None, None),
+        ([{"Key": "user", "Value": "some_user"}, {"Key": "project", "Value": None}], None, None, None),
+        (
+            [
+                {"Key": "user", "Value": "some_user"},
+                {"Key": "project", "Value": "my_project"},
+                {"Key": "system", "Value": "my_system"},
+            ],
+            "some_user2",
+            "my_project",
+            "my_system",
+        ),
+        (
+            [
+                {"Key": "user", "Value": "some_user"},
+                {"Key": "project", "Value": "my_project"},
+                {"Key": "system", "Value": "my_system"},
+            ],
+            "some_user",
+            "my_project2",
+            "my_system",
+        ),
+        (
+            [
+                {"Key": "user", "Value": "some_user"},
+                {"Key": "project", "Value": "my_project"},
+                {"Key": "system", "Value": "my_system"},
+            ],
+            "some_user",
+            "my_project",
+            "my_system2",
+        ),
+    ],
+)
+def test_has_tags_false(tags, user_name, project_name, system_tag):
+    assert not has_tags(tags, user_name, project_name, system_tag)
 
 
 @mock.patch("ml_space_lambda.utils.common_functions.logger")
