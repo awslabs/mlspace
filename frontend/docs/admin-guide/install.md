@@ -67,12 +67,9 @@ _The cleanup role needs to exist but we do not need the ARN_.
 ### Application Roles
 
 We generally expect customers to use their own roles for the {{ $params.APPLICATION_NAME }} APIGW and lambda execution role as well as for the default notebook role.
-While customers may scope these roles down based on the guidelines of their own organization, the following can be used to quickly stand up
-an instance of {{ $params.APPLICATION_NAME }} for demo purposes only. As written, these roles and policies should not be used for production use cases.
+While customers may scope these roles down based on the guidelines of their own organization, the following can be used to quickly stand up an instance of {{ $params.APPLICATION_NAME }} for demo purposes only. As written these roles and policies should not be used for production usecases.
 
-The policies below include a number of placeholder variables that you'll need to replace. These policies are meant to serve as a starting point and are tightly scoped
-to the resources {{ $params.APPLICATION_NAME }} expects to use. You can relax these restrictions as necessary
-or make any additional changes required for your environment.
+The policies below include a number of placeholder variables that you'll need to replace. These policies are meant to serve as a starting point and are tightly scoped to the resources {{ $params.APPLICATION_NAME }} expects to use, you can relax these restrictions as necessary or make any additional changes required for your environment.
 
 | Variable | Expected Value | Example |
 |----------|----------------|---------|
