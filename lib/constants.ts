@@ -106,7 +106,7 @@ export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
  */
 export const ENABLE_TRANSLATE = true;
 
-// Whether or not GroundTruth labeling functionality should be include in the deployment
+// Whether or not Ground Truth labeling functionality should be include in the deployment
 /**
  * @deprecated This constant will be removed in the next release. Activating and deactivating the GroundTruth service
  * is now handled by the app config feature.

@@ -111,10 +111,10 @@ const resourceTypeOptions: MultiselectProps.Option[] = [
             'Export list of all batch translation jobs including their name, status, creation date, source language code, and target language codes',
     },
     {
-        label: 'GroundTruth Labeling Jobs',
+        label: 'Ground Truth Labeling Jobs',
         value: '11',
         description:
-            'Export list of all GroundTruth labeling jobs including their name, status, creation date, and task type',
+            'Export list of all Ground Truth labeling jobs including their name, status, creation date, and task type',
     },
 ];
 
