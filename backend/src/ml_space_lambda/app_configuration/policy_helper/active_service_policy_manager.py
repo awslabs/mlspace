@@ -44,7 +44,7 @@ class ActiveServicePolicyManager:
                         IAMStatementProperty.EFFECT: IAMEffect.DENY,
                         IAMStatementProperty.ACTION: "iam:PassRole",
                         IAMStatementProperty.RESOURCE: account_arn_from_context(
-                            context, "iam", f"role/{IAM_RESOURCE_PREFIX}*"
+                            context, "iam", f"role/{IAM_RESOURCE_PREFIX}*", omit_region=True
                         ),
                         IAMStatementProperty.CONDITION: {"StringEquals": {"iam:PassedToReception": "translate.amazonaws.com"}},
                     },
@@ -105,20 +105,24 @@ class ActiveServicePolicyManager:
                         IAMStatementProperty.EFFECT: IAMEffect.DENY,
                         IAMStatementProperty.ACTION: ["iam:PassRole", "iam:ListRoleTags"],
                         IAMStatementProperty.RESOURCE: [
-                            account_arn_from_context(context, "iam", f"role/{env_variables[EnvVariable.EMR_EC2_ROLE_NAME]}"),
                             account_arn_from_context(
-                                context, "iam", f"role/{env_variables[EnvVariable.EMR_SERVICE_ROLE_NAME]}"
+                                context, "iam", f"role/{env_variables[EnvVariable.EMR_EC2_ROLE_NAME]}", omit_region=True
+                            ),
+                            account_arn_from_context(
+                                context, "iam", f"role/{env_variables[EnvVariable.EMR_SERVICE_ROLE_NAME]}", omit_region=True
                             ),
                         ],
                     },
                     {
                         IAMStatementProperty.EFFECT: IAMEffect.DENY,
                         IAMStatementProperty.ACTION: ["ec2:AuthorizeSecurityGroupIngress"],
-                        IAMStatementProperty.RESOURCE: account_arn_from_context(context, "ec2", "security-group/*"),
+                        IAMStatementProperty.RESOURCE: account_arn_from_context(
+                            context, "ec2", "security-group/*", omit_region=True
+                        ),
                     },
                     {
                         IAMStatementProperty.EFFECT: IAMEffect.DENY,
-                        IAMStatementProperty.ACTION: ["ec2:DescribeInstances", "ec2:DescribeRoutesTables"],
+                        IAMStatementProperty.ACTION: ["ec2:DescribeInstances", "ec2:DescribeRouteTables"],
                         IAMStatementProperty.RESOURCE: "*",
                     },
                 ],
@@ -131,7 +135,9 @@ class ActiveServicePolicyManager:
             {
                 IAMStatementProperty.EFFECT: IAMEffect.DENY,
                 IAMStatementProperty.ACTION: ["dynamodb:CreateTable"],
-                IAMStatementProperty.RESOURCE: account_arn_from_context(context, "dynamodb", "table/invalid-table"),
+                IAMStatementProperty.RESOURCE: account_arn_from_context(
+                    context, "dynamodb", "table/invalid-table", omit_region=True
+                ),
             },
         ]
 
