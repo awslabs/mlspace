@@ -14,29 +14,29 @@
   limitations under the License.
 */
 import {
-    Header,
-    SpaceBetween,
-    Container,
+    Alert,
     Button,
     ButtonDropdown,
+    Container,
     Grid,
-    Alert
+    Header,
+    SpaceBetween
 } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
+import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '../../config/store';
-import { appConfig, getConfiguration, updateConfiguration } from './configuration-reducer';
+import NotificationService from '../../shared/layout/notification/notification.service';
 import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
-import { z } from 'zod';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { listEMRApplications } from '../emr/emr.reducer';
-import { ConfigurationImportModal } from './configuration-import-modal';
-import  SystemBannerConfiguration  from './system-banner-configuration';
-import ProjectCreationConfiguration from './project-creation-configuration';
-import EmrConfiguration from './emr-configuration';
 import ActivatedServicesConfiguration from './activated-services-configuration';
 import AllowedInstanceTypesConfiguration from './allowed-instance-types-configuration';
+import { ConfigurationImportModal } from './configuration-import-modal';
+import { appConfig, getConfiguration, updateConfiguration } from './configuration-reducer';
 import ConfirmConfigurationChangesModal from './confirm-configuration-changes-modal';
+import EmrConfiguration from './emr-configuration';
+import ProjectCreationConfiguration from './project-creation-configuration';
+import SystemBannerConfiguration from './system-banner-configuration';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -72,6 +72,13 @@ export function DynamicConfiguration () {
                         size: z.number().positive()
                     })
                 )
+            }),
+            SystemBanner: z.object({
+                isEnabled: z.boolean(),
+                text: z.string()
+            }).refine((data) => !data.isEnabled || (data.isEnabled && data.text.length >= 1), {
+                message: 'Text is required when banner is activated.',
+                path: ['text']
             })
         }),
     });
@@ -250,6 +257,7 @@ export function DynamicConfiguration () {
                     <SystemBannerConfiguration
                         setFields={setFields}
                         touchFields={touchFields}
+                        errors={errors}
                         isEnabled={state.form.configuration.SystemBanner.isEnabled}
                         text={state.form.configuration.SystemBanner.text}
                         backgroundColor={state.form.configuration.SystemBanner.backgroundColor}
@@ -259,11 +267,16 @@ export function DynamicConfiguration () {
                             iconAlt='Update dynamic configuration'
                             variant='primary'
                             onClick={() => {
-                                setModalVisible(true);
+                                if (!isValid) {
+                                    setState({ validateAll: true, formSubmitting: false });
+                                    scrollToInvalid();
+                                } else {
+                                    setModalVisible(true);
+                                }
                             }}
                             loading={state.formSubmitting}
                             data-cy='dynamic-configuration-submit'
-                            disabled={!isValid || state.formSubmitting}
+                            disabled={state.formSubmitting}
                         >
                         Save Changes
                         </Button>
