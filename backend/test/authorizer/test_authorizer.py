@@ -74,12 +74,13 @@ def policy_response(
     project: ProjectModel = None,
     username: str = MOCK_USERNAME,
     valid_token: bool = True,
+    default_to_username: bool = False,
 ):
     response_context = {}
     principal_id = "Unknown"
     if valid_token:
-        principal_id = user.username if user else username
-        if user and not user.suspended:
+        principal_id = user.username if user and not default_to_username else username
+        if user and not user.suspended and not default_to_username:
             response_context = {"user": json.dumps(user.to_dict())}
         if project:
             response_context["projectName"] = project.name
@@ -1734,6 +1735,7 @@ def test_app_config_routes(
 ):
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
+    # GET requests return an Allow policy immediately, so the user won't be set in the response
     assert lambda_handler(
         mock_event(
             user=user,
@@ -1742,9 +1744,13 @@ def test_app_config_routes(
             path_params=path_params,
         ),
         {},
-    ) == policy_response(allow=allow, user=user)
-    if user:
+    ) == policy_response(
+        allow=allow, user=user, username="Unknown" if method == "GET" else MOCK_USERNAME, default_to_username=method == "GET"
+    )
+    if user and method != "GET":
         mock_user_dao.get.assert_called_with(user.username)
+    elif user and method == "GET":
+        mock_user_dao.get.assert_not_called()
 
 
 @pytest.mark.parametrize(
