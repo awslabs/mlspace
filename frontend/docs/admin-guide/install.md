@@ -1412,6 +1412,8 @@ policy. From the IAM Service page click "Policies" on the left hand side. **Note
         },
         {
             "Action": [
+                "ec2:CreateNetworkInterface",
+                "ec2:CreateNetworkInterfacePermission",
                 "ec2:DeleteNetworkInterface",
                 "ec2:DeleteNetworkInterfacePermission"
             ],

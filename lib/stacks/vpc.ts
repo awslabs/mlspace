@@ -94,7 +94,7 @@ export class VPCStack extends Stack {
 
             if (props.deployCWEndpoint && !props.isIso) {
                 this.vpc.addInterfaceEndpoint('mlspace-cw-interface-endpoint', {
-                    service: InterfaceVpcEndpointAwsService.CLOUDWATCH,
+                    service: InterfaceVpcEndpointAwsService.CLOUDWATCH_MONITORING,
                     privateDnsEnabled: true,
                 });
             }
