@@ -587,7 +587,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
 4. Click next again and enter a name for this policy. You can name the policy whatever you'd like, but ensure you remember it as you'll need it when creating the role.
 5. After the policy has been created, you are now ready to create the role. From the IAM Service page, click "Roles" on the left-hand side.
 6. Click the "Create role" button and then click the "Custom trust policy" card under "Trusted entity type".
-7. Copy and paste the following content into the "Custom trust policy" text area: 
+7. Copy and paste the following content into the "Custom trust policy" text area:
 
 ```JSON
 {
@@ -605,7 +605,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
 ```
 
 8. Click the next button and then select the checkbox next to the name of the policy you created in step 4 above.
-9. After selecting the checkbox for the policy, click next and enter a name for the role. You can name the role whatever you'd like. Optionally add a description and tags, and then click "Create role".
+9. After selecting the checkbox for the policy, click next and enter a name for the role. The name should begin with "MLSpace" (Ex: MLSpaceNotebookRole). Optionally add a description and tags, and then click "Create role".
 10. Once the role has been created, record the role ARN as we'll need to use it later.
 
 #### App Role

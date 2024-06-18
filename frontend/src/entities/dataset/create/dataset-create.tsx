@@ -230,7 +230,7 @@ export function DatasetCreate () {
                                             header='Dataset Access Limitations'
                                         >
                                             Dataset Type is used as a convention to organize data within
-                                            S3 but <strong>does not</strong> prevent other ${window.env.APPLICATION_NAME} users
+                                            S3 but <strong>does not</strong> prevent other {window.env.APPLICATION_NAME} users
                                             from accessing data. Making a &quot;Private&quot; or
                                             &quot;Project&quot; dataset is merely a convention and does
                                             not enforce access control.
