@@ -189,6 +189,7 @@ class ActiveServicePolicyManager:
             "deny",
             on_create_attach_to_notebook_role=True,
             on_create_attach_to_app_role=True,
+            on_create_attach_to_existing_dynamic_roles=True,
         )
 
         return resource_types_to_suspend
