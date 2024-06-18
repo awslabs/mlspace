@@ -474,6 +474,7 @@ class IAMManager:
         policy_type_identifier: str,
         on_create_attach_to_notebook_role: bool = False,
         on_create_attach_to_app_role: bool = False,
+        on_create_attach_to_existing_dynamic_roles: bool = False,
         expected_policy_version: int = None,
     ):
         aws_account = self.sts_client.get_caller_identity()["Account"]
@@ -500,8 +501,9 @@ class IAMManager:
             if on_create_attach_to_app_role:
                 self.iam_client.attach_role_policy(RoleName=self.app_role_name, PolicyArn=policy_arn)
 
-            dynamic_role_names = self.find_dynamic_user_roles()
-            self.attach_policies_to_roles([policy_arn], dynamic_role_names)
+            if on_create_attach_to_existing_dynamic_roles:
+                role_names = self.find_dynamic_user_roles()
+                self.attach_policies_to_roles([policy_arn], role_names)
 
         # If the policy does exist, then update it
         elif expected_policy_version is None or existing_policy_version < expected_policy_version:

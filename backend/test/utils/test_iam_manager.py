@@ -460,6 +460,7 @@ class TestIAMSupport(TestCase):
             "test-type",
             "test-type-1",
             on_create_attach_to_notebook_role=True,
+            on_create_attach_to_existing_dynamic_roles=True,
             expected_policy_version="2",
         )
         attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
