@@ -22,7 +22,7 @@ export const ContentLayout = (props: ContentLayoutProps) => {
     
 
     return (
-        <CloudscapeContentLayout headerVariant='high-contrast' {...props}/>
+        <CloudscapeContentLayout {...props}/>
     );
 };
 

@@ -144,6 +144,9 @@ export function LabelingJobCreate () {
                         message:
                             'Task expiration time must be between 1 minute and 30 days (inclusive).',
                     }),
+                WorkteamArn: z.string().min(1, {
+                    message: 'A labeling team must be selected.',
+                })
             }),
         }),
         taskSelection: z.any(),
