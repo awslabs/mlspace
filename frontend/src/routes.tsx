@@ -76,17 +76,23 @@ export default function AppRoutes () {
         auth.signinRedirect,
     ]);
 
-    useMemo(() => {
-        dispatch(getConfiguration({configScope: 'global'}));
+    useMemo(async () => {
+        let configFetched = false;
+        if (!configFetched) {
+            await dispatch(getConfiguration({configScope: 'global'}));
+        }
+        
         if (configLoadError) {
             notificationService.generateNotification(
                 'Error loading app configuration. Restrictive default policy has been applied in its place. Consult with system admin to resolve issue.',
                 'error'
             );
         }
+        return () => {
+            configFetched = true;
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
-        currentUser,
         configLoadError,
         dispatch,
     ]);
