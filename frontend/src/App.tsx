@@ -65,7 +65,6 @@ export default function App () {
                         toolsClose: 'Close help panel',
                         toolsToggle: 'Open help panel',
                     }}
-                    headerVariant='high-contrast'
                     contentHeader={<Header />}
                     headerSelector='#topBanner'
                     footerSelector='#bottomBanner'

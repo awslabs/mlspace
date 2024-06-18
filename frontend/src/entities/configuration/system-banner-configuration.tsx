@@ -15,17 +15,17 @@
  */
 
 import {
+    Box,
     Container,
     FormField,
     Grid,
     Header,
     Input,
     SpaceBetween,
-    Toggle,
-    Box
+    Toggle
 } from '@cloudscape-design/components';
 import React from 'react';
-import {SetFieldsFunction, TouchFieldsFunction} from '../../shared/validation';
+import { SetFieldsFunction, TouchFieldsFunction } from '../../shared/validation';
 
 export type SystemBannerConfigurationProps = {
     setFields: SetFieldsFunction;
@@ -34,6 +34,7 @@ export type SystemBannerConfigurationProps = {
     text: string;
     isEnabled: boolean;
     touchFields: TouchFieldsFunction;
+    errors: any;
 };
 
 export function SystemBannerConfiguration (props: SystemBannerConfigurationProps) {
@@ -101,6 +102,8 @@ export function SystemBannerConfiguration (props: SystemBannerConfigurationProps
                 </Grid>
                 <FormField
                     label='Banner Text'
+                    errorText={props.errors?.configuration?.SystemBanner?.text}
+                    constraintText='Must have at least one character.'
                 >
                     <Input
                         onChange={({detail}) => {

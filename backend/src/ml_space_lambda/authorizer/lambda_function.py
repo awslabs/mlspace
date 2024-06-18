@@ -71,6 +71,11 @@ def lambda_handler(event, context):
     if requested_resource == "/app-config" and request_method == "GET":
         # Anyone can get the app config
         policy_statement["Effect"] = "Allow"
+        return {
+            "principalId": "Unknown",
+            "policyDocument": {"Version": "2012-10-17", "Statement": [policy_statement]},
+            "context": response_context,
+        }
 
     client_token = None
     token_failure = False
