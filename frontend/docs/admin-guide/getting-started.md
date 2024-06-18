@@ -4,13 +4,13 @@ outline: deep
 
 # High Level Overview
 
-## What is {{ $params.APPLICATION_NAME }}?
+**What is {{ $params.APPLICATION_NAME }}?**
 
 - {{ $params.APPLICATION_NAME }} is an auto-provision system that enables users with valid identity provider (IdP) credentials to securely interact with Amazon AI/ML APIs through a custom AWS console-like UI without needing direct access to the AWS console.
 - {{ $params.APPLICATION_NAME }} creates secure data science environments and allows users to self-organize and collaborate via projects.
 - {{ $params.APPLICATION_NAME }} allows the creation of Notebook instances (traditionally backed by AWS SageMaker), which are machine learning optimized compute instances for conducting analysis and experimentation. For big data and compute-intensive workloads, these instances can also be attached to AWS EMR clusters.
 
-## What makes {{ $params.APPLICATION_NAME }} different from AWS SageMaker?
+**What makes {{ $params.APPLICATION_NAME }} different from AWS SageMaker?**
 
 - AuthN/AuthZ is delegated to the owning organization's OpenID Connect (OIDC) compatible IdP.
 - Dynamic policies are generated for each user and project, enforcing data access restriction based on S3 naming convention within the datasets bucket.
@@ -18,7 +18,7 @@ outline: deep
 - {{ $params.APPLICATION_NAME }} adds the concept of projects to allow easy collaboration across users with common datasets.
 - Users can easily upload, manage, and share datasets for use in their AI/ML workloads.
 
-## How is access to SageMaker resources controlled?
+**How is access to SageMaker resources controlled?**
 
 - All {{ $params.APPLICATION_NAME }} resources are tagged with the associated project and user (as well as a “system” tag associating them with {{ $params.APPLICATION_NAME }} in general).
 - These tags are used to determine which users have access to a given resource as well as which actions they can take against a given resource.
