@@ -99,7 +99,7 @@ export class IAMStack extends Stack {
          * Notebook policy - base permissions used when in a notebook and also applied to general use of the application
          * Notebook role - the role and permissions used when users are accessing a notebook
          */
-        const notebookPolicyStatements = (partition: string, region: string) => {
+        const notebookPolicyStatements = (partition: string, region: string, allow_all_instances: boolean = false) => {
             const statements = [
                 new PolicyStatement({
                     effect: Effect.ALLOW,
@@ -204,20 +204,6 @@ export class IAMStack extends Stack {
                         `arn:${partition}:sagemaker:${region}:${this.account}:endpoint-config/*`,
                     ],
                 }),
-                // Endpoint Configuration Permissions
-                new PolicyStatement({
-                    effect: Effect.DENY,
-                    actions: ['sagemaker:CreateEndpointConfig'],
-                    resources: [
-                        `arn:${partition}:sagemaker:${region}:${this.account}:endpoint-config/*`,
-                    ],
-                    conditions: {
-                        Null: {
-                            'sagemaker:VolumeKmsKey': 'true',
-                            ...invertedBooleanConditions(requestTagsConditions),
-                        },
-                    },
-                }),
                 // Model Permissions
                 new PolicyStatement({
                     effect: Effect.ALLOW,
@@ -228,40 +214,6 @@ export class IAMStack extends Stack {
                             'sagemaker:VpcSecurityGroupIds': 'false',
                             'sagemaker:VpcSubnets': 'false',
                             ...requestTagsConditions,
-                        },
-                    },
-                }),
-                // HPO Permissions
-                new PolicyStatement({
-                    effect: Effect.DENY,
-                    actions: [
-                        'sagemaker:CreateHyperParameterTuningJob',
-                        'sagemaker:CreateTrainingJob',
-                    ],
-                    resources: [
-                        `arn:${partition}:sagemaker:${region}:${this.account}:training-job/*`,
-                        `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-training-job/*`
-                    ],
-                    conditions: {
-                        Null: {
-                            'sagemaker:VpcSecurityGroupIds': 'true',
-                            'sagemaker:VpcSubnets': 'true',
-                            'sagemaker:VolumeKmsKey': 'true',
-                            ...invertedBooleanConditions(requestTagsConditions),
-                        },
-                    },
-                }),
-                // Transform Permissions
-                new PolicyStatement({
-                    effect: Effect.DENY,
-                    actions: ['sagemaker:CreateTransformJob'],
-                    resources: [
-                        `arn:${partition}:sagemaker:${region}:${this.account}:transform-job/*`,
-                    ],
-                    conditions: {
-                        Null: {
-                            'sagemaker:VolumeKmsKey': 'true',
-                            ...invertedBooleanConditions(requestTagsConditions),
                         },
                     },
                 }),
@@ -407,6 +359,118 @@ export class IAMStack extends Stack {
                     })
                 );
             }
+
+            /**
+             * Using the new instance restrain policies requires different permissions based on DynamicRoles permissions
+             * 
+             * Additionally the permissions boundary needs statements that have ALLOW permissions
+             */
+            if (!props.mlspaceConfig.MANAGE_IAM_ROLES || allow_all_instances) {
+                statements.push(
+                    // Endpoint Configuration Permissions
+                    new PolicyStatement({
+                        effect: Effect.ALLOW,
+                        actions: ['sagemaker:CreateEndpointConfig'],
+                        resources: [
+                            `arn:${partition}:sagemaker:${region}:${this.account}:endpoint-config/*`,
+                        ],
+                        conditions: {
+                            Null: {
+                                'sagemaker:VolumeKmsKey': 'false',
+                                ...requestTagsConditions,
+                            },
+                        },
+                    }));
+                statements.push(
+                    // HPO Permissions
+                    new PolicyStatement({
+                        effect: Effect.ALLOW,
+                        actions: [
+                            'sagemaker:CreateHyperParameterTuningJob',
+                            'sagemaker:CreateTrainingJob',
+                        ],
+                        resources: [
+                            `arn:${partition}:sagemaker:${region}:${this.account}:training-job/*`,
+                            `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-training-job/*`
+                        ],
+                        conditions: {
+                            Null: {
+                                'sagemaker:VpcSecurityGroupIds': 'false',
+                                'sagemaker:VpcSubnets': 'false',
+                                'sagemaker:VolumeKmsKey': 'false',
+                                ...requestTagsConditions,
+                            },
+                        },
+                    }));
+                statements.push(
+                    // Transform Permissions
+                    new PolicyStatement({
+                        effect: Effect.ALLOW,
+                        actions: ['sagemaker:CreateTransformJob'],
+                        resources: [
+                            `arn:${partition}:sagemaker:${region}:${this.account}:transform-job/*`,
+                        ],
+                        conditions: {
+                            Null: {
+                                'sagemaker:VolumeKmsKey': 'false',
+                                ...requestTagsConditions,
+                            },
+                        },
+                    }));
+            } else {
+                statements.push(
+                    // Endpoint Configuration Permissions
+                    new PolicyStatement({
+                        effect: Effect.DENY,
+                        actions: ['sagemaker:CreateEndpointConfig'],
+                        resources: [
+                            `arn:${partition}:sagemaker:${region}:${this.account}:endpoint-config/*`,
+                        ],
+                        conditions: {
+                            Null: {
+                                'sagemaker:VolumeKmsKey': 'true',
+                                ...invertedBooleanConditions(requestTagsConditions),
+                            },
+                        },
+                    }));
+                statements.push(
+                    // HPO Permissions
+                    new PolicyStatement({
+                        effect: Effect.DENY,
+                        actions: [
+                            'sagemaker:CreateHyperParameterTuningJob',
+                            'sagemaker:CreateTrainingJob',
+                        ],
+                        resources: [
+                            `arn:${partition}:sagemaker:${region}:${this.account}:training-job/*`,
+                            `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-training-job/*`
+                        ],
+                        conditions: {
+                            Null: {
+                                'sagemaker:VpcSecurityGroupIds': 'true',
+                                'sagemaker:VpcSubnets': 'true',
+                                'sagemaker:VolumeKmsKey': 'true',
+                                ...invertedBooleanConditions(requestTagsConditions),
+                            },
+                        },
+                    }));
+                statements.push(
+                    // Transform Permissions
+                    new PolicyStatement({
+                        effect: Effect.DENY,
+                        actions: ['sagemaker:CreateTransformJob'],
+                        resources: [
+                            `arn:${partition}:sagemaker:${region}:${this.account}:transform-job/*`,
+                        ],
+                        conditions: {
+                            Null: {
+                                'sagemaker:VolumeKmsKey': 'true',
+                                ...invertedBooleanConditions(requestTagsConditions),
+                            },
+                        },
+                    }));
+            }
+
             return statements;
         };
 
@@ -585,7 +649,7 @@ export class IAMStack extends Stack {
                                     },
                                 },
                             }),
-                            ...notebookPolicyStatements('*', '*'),
+                            ...notebookPolicyStatements('*', '*', true),
                         ],
                     }
                 );
