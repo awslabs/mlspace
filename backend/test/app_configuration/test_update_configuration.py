@@ -309,6 +309,7 @@ def test_update_active_services_all_active_success(
         "deny",
         on_create_attach_to_notebook_role=True,
         on_create_attach_to_app_role=True,
+        on_create_attach_to_existing_dynamic_roles=True,
     )
 
 
@@ -368,6 +369,7 @@ def test_update_active_services_single_deny_success(
         "deny",
         on_create_attach_to_notebook_role=True,
         on_create_attach_to_app_role=True,
+        on_create_attach_to_existing_dynamic_roles=True,
     )
     if "resource_type" in type_info:
         mock_suspend_all_of_type.assert_called_with(type_info["resource_type"])
@@ -423,5 +425,6 @@ def test_update_active_services_group_deny_success(
         "deny",
         on_create_attach_to_notebook_role=True,
         on_create_attach_to_app_role=True,
+        on_create_attach_to_existing_dynamic_roles=True,
     )
     mock_suspend_all_of_type.assert_called_with(ResourceType.BATCH_TRANSLATE_JOB)
