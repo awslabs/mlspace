@@ -222,7 +222,7 @@ def generate_exception_response(e, status_code=400):
             },
             {
                 "Codes": ["AccessDeniedException"],
-                "FriendlyMessage": "An administrator or owner has restricted access to this resource or this account has hit its service limit for this resource. If you need access or to increase the limits, please contact a system administrator or owner of the resource for assistance",
+                "FriendlyMessage": "An administrator or owner has restricted access to this resource or this account has hit its service limit for this resource. If you need access or to increase the limits, please contact a system administrator or owner of the resource for assistance.",
             },
         ]
 
@@ -230,7 +230,7 @@ def generate_exception_response(e, status_code=400):
             if e.response["Error"]["Code"] in errorType["Codes"] and (
                 "MatchStrings" not in errorType or any(error in error_msg for error in errorType["MatchStrings"])
             ):
-                e = f"{errorType['FriendlyMessage']}. Full message: {error_msg}"
+                e = f"{errorType['FriendlyMessage']} Full message: {error_msg}"
                 break
 
         logger.exception(e)
