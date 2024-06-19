@@ -62,13 +62,15 @@ export function EndpointCreate () {
     const formSchema = z.object({
         EndpointName: z
             .string({ required_error: 'Endpoint name is required' })
-            .min(3)
+            .min(3, {
+                message: 'Name cannot be less than 3 characters'
+            })
             .max(63, {
                 message: 'Name cannot be more than 63 characters',
             })
             .regex(/^[a-zA-Z0-9-]*$/, {
                 message:
-                    'Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region',
+                generateNameConstraintText(),
             }),
     });
 
