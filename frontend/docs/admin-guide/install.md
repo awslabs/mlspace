@@ -243,7 +243,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
             ],
             "Resource": [
                 "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:training-job/*",
-                "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:hyper-parameter-training-job/*",
+                "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:hyper-parameter-training-job/*"
             ],
             "Effect": "Deny"
         },
@@ -340,6 +340,10 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
 }
 ```
 == Dynamic Roles Disabled
+
+> [!NOTE]
+> Running with Dynamic Roles disabled is an unsupported configuration, but it is sometimes necessary to get up and running quickly in security-constrained environments. The policy below was checked on June 19, 2024, but it is provided on a best-effort basis and may need additional statements.
+
 ```JSON
 {
     "Version": "2012-10-17",
@@ -1117,12 +1121,12 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
             "Effect": "Allow",
             "Action": [
                 "iam:AttachRolePolicy",
-                "iam:DetachRolePolicy",
+                "iam:DetachRolePolicy"
             ],
             "Resource": [
                 "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/{MLSPACE_APP_ROLE_NAME}",
                 "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/{MLSPACE_NOTEBOOK_ROLE_NAME}",
-                "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/MLSpace*",
+                "arn:{AWS_PARTITION}:iam::{AWS_ACCOUNT}:role/MLSpace*"
             ],
             "Condition": {
                 "StringEqualsIgnoreCase": {
@@ -1135,7 +1139,7 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
                         "{JOB_INSTANCE_CONSTRAINT_POLICY_ARN}"
                     ]
                 }
-            },
+            }
         },
         {
             "Action": [
@@ -1640,9 +1644,7 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `ACCESS_LOGS_BUCKET_NAME` | S3 bucket which will store access logs if `ENABLE_ACCESS_LOGGING` is `true` | `mlspace-access-logs` |
 | `WEBSITE_BUCKET_NAME` | S3 bucket used to store the static {{ $params.APPLICATION_NAME }} website | `mlspace-website` |
 | `MLSPACE_LIFECYCLE_CONFIG_NAME` | Name of the default lifecycle config that should be used with {{ $params.APPLICATION_NAME }} notebooks (will be generated as part of the CDK deployment) | `mlspace-notebook-lifecycle-config` |
-| `NOTEBOOK_PARAMETERS_FILE_NAME` | Filename of the default notebook parameters that is generated
-
- as part of the CDK deployment | `mlspace-website` |
+| `NOTEBOOK_PARAMETERS_FILE_NAME` | Filename of the default notebook parameters that is generated as part of the CDK deployment | `mlspace-website` |
 | `PERMISSIONS_BOUNDARY_POLICY_NAME` | Name of the managed policy used as a permissions boundary for dynamically created {{ $params.APPLICATION_NAME }} roles | `mlspace-project-user-permission-boundary` |
 | `KEY_MANAGER_ROLE_NAME` | Name of the IAM role with permissions to manage the KMS Key. If this property is set, you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
 | `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with {{ $params.APPLICATION_NAME }}. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN`, `APP_ROLE_ARN`, `SYSTEM_ROLE_ARN`, `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN`, and `JOB_INSTANCE_CONSTRAINT_POLICY_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set, you _do not_ need to set `KEY_MANAGER_ROLE_NAME` |
