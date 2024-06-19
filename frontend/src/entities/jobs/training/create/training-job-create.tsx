@@ -355,7 +355,7 @@ export default function TrainingJobCreate () {
                         );
                         if (result.payload?.DeletedMetricsDefinitions) {
                             notificationService.generateNotification(
-                                'This training job leverages a built-in Amazon SageMaker algorithm. Metric definitions for these algorithms cannot be customized. The cloned training job was created using the default metric definitions for this algorithm. You can view the values in the details page of this new training job.',
+                                'This training job leverages a built-in Amazon SageMaker algorithm. Metric definitions for these algorithms cannot be customized. The training job was created using the default metric definitions for this algorithm. You can view the values in the details page of this new training job.',
                                 'info'
                             );
                         }

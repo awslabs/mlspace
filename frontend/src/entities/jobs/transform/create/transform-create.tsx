@@ -63,6 +63,7 @@ import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 import { DatasetResourceSelectorSelectableItems } from '../../../../modules/dataset/dataset-selector.types';
 import { ServiceTypes } from '../../../../shared/model/app.configuration.model';
 import ContentLayout from '../../../../shared/layout/content-layout';
+import { generateNameConstraintText } from '../../../../shared/util/form-utils';
 
 export function TransformCreate () {
     const [s3DataTypes, setS3DataTypes] = useState([] as SelectProps.Option[]);
@@ -299,7 +300,7 @@ export function TransformCreate () {
                             <FormField
                                 label='Job name'
                                 constraintText={
-                                    'Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in the same AWS Region.'
+                                    generateNameConstraintText()
                                 }
                                 errorText={errors.TransformJobName}
                             >

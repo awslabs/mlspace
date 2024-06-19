@@ -60,7 +60,7 @@ export function ModelCreate () {
     const formSchema = z.object({
         ModelName: z
             .string()
-            .min(3, { message: 'Model name is required' })
+            .min(3, { message: 'Model name must contain at least 3 characters.' })
             .max(63)
             .regex(/^[a-zA-Z0-9](-*[a-zA-Z0-9])*$/, {
                 message: 'Name can only contain alphanumeric characters and hyphens (-)',
