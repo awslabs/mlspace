@@ -222,7 +222,7 @@ def generate_exception_response(e, status_code=400):
             },
             {
                 "Codes": ["AccessDeniedException"],
-                "FriendlyMessage": "An administrator or owner has restricted access to this resource. If you need access, please contact a system administrator or owner of the resource for assistance",
+                "FriendlyMessage": "An administrator or owner has restricted access to this resource or this account has hit its service limit for this resource. If you need access or to increase the limits, please contact a system administrator or owner of the resource for assistance.",
             },
         ]
 
