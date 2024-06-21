@@ -317,9 +317,7 @@ export function HPOJobCreate () {
                     trainingJob.HyperParameterRanges?.IntegerParameterRanges.filter(
                         (hyperparameter) => hyperparameter !== null
                     ).filter(
-                        (hyperparameter) => {
-                            String(hyperparameter.MinValue).trim() && String(hyperparameter.MaxValue).trim();
-                        }
+                        (hyperparameter) => String(hyperparameter.MinValue).trim() && String(hyperparameter.MaxValue).trim()
                     ) || [],
                 ContinuousParameterRanges:
                     trainingJob.HyperParameterRanges?.ContinuousParameterRanges.filter(
