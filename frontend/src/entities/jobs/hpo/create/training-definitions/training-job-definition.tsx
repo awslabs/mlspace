@@ -232,7 +232,6 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                         }
                     });
                     const parameterRanges = Object.values(item.HyperParameterRanges.ContinuousParameterRanges).concat(Object.values(item.HyperParameterRanges.IntegerParameterRanges));
-
                     parameterRanges.forEach(
                         (parameterRange: any) => {
                             const hyperParameter = algorithm.defaultHyperParameters.find(
@@ -248,7 +247,7 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                                         // - OR the field has a value
                                         // - OR this is the max field and the min field has a value
                                         // This evaluation avoids the issue where a blank value is evaluated as a 0 on a forced safeParse even for optional fields
-                                        if ((!hyperParameter.zValidator?.isOptional || value || (index === 1 && parameterRange.MinValue)) && !nanError ) {
+                                        if ((hyperParameter.required || value || (index === 1 && parameterRange.MinValue)) && !nanError ) {
                                             // Any word alternatives should not apply to ranges
                                             let parseResult = hyperParameter.zValidator?.safeParse(value);
                                             if (parseResult?.success === false) {

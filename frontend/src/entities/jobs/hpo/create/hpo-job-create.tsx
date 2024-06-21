@@ -317,7 +317,9 @@ export function HPOJobCreate () {
                     trainingJob.HyperParameterRanges?.IntegerParameterRanges.filter(
                         (hyperparameter) => hyperparameter !== null
                     ).filter(
-                        (hyperparameter) => String(hyperparameter.MinValue).trim() && String(hyperparameter.MaxValue).trim()
+                        (hyperparameter) => {
+                            String(hyperparameter.MinValue).trim() && String(hyperparameter.MaxValue).trim();
+                        }
                     ) || [],
                 ContinuousParameterRanges:
                     trainingJob.HyperParameterRanges?.ContinuousParameterRanges.filter(
@@ -376,6 +378,7 @@ export function HPOJobCreate () {
                 element={
                     <Wizard
                         activeStepIndex={state.activeStepIndex}
+                        isLoadingNextStep={state.formSubmitting}
                         onNavigate={(event) => {
                             switch (event.detail.reason) {
                                 case 'step':
