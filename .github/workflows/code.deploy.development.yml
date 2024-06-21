@@ -27,8 +27,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/${{ env.ROLE_NAME_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT }}:role/${{ vars.ROLE_NAME_TO_ASSUME }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           role-duration-seconds: 7200
 
@@ -39,11 +39,11 @@ jobs:
           name: "config.json"
           json: |
             {
-              "AWS_ACCOUNT": "${{ env.AWS_ACCOUNT }}",
-              "AWS_REGION": "${{ env.AWS_REGION }}",
+              "AWS_ACCOUNT": "${{ vars.AWS_ACCOUNT }}",
+              "AWS_REGION": "${{ vars.AWS_REGION }}",
               "OIDC_URL": "${{ secrets.OIDC_URL }}",
               "OIDC_CLIENT_NAME": "${{ secrets.OIDC_CLIENT_NAME }}",
-              "KEY_MANAGER_ROLE_NAME": "${{ env.KEY_MANAGER_ROLE_NAME }}"
+              "KEY_MANAGER_ROLE_NAME": "${{ vars.KEY_MANAGER_ROLE_NAME }}"
             }
           dir: './lib/'
 
