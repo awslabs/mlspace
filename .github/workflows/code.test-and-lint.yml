@@ -22,14 +22,18 @@ jobs:
         with:
           payload: |
             {
-              "text": "Finishing Build: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-              "blocks": [
+              "text": "Deployment In Progress for ${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+              "attachments": [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
-                  }
+                  "pretext": "Deployment In Progress",
+                  "color": "dbab09",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "short": true,
+                      "value": "In Progress"
+                    }
+                  ]
                 }
               ]
             }
@@ -142,16 +146,21 @@ jobs:
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
         with:
+          update-ts: ${{ steps.slack.outputs.ts }}
           payload: |
             {
-              "text": "Finished Build: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
-              "blocks": [
+              "text": "Deployment Completed ${{ job.status }}",
+              "attachments": [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
-                  }
+                  "pretext": "Deployment Completed",
+                  "color": "28a745",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "short": true,
+                      "value": "Completed"
+                    }
+                  ]
                 }
               ]
             }
