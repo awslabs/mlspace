@@ -67,7 +67,6 @@ export type Hyperparameter = {
     type: HyperparameterType;
     typeOptions: HyperparameterType[];
     scalingType?: string;
-    required: boolean;
     description?: ReactNode;
     options?: string[] | number[];
     commaSeparatedList?: boolean,
@@ -113,7 +112,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping_rounds',
             value: [],
-            required: false,
             description: 'The model trains until the validation score stops improving. Validation error needs to decrease at least every early_stopping_rounds to continue training. SageMaker hosting uses the best model for inference.',
             zValidator: numberValidator('early_stopping_rounds',
                 {
@@ -124,14 +122,12 @@ export const ML_ALGORITHMS: Algorithm[] = [
             key: 'csv_weights',
             value: ['0'],
             options: ['0', '1'],
-            required: false,
             description: 'When this flag is enabled, XGBoost differentiates the importance of instances for csv input by taking the second column (the column after labels) in training data as the instance weights.',
         }, {
             ...integerParameterProperties,
             scalingType: 'Linear',
             key: 'num_round',
             value: [],
-            required: true,
             description: 'The number of rounds to run the training.',
             zValidator: numberValidator('num_round',
                 {
@@ -142,7 +138,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'booster',
             value: ['gbtree'],
-            required: false,
             description: 'Which booster to use. The gbtree and dart values use a tree-based model, while gblinear uses a linear function.',
             options: ['gbtree', 'gblinear', 'dart']
         }, {
@@ -150,13 +145,11 @@ export const ML_ALGORITHMS: Algorithm[] = [
             key: 'verbosity',
             value: ['1'],
             options: [0, 1, 2, 3],
-            required: false,
             description: 'Verbosity of printing messages.',
         }, {
             ...staticParameterProperties,
             key: 'nthread',
             value: [],
-            required: false,
             description: 'Number of parallel threads used to run xgboost.',
             zValidator: numberValidator('nthread',
                 {
@@ -167,7 +160,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'eta',
             value: ['0.3'],
-            required: false,
             description: 'Step size shrinkage used in updates to prevent overfitting. After each boosting step, you can directly get the weights of new features. The eta parameter actually shrinks the feature weights to make the boosting process more conservative.',
             zValidator: numberValidator('eta',
                 {
@@ -180,7 +172,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'gamma',
             value: ['0.0'],
-            required: false,
             description: 'Minimum loss reduction required to make a further partition on a leaf node of the tree. The larger, the more conservative the algorithm is.',
             zValidator: numberValidator('gamma',
                 {
@@ -192,7 +183,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'max_depth',
             value: ['6'],
-            required: false,
             description: 'Maximum depth of a tree. Increasing this value makes the model more complex and likely to be overfit. 0 indicates no limit. A limit is required when grow_policy=depth-wise.',
             zValidator: numberValidator('max_depth',
                 {
@@ -203,7 +193,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'min_child_weight',
             value: ['1.0'],
-            required: false,
             description: 'Minimum sum of instance weight (hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, the building process gives up further partitioning. In linear regression models, this simply corresponds to a minimum number of instances needed in each node. The larger the algorithm, the more conservative it is.',
             zValidator: numberValidator('min_child_weight',
                 {
@@ -215,7 +204,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'max_delta_step',
             value: ['0'],
-            required: false,
             description: 'Maximum delta step allowed for each tree\'s weight estimation. When a positive integer is used, it helps make the update more conservative. The preferred option is to use it in logistic regression. Set it to 1-10 to help control the update.',
             zValidator: numberValidator('max_delta_step',
                 {
@@ -226,7 +214,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'subsample',
             value: ['1.0'],
-            required: false,
             description: 'Subsample ratio of the training instance. Setting it to 0.5 means that XGBoost randomly collects half of the data instances to grow trees. This prevents overfitting.',
             zValidator: numberValidator('subsample',
                 {
@@ -239,14 +226,12 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'sampling_method',
             value: ['uniform'],
-            required: false,
             options: ['uniform', 'gradient_based'],
         }, {
             ...continuousParameterProperties,
             scalingType: 'Linear',
             key: 'colsample_bytree',
             value: ['1.0'],
-            required: false,
             description: 'Subsample ratio of columns when constructing each tree.',
             zValidator: numberValidator('colsample_bytree',
                 {
@@ -259,7 +244,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'colsample_bylevel',
             value: ['1'],
-            required: false,
             description: 'Subsample ratio of columns for each split, in each level.',
             zValidator: numberValidator('colsample_bylevel',
                 {
@@ -272,7 +256,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'lambda',
             value: ['1.0'],
-            required: false,
             description: 'L2 regularization term on weights. Increasing this value makes models more conservative.',
             zValidator: numberValidator('lambda',
                 {
@@ -284,7 +267,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'alpha',
             value: ['0.0'],
-            required: false,
             description: 'L1 regularization term on weights. Increasing this value makes models more conservative.',
             zValidator: numberValidator('alpha',
                 {
@@ -295,14 +277,12 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'tree_method',
             value: ['auto'],
-            required: false,
             options: ['auto', 'exact', 'approx', 'hist', 'gpu_hist'],
             description: 'The tree construction algorithm used in XGBoost.',
         }, {
             ...staticParameterProperties,
             key: 'sketch_eps',
             value: ['0.03'],
-            required: false,
             description: 'Used only for approximate greedy algorithm. This translates into O(1 / sketch_eps) number of bins. Compared to directly select number of bins, this comes with theoretical guarantee with sketch accuracy.',
             zValidator: numberValidator('sketch_eps',
                 {
@@ -314,7 +294,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'scale_pos_weight',
             value: ['1'],
-            required: false,
             description: 'Controls the balance of positive and negative weights. It\'s useful for unbalanced classes. A typical value to consider: sum(negative cases) / sum(positive cases).',
             zValidator: numberValidator('scale_pos_weight',
                 {
@@ -325,7 +304,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'updater',
             value: ['grow_colmaker,prune'],
-            required: false,
             options: ['grow_colmaker', 'grow_histmaker', 'grow_local_histmaker', 'grow_quantile_histmaker', 'grow_gpu_hist', 'sync', 'refresh', 'prune'],
             commaSeparatedList: true,
             description: 'A comma-separated string that defines the sequence of tree updaters to run. This provides a modular way to construct and to modify the trees.'
@@ -333,34 +311,29 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'dsplit',
             value: ['row'],
-            required: false,
             options: ['row', 'col']
         }, {
             ...staticParameterProperties,
             key: 'refresh_leaf',
             value: ['1'],
-            required: false,
             options: ['0', '1'],
             description:'This is a parameter of the \'refresh\' updater plug-in. When set to true (1), tree leaves and tree node stats are updated. When set to false(0), only tree node stats are updated.',
         }, {
             ...staticParameterProperties,
             key: 'process_type',
             value: ['default'],
-            required: false,
             options: ['default', 'update'],
             description: 'The type of boosting process to run.',
         }, {
             ...staticParameterProperties,
             key: 'grow_policy',
             value: ['depthwise'],
-            required: false,
             options: ['depthwise', 'lossguide'],
             description: 'Controls the way that new nodes are added to the tree. Currently supported only if tree_method is set to hist.'
         }, {
             ...staticParameterProperties,
             key: 'max_leaves',
             value: ['0'],
-            required: false,
             description: 'Maximum number of nodes to be added. Relevant only if grow_policy is set to lossguide.',
             zValidator: numberValidator('max_leaves',
                 {
@@ -370,7 +343,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'max_bin',
             value: ['256'],
-            required: false,
             description: 'Maximum number of discrete bins to bucket continuous features. Used only if tree_method is set to hist.',
             zValidator: numberValidator('max_bin',
                 {
@@ -380,7 +352,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'num_parallel_tree',
             value: ['1'],
-            required: false,
             zValidator: numberValidator('num_parallel_tree',
                 {
                     min: 1
@@ -389,21 +360,18 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'sample_type',
             value: ['uniform'],
-            required: false,
             options: ['uniform', 'weighted'],
             description: 'Type of sampling algorithm.',
         }, {
             ...staticParameterProperties,
             key: 'normalize_type',
             value: ['tree'],
-            required: false,
             options: ['tree', 'forest'],
             description: 'Type of normalization algorithm.',
         }, {
             ...staticParameterProperties,
             key: 'rate_drop',
             value: ['0.0'],
-            required: false,
             description: 'The dropout rate that specifies the fraction of previous trees to drop during the dropout.',
             zValidator: numberValidator('rate_drop',
                 {
@@ -415,14 +383,12 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'one_drop',
             value: ['0'],
-            required: false,
             options: ['0', '1'],
             description: 'When this flag is enabled, at least one tree is always dropped during the dropout.',
         }, {
             ...staticParameterProperties,
             key: 'skip_drop',
             value: ['0.0'],
-            required: false,
             description: 'Probability of skipping the dropout procedure during a boosting iteration.',
             zValidator: numberValidator('skip_drop',
                 {
@@ -434,7 +400,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'lambda_bias',
             value: ['0.0'],
-            required: false,
             description: 'L2 regularization term on bias.',
             zValidator: numberValidator('lambda_bias',
                 {
@@ -446,7 +411,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'tweedie_variance_power',
             value: ['1.5'],
-            required: false,
             description: 'Parameter that controls the variance of the Tweedie distribution.',
             zValidator: numberValidator('tweedie_variance_power',
                 {
@@ -460,21 +424,18 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'objective',
             value: [],
-            required: false,
             options: ['reg:squarederror', 'reg:logistic', 'binary:logistic', 'binary:logitraw', 'count:poisson', 'binary:hinge', 'multi:softmax', 'multi:softprob', 'rank:pairwise', 'reg:gamma', 'reg:tweedie'],
             description: 'Specifies the learning task and the corresponding learning objective. Examples: reg:logistic, multi:softmax, reg:squarederror.',
         }, {
             ...staticParameterProperties,
             key: 'num_class',
             value: [],
-            required: false,
             description: 'The number of classes.',
             zValidator: numberValidator('num_class')
         }, {
             ...staticParameterProperties,
             key: 'base_score',
             value: ['0.5'],
-            required: false,
             description: 'The initial prediction score of all instances, global bias.',
             zValidator: numberValidator('base_score',
                 {
@@ -484,7 +445,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'eval_metric',
             value: [],
-            required: false,
             options: ['rmse', 'mae', 'logloss', 'error', 'error@t', 'merror', 'mlogloss', 'auc', 'ndcg', 'map', 'ndcg@n', 'map@n', 'ndcg-', 'map-', 'ndcg@n-', 'map@n-'],
             description: 'Evaluation metrics for validation data.',
         }]
@@ -498,7 +458,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         defaultHyperParameters: [{
             key: 'feature_dim',
             value: [],
-            required: true,
             ...staticParameterProperties,
             zValidator: positiveIntValidator('feature_dim', { required: true }),
             description: 'The number of features in the input data.',
@@ -506,7 +465,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'mini_batch_size',
             value: ['1000'],
-            required: false,
             ...integerParameterProperties,
             scalingType: 'Linear',
             zValidator: positiveIntValidator('mini_batch_size'),
@@ -516,14 +474,12 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...linearIntProperties,
             key: 'epochs',
             value: ['15'],
-            required: false,
             zValidator: positiveIntValidator('epochs'),
             description: 'The maximum number of passes over the training data.',
         },
         {
             key: 'predictor_type',
             value: ['binary_classifier'],
-            required: false,
             ...staticParameterProperties,
             options: ['binary_classifier', 'multiclass_classifier', 'regressor'],
             description: 'Specifies the type of target variable as a binary classification, multiclass classification, or regression.',
@@ -531,7 +487,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'use_bias',
             value: ['true', 'false'],
-            required: false,
             ...categoricalParameterProperties,
             options: ['true', 'false'],
             description: 'Specifies whether the model should include a bias term, which is the intercept term in the linear equation.',
@@ -539,7 +494,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'binary_classifier_model_selection_criteria',
             value: ['accuracy'],
-            required: false,
             ...staticParameterProperties,
             options: ['accuracy', 'f1', 'f_beta', 'precision_at_target_recall', 'recall_at_target_precision', 'cross_entropy_loss', 'loss_function'],
             description: 'When predictor_type is set to binary_classifier, the model evaluation criteria for the validation dataset (or for the training dataset if you don\'t provide a validation dataset).',
@@ -547,7 +501,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'target_recall',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('target_recall', { min:0.000001, max: 0.999999, isFloat: true }),
             description:
@@ -556,7 +509,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'target_precision',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('target_precision', { min:0.000001, max: 0.999999, isFloat: true }),
             description: 'The target precision. If binary_classifier_model_selection_criteria is recall_at_target_precision, then precision is held at this value while recall is maximized.',
@@ -564,7 +516,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'num_models',
             value: ['auto'],
-            required: false,
             ...staticParameterProperties,
             zValidator: positiveIntValidator('num_models', { alternateValues: ['auto'] }),
             description: 'The number of models to train in parallel. For the default, auto, the algorithm decides the number of parallel models to train. One model is trained according to the given training parameter (regularization, optimizer, loss), and the rest by close parameters.',
@@ -572,7 +523,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'num_calibration_samples',
             value: ['10000000'],
-            required: false,
             ...staticParameterProperties,
             zValidator: positiveIntValidator('num_calibration_samples'),
             description: 'The number of observations from the validation dataset to use for model calibration (when finding the best threshold).',
@@ -580,7 +530,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'init_method',
             value: ['uniform'],
-            required: false,
             ...staticParameterProperties,
             options: ['uniform', 'normal'],
             description: 'Sets the initial distribution function used for model weights.',
@@ -588,7 +537,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'init_scale',
             value: ['0.7'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('init_scale', { min: 0.0000000001, isFloat: true }),
             description: 'Scales an initial uniform distribution for model weights. Applies only when the init_method hyperparameter is set to uniform.',
@@ -596,7 +544,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'init_sigma',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('init_sigma', { min:0.0000000001, isFloat: true }),
             description: 'The initial standard deviation for the normal distribution. Applies only when the init_method hyperparameter is set to normal.',
@@ -604,7 +551,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'init_bias',
             value: ['0.0'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('init_bias', { isFloat: true }),
             description: 'Initial weight for the bias term.',
@@ -612,7 +558,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'optimizer',
             value: ['auto'],
-            required: false,
             ...staticParameterProperties,
             options: ['auto', 'adam', 'sgd', 'rmsprop'],
             description: 'The optimization algorithm to use.',
@@ -620,7 +565,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'loss',
             value: ['auto'],
-            required: false,
             ...staticParameterProperties,
             options: ['logistic', 'squared_loss', 'absolute_loss', 'hinge_loss', 'eps_insensitive_squared_loss', 'eps_insensitive_absolute_loss', 'quantile_loss', 'huber_loss', 'softmax_loss', 'auto'],
             description: 'Specifies the loss function. Valid and default values depend on the selected predictor_type.',
@@ -628,7 +572,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'margin',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('margin', { min: 0, isFloat: true }),
             description: 'The margin for the hinge_loss function.',
@@ -636,7 +579,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'quantile',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('quantile', { min: 0.00000001, max: 0.99999999, isFloat: true }),
             description: 'The quantile for quantile loss. For quantile q, the model attempts to produce predictions so that the value of true_label is greater than the prediction with probability q.',
@@ -644,7 +586,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'loss_insensitivity',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('loss_insensitivity', { min: 0.00000001, isFloat: true }),
             description: 'The parameter for the epsilon-insensitive loss type. During training and metric evaluation, any error smaller than this value is considered to be zero.',
@@ -652,7 +593,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'huber_delta',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('huber_delta', { min: 0, isFloat: true }),
             description: 'The parameter for Huber loss. During training and metric evaluation, compute L2 loss for errors smaller than delta and L1 loss for errors larger than delta.',
@@ -660,7 +600,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'wd',
             value: [],
-            required: false,
             ...continuousParameterProperties,
             scalingType: 'Logarithmic',
             zValidator: numberValidator('wd', { min: 0, isFloat: true }),
@@ -669,7 +608,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'l1',
             value: [],
-            required: false,
             ...continuousParameterProperties,
             scalingType: 'Logarithmic',
             zValidator: numberValidator('l1', { min: 0, isFloat: true }),
@@ -678,7 +616,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'momentum',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('momentum', { min: 0, max: 0.99999999, isFloat: true }),
             description: 'The momentum of the sgd optimizer.',
@@ -686,7 +623,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'learning_rate',
             value: [],
-            required: false,
             ...continuousParameterProperties,
             scalingType: 'Logarithmic',
             zValidator: numberValidator('learning_rate', { min: 0.000000001, isFloat: true }),
@@ -695,7 +631,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'beta_1',
             value: ['0.9'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('beta_1', { min: 0, max: 0.99999999, isFloat: true }),
             description: 'The exponential decay rate for first-moment estimates. Applies only when the optimizer value is adam.',
@@ -703,7 +638,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'beta_2',
             value: ['0.999'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('beta_2', { min: 0, max: 0.99999999, isFloat: true }),
             description: 'The exponential decay rate for second-moment estimates. Applies only when the optimizer value is adam.',
@@ -711,7 +645,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'bias_lr_mult',
             value: ['10'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('bias_lr_mult', { min: 0.00000001, isFloat: true }),
             description: 'Allows a different learning rate for the bias term. The actual learning rate for the bias is learning_rate * bias_lr_mult.',
@@ -719,7 +652,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'bias_wd_mult',
             value: ['0.0'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('bias_wd_mult', { min: 0, isFloat: true }),
             description: 'Allows different regularization for the bias term. The actual L2 regularization weight for the bias is wd * bias_wd_mult. By default, there is no regularization on the bias term.',
@@ -727,7 +659,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'use_lr_scheduler',
             value: ['true'],
-            required: false,
             ...staticParameterProperties,
             options: ['true', 'false'],
             description: 'Whether to use a scheduler for the learning rate. If you want to use a scheduler, specify true. ',
@@ -735,7 +666,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'lr_scheduler_step',
             value: ['100'],
-            required: false,
             ...staticParameterProperties,
             zValidator: positiveIntValidator('lr_scheduler_step'),
             description: 'The number of steps between decreases of the learning rate. Applies only when the use_lr_scheduler hyperparameter is set to true.',
@@ -743,7 +673,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'lr_scheduler_factor',
             value: ['0.99'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('lr_scheduler_factor', { min: 0.0000000001, max: 0.9999999999, isFloat: true }),
             description: 'For every lr_scheduler_step hyperparameter, the learning rate decreases by this quantity. Applies only when the use_lr_scheduler hyperparameter is set to true.',
@@ -751,7 +680,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'lr_scheduler_minimum_lr',
             value: ['0.00001'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('lr_scheduler_minimum_lr', { min: 0.00000000000000000001, isFloat: true }),
             description: 'The learning rate never decreases to a value lower than the value set for lr_scheduler_minimum_lr. Applies only when the use_lr_scheduler hyperparameter is set to true.',
@@ -759,7 +687,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'normalize_data',
             value: ['true'],
-            required: false,
             ...staticParameterProperties,
             options: ['true', 'false', 'auto'],
             description: '',
@@ -767,7 +694,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'normalize_label',
             value: ['auto'],
-            required: false,
             ...staticParameterProperties,
             options: ['true', 'false', 'auto'],
             description: 'Normalizes the feature data before training. Data normalization shifts the data for each feature to have a mean of zero and scales it to have unit standard deviation.',
@@ -775,7 +701,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'unbias_data',
             value: ['auto'],
-            required: false,
             ...staticParameterProperties,
             options: ['true', 'false', 'auto'],
             description: '',
@@ -783,7 +708,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'unbias_label',
             value: ['auto'],
-            required: false,
             ...staticParameterProperties,
             options: ['true', 'false', 'auto'],
             description: 'Unbiases the features before training so that the mean is 0. By default data is unbiased as the use_bias hyperparameter is set to true.',
@@ -791,7 +715,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'num_point_for_scaler',
             value: ['10000'],
-            required: false,
             ...staticParameterProperties,
             zValidator: positiveIntValidator('num_point_for_scaler'),
             description: 'The number of data points to use for calculating normalization or unbiasing of terms.',
@@ -799,7 +722,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'early_stopping_patience',
             value: ['3'],
-            required: false,
             ...staticParameterProperties,
             zValidator: positiveIntValidator('early_stopping_patience'),
             description: 'If no improvement is made in the relevant metric, the number of epochs to wait before ending training. If you have provided a value for binary_classifier_model_selection_criteria. the metric is that value. Otherwise, the metric is the same as the value specified for the loss hyperparameter. The metric is evaluated on the validation data. If you haven\'t provided validation data, the metric is always the same as the value specified for the loss hyperparameter and is evaluated on the training data. To disable early stopping, set early_stopping_patience to a value greater than the value specified for epochs.',
@@ -807,7 +729,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'early_stopping_tolerance',
             value: ['0.001'],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('early_stopping_tolerance', { min: 0.0000000001, isFloat: true }),
             description: 'The relative tolerance to measure an improvement in loss. If the ratio of the improvement in loss divided by the previous best loss is smaller than this value, early stopping considers the improvement to be zero.',
@@ -817,7 +738,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             // Values correctly enforced in the range validation checks in training-job-definitions.tsx
             key: 'positive_example_weight_mult',
             value: [],
-            required: false,
             options: ['balanced', 'auto'],
             // This uniquely has 3 possible type options
             type: HyperparameterType.CONTINUOUS,
@@ -829,7 +749,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'num_classes',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: positiveIntValidator('num_classes'),
             description: 'The number of classes for the response variable. The algorithm assumes that classes are labeled 0, ..., num_classes - 1.',
@@ -837,7 +756,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'accuracy_top_k',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: positiveIntValidator('accuracy_top_k'),
             description: 'When computing the top-k accuracy metric for multiclass classification, the value of k. If the model assigns one of the top-k scores to the true label, an example is scored as correct.',
@@ -845,7 +763,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'f_beta',
             value: [],
-            required: false,
             ...staticParameterProperties,
             zValidator: numberValidator('f_beta', { min: 0.00000001, isFloat: true }),
             description: 'The value of beta to use when calculating F score metrics for binary or multiclass classification. Also used if the value specified for binary_classifier_model_selection_criteria is f_beta.',
@@ -853,7 +770,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
         {
             key: 'balance_multiclass_weights',
             value: [],
-            required: false,
             options: ['true', 'false'],
             ...staticParameterProperties,
             description: 'Specifies whether to use class weights, which give each class equal importance in the loss function. Used only when the predictor_type is multiclass_classifier.',
@@ -870,7 +786,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'base_network',
             value: ['vgg-16'],
-            required: false,
             options: ['vgg-16','resnet-50'],
             description: 'The base network architecture to use.',
         },
@@ -878,7 +793,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'use_pretrained_model',
             value: ['1'],
-            required: false,
             options: ['0', '1'],
             description: 'The algorithm toIndicates whether to use a pre-trained model for training. If set to 1, then the pre-trained model with corresponding architecture is loaded and used for training. Otherwise, the network is trained from scratch. use for semantic segmentation.',
         },
@@ -886,7 +800,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'num_classes',
             value: [],
-            required: true,
             description: 'The number of output classes. This parameter defines the dimensions of the network output and is typically set to the number of classes in the dataset.',
             zValidator: positiveIntValidator('num_classes', { required: true })
         },
@@ -894,7 +807,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'epochs',
             value: ['30'],
-            required: false,
             description: 'The number of training epochs.',
             zValidator: positiveIntValidator('epochs')
         },
@@ -903,7 +815,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Logarithmic',
             key: 'learning_rate',
             value: ['0.001'],
-            required: false,
             description: 'The initial learning rate.',
             zValidator: numberValidator('learning_rate', { min: 0.0000000001, max: 1, isFloat: true })
         },
@@ -911,7 +822,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'lr_scheduler_factor',
             value: ['0.1'],
-            required: false,
             description: 'The ratio to reduce learning rate. Used in conjunction with the lr_scheduler_step parameter defined as lr_new = lr_old * lr_scheduler_factor.',
             zValidator: numberValidator('lr_scheduler_factor', { min: 0.0000000001, max: 1, isFloat: true })
         },
@@ -919,14 +829,12 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'lr_scheduler_step',
             value: [''],
-            required: false,
             description: 'The epochs at which to reduce the learning rate. The learning rate is reduced by lr_scheduler_factor at epochs listed in a comma-delimited string: "epoch1, epoch2, ...". For example, if the value is set to "10, 20" and the lr_scheduler_factor is set to 1/2, then the learning rate is halved after 10th epoch and then halved again after 20th epoch.'
         },
         {
             ...categoricalParameterProperties,
             key: 'optimizer',
             value: ['sgd', 'adam', 'rmsprop', 'adadelta'],
-            required: false,
             options: ['sgd', 'adam', 'rmsprop', 'adadelta'],
             description: 'The optimizer types. For details on optimizer values, see MXNet\'s API',
         },
@@ -935,7 +843,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             key: 'momentum',
             scalingType: 'ReverseLogarithmic',
             value: ['0.9'],
-            required: false,
             description: 'The momentum for sgd. Ignored for other optimizers.',
             zValidator: numberValidator('momentum', { min: 0.0000000001, max: 1, isFloat: true })
         },
@@ -944,7 +851,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             key: 'weight_decay',
             scalingType: 'Logarithmic',
             value: ['0.0005'],
-            required: false,
             description: 'The weight decay coefficient for sgd and rmsprop. Ignored for other optimizers.',
             zValidator: numberValidator('weight_decay', { min: 0.0000000001, max: 1, isFloat: true })
         },
@@ -953,7 +859,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             key: 'mini_batch_size',
             scalingType: 'Linear',
             value: ['32'],
-            required: false,
             description: 'The batch size for training. In a single-machine multi-gpu setting, each GPU handles mini_batch_size/num_gpu training samples. For the multi-machine training in dist_sync mode, the actual batch size is mini_batch_size*number of machines. A large mini_batch_size usually leads to faster training, but it may cause out of memory problem. The memory usage is related to mini_batch_size, image_shape, and base_network architecture. For example, on a single p3.2xlarge instance, the largest mini_batch_size without an out of memory error is 32 with the base_network set to "resnet-50" and an image_shape of 300. With the same instance, you can use 64 as the mini_batch_size with the base network vgg-16 and an image_shape of 300.',
             zValidator: positiveIntValidator('mini_batch_size')
         },
@@ -961,7 +866,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'image_shape',
             value: ['300'],
-            required: false,
             description: 'The image size for input images. We rescale the input image to a square image with this size. We recommend using 300 and 512 for better performance.',
             zValidator: numberValidator('image_shape', { min: 300 })
         },
@@ -969,7 +873,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'label_width',
             value: ['350'],
-            required: false,
             description: 'The force padding label width used to sync across training and validation data. For example, if one image in the data contains at most 10 objects, and each object\'s annotation is specified with 5 numbers, [class_id, left, top, width, height], then the label_width should be no smaller than (10*5 + header information length). The header information length is usually 2. We recommend using a slightly larger label_width for the training, such as 60 for this example.',
             zValidator: numberValidator('label_width') // Console allows any int, but docs say must be positive int
         },
@@ -977,7 +880,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'num_training_samples',
             value: [],
-            required: true,
             description: 'The number of training examples in the input dataset.',
             zValidator: positiveIntValidator('num_training_samples', { required: true })
         },
@@ -985,7 +887,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'nms_threshold',
             value: ['0.45'],
-            required: false,
             description: 'The non-maximum suppression threshold.',
             zValidator: numberValidator('nms_threshold', { min: 0.0000000001, max: 1, isFloat: true })
         },
@@ -993,7 +894,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'overlap_threshold',
             value: ['0.5'],
-            required: false,
             description: 'The evaluation overlap threshold.',
             zValidator: numberValidator('overlap_threshold', { min: 0.0000000001, max: 1, isFloat: true })
         },
@@ -1001,14 +901,12 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'freeze_layer_pattern',
             value: ['false'],
-            required: false,
             description: 'The regular expression (regex) for freezing layers in the base network. For example, if we set freeze_layer_pattern = "^(conv1_|conv2_).*", then any layers with a name that contains "conv1_" or "conv2_" are frozen, which means that the weights for these layers are not updated during training. The layer names can be found in the network symbol files vgg16-symbol.json and resnet-50-symbol.json. Freezing a layer means that its weights can not be modified further. This can reduce training time significantly in exchange for modest losses in accuracy. This technique is commonly used in transfer learning where the lower layers in the base network do not need to be retrained.',
         },
         {
             ...staticParameterProperties,
             key: 'kv_store',
             value: [],
-            required: false,
             options: ['dist_sync', 'dist_async'],
             description: 'The weight update synchronization mode used for distributed training. The weights can be updated either synchronously or asynchronously across machines. Synchronous updates typically provide better accuracy than asynchronous updates but can be slower. See the Distributed Training MXNet tutorial for details. Note: This parameter is not applicable to single machine training.'
         },
@@ -1016,7 +914,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping',
             value: ['false'],
-            required: false,
             options: ['true', 'false'],
             description: 'True to use early stopping logic during training. False not to use it.',
         },
@@ -1024,7 +921,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping_min_epochs',
             value: ['10'],
-            required: false,
             description: 'The minimum number of epochs that must be run before the early stopping logic can be invoked. It is used only when early_stopping = True.',
             zValidator: positiveIntValidator('early_stopping_min_epochs')
         },
@@ -1032,7 +928,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping_patience',
             value: ['5'],
-            required: false,
             description: 'The number of epochs to wait before ending training if no improvement, as defined by the early_stopping_tolerance hyperparameter, is made in the relevant metric. It is used only when early_stopping = True.',
             zValidator: positiveIntValidator('early_stopping_patience')
         },
@@ -1040,7 +935,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping_tolerance',
             value: ['0.0'],
-            required: false,
             description: 'The tolerance value that the relative improvement in validation:mAP, the mean average precision (mAP), is required to exceed to avoid early stopping. If the ratio of the change in the mAP divided by the previous best mAP is smaller than the early_stopping_tolerance value set, early stopping considers that there is no improvement. It is used only when early_stopping = True.',
             zValidator: numberValidator('early_stopping_tolerance', { min: 0, max: 1, isFloat: true })
         }]
@@ -1056,22 +950,19 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'backbone',
             value: ['resnet-50','resnet-101'],
-            required: false,
             description: 'The backbone to use for the algorithm\'s encoder component.',
         },
         {
             ...staticParameterProperties,
-            key: 'use_pretrained_model',
             value: ['True'],
-            required: false,
             options: ['True','False'],
+            key: 'use_pretrained_model',
             description: 'Whether a pretrained model is to be used for the backbone.',
         },
         {
             ...staticParameterProperties,
             key: 'algorithm',
             value: ['fcn'],
-            required: false,
             options: ['fcn','psp','deeplab'],
             description: 'The algorithm to use for semantic segmentation.',
         },
@@ -1079,7 +970,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'lr_scheduler',
             value: ['poly'],
-            required: false,
             options: ['poly', 'step', 'cosine'],
             description: 'The shape of the learning rate schedule that controls its decrease over time.',
         },
@@ -1087,7 +977,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'crop_size',
             value: ['240'],
-            required: false,
             description: 'The image size for input during training. We randomly rescale the input image based on base_size, and then take a random square crop with side length equal to crop_size. The crop_size will be automatically rounded up to multiples of 8.',
             zValidator: numberValidator('crop_size',
                 {
@@ -1098,7 +987,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'num_classes',
             value: [],
-            required: true,
             description: 'The number of classes to segment.',
             zValidator: numberValidator('num_classes',
                 {
@@ -1111,7 +999,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'num_training_samples',
             value: [],
-            required: true,
             description: 'The number of samples in the training data. The algorithm uses this value to set up the learning rate scheduler.',
             zValidator: numberValidator('num_training_samples',
                 {
@@ -1123,7 +1010,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'epochs',
             value: ['30'],
-            required: false,
             description: 'The number of epochs with which to train.',
             zValidator: numberValidator('epochs',
                 {
@@ -1135,7 +1021,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Logarithmic',
             key: 'learning_rate',
             value: ['0.001'],
-            required: false,
             description: 'The initial learning rate.',
             zValidator: numberValidator('learning_rate',
                 {
@@ -1149,7 +1034,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'gamma1',
             value: ['0.90'],
-            required: false,
             description: 'The decay factor for the moving average of the squared gradient for rmsprop. Used only for rmsprop.',
             zValidator: numberValidator('gamma1',
                 {
@@ -1162,7 +1046,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'gamma2',
             value: ['0.90'],
-            required: false,
             description: 'The momentum factor for rmsprop.',
             zValidator: numberValidator('gamma2',
                 {
@@ -1175,7 +1058,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...categoricalParameterProperties,
             key: 'optimizer',
             value: ['sgd','adam','rmsprop','adagrad','nag'], // Docs say default is 'sgd', but in console all are selected
-            required: false,
             options: ['sgd','adam','rmsprop','adagrad','nag'],
             description: 'The type of optimizer.',
         },
@@ -1184,7 +1066,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Logarithmic',
             key: 'weight_decay',
             value: ['0.0001'],
-            required: false,
             description: 'The weight decay coefficient for the sgd optimizer. When you use other optimizers, the algorithm ignores this parameter.',
             zValidator: numberValidator('weight_decay',
                 {
@@ -1200,7 +1081,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'ReverseLogarithmic',
             key: 'momentum',
             value: ['0.9'],
-            required: false,
             description: 'The momentum for the sgd optimizer. When you use other optimizers, the semantic segmentation algorithm ignores this parameter.',
             zValidator: numberValidator('momentum',
                 {
@@ -1215,7 +1095,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             scalingType: 'Linear',
             key: 'mini_batch_size',
             value: ['16'],
-            required: false,
             description: 'The batch size for training. Using a large mini_batch_size usually results in faster training, but it might cause you to run out of memory. Memory usage is affected by the values of the mini_batch_size and image_shape parameters, and the backbone architecture.',
             zValidator: numberValidator('mini_batch_size',
                 {
@@ -1227,7 +1106,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'validation_mini_batch_size',
             value: ['32'],
-            required: false,
             description: 'The batch size for validation. A large mini_batch_size usually results in faster training, but it might cause you to run out of memory. Memory usage is affected by the values of the mini_batch_size and image_shape parameters, and the backbone architecture. ',
             zValidator: numberValidator('validation_mini_batch_size',
                 {
@@ -1239,7 +1117,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping_min_epochs',
             value: ['5'],
-            required: false,
             description: 'The minimum number of epochs that must be run.',
             zValidator: numberValidator('early_stopping_min_epochs',
                 {
@@ -1250,7 +1127,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping_patience',
             value: ['4'],
-            required: false,
             description: 'The number of epochs that meet the tolerance for lower performance before the algorithm enforces an early stop.',
             zValidator: numberValidator('early_stopping_patience',
                 {
@@ -1261,7 +1137,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping_tolerance',
             value: ['0.0'],
-            required: false,
             description: 'If the relative improvement of the score of the training job, the mIOU, is smaller than this value, early stopping considers the epoch as not improved. This is used only when early_stopping = True.',
             zValidator: numberValidator('early_stopping_tolerance',
                 {
@@ -1274,7 +1149,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             ...staticParameterProperties,
             key: 'early_stopping',
             value: ['False'],
-            required: false,
             options: ['True','False'],
             description: 'Whether to use early stopping logic during training.',
         }]
@@ -1329,7 +1203,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mode',
                 value: ['skipgram', 'cbow', 'batch_skipgram', 'supervised'],
-                required: true,
                 ...categoricalParameterProperties,
                 options: ['skipgram', 'cbow', 'batch_skipgram', 'supervised'],
                 description:
@@ -1338,7 +1211,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 ...linearIntProperties,
                 key: 'min_count',
-                required: false,
                 value: ['5'],
                 description: 'Words that appear less than min_count times are discarded.',
                 zValidator: positiveIntValidator('min_count'),
@@ -1347,7 +1219,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'window_size',
                 value: ['5'],
-                required: false,
                 description:
                     'The size of the context window. The context window is the number of words surrounding the target word used for training.',
                 zValidator: positiveIntValidator('window_size'),
@@ -1356,7 +1227,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'negative_samples',
                 value: ['5'],
-                required: false,
                 description:
                     'The number of negative samples for the negative sample sharing strategy.',
                 zValidator: positiveIntValidator('negative_samples'),
@@ -1365,7 +1235,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'epochs',
                 value: ['5'],
-                required: false,
                 description: 'The number of complete passes through the training data.',
                 zValidator: positiveIntValidator('epochs'),
             },
@@ -1373,7 +1242,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'min_char',
                 value: ['3'],
-                required: false,
                 description:
                     'The minimum number of characters to use for subwords/character n-grams.',
                 zValidator: positiveIntValidator('min_char'),
@@ -1382,7 +1250,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'max_char',
                 value: ['6'],
-                required: false,
                 description:
                     'The maximum number of characters to use for subwords/character n-grams.',
                 zValidator: positiveIntValidator('max_char'),
@@ -1391,7 +1258,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'buckets',
                 value: ['2000000'],
-                required: false,
                 description:
                     'The number of hash buckets to use for subwords (Word2Vec) or word n-grams (Text Classification).',
                 zValidator: positiveIntValidator('buckets'),
@@ -1399,7 +1265,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'subwords',
                 value: ['false', 'true'],
-                required: false,
                 ...categoricalParameterProperties,
                 options: ['true', 'false'],
                 description: 'Whether to learn subword embeddings on not.',
@@ -1408,7 +1273,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'word_ngrams',
                 value: ['2'],
-                required: false,
                 description: 'The number of word n-gram features to use.',
                 zValidator: positiveIntValidator('word_ngrams'),
             },
@@ -1416,7 +1280,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'vector_dim',
                 value: ['100'],
-                required: false,
                 description:
                     'The dimension of the embedding layer (Text Classification) or word vectors that the algorithm learns (Word2Vec).',
                 zValidator: positiveIntValidator('vector_dim'),
@@ -1425,7 +1288,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
                 ...linearIntProperties,
                 key: 'batch_size',
                 value: ['11'],
-                required: false,
                 description:
                     'The size of each batch when mode is set to batch_skipgram. Set to a number between 10 and 20.',
                 zValidator: numberValidator('batch_size',
@@ -1437,7 +1299,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'learning_rate',
                 value: ['0.05'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 description: 'The step size used for parameter updates.',
@@ -1451,7 +1312,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'sampling_threshold',
                 value: ['0.0001'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Linear',
                 description:
@@ -1466,7 +1326,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'min_epochs',
                 value: ['5'],
-                required: false,
                 ...staticParameterProperties,
                 description:
                     'The minimum number of epochs to train before early stopping logic is invoked.',
@@ -1475,7 +1334,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'patience',
                 value: ['4'],
-                required: false,
                 ...staticParameterProperties,
                 description:
                     'The number of epochs to wait before applying early stopping when no progress is made on the validation set. Used only when "early_stopping" is "True".',
@@ -1484,7 +1342,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'early_stopping',
                 value: ['false'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['true', 'false'],
                 description:
@@ -1493,7 +1350,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'evaluation',
                 value: ['true'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['true', 'false'],
                 description:
@@ -1511,7 +1367,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'feature_dim',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('feature_dim', { required: true }),
                 description: 'The number of features in the input data.',
@@ -1519,7 +1374,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mini_batch_size',
                 value: ['5000'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('mini_batch_size'),
                 description: 'The number of observations per mini-batch for the data iterator.',
@@ -1527,7 +1381,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'k',
                 value: [''],
-                required: true,
                 ...integerParameterProperties,
                 scalingType: 'Auto',
                 zValidator: positiveIntValidator('k', { required: true }),
@@ -1536,7 +1389,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'predictor_type',
                 value: ['classifier'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['classifier', 'regressor'],
                 zValidator: z.string().min(1, { message: 'predictor_type is required' }),
@@ -1545,7 +1397,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'sample_size',
                 value: [''],
-                required: true,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('sample_size', { required: true }),
                 description: 'The number of data points to be sampled from the training data set.',
@@ -1553,7 +1404,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'dimension_reduction_type',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 options: ['', 'sign', 'fjlt'],
                 description: 'The type of dimension reduction method.',
@@ -1561,14 +1411,12 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'dimension_reduction_target',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 description: 'The target dimension to reduce to.',
             },
             {
                 key: 'index_type',
                 value: ['faiss.Flat'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['faiss.Flat', 'faiss.IVFFlat', 'faiss.IVFPQ'],
                 description: 'The type of index.',
@@ -1576,7 +1424,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'index_metric',
                 value: ['L2'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['L2', 'INNER_PRODUCT', 'COSINE'],
                 description:
@@ -1585,7 +1432,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'faiss_index_ivf_nlists',
                 value: ['auto'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('faiss_index_ivf_nlists', { alternateValues: ['auto'] }), // auto or int
                 description:
@@ -1594,7 +1440,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'faiss_index_pq_m',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 options: [1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64, 96],
                 description:
@@ -1612,7 +1457,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'feature_dim',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('feature_dim', { required: true }),
                 description:
@@ -1621,7 +1465,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mini_batch_size',
                 value: ['1000'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('mini_batch_size'),
                 description: 'The size of mini-batch used for training.',
@@ -1629,7 +1472,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'epochs',
                 value: ['1'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('epochs'),
                 description: 'The number of training epochs to run.',
@@ -1637,7 +1479,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_factors',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: numberValidator('num_factors', { min: 2, required: true }),
                 description:
@@ -1646,7 +1487,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'predictor_type',
                 value: ['binary_classifier'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['binary_classifier', 'regressor'],
                 description:
@@ -1655,7 +1495,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'clip_gradient',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: floatValidator('clip_gradient'),
                 description:
@@ -1664,7 +1503,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'eps',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: floatValidator('eps'),
                 description:
@@ -1673,7 +1511,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'rescale_grad',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: floatValidator('rescale_grad'),
                 description:
@@ -1682,7 +1519,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'bias_lr',
                 value: ['0.1'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('bias_lr', false, true),
@@ -1692,7 +1528,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'linear_lr',
                 value: ['0.001'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('linear_lr', false, true),
@@ -1702,7 +1537,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'factors_lr',
                 value: ['0.0001'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('factors_lr', false, true),
@@ -1712,7 +1546,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'bias_wd',
                 value: ['0.01'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('bias_wd', false, true),
@@ -1722,7 +1555,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'linear_wd',
                 value: ['0.001'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('linear_wd', false, true),
@@ -1732,7 +1564,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'factors_wd',
                 value: ['0.00001'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('factors_wd', false, true),
@@ -1742,7 +1573,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'bias_init_method',
                 value: ['normal'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['uniform', 'normal', 'constant'],
                 description: 'The initialization method for the bias term.',
@@ -1750,7 +1580,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'bias_init_scale',
                 value: [''],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('bias_init_scale', false, true),
@@ -1760,7 +1589,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'bias_init_sigma',
                 value: ['0.01'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('bias_init_sigma', false, true),
@@ -1770,7 +1598,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'bias_init_value',
                 value: [''],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('bias_init_value'),
@@ -1780,7 +1607,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'linear_init_method',
                 value: ['normal'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['uniform', 'normal', 'constant'],
                 description: 'The initialization method for linear terms.',
@@ -1788,7 +1614,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'linear_init_scale',
                 value: [''],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('linear_init_scale', false, true),
@@ -1798,7 +1623,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'linear_init_sigma',
                 value: ['0.01'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('linear_init_sigma', false, true),
@@ -1808,7 +1632,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'linear_init_value',
                 value: [''],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('linear_init_value'),
@@ -1818,7 +1641,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'factors_init_method',
                 value: ['normal'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['uniform', 'normal', 'constant'],
                 description: 'The initialization method for factorization terms.',
@@ -1826,7 +1648,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'factors_init_scale',
                 value: [''],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('factors_init_scale', false, true),
@@ -1836,7 +1657,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'factors_init_sigma',
                 value: [''],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('factors_init_sigma', false, true),
@@ -1846,7 +1666,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'factors_init_value',
                 value: [''],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: floatValidator('factors_init_value'),
@@ -1865,7 +1684,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc_dim',
                 value: ['4096'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('enc_dim',
                     {
@@ -1877,7 +1695,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mini_batch_size',
                 value: ['32'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('mini_batch_size',
                     {
@@ -1890,7 +1707,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'epochs',
                 value: ['20'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('epochs',
                     {
@@ -1903,7 +1719,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'early_stopping_tolerance',
                 value: ['0.01'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Linear',
                 zValidator: numberValidator('early_stopping_tolerance',
@@ -1918,7 +1733,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'early_stopping_patience',
                 value: ['3'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('early_stopping_patience',
                     {
@@ -1931,7 +1745,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'dropout',
                 value: ['0.0'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Linear',
                 zValidator: numberValidator('dropout',
@@ -1946,7 +1759,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'weight_decay',
                 value: ['0.0'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: numberValidator('weight_decay',
@@ -1960,7 +1772,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'bucket_width',
                 value: ['0'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('bucket_width',
                     {
@@ -1973,7 +1784,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_classes',
                 value: ['2'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('num_classes',
                     {
@@ -1986,7 +1796,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mlp_layers',
                 value: ['2'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('mlp_layers',
                     {
@@ -1998,7 +1807,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mlp_dim',
                 value: ['512'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('mlp_dim',
                     {
@@ -2010,7 +1818,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mlp_activation',
                 value: ['linear', 'relu', 'tanh'],
-                required: false,
                 ...categoricalParameterProperties,
                 options: ['tanh', 'relu', 'linear'],
                 description:
@@ -2019,7 +1826,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'output_layer',
                 value: ['softmax'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['softmax', 'mean_squared_error'],
                 description:
@@ -2028,7 +1834,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'optimizer',
                 value: ['adam', 'adadelta', 'adagrad', 'sgd', 'rmsprop'],
-                required: false,
                 ...categoricalParameterProperties,
                 options: ['adam', 'adadelta', 'adagrad', 'sgd', 'rmsprop'],
                 description: 'The optimizer type.',
@@ -2036,7 +1841,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'learning_rate',
                 value: ['0.0004'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: numberValidator('learning_rate',
@@ -2050,7 +1854,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'negative_sampling_rate',
                 value: ['0'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('negative_sampling_rate',
                     {
@@ -2063,7 +1866,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'tied_token_embedding_weight',
                 value: ['true'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['true', 'false'],
                 description:
@@ -2072,7 +1874,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'token_embedding_storage_type',
                 value: ['dense', 'row_sparse'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['dense', 'row_sparse'],
                 description:
@@ -2081,7 +1882,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'comparator_list',
                 value: ['hadamard, concat, abs_diff'],
-                required: false,
                 ...staticParameterProperties,
                 description:
                     'Valid values: a string that contains any combination of the names of the three binary operators: hadamard, concat, or abs_diff.',
@@ -2089,7 +1889,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc0_network',
                 value: ['hcnn'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['hcnn', 'bilstm', ' pooled_embedding'],
                 description:
@@ -2098,7 +1897,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_network',
                 value: ['enc0'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['enc0', 'hcnn', 'bilstm', ' pooled_embedding'],
                 description:
@@ -2107,7 +1905,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc0_cnn_filter_width',
                 value: ['3'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('enc0_cnn_filter_width',
                     {
@@ -2120,20 +1917,17 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc0_max_seq_len',
                 value: ['100'],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: numberValidator('enc0_max_seq_len',
                     {
                         min: 1,
-                        max: 500,
-                        required: true
+                        max: 500
                     }),
                 description: 'The maximum sequence length for the enc0 encoder.',
             },
             {
                 key: 'enc0_token_embedding_dim',
                 value: ['300'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('enc0_token_embedding_dim',
                     {
@@ -2145,7 +1939,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc0_vocab_size',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: numberValidator('enc0_vocab_size',
                     {
@@ -2158,7 +1951,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc0_vocab_file',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: z.string().regex(/^[a-zA-Z0-9._]*$/, {
                     message:
@@ -2170,7 +1962,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc0_layers',
                 value: ['auto'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('enc0_layers',
                     {
@@ -2184,7 +1975,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc0_pretrained_embedding_file',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: z.string().regex(/^[a-zA-Z0-9._]*$/, {
                     message:
@@ -2196,7 +1986,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc0_freeze_pretrained_embedding',
                 value: ['true'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['true', 'false'],
                 description: 'Whether to freeze enc0 pretrained embedding weights.',
@@ -2204,7 +1993,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_cnn_filter_width',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('enc1_cnn_filter_width',
                     {
@@ -2216,7 +2004,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_max_seq_len',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('enc1_max_seq_len',
                     {
@@ -2228,7 +2015,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_token_embedding_dim',
                 value: [''],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('enc1_token_embedding_dim',
                     {
@@ -2240,7 +2026,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_vocab_size',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('enc1_vocab_size',
                     {
@@ -2252,7 +2037,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_vocab_file',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: z.string().regex(/^[a-zA-Z0-9._]*$/, {
                     message:
@@ -2264,7 +2048,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_layers',
                 value: [''],
-                required: false,
                 ...linearIntProperties,
                 zValidator: numberValidator('enc1_layers',
                     {
@@ -2277,7 +2060,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_pretrained_embedding_file',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: z.string().regex(/^[a-zA-Z0-9._]*$/, {
                     message:
@@ -2289,7 +2071,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'enc1_freeze_pretrained_embedding',
                 value: ['true'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['true', 'false'],
                 description: 'Whether to freeze enc1 pretrained embedding weights.',
@@ -2306,7 +2087,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'use_pretrained_model',
                 value: ['0'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['0', '1'],
                 description:
@@ -2315,7 +2095,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'multi_label',
                 value: ['0'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['0', '1'],
                 description:
@@ -2324,7 +2103,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'use_weighted_loss',
                 value: ['0'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['0', '1'],
                 description:
@@ -2333,7 +2111,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'checkpoint_frequency',
                 value: ['1'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('checkpoint_frequency',
                     {
@@ -2346,7 +2123,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'precision_dtype',
                 value: ['float32'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['float32', 'float16'],
                 description:
@@ -2355,7 +2131,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_layers',
                 value: ['152'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['18', '20', '32', '34', '44', '50', '56', '101', '110', '152', '200'],
                 description:
@@ -2364,7 +2139,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'resize',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('resize', { min: 5 }),
                 description:
@@ -2373,7 +2147,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'epochs',
                 value: ['30'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('epoch'),
                 description: 'Number of training epochs.',
@@ -2381,7 +2154,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'learning_rate',
                 value: ['0.1'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: numberValidator('learning_rate',
@@ -2395,7 +2167,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'lr_scheduler_factor',
                 value: ['0.1'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('lr_scheduler_factor',
                     {
@@ -2409,7 +2180,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'lr_scheduler_step',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: z
                     .string()
@@ -2425,7 +2195,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'optimizer',
                 value: ['sgd', 'adam', 'rmsprop', 'nag'],
-                required: false,
                 ...categoricalParameterProperties,
                 options: ['sgd', 'adam', 'rmsprop', 'nag'],
                 description: 'The optimizer type.',
@@ -2433,7 +2202,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'momentum',
                 value: ['0.9'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'ReverseLogarithmic',
                 zValidator: numberValidator('momentum',
@@ -2447,7 +2215,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'weight_decay',
                 value: ['0.0001'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: numberValidator('weight_decay',
@@ -2462,7 +2229,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'beta_1',
                 value: ['0.9'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'ReverseLogarithmic',
                 zValidator: numberValidator('beta_1',
@@ -2477,7 +2243,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'beta_2',
                 value: ['0.999'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'ReverseLogarithmic',
                 zValidator: numberValidator('beta_2',
@@ -2492,7 +2257,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'eps',
                 value: ['0.00000001'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: numberValidator('eps',
@@ -2507,7 +2271,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'gamma',
                 value: ['0.9'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'ReverseLogarithmic',
                 zValidator: numberValidator('gamma',
@@ -2522,7 +2285,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mini_batch_size',
                 value: ['32'],
-                required: false,
                 ...linearIntProperties,
                 scalingType: 'Logarithmic',
                 zValidator: positiveIntValidator('mini_batch_size'),
@@ -2532,7 +2294,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'image_shape',
                 value: ['3,224,224'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: z
                     .string()
@@ -2548,7 +2309,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_classes',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('num_classes', { required: true }),
                 description:
@@ -2557,7 +2317,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_training_samples',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('num_training_samples', { required: true }),
                 description:
@@ -2566,7 +2325,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'augmentation_type',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 options: ['crop', 'crop_color', ' crop_color_transform'],
                 description:
@@ -2575,7 +2333,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'top_k',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('top_k', { min: 2 }),
                 description:
@@ -2584,7 +2341,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'kv_store',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 options: ['dist_sync', 'dist_async'],
                 description:
@@ -2593,7 +2349,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'early_stopping',
                 value: ['false'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['true', 'false'],
                 description:
@@ -2602,7 +2357,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'early_stopping_min_epochs',
                 value: ['10'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('early_stopping_min_epochs',
                     {
@@ -2615,7 +2369,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'early_stopping_patience',
                 value: ['5'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('early_stopping_patience',
                     {
@@ -2628,7 +2381,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'early_stopping_tolerance',
                 value: ['0.0'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('early_stopping_tolerance',
                     {
@@ -2651,7 +2403,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'k',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 description: 'The number of required clusters.',
                 zValidator: positiveIntValidator('k', { required: true }),
@@ -2659,7 +2410,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'feature_dim',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('feature_dim', { required: true }),
                 description: 'The number of features in the input data.',
@@ -2667,7 +2417,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'init_method',
                 value: ['random', 'kmeans++'],
-                required: false,
                 ...categoricalParameterProperties,
                 options: ['random', 'kmeans++'],
                 description:
@@ -2676,7 +2425,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mini_batch_size',
                 value: ['5000'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('mini_batch_size'),
                 description: 'The number of observations per mini-batch for the data iterator.',
@@ -2684,7 +2432,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'extra_center_factor',
                 value: ['auto'],
-                required: false,
                 ...integerParameterProperties,
                 scalingType: 'Auto',
                 zValidator: positiveIntValidator('extra_center_factor', { alternateValues: ['auto'] }), // auto or int
@@ -2694,7 +2441,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'local_lloyd_max_iter',
                 value: ['300'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('local_lloyd_max_iter', { required: true }),
                 description:
@@ -2703,7 +2449,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'local_lloyd_tol',
                 value: ['0.0001'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('local_lloyd_tol',
                     {
@@ -2717,7 +2462,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'local_lloyd_init_method',
                 value: ['kmeans++'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['random', 'kmeans++'],
                 description:
@@ -2726,7 +2470,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'local_lloyd_num_trials',
                 value: ['auto'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('local_lloyd_num_trials', { alternateValues: ['auto'] }), // auto or int
                 description:
@@ -2735,7 +2478,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'half_life_time_size',
                 value: ['0'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: numberValidator('half_life_time_size', { min: 0 }),
                 description:
@@ -2744,7 +2486,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'epochs',
                 value: ['1'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('epochs'),
                 description: 'The number of passes done over the training data.',
@@ -2752,7 +2493,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'eval_metrics',
                 value: ['["msd"]'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['["msd"]', '["ssd"]', '["msd", "ssd"]'],
                 description:
@@ -2770,7 +2510,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mini_batch_size',
                 value: ['128'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('mini_batch_size'),
                 description:
@@ -2779,7 +2518,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'time_freq',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 // A positive int followed by M, W, D, H, or min
                 zValidator: z.string().regex(/^\s*([1-9]\d*)?(M|D|W|H|min)\s*$/, {
@@ -2805,7 +2543,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'early_stopping_patience',
                 value: [''],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('early_stopping_patience'),
                 description:
@@ -2814,7 +2551,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'epochs',
                 value: [''],
-                required: true,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('epochs', { required: true }),
                 description:
@@ -2823,7 +2559,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'context_length',
                 value: [''],
-                required: true,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('context_length', { required: true }),
                 description:
@@ -2832,7 +2567,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'prediction_length',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('prediction_length', { required: true }),
                 description:
@@ -2841,7 +2575,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_cells',
                 value: ['40'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('num_cells'),
                 description:
@@ -2850,7 +2583,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_layers',
                 value: ['2'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('num_layers'),
                 description:
@@ -2859,7 +2591,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_dynamic_feat',
                 value: ['auto'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('num_dynamic_feat', { alternateValues: ['auto', 'ignore', ''] }), // auto, ignore, positive int, or empty string
                 description:
@@ -2868,7 +2599,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'dropout_rate',
                 value: ['0.1'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Linear',
                 zValidator: numberValidator('dropout_rate',
@@ -2883,7 +2613,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'cardinality',
                 value: ['auto'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('cardinality', { alternateValues: ['auto', 'ignore', ''] }), // auto, ignore, array of positive integers, empty string, or (?) - This is probably incorrectly implemented right now
                 description:
@@ -2892,7 +2621,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'embedding_dimension',
                 value: ['10'],
-                required: false,
                 ...linearIntProperties,
                 zValidator: positiveIntValidator('embedding_dimension'),
                 description:
@@ -2901,7 +2629,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'learning_rate',
                 value: ['0.001'],
-                required: false,
                 ...continuousParameterProperties,
                 scalingType: 'Logarithmic',
                 zValidator: numberValidator('learning_rate',
@@ -2916,7 +2643,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'likelihood',
                 value: ['student-T', 'gaussian', 'beta', 'negative-binomial', 'deterministic-L1'],
-                required: false,
                 ...categoricalParameterProperties,
                 options: ['student-T', 'gaussian', 'beta', 'negative-binomial', 'deterministic-L1'],
                 description: (
@@ -2944,7 +2670,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'test_quantiles',
                 value: ['[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: z.string().regex(/^\s*\[\s*0\.\d+(\s*,\s*0\.\d+)*\s*\]\s*$/, {
                     message: 'test_quantiles must be an array of float values.',
@@ -2954,7 +2679,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_eval_samples',
                 value: ['100'],
-                required: false,
                 ...staticParameterProperties,
                 zValidator: positiveIntValidator('num_eval_samples'),
                 description:
@@ -2972,7 +2696,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'algorithm_mode',
                 value: ['regular'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['regular', 'randomized'],
                 description:
@@ -2981,7 +2704,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'num_components',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 description: 'The number of principal components to compute.',
                 zValidator: positiveIntValidator('num_components', { required: true }),
@@ -2989,7 +2711,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'subtract_mean',
                 value: ['true'],
-                required: false,
                 ...staticParameterProperties,
                 options: ['true', 'false'],
                 description:
@@ -2998,7 +2719,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'extra_components',
                 value: ['-1'],
-                required: false,
                 ...staticParameterProperties,
                 description:
                     'As the value increases, the solution becomes more accurate but the runtime and memory consumption increase linearly. The default, -1, means the maximum of 10 and num_components. Valid for randomized mode only.',
@@ -3020,7 +2740,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'feature_dim',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 description: 'Input dimension.',
                 zValidator: positiveIntValidator('feature_dim', { required: true }),
@@ -3028,7 +2747,6 @@ export const ML_ALGORITHMS: Algorithm[] = [
             {
                 key: 'mini_batch_size',
                 value: [''],
-                required: true,
                 ...staticParameterProperties,
                 description: 'Number of rows in a mini-batch.',
                 zValidator: positiveIntValidator('mini_batch_size', { required: true }),
