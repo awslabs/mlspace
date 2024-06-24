@@ -12,6 +12,11 @@ permissions:
   contents: read
 
 jobs:
+  send_slack_notification:
+    name: Slack Notification
+    uses: slackapi/slack-github-action
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   backend_build:
     name: Backend Tests
     runs-on: ubuntu-latest
