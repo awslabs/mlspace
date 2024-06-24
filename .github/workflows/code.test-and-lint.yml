@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send PR Created Notification
-        if: github.event.pull_request.created_at == github.event.pull_request.updated_at
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
