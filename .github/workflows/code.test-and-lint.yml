@@ -23,9 +23,10 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_TITLE: 'PR Created: ${{ github.event.pull_request.title }} by ${{ github.event.pull_request.user.login }}'
           SLACK_FOOTER: ''
-          MSG_MINIMAL: 'actions url,commit'
+          MSG_MINIMAL: true
           SLACK_MESSAGE: 'PR Created ${{ github.event.pull_request.html_url }}'
       - name: Send GitHub Action trigger data to Slack workflow
+        if: github.event_name != 'pull_request'
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK:  ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -139,6 +140,7 @@ jobs:
     steps:
       - name: Send GitHub Action trigger data to Slack workflow
         uses: rtCamp/action-slack-notify@v2
+        if: github.event_name != 'pull_request'
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_COLOR: ${{ job.status }}
