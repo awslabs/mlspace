@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   send_slack_notification:
-    name: Backend Tests
+    name: Send Slack Notification
     runs-on: ubuntu-latest
     steps:
       - name: Send GitHub Action trigger data to Slack workflow
