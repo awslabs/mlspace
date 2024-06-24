@@ -13,10 +13,14 @@ permissions:
 
 jobs:
   send_slack_notification:
-    name: Slack Notification
-    uses: slackapi/slack-github-action@v1.26.0
-    env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send GitHub Action trigger data to Slack workflow
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   backend_build:
     name: Backend Tests
     runs-on: ubuntu-latest
