@@ -70,6 +70,8 @@ def test_environment_variables():
             EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
             EnvVariable.PROJECTS_TABLE: "mlspace-projects",
             EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",
+            EnvVariable.GROUPS_TABLE: "mlspace-groups",
+            EnvVariable.GROUP_USERS_TABLE: "mlspace-group-users",
             EnvVariable.RESOURCE_METADATA_TABLE: "mlspace-resource-metadata",
             EnvVariable.RESOURCE_SCHEDULE_TABLE: "mlspace-resource-schedule",
             EnvVariable.S3_KEY: "notebook-params.json",
