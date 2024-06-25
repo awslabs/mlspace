@@ -232,7 +232,6 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                         }
                     });
                     const parameterRanges = Object.values(item.HyperParameterRanges.ContinuousParameterRanges).concat(Object.values(item.HyperParameterRanges.IntegerParameterRanges));
-
                     parameterRanges.forEach(
                         (parameterRange: any) => {
                             const hyperParameter = algorithm.defaultHyperParameters.find(
@@ -243,14 +242,9 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                                 let nanError = false;
                                 [parameterRange.MinValue, parameterRange.MaxValue].forEach(
                                     (value, index) => {
-                                        // Only evaluate the validator if:
-                                        // - The field is required
-                                        // - OR the field has a value
-                                        // - OR this is the max field and the min field has a value
-                                        // This evaluation avoids the issue where a blank value is evaluated as a 0 on a forced safeParse even for optional fields
-                                        if ((!hyperParameter.zValidator?.isOptional || value || (index === 1 && parameterRange.MinValue)) && !nanError ) {
+                                        if (hyperParameter.zValidator && !nanError ) {
                                             // Any word alternatives should not apply to ranges
-                                            let parseResult = hyperParameter.zValidator?.safeParse(value);
+                                            let parseResult = hyperParameter.zValidator.safeParse(value);
                                             if (parseResult?.success === false) {
                                                 ctx.addIssue({
                                                     code: 'custom',
@@ -263,6 +257,13 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
                                                                     `${previous}; ${current}`
                                                             ) +
                                                         ` (${index === 0 ? 'min value' : 'max value'})`,
+                                                });
+                                            } else if (value && ((index === 1 && !parameterRange.MinValue) || (index === 0 && !parameterRange.MaxValue))) {
+                                                // Ensure the min/max fields are populated if their counterpart is populated
+                                                ctx.addIssue({
+                                                    code: 'custom',
+                                                    path: ['hyperparameters', parameterRange.Name],
+                                                    message: `Please set a ${index === 1 ? 'min ' : 'max'} value`,
                                                 });
                                             } else {
                                                 // Check if the user put an approved non-number alternate value in the range field and alert on this unique scenario

@@ -376,6 +376,7 @@ export function HPOJobCreate () {
                 element={
                     <Wizard
                         activeStepIndex={state.activeStepIndex}
+                        isLoadingNextStep={state.formSubmitting}
                         onNavigate={(event) => {
                             switch (event.detail.reason) {
                                 case 'step':
