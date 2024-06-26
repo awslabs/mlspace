@@ -21,7 +21,7 @@ import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { CfnSecurityConfiguration } from 'aws-cdk-lib/aws-emr';
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
-import { Effect, IRole, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { Effect, IManagedPolicy, IRole, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { IKey } from 'aws-cdk-lib/aws-kms';
 import { Code, Function } from 'aws-cdk-lib/aws-lambda';
 import {
@@ -53,6 +53,8 @@ export type CoreStackProps = {
     readonly encryptionKey: IKey;
     readonly mlSpaceAppRole: IRole;
     readonly mlSpaceNotebookRole: IRole;
+    readonly mlspaceEndpointConfigInstanceConstraintPolicy?: IManagedPolicy,
+    readonly mlspaceJobInstanceConstraintPolicy?: IManagedPolicy,
     readonly mlSpaceVPC: IVpc;
     readonly mlSpaceDefaultSecurityGroupId: string;
     readonly isIso?: boolean;
@@ -237,8 +239,8 @@ export class CoreStack extends Stack {
             role: props.mlSpaceAppRole,
             environment: {
                 APP_CONFIG_TABLE: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
-                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN,
-                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN,
+                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceEndpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
+                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceJobInstanceConstraintPolicy?.managedPolicyArn || '',
                 SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
                 MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
             },
