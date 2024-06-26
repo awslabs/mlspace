@@ -18,6 +18,7 @@ import json
 from unittest import mock
 
 from ml_space_lambda.enums import EnvVariable
+from ml_space_lambda.utils import mlspace_config
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
@@ -38,6 +39,8 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 def test_update_instance_kms_key_conditions(
     mock_ec2, mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_union
 ):
+    mlspace_config.env_variables = {}
+
     paginator = mock.Mock()
     unsupported_instances = ["g5.large", "g5ad.large"]
     kms_unsupported_instances.return_value = unsupported_instances

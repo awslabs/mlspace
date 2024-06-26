@@ -58,6 +58,7 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
             EnvVariable.EMR_SECURITY_CONFIGURATION: "MLSpace-EMR-SecurityConfig",
             EnvVariable.EMR_EC2_SSH_KEY: "",
             EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
+            EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN: "",
             EnvVariable.MANAGE_IAM_ROLES: "",
             EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
             EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",

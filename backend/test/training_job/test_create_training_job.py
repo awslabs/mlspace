@@ -147,6 +147,7 @@ args = {
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.training_job.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.random")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.sagemaker")
@@ -158,11 +159,14 @@ def test_create_training_job_success(
     mock_sagemaker,
     mock_pull_config,
     mock_random,
+    kms_unsupported_instances,
     mock_s3_param_json,
 ):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.param_file = {}
     mlspace_config.env_variables = {}
+
+    kms_unsupported_instances.return_value = []
 
     expected_response = generate_html_response(200, {"TrainingJobArn": "example_training_job_arn"})
 
@@ -206,6 +210,7 @@ def test_create_training_job_success(
     )
 
 
+@mock.patch("ml_space_lambda.training_job.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.random")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.sagemaker")
@@ -215,10 +220,13 @@ def test_create_training_job_client_error(
     mock_sagemaker,
     mock_pull_config,
     mock_random,
+    kms_unsupported_instances,
     mock_s3_param_json,
 ):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.env_variables = {}
+
+    kms_unsupported_instances.return_value = []
 
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
@@ -248,6 +256,7 @@ def test_create_training_job_client_error(
 
 # This test addresses special cases where built-in algorithms are not publicly available in MLSpace
 # Current common example is xgboost training algorithm
+@mock.patch("ml_space_lambda.training_job.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.random")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.training_job.lambda_functions.sagemaker")
@@ -259,10 +268,13 @@ def test_create_training_job_custom_builtin_error(
     mock_sagemaker,
     mock_pull_config,
     mock_random,
+    kms_unsupported_instances,
     mock_s3_param_json,
 ):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.env_variables = {}
+
+    kms_unsupported_instances.return_value = []
 
     error_msg = {
         "Error": {

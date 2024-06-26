@@ -76,6 +76,7 @@ def _mock_job_definition(
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.hpo_job.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.random")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.sagemaker")
@@ -87,11 +88,14 @@ def test_create_hpo_job_single_job_success(
     mock_sagemaker,
     mock_pull_config,
     mock_random,
+    kms_unsupported_instances,
     mock_s3_param_json,
 ):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.param_file = {}
     mlspace_config.env_variables = {}
+
+    kms_unsupported_instances.return_value = []
 
     event_body = {
         "HPOJobDefinition": {
@@ -186,6 +190,7 @@ def test_create_hpo_job_single_job_success(
     )
 
 
+@mock.patch("ml_space_lambda.hpo_job.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.random")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.sagemaker")
@@ -197,6 +202,7 @@ def test_create_hpo_job_multiple_jobs_success(
     mock_sagemaker,
     mock_pull_config,
     mock_random,
+    kms_unsupported_instances,
     mock_s3_param_json,
 ):
     # clear out global config if set to make lambda tests independent of each other
@@ -204,6 +210,8 @@ def test_create_hpo_job_multiple_jobs_success(
     mlspace_config.env_variables = {}
     mocked_random_subnet = "example_subnet3"
     mock_random.sample.return_value = [mocked_random_subnet]
+
+    kms_unsupported_instances.return_value = []
 
     event_body = {
         "HPOJobDefinition": {
@@ -310,6 +318,7 @@ def test_create_hpo_job_multiple_jobs_success(
     )
 
 
+@mock.patch("ml_space_lambda.hpo_job.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.project_user_dao")
@@ -319,10 +328,13 @@ def test_create_hpo_job_no_jobs_success(
     mock_project_user_dao,
     mock_sagemaker,
     mock_pull_config,
+    kms_unsupported_instances,
     mock_s3_param_json,
 ):
     # neither TrainingJobDefinition nor TrainingJobDefinitions are required
     # parameters, so we need to test with neither included
+
+    kms_unsupported_instances.return_value = []
 
     event_body = {
         "HPOJobDefinition": {
@@ -380,6 +392,7 @@ def test_create_hpo_job_no_jobs_success(
     )
 
 
+@mock.patch("ml_space_lambda.hpo_job.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.sagemaker")
 @mock.patch("ml_space_lambda.hpo_job.lambda_functions.project_user_dao")
@@ -389,8 +402,11 @@ def test_create_hpo_job_client_error(
     mock_project_user_dao,
     mock_sagemaker,
     mock_pull_config,
+    kms_unsupported_instances,
     mock_s3_param_json,
 ):
+    kms_unsupported_instances.return_value = []
+
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
         "ResponseMetadata": {"HTTPStatusCode": 400},
