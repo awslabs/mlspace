@@ -27,6 +27,7 @@ import TextStyle from '@tiptap/extension-text-style';
 import Link from '@tiptap/extension-link';
 import { Color } from '@tiptap/extension-color';
 import { ColumnLayout, Container, Icon, SpaceBetween } from '@cloudscape-design/components';
+import './rich-text-utils.scss';
 
 export type RichTextEditorProps = {
     value: string;
@@ -50,7 +51,7 @@ export function RichTextEditor (props: RichTextEditorProps) {
 
     const editor = useEditor({
         extensions: extensions,
-        content: props.value,
+        content: props.value
     });
 
     const addImage = useCallback(() => {
