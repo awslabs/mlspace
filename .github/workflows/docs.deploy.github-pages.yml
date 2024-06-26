@@ -1,5 +1,5 @@
-name: Deploy VitePress site to Pages
 
+name: Deploy VitePress site to Github Pages
 on:
   push:
     branches: [main]
