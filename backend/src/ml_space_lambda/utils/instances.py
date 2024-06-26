@@ -22,32 +22,41 @@ from ml_space_lambda.utils.mlspace_config import retry_config
 ec2 = boto3.client("ec2", config=retry_config)
 
 
-def nitro_abbreviated_union(sagemaker_instances: dict[str, set[str]], prefix: str = None) -> list[str]:
-    abbreviated_instancers = {}
-    for instance_type in nitro_instances():
-        full_name = instance_type
-        components = full_name.split(".")
-        family_name = components[0]
+def abbreviated_instance_union(s1_instances: list[str], s2_instances: list[str]) -> list[str]:
+    # Finds the list of instances common among s1_instances and s2_instances and returns an abbreviated list.
+    #
+    # If all instance types for a family (ie. "m4.large", "m4.xlarge") are common between both lists the resulting
+    # list will be abbreviated with a "m4.*" value instead of all the instance types for that family.
 
-        if prefix is not None:
-            full_name = ".".join([prefix, *components])
-            family_name = ".".join([prefix, components[0]])
+    abbreviated_instances = {}
 
-        family = sagemaker_instances.get(family_name, set())
-        if full_name in family:
-            family.remove(full_name)
+    s1_compiled = {}
+    for instance_type in s1_instances:
+        family_name = ".".join(instance_type.split(".")[:-1])
+        family = s1_compiled.get(family_name, set())
+        family.add(instance_type)
+        s1_compiled[family_name] = family
+
+    for instance_type in s2_instances:
+        family_name = ".".join(instance_type.split(".")[:-1])
+        family = s1_compiled.get(family_name, set())
+
+        if instance_type in family:
+            family.remove(instance_type)
 
             if len(family) == 0:
-                abbreviated_instancers[family_name] = set([".".join([family_name, "*"])])
+                abbreviated_instances[family_name] = set([".".join([family_name, "*"])])
             else:
-                family = abbreviated_instancers.get(family_name, set())
-                family.add(full_name)
-                abbreviated_instancers[family_name] = family
+                family = abbreviated_instances.get(family_name, set())
+                family.add(instance_type)
+                abbreviated_instances[family_name] = family
 
-    return [type for family_name in abbreviated_instancers for type in abbreviated_instancers[family_name]]
+    return [type for family_name in abbreviated_instances for type in abbreviated_instances[family_name]]
 
 
-def nitro_instances() -> list[str]:
+def kms_unsupported_instances() -> list[str]:
+    # Returns a list of instance types that do not support using a KMS key to encrypt storage volumes.
+
     paginator = ec2.get_paginator("describe_instance_types")
     response_iterator = paginator.paginate(
         Filters=[{"Name": "hypervisor", "Values": ["nitro"]}, {"Name": "instance-storage-supported", "Values": ["true"]}]
