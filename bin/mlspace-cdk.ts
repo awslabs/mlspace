@@ -113,6 +113,8 @@ const coreStack = new CoreStack(app, 'mlspace-core', {
     encryptionKey: kmsStack.masterKey,
     mlSpaceAppRole,
     mlSpaceNotebookRole,
+    mlspaceEndpointConfigInstanceConstraintPolicy,
+    mlspaceJobInstanceConstraintPolicy,
     mlSpaceVPC,
     lambdaSecurityGroups: [vpcStack.vpcSecurityGroup],
     mlSpaceDefaultSecurityGroupId: vpcStack.vpcSecurityGroupId,
