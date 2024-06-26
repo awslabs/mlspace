@@ -95,6 +95,7 @@ stacks.push(iamStack);
 const mlSpaceNotebookRole = iamStack.mlSpaceNotebookRole;
 const mlspaceEndpointConfigInstanceConstraintPolicy = iamStack.mlspaceEndpointConfigInstanceConstraintPolicy;
 const mlspaceJobInstanceConstraintPolicy = iamStack.mlspaceJobInstanceConstraintPolicy;
+const mlspaceKmsInstanceConditionsPolicy = iamStack.mlspaceKmsInstanceConditionsPolicy;
 const mlSpaceAppRole = iamStack.mlSpaceAppRole;
 const websiteS3ReaderRole = iamStack.s3ReaderRole;
 const mlSpaceSystemRole = iamStack.mlSpaceSystemRole;
@@ -112,6 +113,7 @@ const coreStack = new CoreStack(app, 'mlspace-core', {
     notificationDistro: config.NOTIFICATION_DISTRO,
     encryptionKey: kmsStack.masterKey,
     mlSpaceAppRole,
+    mlspaceKmsInstanceConditionsPolicy,
     mlSpaceNotebookRole,
     mlspaceEndpointConfigInstanceConstraintPolicy,
     mlspaceJobInstanceConstraintPolicy,
@@ -166,6 +168,7 @@ const apiStackProperties: ApiStackProperties = {
     notebookInstanceRole: mlSpaceNotebookRole,
     endpointConfigInstanceConstraintPolicy: mlspaceEndpointConfigInstanceConstraintPolicy,
     jobInstanceConstraintPolicy: mlspaceJobInstanceConstraintPolicy,
+    mlspaceKmsInstanceConditionsPolicy: mlspaceKmsInstanceConditionsPolicy,
     notebookParamFileKey: config.NOTEBOOK_PARAMETERS_FILE_NAME,
     deploymentEnvironmentName: 'mlspace',
     authorizer: restStack.mlspaceRequestAuthorizer,

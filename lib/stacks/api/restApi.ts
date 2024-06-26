@@ -50,6 +50,7 @@ export type ApiStackProperties = {
     readonly notebookInstanceRole: IRole;
     readonly endpointConfigInstanceConstraintPolicy?: IManagedPolicy,
     readonly jobInstanceConstraintPolicy?: IManagedPolicy,
+    readonly mlspaceKmsInstanceConditionsPolicy?: IManagedPolicy,
     readonly configBucketName: string;
     readonly notebookParamFileKey: string;
     readonly deploymentEnvironmentName: string;
