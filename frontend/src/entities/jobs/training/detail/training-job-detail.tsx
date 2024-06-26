@@ -22,12 +22,11 @@ import {
     SpaceBetween,
     Header,
     Button,
-    ContentLayout,
     Table,
     StatusIndicator,
     Link,
 } from '@cloudscape-design/components';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../../config/store';
 import Condition from '../../../../modules/condition';
@@ -48,11 +47,13 @@ import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { LogsComponent } from '../../../../shared/util/log-utils';
 import { createModelFromTrainingJob } from '../training-job.actions';
 import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 export function TrainingJobDetail () {
     const { projectName, trainingJobName } = useParams();
     const trainingJob: ITrainingJob = useAppSelector(selectTrainingJob);
     const loadingJobDetails = useAppSelector(loadingTrainingJobDetails);
+    const [initialLoaded, setInitialLoaded] = useState(false);
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -63,6 +64,7 @@ export function TrainingJobDetail () {
     useEffect(() => {
         dispatch(describeTrainingJob(String(trainingJobName)))
             .unwrap()
+            .then(() => setInitialLoaded(true))
             .catch(() => {
                 navigate('/404');
             });
@@ -82,13 +84,13 @@ export function TrainingJobDetail () {
     }, [dispatch, projectName, trainingJobName]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
-        dispatch(describeTrainingJob(String(trainingJobName)));
-    }, [dispatch], (trainingJob.TrainingJobStatus !== JobStatus.Failed && trainingJob.TrainingJobStatus !== JobStatus.Completed));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeTrainingJob(String(trainingJobName)));
+    }, [dispatch, trainingJob.TrainingJobStatus], (trainingJob.TrainingJobStatus !== JobStatus.Failed && trainingJob.TrainingJobStatus !== JobStatus.Completed));
 
     return (
         <ContentLayout header={<Header variant='h1'>{trainingJobName}</Header>}>
-            {loadingJobDetails && !isBackgroundRefreshing ? (
+            {loadingJobDetails && !initialLoaded ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
                 </Container>
@@ -159,9 +161,9 @@ export function TrainingJobDetail () {
                                         <Box key={1} color='text-status-inactive'>
                                             Status
                                         </Box>
-                                        {prettyStatus(
+                                        {prettyStatus(isBackgroundRefreshing ? 'Loading' :
                                             trainingJob.TrainingJobStatus,
-                                            trainingJob.FailureReason
+                                        trainingJob.FailureReason
                                         )}
                                     </div>
 

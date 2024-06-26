@@ -38,6 +38,64 @@ class ResourceType(str, Enum):
     TRANSFORM_JOB = "transform-job"
 
 
+# This is specifically used for app configuration.
+# These are service names without dashes so they can be used as properties of a model in the frontend
+class ServiceType(str, Enum):
+    REALTIME_TRANSLATE = "realtimeTranslate"
+    BATCH_TRANSLATE = "batchTranslate"
+    EMR_CLUSTER = "emrCluster"
+    ENDPOINT = "endpoint"
+    ENDPOINT_CONFIG = "endpointConfig"
+    HPO_JOB = "hpoJob"
+    LABELING_JOB = "labelingJob"
+    MODEL = "model"
+    NOTEBOOK = "notebook"
+    TRAINING_JOB = "trainingJob"
+    TRANSFORM_JOB = "transformJob"
+
+
+class IAMStatementProperty(str, Enum):
+    ACTION = "Action"
+    EFFECT = "Effect"
+    RESOURCE = "Resource"
+    CONDITION = "Condition"
+
+
+class IAMEffect(str, Enum):
+    DENY = "Deny"
+    ALLOW = "Allow"
+
+
+class EnvVariable(str, Enum):
+    BUCKET = "BUCKET"
+    S3_KEY = "S3_KEY"
+    SYSTEM_TAG = "SYSTEM_TAG"
+    DATASETS_TABLE = "DATASETS_TABLE"
+    PROJECTS_TABLE = "PROJECTS_TABLE"
+    PROJECT_USERS_TABLE = "PROJECT_USERS_TABLE"
+    USERS_TABLE = "USERS_TABLE"
+    RESOURCE_SCHEDULE_TABLE = "RESOURCE_SCHEDULE_TABLE"
+    RESOURCE_METADATA_TABLE = "RESOURCE_METADATA_TABLE"
+    APP_CONFIGURATION_TABLE = "APP_CONFIGURATION_TABLE"
+    AWS_DEFAULT_REGION = "AWS_DEFAULT_REGION"
+    DATA_BUCKET = "DATA_BUCKET"
+    EMR_CONFIG_BUCKET = "EMR_CONFIG_BUCKET"
+    MANAGE_IAM_ROLES = "MANAGE_IAM_ROLES"
+    LOG_BUCKET = "LOG_BUCKET"
+    DYNAMO_TABLE = "DYNAMO_TABLE"
+    EMR_EC2_ROLE_NAME = "EMR_EC2_ROLE_NAME"
+    EMR_SERVICE_ROLE_NAME = "EMR_SERVICE_ROLE_NAME"
+    EMR_SECURITY_CONFIGURATION = "EMR_SECURITY_CONFIGURATION"
+    EMR_EC2_SSH_KEY = "EMR_EC2_SSH_KEY"
+    ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN = "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"
+    NEW_USER_SUSPENSION_DEFAULT = "NEW_USER_SUSPENSION_DEFAULT"
+    TRANSLATE_DATE_ROLE_ARN = "TRANSLATE_DATE_ROLE_ARN"
+    NOTEBOOK_ROLE_NAME = "NOTEBOOK_ROLE_NAME"
+    APP_ROLE_NAME = "APP_ROLE_NAME"
+    PERMISSIONS_BOUNDARY_ARN = "PERMISSIONS_BOUNDARY_ARN"
+    JOB_INSTANCE_CONSTRAINT_POLICY_ARN = "JOB_INSTANCE_CONSTRAINT_POLICY_ARN"
+
+
 class Permission(Enum):
     COLLABORATOR = "CO"
     PROJECT_OWNER = "MO"

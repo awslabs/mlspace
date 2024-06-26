@@ -46,7 +46,7 @@ import Configuration from './configuration/configuration';
 import Report from './report/report';
 import { selectCurrentUser } from './user/user.reducer';
 import { useAppSelector } from '../config/store';
-import { hasPermission } from '../shared/util/permission-utils';
+import { hasPermission, enableProjectCreation } from '../shared/util/permission-utils';
 import { Permission } from '../shared/model/user.model';
 import ResourceNotFound from '../modules/resource-not-found';
 import EMRDetail from './emr/detail/emr-clusters-detail';
@@ -54,8 +54,14 @@ import BatchTranslate from './batch-translate';
 import BatchTranslateCreate from './batch-translate/create';
 import BatchTranslateDetail from './batch-translate/detail';
 import TranslateRealtime from './translate-realtime/translate-realtime';
+import { appConfig } from './configuration/configuration-reducer';
+import { IAppConfiguration } from '../shared/model/app.configuration.model';
 
 const EntityRoutes = () => {
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
+    const currentUser = useAppSelector(selectCurrentUser);
+
+
     return (
         <div>
             <ErrorBoundaryRoutes>
@@ -75,10 +81,12 @@ const EntityRoutes = () => {
                     path='personal/notebook/:name/edit'
                     element={<NotebookCreate update={true} />}
                 />
-                {window.env.ENABLE_TRANSLATE ? (
+                {applicationConfig.configuration.EnabledServices.realtimeTranslate ? (
                     <Route path='personal/translate/realtime' element={<TranslateRealtime />} />
                 ) : undefined}
-                <Route path='project/create' element={<ProjectCreate />} />
+                {enableProjectCreation(applicationConfig.configuration.ProjectCreation.isAdminOnly, currentUser) ? (
+                    <Route path='project/create' element={<ProjectCreate />} />
+                ) : undefined}
                 <Route path='project/:projectName' element={<ProjectDetail />} />
                 <Route path='project/:projectName/edit' element={<ProjectCreate isEdit={true} />} />
                 <Route path='project/:projectName/user' element={<ProjectUser />} />
@@ -115,7 +123,7 @@ const EntityRoutes = () => {
                 <Route path='project/:projectName/model/create' element={<ModelCreate />} />
                 <Route path='project/:projectName/model/:modelName' element={<ModelDetail />} />
 
-                {window.env.ENABLE_GROUNDTRUTH ? (
+                {applicationConfig.configuration.EnabledServices.labelingJob ? (
                     <Route
                         path='project/:projectName/jobs/labeling/*'
                         element={<LabelingJobRoutes />}
@@ -132,26 +140,34 @@ const EntityRoutes = () => {
                     element={<TransformJobRoutes />}
                 />
 
-                <Route path='project/:projectName/emr' element={<EMRClusters />} />
-                <Route path='project/:projectName/emr/create' element={<EMRClusterCreate />} />
-                <Route
-                    path='project/:projectName/emr/:clusterId/:clusterName'
-                    element={<EMRDetail />}
-                />
-                {window.env.ENABLE_TRANSLATE ? (
-                    <Route
-                        path='project/:projectName/batch-translate'
-                        element={<BatchTranslate />}
-                    />
+                {applicationConfig.configuration.EnabledServices.emrCluster ? (
+                    <>
+                        <Route path='project/:projectName/emr' element={<EMRClusters />} />
+
+                        <Route path='project/:projectName/emr/create' element={<EMRClusterCreate />} />
+                        <Route
+                            path='project/:projectName/emr/:clusterId/:clusterName'
+                            element={<EMRDetail />}
+                        />
+                    </>
                 ) : undefined}
-                <Route
-                    path='project/:projectName/batch-translate/create'
-                    element={<BatchTranslateCreate />}
-                />
-                <Route
-                    path='project/:projectName/batch-translate/:jobId'
-                    element={<BatchTranslateDetail />}
-                />
+                {applicationConfig.configuration.EnabledServices.batchTranslate ? (
+                    <>
+                        <Route
+                            path='project/:projectName/batch-translate'
+                            element={<BatchTranslate />}
+                        />
+
+                        <Route
+                            path='project/:projectName/batch-translate/create'
+                            element={<BatchTranslateCreate />}
+                        />
+                        <Route
+                            path='project/:projectName/batch-translate/:jobId'
+                            element={<BatchTranslateDetail />}
+                        />
+                    </>
+                ) : undefined}
                 <Route path='*' element={<ResourceNotFound />} />
             </ErrorBoundaryRoutes>
         </div>
@@ -160,7 +176,6 @@ const EntityRoutes = () => {
 
 function RequireAdmin () {
     const currentUser = useAppSelector(selectCurrentUser);
-
     return hasPermission(Permission.ADMIN, currentUser.permissions) ? (
         <Outlet />
     ) : (

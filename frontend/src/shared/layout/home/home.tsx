@@ -15,7 +15,7 @@
 */
 
 import React, { useEffect } from 'react';
-import { useAppDispatch } from '../../../config/store';
+import {useAppDispatch} from '../../../config/store';
 import {
     setActiveHref,
     setBreadcrumbs,
@@ -23,12 +23,12 @@ import {
 } from '../navigation/navigation.reducer';
 import ProjectCards from '../../../entities/project/card';
 import { selectProject } from '../../../entities/project/card/project-card.reducer';
-import { ContentLayout, Header } from '@cloudscape-design/components';
+import { Header } from '@cloudscape-design/components';
 import { resetCurrentProject } from '../../../entities/project/project.reducer';
+import ContentLayout from '../content-layout';
 
 export const Home = () => {
     const dispatch = useAppDispatch();
-
     useEffect(() => {
         dispatch(selectProject());
         dispatch(setBreadcrumbs([]));

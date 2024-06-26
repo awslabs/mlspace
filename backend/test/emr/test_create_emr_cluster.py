@@ -17,7 +17,6 @@
 import copy
 import json
 import time
-from io import BytesIO
 from typing import Optional
 from unittest import mock
 
@@ -26,7 +25,7 @@ from botocore.exceptions import ClientError
 
 import ml_space_lambda.utils.mlspace_config as mlspace_config
 from ml_space_lambda.data_access_objects.project import ProjectModel
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import ResourceType, ServiceType
 from ml_space_lambda.utils.common_functions import generate_html_response, generate_tags
 
 TEST_ENV_CONFIG = {
@@ -35,94 +34,114 @@ TEST_ENV_CONFIG = {
     "EMR_EC2_ROLE_NAME": "Custom-EMR-EC2-Role",
     "EMR_SERVICE_ROLE_NAME": "Custom-EMR-ServiceRole",
     "EMR_SECURITY_CONFIGURATION": "Custom-EMR-Security-Config",
+    "EMR_EC2_SSH_KEY": "some-key",
     "MANAGE_IAM_ROLES": "",
-    "BUCKET": "example_bucket",
-    "S3_KEY": "example_s3_key",
 }
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.emr import lambda_functions as emr_handler
+    from ml_space_lambda.utils.app_config_utils import get_app_config
 
 MOCK_PROJECT_NAME = "example_project"
 MOCK_CLUSTER_NAME = "example_cluster_name"
+MOCK_RELEASE_LABEL = "emr-6.2.0"
 
-mock_cluster_config = {
-    "applications": [{"Name": "Hadoop"}, {"Name": "Hue"}],
-    "log-location": "s3://example_bucket",
-    "release": "emr-6.2.0",
-    "ami": "ami-0acee44940796046c",
-    "example_emr_size": {
-        "master-type": "ml.g5.48xlarge",
-        "core-type": "ml.g5.24xlarge",
-        "size": 3,
-    },
-    "auto-scaling": {
-        "min-instances": 1,
-        "max-instances": 3,
-        "scale-out": {
-            "cooldown": 0,
-            "increment": 5,
-            "eval-periods": 1,
-            "percentage-mem-available": 20,
+MOCK_APP_CONFIG = {
+    "configScope": "global",
+    "versionId": 1,
+    "changeReason": "Testing",
+    "changedBy": "Tester",
+    "createdAt": 1,
+    "configuration": {
+        "EnabledInstanceTypes": {
+            ServiceType.NOTEBOOK.value: [],
+            ServiceType.ENDPOINT.value: [],
+            ServiceType.TRAINING_JOB.value: [],
+            ServiceType.TRANSFORM_JOB.value: [],
         },
-        "scale-in": {
-            "cooldown": 0,
-            "increment": -5,
-            "eval-periods": 1,
-            "percentage-mem-available": 20,
+        "EnabledServices": {
+            ServiceType.REALTIME_TRANSLATE.value: "true",
+            ServiceType.BATCH_TRANSLATE.value: "false",
+            ServiceType.LABELING_JOB.value: "true",
+            ServiceType.EMR_CLUSTER.value: "true",
+            ServiceType.ENDPOINT.value: "true",
+            ServiceType.ENDPOINT_CONFIG.value: "false",
+            ServiceType.HPO_JOB.value: "true",
+            ServiceType.MODEL.value: "true",
+            ServiceType.NOTEBOOK.value: "false",
+            ServiceType.TRAINING_JOB.value: "true",
+            ServiceType.TRANSFORM_JOB.value: "true",
+        },
+        "EMRConfig": {
+            "clusterTypes": [
+                {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
+                {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
+            ],
+            "autoScaling": {
+                "minInstances": 2,
+                "maxInstances": 15,
+                "scaleOut": {"increment": 1, "percentageMemAvailable": 15, "evalPeriods": 1, "cooldown": 300},
+                "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
+            },
+            "applications": [
+                {"Name": "Hadoop"},
+                {"Name": "Spark"},
+            ],
         },
     },
-    "ec2-key": "example_ec2_key",
 }
-
-
-mock_cluster_config_response = {"Body": BytesIO(bytes(json.dumps(mock_cluster_config), "utf-8"))}
 
 
 def _expected_args(custom_ami: Optional[str] = None):
     expected_args = {
         "Name": "example_cluster_name",
         "LogUri": "s3://mlspace-log-bucket",
-        "ReleaseLabel": mock_cluster_config["release"],
-        "Applications": [{"Name": "Hive"}, {"Name": "HBase"}],
+        "ReleaseLabel": MOCK_RELEASE_LABEL,
+        "Applications": [{"Name": "Hadoop"}, {"Name": "Spark"}],
         "Instances": {
             "InstanceGroups": [
                 {
                     "Name": "Master",
                     "Market": "ON_DEMAND",
                     "InstanceRole": "MASTER",
-                    "InstanceType": "ml.g5.48xlarge",
+                    "InstanceType": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterTypes"][0]["masterType"],
                     "InstanceCount": 1,
                 },
                 {
                     "Name": "Worker",
                     "Market": "ON_DEMAND",
                     "InstanceRole": "CORE",
-                    "InstanceType": "ml.g5.24xlarge",
+                    "InstanceType": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterTypes"][0]["coreType"],
                     "InstanceCount": 3,
                     "AutoScalingPolicy": {
                         "Constraints": {
-                            "MinCapacity": mock_cluster_config["auto-scaling"]["min-instances"],
-                            "MaxCapacity": mock_cluster_config["auto-scaling"]["max-instances"],
+                            "MinCapacity": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"]["minInstances"],
+                            "MaxCapacity": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"]["maxInstances"],
                         },
                         "Rules": [
                             {
                                 "Name": "AutoScalingPolicyUp",
-                                "Description": "Scaling policy configured in the cluster-config.json",
+                                "Description": "Scaling policy configured in the dynamic config",
                                 "Action": {
                                     "SimpleScalingPolicyConfiguration": {
-                                        "ScalingAdjustment": mock_cluster_config["auto-scaling"]["scale-out"]["increment"],
-                                        "CoolDown": mock_cluster_config["auto-scaling"]["scale-out"]["cooldown"],
+                                        "ScalingAdjustment": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"][
+                                            "scaleOut"
+                                        ]["increment"],
+                                        "CoolDown": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"]["scaleOut"][
+                                            "cooldown"
+                                        ],
                                     }
                                 },
                                 "Trigger": {
                                     "CloudWatchAlarmDefinition": {
                                         "ComparisonOperator": "LESS_THAN",
-                                        "EvaluationPeriods": mock_cluster_config["auto-scaling"]["scale-out"]["eval-periods"],
+                                        "EvaluationPeriods": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"][
+                                            "scaleOut"
+                                        ]["evalPeriods"],
                                         "MetricName": "YARNMemoryAvailablePercentage",
                                         "Period": 300,
-                                        "Threshold": mock_cluster_config["auto-scaling"]["scale-out"][
-                                            "percentage-mem-available"
+                                        "Threshold": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"]["scaleOut"][
+                                            "percentageMemAvailable"
                                         ],
                                         "Unit": "PERCENT",
                                     }
@@ -130,21 +149,27 @@ def _expected_args(custom_ami: Optional[str] = None):
                             },
                             {
                                 "Name": "AutoScalingPolicyDown",
-                                "Description": "Scaling policy configured in the cluster-config.json",
+                                "Description": "Scaling policy configured in the dynamic config",
                                 "Action": {
                                     "SimpleScalingPolicyConfiguration": {
-                                        "ScalingAdjustment": mock_cluster_config["auto-scaling"]["scale-in"]["increment"],
-                                        "CoolDown": mock_cluster_config["auto-scaling"]["scale-in"]["cooldown"],
+                                        "ScalingAdjustment": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"][
+                                            "scaleIn"
+                                        ]["increment"],
+                                        "CoolDown": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"]["scaleIn"][
+                                            "cooldown"
+                                        ],
                                     }
                                 },
                                 "Trigger": {
                                     "CloudWatchAlarmDefinition": {
                                         "ComparisonOperator": "GREATER_THAN",
-                                        "EvaluationPeriods": mock_cluster_config["auto-scaling"]["scale-in"]["eval-periods"],
+                                        "EvaluationPeriods": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"][
+                                            "scaleIn"
+                                        ]["evalPeriods"],
                                         "MetricName": "YARNMemoryAvailablePercentage",
                                         "Period": 300,
-                                        "Threshold": mock_cluster_config["auto-scaling"]["scale-in"][
-                                            "percentage-mem-available"
+                                        "Threshold": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["autoScaling"]["scaleIn"][
+                                            "percentageMemAvailable"
                                         ],
                                         "Unit": "PERCENT",
                                     }
@@ -154,7 +179,7 @@ def _expected_args(custom_ami: Optional[str] = None):
                     },
                 },
             ],
-            "Ec2KeyName": mock_cluster_config["ec2-key"],
+            "Ec2KeyName": TEST_ENV_CONFIG["EMR_EC2_SSH_KEY"],
             "KeepJobFlowAliveWhenNoSteps": True,
             "TerminationProtected": False,
             "Ec2SubnetId": "subnet1",
@@ -180,8 +205,7 @@ def _expected_args(custom_ami: Optional[str] = None):
 
 def _mock_event_body(subnet: Optional[str] = "", custom_ami: Optional[str] = None):
     options = {
-        "emrSize": "example_emr_size",
-        "applications": ["Hive", "HBase"],
+        "emrSize": MOCK_APP_CONFIG["configuration"]["EMRConfig"]["clusterTypes"][0]["name"],
         "emrRelease": "emr-6.2.0",
     }
     if custom_ami:
@@ -259,9 +283,9 @@ def _mock_event(subnet: Optional[str] = "", custom_ami: Optional[str] = None):
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.utils.app_config_utils.app_configuration_dao")
 @mock.patch("ml_space_lambda.emr.lambda_functions.resource_scheduler_dao")
 @mock.patch("ml_space_lambda.emr.lambda_functions.project_dao")
-@mock.patch("ml_space_lambda.emr.lambda_functions.s3")
 @mock.patch("ml_space_lambda.emr.lambda_functions.random")
 @mock.patch("ml_space_lambda.emr.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.emr.lambda_functions.emr")
@@ -269,9 +293,9 @@ def test_create_emr_cluster_success(
     mock_emr,
     mock_pull_config,
     mock_random,
-    mock_s3,
     mock_project_dao,
     mock_resource_scheduler_dao,
+    mock_app_configuration_dao,
     mock_ami_id,
 ):
     # clear out global config if set to make lambda tests independent of each other
@@ -282,7 +306,8 @@ def test_create_emr_cluster_success(
     mocked_random_subnet = "example_subnet2"
     mock_random.sample.return_value = [mocked_random_subnet]
 
-    mock_s3.get_object.return_value = copy.deepcopy(mock_cluster_config_response)
+    mock_app_configuration_dao.get.return_value = [MOCK_APP_CONFIG]
+    get_app_config.cache_clear()
     mock_emr.run_job_flow.return_value = mock_response
     mock_paginator = mock.MagicMock()
     mock_emr.get_paginator.return_value = mock_paginator
@@ -296,7 +321,6 @@ def test_create_emr_cluster_success(
 
     mock_emr.run_job_flow.assert_called_with(**_mock_args(specific_subnet=mocked_random_subnet, custom_ami=mock_ami_id))
     mock_pull_config.assert_called_once()
-    mock_s3.get_object.assert_called_with(Bucket="example_bucket", Key="cluster-config.json")
 
     cluster_schedule = mock_resource_scheduler_dao.create.call_args.args[0]
     assert cluster_schedule.resource_id == mock_cluster_id
@@ -307,17 +331,13 @@ def test_create_emr_cluster_success(
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.utils.app_config_utils.app_configuration_dao")
 @mock.patch("ml_space_lambda.emr.lambda_functions.resource_scheduler_dao")
 @mock.patch("ml_space_lambda.emr.lambda_functions.project_dao")
-@mock.patch("ml_space_lambda.emr.lambda_functions.s3")
 @mock.patch("ml_space_lambda.emr.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.emr.lambda_functions.emr")
 def test_create_emr_cluster_success_with_subnet(
-    mock_emr,
-    mock_pull_config,
-    mock_s3,
-    mock_project_dao,
-    mock_resource_scheduler_dao,
+    mock_emr, mock_pull_config, mock_project_dao, mock_resource_scheduler_dao, mock_app_configuration_dao
 ):
     # This test checks to see that the response contains the expected subnet that the user specifies.
 
@@ -329,7 +349,8 @@ def test_create_emr_cluster_success_with_subnet(
     specific_subnet = "ThisIsASpecificSubnet1"
     mock_ami_id = "ami-123456789"
 
-    mock_s3.get_object.return_value = copy.deepcopy(mock_cluster_config_response)
+    mock_app_configuration_dao.get.return_value = [MOCK_APP_CONFIG]
+    get_app_config.cache_clear()
     mock_emr.run_job_flow.return_value = mock_response
     mock_paginator = mock.MagicMock()
     mock_emr.get_paginator.return_value = mock_paginator
@@ -344,7 +365,6 @@ def test_create_emr_cluster_success_with_subnet(
     # Check it had correct parameters and subnet was passed in
     mock_emr.run_job_flow.assert_called_with(**_mock_args(specific_subnet=specific_subnet, custom_ami=mock_ami_id))
     mock_pull_config.assert_not_called()
-    mock_s3.get_object.assert_called_with(Bucket="example_bucket", Key="cluster-config.json")
 
     # Check it was created successfully
     cluster_schedule = mock_resource_scheduler_dao.create.call_args.args[0]
@@ -356,10 +376,10 @@ def test_create_emr_cluster_success_with_subnet(
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.emr.lambda_functions.s3")
+@mock.patch("ml_space_lambda.utils.app_config_utils.app_configuration_dao")
 @mock.patch("ml_space_lambda.emr.lambda_functions.pull_config_from_s3")
 @mock.patch("ml_space_lambda.emr.lambda_functions.emr")
-def test_create_emr_cluster_client_error(mock_emr, mock_pull_config, mock_s3):
+def test_create_emr_cluster_client_error(mock_emr, mock_pull_config, mock_app_configuration_dao):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.param_file = {}
     mlspace_config.env_variables = {}
@@ -376,13 +396,13 @@ def test_create_emr_cluster_client_error(mock_emr, mock_pull_config, mock_s3):
 
     specific_subnet = "ADifferentSubnet"
 
-    mock_s3.get_object.return_value = copy.deepcopy(mock_cluster_config_response)
+    mock_app_configuration_dao.get.return_value = [MOCK_APP_CONFIG]
+    get_app_config.cache_clear()
     mock_emr.run_job_flow.side_effect = ClientError(error_msg, "RunJobFlow")
 
     assert emr_handler.create(_mock_event(subnet=specific_subnet), mock_context) == expected_response
 
     mock_pull_config.assert_not_called()
-    mock_s3.get_object.assert_called_with(Bucket="example_bucket", Key="cluster-config.json")
     error_args = _mock_args(specific_subnet=specific_subnet)
     mock_emr.run_job_flow.assert_called_with(**error_args)
 

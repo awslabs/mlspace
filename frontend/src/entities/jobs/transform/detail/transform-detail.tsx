@@ -22,7 +22,6 @@ import {
     Box,
     ColumnLayout,
     Button,
-    ContentLayout,
     Alert,
     StatusIndicator,
 } from '@cloudscape-design/components';
@@ -42,12 +41,14 @@ import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import DetailsContainer from '../../../../modules/details-container';
 import { LogsComponent } from '../../../../shared/util/log-utils';
 import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 function TransformDetail () {
     const { projectName, name } = useParams();
     const transform: ITransform = useAppSelector((state) => state.jobs.transform.job);
     const loadingTransformDetails = useAppSelector(loadingTransformJobDetails);
     const [submitStop, setSubmitStop] = useState(false);
+    const [initialLoaded, setInitialLoaded] = useState(false);
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -60,7 +61,7 @@ function TransformDetail () {
     }, [transform]);
 
     useEffect(() => {
-        dispatch(describeBatchTransformJob(name)).catch(() => {
+        dispatch(describeBatchTransformJob(name)).then(() => setInitialLoaded(true)).catch(() => {
             navigate('/404');
         });
         dispatch(
@@ -73,13 +74,13 @@ function TransformDetail () {
     }, [dispatch, navigate, basePath, name, projectName]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
-        dispatch(describeBatchTransformJob(name));
-    }, [dispatch], (transform.TransformJobStatus !== JobStatus.Failed && transform.TransformJobStatus !== JobStatus.Completed));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeBatchTransformJob(name));
+    }, [dispatch, transform.TransformJobStatus], (transform.TransformJobStatus !== JobStatus.Failed && transform.TransformJobStatus !== JobStatus.Completed));
 
     const jobSummary = new Map<string, ReactNode>();
     jobSummary.set('Job name', transform.TransformJobName!);
-    jobSummary.set('Status', prettyStatus(transform.TransformJobStatus, transform.FailureReason));
+    jobSummary.set('Status', prettyStatus(isBackgroundRefreshing ? 'Loading' : transform.TransformJobStatus, transform.FailureReason));
     jobSummary.set('Approx. batch transform duration', transform.duration);
     jobSummary.set('ARN', transform.TransformJobArn!);
     jobSummary.set('Creation time', formatDate(transform.CreationTime!));
@@ -154,7 +155,7 @@ function TransformDetail () {
                 </Header>
             }
         >
-            {loadingTransformDetails && !isBackgroundRefreshing ? (
+            {loadingTransformDetails && !initialLoaded ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
                 </Container>

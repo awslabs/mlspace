@@ -28,18 +28,15 @@ _account_map = {
     "ap-southeast-1": "377565633583",
     "ca-central-1": "918755190332",
     "us-iso-east-1": "403361949736",
-    "us-isob-east-1": "492044955883"
+    "us-isob-east-1": "492044955883",
 }
 
 _assets_domain_map = {
     "us-iso-east-1": "crowd-html-elements-us-iso-east-1.s3.us-iso-east-1.c2s.ic.gov",
-    "us-isob-east-1": "crowd-html-elements-us-isob-east-1.s3.us-isob-east-1.sc2s.sgov.gov"
+    "us-isob-east-1": "crowd-html-elements-us-isob-east-1.s3.us-isob-east-1.sc2s.sgov.gov",
 }
 
-_documentation_domain_map = {
-    "aws-iso": "docs.c2shome.ic.gov",
-    "aws-iso-b": "docs.sc2shome.sgov.gov"
-}
+_documentation_domain_map = {"aws-iso": "docs.c2shome.ic.gov", "aws-iso-b": "docs.sc2shome.sgov.gov"}
 
 _lambda_types = ["ACS", "PRE"]
 
@@ -65,7 +62,7 @@ _task_types = [
     "AdjustmentVideoObjectTracking",
     "Adjustment3DPointCloudObjectDetection",
     "Adjustment3DPointCloudObjectTracking",
-    "Adjustment3DPointCloudSemanticSegmentation"
+    "Adjustment3DPointCloudSemanticSegmentation",
 ]
 
 
@@ -98,4 +95,3 @@ def get_groundtruth_lambda_arn(lambda_type, task_type, boto_session):
         raise RuntimeError(f"'task_type' must be one of {_task_types}")
 
     return f"arn:{arn_partition}:lambda:{region}:{account}:function:{lambda_type}-{task_type}"
-

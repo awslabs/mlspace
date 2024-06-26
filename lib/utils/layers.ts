@@ -111,14 +111,16 @@ export class LambdaLayer extends Construct {
         cpSync(layerDir, buildDir, { recursive: true });
 
         // actually do the bundling
-        const code = bundleAction();
+        try {
+            const code = bundleAction();
 
-        // cleanup
-        if (existsSync(buildDir)) {
-            rmdirSync(buildDir, { recursive: true, });
+            return code;
+        } finally {
+            // cleanup
+            if (existsSync(buildDir)) {
+                rmdirSync(buildDir, { recursive: true, });
+            }
         }
-
-        return code;
     }
 }
 

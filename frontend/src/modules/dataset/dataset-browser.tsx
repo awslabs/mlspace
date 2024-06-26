@@ -33,6 +33,8 @@ import { EmptyState } from '../table';
 import { DatasetBrowserProps } from './dataset-browser.types';
 import NotificationService from '../../shared/layout/notification/notification.service';
 import { useUsername } from '../../shared/util/auth-utils';
+import '../../entities/dataset/dataset.scss';
+
 
 export function DatasetBrowser (props: DatasetBrowserProps) {
     const username = useUsername();
@@ -108,7 +110,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     }, [dispatch, isCreating, notificationService, projectName, username]);
 
     const fetchDatasets = useCallback((type: DatasetType) => {
-        dispatch(getDatasetsList(projectName)).then((response) => {
+        dispatch(getDatasetsList({projectName})).then((response) => {
             if (isFulfilled(response)) {
                 setState({
                     type: DatasetActionType.State,
@@ -207,7 +209,15 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                 <Condition condition={header !== undefined}>
                     { header }
                 </Condition>
-                
+
+                <Condition condition={manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false}>
+                    <div className='drop-box'>
+                        <Box textAlign='center'>
+                            Drag and drop files and folders you want to upload here, or choose Upload Files or Upload Folder.
+                        </Box>
+                    </div>
+                </Condition>
+
                 <Condition condition={manageMode !== DatasetBrowserManageMode.Create}>
                     <BreadcrumbGroup items={breadcrumbItems} onClick={(event) => {
                         event.preventDefault();

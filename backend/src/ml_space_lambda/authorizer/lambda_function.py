@@ -30,6 +30,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
+from ml_space_lambda.utils.app_config_utils import get_app_config
 from ml_space_lambda.utils.common_functions import authorization_wrapper
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,25 @@ def lambda_handler(event, context):
         "Effect": "Deny",
         "Resource": event["methodArn"],
     }
+
+    requested_resource = event["resource"]
+    path_params = event["pathParameters"]
+    request_method = event["httpMethod"]
+
+    logger.info(
+        f"Determining access for Resource: {requested_resource} "
+        f"- PathParams: {json.dumps(path_params) if path_params else 'N/A'} "
+        f"- Method: {request_method}"
+    )
+
+    if requested_resource == "/app-config" and request_method == "GET":
+        # Anyone can get the app config
+        policy_statement["Effect"] = "Allow"
+        return {
+            "principalId": "Unknown",
+            "policyDocument": {"Version": "2012-10-17", "Statement": [policy_statement]},
+            "context": response_context,
+        }
 
     client_token = None
     token_failure = False
@@ -102,15 +122,6 @@ def lambda_handler(event, context):
         }
 
     username = urllib.parse.unquote(token_info["preferred_username"]).replace(",", "-").replace("=", "-").replace(" ", "-")
-    requested_resource = event["resource"]
-    path_params = event["pathParameters"]
-    request_method = event["httpMethod"]
-
-    logger.info(
-        f"Determining access for Resource: {requested_resource} "
-        f"- PathParams: {json.dumps(path_params) if path_params else 'N/A'} "
-        f"- Method: {request_method}"
-    )
 
     # Only run through the auth logic if the token has not yet expired
     if token_info["exp"] > time.time():
@@ -164,9 +175,12 @@ def lambda_handler(event, context):
                     project_user = project_user_dao.get(project_name, username)
                     # User must belong to the project for any project specific resources
                     if project_user or Permission.ADMIN in user.permissions:
-                        # User must be an owner or admin to add/remove users
+                        # User must be an owner or admin to add/remove users or update the project config
                         if (
-                            (request_method == "POST" and requested_resource.endswith("/users"))
+                            (
+                                request_method == "POST"
+                                and (requested_resource.endswith("/users") or requested_resource.endswith("/app-config"))
+                            )
                             or (request_method in ["PUT", "DELETE"] and len(path_params) == 2 and "username" in path_params)
                         ) and (
                             (project_user and Permission.PROJECT_OWNER not in project_user.permissions)
@@ -266,7 +280,9 @@ def lambda_handler(event, context):
                     except Exception as e:
                         logging.exception(e)
                         logging.info("Access Denied. Encountered error while determining resource access policy.")
-
+            elif requested_resource == "/app-config" and request_method == "POST" and Permission.ADMIN in user.permissions:
+                # Operations for app-wide configuration can only be performed by admins
+                policy_statement["Effect"] = "Allow"
             elif requested_resource == "/login" and request_method == "PUT":
                 policy_statement["Effect"] = "Allow"
             elif (
@@ -274,8 +290,14 @@ def lambda_handler(event, context):
             ) and Permission.ADMIN in user.permissions:
                 policy_statement["Effect"] = "Allow"
             elif requested_resource == "/project" and request_method == "POST":
-                # Anyone can create a project
-                policy_statement["Effect"] = "Allow"
+                if Permission.ADMIN in user.permissions:
+                    policy_statement["Effect"] = "Allow"
+                else:
+                    # Get the latest app config
+                    app_config = get_app_config()
+                    # Check if project creation is admin only; if not, anyone can create a project
+                    if not app_config.configuration.project_creation.admin_only:
+                        policy_statement["Effect"] = "Allow"
             elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
                 # If this is a request for a dataset related presigned url or for
                 # creating a new dataset, we need to determine the underlying dataset
@@ -340,6 +362,8 @@ def lambda_handler(event, context):
                     "/translate/list-languages",
                     "/project",
                     "/emr",
+                    "/emr/applications",
+                    "/emr/release",
                     "/translate/custom-terminologies",
                 ]
             ) and request_method == "GET":

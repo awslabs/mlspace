@@ -18,7 +18,6 @@ import React, { useEffect, useState } from 'react';
 import {
     Button,
     Container,
-    ContentLayout,
     ExpandableSection,
     Form,
     FormField,
@@ -66,6 +65,8 @@ import { notebookCluster } from '../notebook.service';
 import { InstanceTypeSelector } from '../../../shared/metadata/instance-type-dropdown';
 import { convertDailyStopTime, timezoneDisplayString } from '../../../shared/util/date-utils';
 import { EMRResourceMetadata } from '../../../shared/model/resource-metadata.model';
+import { ServiceTypes } from '../../../shared/model/app.configuration.model';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 export type NotebookCreateProps = {
     update?: boolean;
@@ -354,7 +355,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
                                         setFields({ InstanceType: detail.selectedOption.value });
                                     }}
                                     onBlur={() => touchFields(['InstanceType'])}
-                                    instanceTypeCategory='InstanceType'
+                                    service={ServiceTypes.NOTEBOOK}
                                 />
                             </FormField>
                             <FormField

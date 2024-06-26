@@ -15,7 +15,7 @@
 */
 
 import React, { ReactNode, useEffect, useState } from 'react';
-import { SpaceBetween, Header, Button, ContentLayout } from '@cloudscape-design/components';
+import { SpaceBetween, Header, Button } from '@cloudscape-design/components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../config/store';
 import { INotebook } from '../../../shared/model/notebook.model';
@@ -45,6 +45,7 @@ import { selectCurrentUser } from '../../user/user.reducer';
 import { hasPermission, isAdminOrProjectOwner } from '../../../shared/util/permission-utils';
 import { deletionDescription } from '../../../shared/util/form-utils';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function NotebookDetail () {
     const { projectName, name } = useParams();
@@ -55,6 +56,8 @@ function NotebookDetail () {
     const project: IProject = useAppSelector((state) => state.project.project);
     const projectPermissions = useAppSelector((state) => state.project.permissions);
     const [notebookInstanceURL, setNotebookInstanceUrl] = useState('' as string);
+
+    const [initialLoaded, setInitialLoaded] = useState(false);
 
     const dispatch = useAppDispatch();
     const notificationService = NotificationService(dispatch);
@@ -72,6 +75,7 @@ function NotebookDetail () {
                     if (!projectName && resp.data.Project) {
                         dispatch(getProject({projectName: resp.data.Project}));
                     }
+                    setInitialLoaded(true);
                 })
                 .catch(() => {
                     navigate('/404');
@@ -95,13 +99,13 @@ function NotebookDetail () {
     }, [name, notebook.NotebookInstanceStatus]);
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
-        dispatch(describeNotebookInstance(name!));
-    }, [dispatch]);
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await dispatch(describeNotebookInstance(name!));
+    }, [dispatch], (notebook.NotebookInstanceStatus !== 'InService' && notebook.NotebookInstanceStatus !== 'Stopped' && notebook.NotebookInstanceStatus !== 'Failed'));
 
     const notebookDetails = new Map<string, ReactNode>();
     notebookDetails.set('Name', notebook.NotebookInstanceName);
-    notebookDetails.set('Status', prettyStatus(notebook.NotebookInstanceStatus));
+    notebookDetails.set('Status', prettyStatus(isBackgroundRefreshing ? 'Loading' : notebook.NotebookInstanceStatus));
     notebookDetails.set('Notebook instance type', notebook.InstanceType);
     notebookDetails.set('Platform identifier', notebook.PlatformIdentifier);
     notebookDetails.set('ARN', notebook.NotebookInstanceArn);
@@ -172,7 +176,7 @@ function NotebookDetail () {
                 <Header
                     variant='h1'
                     actions={
-                        <>
+                        <SpaceBetween direction='horizontal' size='xs'>
                             <Button
                                 data-cy='notebook-delete'
                                 disabled={!ownerOrPrivileged || !notebookStopped}
@@ -284,7 +288,7 @@ function NotebookDetail () {
                             >
                                 Open JupyterLab
                             </Button>
-                        </>
+                        </SpaceBetween>
                     }
                 >
                     {notebook.NotebookInstanceName}
@@ -309,13 +313,13 @@ function NotebookDetail () {
                             Edit
                         </Button>
                     }
-                    loading={loadingNotebook && !isBackgroundRefreshing}
+                    loading={loadingNotebook && !initialLoaded}
                 />
                 <DetailsContainer
                     header='Permissions and encryption'
                     columns={3}
                     info={permissionsInfo}
-                    loading={loadingNotebook && !isBackgroundRefreshing}
+                    loading={loadingNotebook && !initialLoaded}
                 />
                 <LogsComponent
                     resourceType='NotebookInstances'

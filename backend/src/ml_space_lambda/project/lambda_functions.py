@@ -29,7 +29,7 @@ from ml_space_lambda.data_access_objects.project import ProjectDAO, ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
-from ml_space_lambda.enums import DatasetType, Permission, ResourceType
+from ml_space_lambda.enums import DatasetType, EnvVariable, Permission, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config, serialize_permissions, total_project_owners
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
@@ -70,7 +70,7 @@ def _validate_input(input: str, max_length: int, field: str) -> None:
 def _add_project_user(project_name: str, username: str, permissions: Optional[List[Permission]] = None):
     env_variables = get_environment_variables()
     iam_role_arn = None
-    if env_variables["MANAGE_IAM_ROLES"]:
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         iam_role_arn = iam_manager.add_iam_role(project_name, username)
 
     if not user_dao.get(username):

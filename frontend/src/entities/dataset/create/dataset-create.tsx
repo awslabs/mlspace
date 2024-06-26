@@ -25,7 +25,6 @@ import {
     Input,
     Container,
     Select,
-    ContentLayout,
     Popover,
     StatusIndicator,
     Alert,
@@ -52,6 +51,7 @@ import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-brows
 import { DatasetResourceObject } from '../../../modules/dataset/dataset-browser.reducer';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useUsername } from '../../../shared/util/auth-utils';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 const formSchema = z.object({
     name: z
@@ -230,7 +230,7 @@ export function DatasetCreate () {
                                             header='Dataset Access Limitations'
                                         >
                                             Dataset Type is used as a convention to organize data within
-                                            S3 but <strong>does not</strong> prevent other ${window.env.APPLICATION_NAME} users
+                                            S3 but <strong>does not</strong> prevent other {window.env.APPLICATION_NAME} users
                                             from accessing data. Making a &quot;Private&quot; or
                                             &quot;Project&quot; dataset is merely a convention and does
                                             not enforce access control.

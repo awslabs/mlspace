@@ -33,27 +33,27 @@
 	"ami" : "CUSTOM_AMI",
 	"release" : "emr-6.2.0",
 	"log-location" : "s3://{LOG_BUCKET_NAME}",
-	"ec2-key" : "EC2_KEY",
+	"ec2-key" : "",
 	"applications" : [
         {
            "Name": "Hadoop"
         },
-				{
+		{
            "Name": "Spark"
         },
-				{
+		{
            "Name": "Ganglia"
         },
-				{
+		{
            "Name": "Hive"
         },
-				{
+		{
            "Name": "Tez"
         },
-				{
+		{
            "Name": "Presto"
         },
-				{
+		{
            "Name": "Livy"
         }
     ]

@@ -63,6 +63,20 @@ export class EmrApiStack extends Stack {
                 method: 'PUT',
                 id: 'resource_scheduler-set-emr-termination',
             },
+            {
+                name: 'list_applications',
+                resource: 'emr',
+                description: 'List all applications available to install and configure when launching a cluster',
+                path: 'emr/applications',
+                method: 'GET',
+            },
+            {
+                name: 'list_release_labels',
+                resource: 'emr',
+                description: 'List of available EMR release labels',
+                path: 'emr/release',
+                method: 'GET',
+            },
         ];
 
         apis.forEach((f) => {
@@ -71,6 +85,7 @@ export class EmrApiStack extends Stack {
                 restApi,
                 props.authorizer,
                 props.applicationRole,
+                props.applicationRole.roleName,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],

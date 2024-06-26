@@ -23,7 +23,6 @@ import {
     Header,
     FormField,
     Input,
-    ContentLayout,
     Container,
     Textarea,
     Toggle,
@@ -48,6 +47,7 @@ import {
 } from '../../../shared/util/date-utils';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { Timezone } from '../../../shared/model/user.model';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 export type ResourceCreateProperties = {
     isEdit?: boolean;

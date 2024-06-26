@@ -198,18 +198,46 @@ def generate_html_response(status_code, response_body):
     }
 
 
-def generate_exception_response(e):
-    status_code = 400
+def generate_exception_response(e, status_code=400):
+    error_msg = str(e)
     if hasattr(e, "response"):  # i.e. validate the exception was from an API call
         metadata = e.response.get("ResponseMetadata")
         if metadata:
             status_code = metadata.get("HTTPStatusCode", 400)
+
+        """
+        Codes (required) - What codes to alert on 
+        MatchStrings (optional) - What strings to look for in addition to the code. If no match strings are provided, then just the code is used
+        FriendlyMessage (required) - Message replacment for the existing error 
+        """
+        ERROR_DICT = [
+            {
+                "Codes": ["ResourceInUse", "ValidationException"],
+                "MatchStrings": ["Cannot create a duplicate", "already existing", "already exists"],
+                "FriendlyMessage": "The resource name you provided already exists. Please choose a different name.",
+            },
+            {
+                "Codes": ["ResourceLimitExceeded"],
+                "FriendlyMessage": "You have reached the maximum allowed usage for this resource. Please contact your MLSpace administrator to increase the allowed usage limits.",
+            },
+            {
+                "Codes": ["AccessDeniedException"],
+                "FriendlyMessage": "An administrator or owner has restricted access to this resource or this account has hit its service limit for this resource. If you need access or to increase the limits, please contact a system administrator or owner of the resource for assistance.",
+            },
+        ]
+
+        for errorType in ERROR_DICT:
+            if e.response["Error"]["Code"] in errorType["Codes"] and (
+                "MatchStrings" not in errorType or any(error in error_msg for error in errorType["MatchStrings"])
+            ):
+                e = f"{errorType['FriendlyMessage']} Full message: {error_msg}"
+                break
+
         logger.exception(e)
     elif hasattr(e, "http_status_code"):
         status_code = e.http_status_code
         logger.exception(e)
     else:
-        error_msg = str(e)
         if error_msg in ["'requestContext'", "'pathParameters'", "'body'"]:
             e = f"Missing event parameter: {error_msg}"
         else:
@@ -218,12 +246,44 @@ def generate_exception_response(e):
     return generate_html_response(status_code, e)
 
 
-def generate_tags(user_name: str, project_name: str, system_tag: str) -> list:
-    return [
+def generate_tags(user_name: str, project_name: str, system_tag: str, additional_tags: list = None) -> list:
+    tags = [
         {"Key": "user", "Value": user_name},
         {"Key": "project", "Value": project_name},
         {"Key": "system", "Value": system_tag},
     ]
+
+    if additional_tags:
+        tags.extend(additional_tags)
+
+    return tags
+
+
+def has_tags(tags: list, user_name: str = None, project_name: str = None, system_tag: str = None) -> bool:
+    """
+    Checks if the common tags (as created by generate_tags exist in the list of tags.
+
+    Optionally you can provide specific values required for the tags instead of just looking
+    for their existence.
+    """
+    has_user = False
+    has_project = False
+    has_system = False
+
+    for tag in tags:
+        if tag["Key"] == "user":
+            if user_name is None or tag["Value"] == user_name:
+                has_user = True
+
+        if tag["Key"] == "project":
+            if project_name is None or tag["Value"] == project_name:
+                has_project = True
+
+        if tag["Key"] == "system":
+            if system_tag is None or tag["Value"] == system_tag:
+                has_system = True
+
+    return has_user & has_project & has_system
 
 
 def serialize_permissions(permissions: Optional[List[Permission]]) -> List[str]:

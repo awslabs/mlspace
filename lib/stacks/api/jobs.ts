@@ -156,6 +156,7 @@ export class JobsApiStack extends Stack {
                 restApi,
                 props.authorizer,
                 props.applicationRole,
+                props.applicationRole.roleName,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],

@@ -21,7 +21,6 @@ import Form from '@cloudscape-design/components/form';
 import {
     Button,
     Container,
-    ContentLayout,
     FormField,
     Header,
     Input,
@@ -46,6 +45,7 @@ import { AttributeEditorSchema } from '../../../modules/environment-variables/en
 import { NetworkSettings } from '../../jobs/hpo/create/training-definitions/network-settings';
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
 import '../../../shared/validation/helpers/uri';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 export function ModelCreate () {
     const dispatch = useAppDispatch();
@@ -60,7 +60,7 @@ export function ModelCreate () {
     const formSchema = z.object({
         ModelName: z
             .string()
-            .min(3, { message: 'Model name is required' })
+            .min(3, { message: 'Model name must contain at least 3 characters.' })
             .max(63)
             .regex(/^[a-zA-Z0-9](-*[a-zA-Z0-9])*$/, {
                 message: 'Name can only contain alphanumeric characters and hyphens (-)',
@@ -169,7 +169,7 @@ export function ModelCreate () {
                 })
                 .catch((err) => {
                     notificationService.generateNotification(
-                        `Failed to create endpoint with error: ${err.response.data}`,
+                        `Failed to create model because: ${err.response.data}`,
                         'error'
                     );
                 })

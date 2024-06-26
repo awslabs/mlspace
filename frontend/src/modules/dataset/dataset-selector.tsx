@@ -29,8 +29,8 @@ import { useAppDispatch } from '../../config/store';
 import { getDatasetContents } from './dataset-browser.reducer';
 import { datasetFromS3Uri } from '../../shared/util/dataset-utils';
 import { isFulfilled } from '@reduxjs/toolkit';
-import { debounce } from 'lodash';
 import { DatasetType } from '../../shared/model';
+import { useDebounce } from '../../shared/util/hooks';
 
 export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
     const username = useUsername();
@@ -48,8 +48,7 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
     });
 
     // disable since debounce() interferes with the linter tracking dependencies
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const updateIsEmpty = useCallback(debounce((s3Uri: string) => {
+    const updateIsEmpty = useDebounce(useCallback((s3Uri: string) => {
         const datasetContext = datasetFromS3Uri(s3Uri);
 
         if (datasetContext?.name) {
@@ -88,7 +87,7 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                 });
             });                
         }
-    }, 300), [dispatch, username, projectName, isSelectingObject, isSelectingPrefixes]);
+    }, [dispatch, username, projectName, isSelectingObject, isSelectingPrefixes]), 300);
 
     // if resource changes reset to defaults
     useEffect(() => {

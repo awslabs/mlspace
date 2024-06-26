@@ -205,6 +205,7 @@ export class ProjectsApiStack extends Stack {
                     EMR_SECURITY_CONFIGURATION: props.mlspaceConfig.EMR_SECURITY_CONFIG_NAME,
                     EMR_EC2_ROLE_NAME: props.emrEC2RoleName || '',
                     EMR_SERVICE_ROLE_NAME: props.emrServiceRoleName || '',
+                    EMR_EC2_SSH_KEY: props.mlspaceConfig.EMR_EC2_SSH_KEY,
                     DATA_BUCKET: props.dataBucketName,
                     LOG_BUCKET: props.cwlBucketName,
                 },
@@ -219,11 +220,13 @@ export class ProjectsApiStack extends Stack {
         ];
 
         apis.forEach((f) => {
+            const system_permissions = ['remove_user', 'update', 'delete'];
             registerAPIEndpoint(
                 this,
                 restApi,
                 props.authorizer,
-                props.applicationRole,
+                system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
+                props.applicationRole.roleName,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],

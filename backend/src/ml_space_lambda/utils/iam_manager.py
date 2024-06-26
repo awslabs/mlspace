@@ -17,13 +17,12 @@
 import hashlib
 import json
 import logging
-import os
 from typing import List, Optional
 
 import boto3
 
 from ml_space_lambda.enums import IAMResourceType
-from ml_space_lambda.utils.common_functions import generate_tags, retry_config
+from ml_space_lambda.utils.common_functions import generate_tags, has_tags, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 logger = logging.getLogger(__name__)
@@ -33,6 +32,7 @@ IAM_ROLE_NAME_MAX_LENGTH = 64
 IAM_POLICY_NAME_MAX_LENGTH = 128
 USER_POLICY_VERSION = 1
 PROJECT_POLICY_VERSION = 1
+DYNAMIC_USER_ROLE_TAG = {"Key": "dynamic-user-role", "Value": "true"}
 
 
 class IAMManager:
@@ -192,9 +192,10 @@ class IAMManager:
         env_variables = get_environment_variables()
         self.data_bucket = env_variables["DATA_BUCKET"]
         self.system_tag = env_variables["SYSTEM_TAG"]
-        self.notebook_role_name = os.getenv("NOTEBOOK_ROLE_NAME", "")
+        self.app_role_name = env_variables["APP_ROLE_NAME"]
+        self.notebook_role_name = env_variables["NOTEBOOK_ROLE_NAME"]
         self.default_notebook_role_policy_arns = []
-        self.permissions_boundary_arn = os.getenv("PERMISSIONS_BOUNDARY_ARN", "")
+        self.permissions_boundary_arn = env_variables["PERMISSIONS_BOUNDARY_ARN"]
 
     def add_iam_role(self, project_name: str, username: str) -> str:
         iam_role_name = self._generate_iam_role_name(username, project_name)
@@ -218,7 +219,7 @@ class IAMManager:
         self._check_name_length(IAMResourceType.ROLE, iam_role_name)
 
         # Check if the project policy exists
-        existing_project_policy_version = self._get_policy_verison(project_policy_arn)
+        existing_project_policy_version = self._get_policy_version(project_policy_arn)
         if existing_project_policy_version is None:
             project_policy_arn = self._create_iam_policy(
                 project_policy_name,
@@ -245,7 +246,7 @@ class IAMManager:
             )
 
         # Check if the user policy exists
-        existing_user_policy_version = self._get_policy_verison(user_policy_arn)
+        existing_user_policy_version = self._get_policy_version(user_policy_arn)
         if existing_user_policy_version is None:
             user_policy_arn = self._create_iam_policy(
                 user_policy_name,
@@ -372,7 +373,7 @@ class IAMManager:
                 }
             ),
             Description=f"Default SageMaker Notebook role for Project: {project_name} - User: {username}",
-            Tags=generate_tags(username, project_name, self.system_tag),
+            Tags=generate_tags(username, project_name, self.system_tag, [DYNAMIC_USER_ROLE_TAG]),
             PermissionsBoundary=self.permissions_boundary_arn,
         )
         return iam_role_response["Role"]["Arn"]
@@ -410,7 +411,7 @@ class IAMManager:
         except self.iam_client.exceptions.NoSuchEntityException:
             return None
 
-    def _get_policy_verison(self, resource_identifier: str) -> Optional[int]:
+    def _get_policy_version(self, resource_identifier: str) -> Optional[int]:
         try:
             existing_policy = self.iam_client.get_policy(PolicyArn=resource_identifier)
             # Grab policy version from tags otherwise return a version of -1 if the policy exists
@@ -450,6 +451,126 @@ class IAMManager:
             .replace("$BUCKET_NAME", self.data_bucket)
             .replace("$PARTITION", self.aws_partition)
         )
+
+    def _generate_user_hash(self, username: str) -> str:
+        return hashlib.sha256(username.encode()).hexdigest()
+
+    def generate_policy(self, statements: list):
+        if len(statements) > 0:
+            return {"Version": "2012-10-17", "Statement": statements}
+        else:
+            return None
+
+    def generate_policy_string(self, statements: list):
+        policy = self.generate_policy(statements)
+        return json.dumps(policy) if policy else None
+
+    # If the provided policy doesn't exist, it will be created
+    def update_dynamic_policy(
+        self,
+        policy: str,
+        policy_name: str,
+        policy_type: str,
+        policy_type_identifier: str,
+        on_create_attach_to_notebook_role: bool = False,
+        on_create_attach_to_app_role: bool = False,
+        on_create_attach_to_existing_dynamic_roles: bool = False,
+        expected_policy_version: int = None,
+    ):
+        aws_account = self.sts_client.get_caller_identity()["Account"]
+        prefixed_policy_name = f"{IAM_RESOURCE_PREFIX}-{policy_name}"
+        self._check_name_length(IAMResourceType.POLICY, prefixed_policy_name)
+        policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{prefixed_policy_name}"
+        logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
+        # Create the policy if it doesn't exist
+        existing_policy_version = self._get_policy_version(policy_arn)
+        if existing_policy_version is None and policy:
+            logger.info(f"Creating a new {policy_name} dynamic policy")
+            policy_arn = self._create_iam_policy(
+                prefixed_policy_name,
+                policy,
+                policy_type,
+                policy_type_identifier,
+                1 if expected_policy_version is None else expected_policy_version,
+            )
+
+            # Attaches the policy to the notebook role so it will get attached to new dynamic roles
+            if on_create_attach_to_notebook_role:
+                self.iam_client.attach_role_policy(RoleName=self.notebook_role_name, PolicyArn=policy_arn)
+
+            if on_create_attach_to_app_role:
+                self.iam_client.attach_role_policy(RoleName=self.app_role_name, PolicyArn=policy_arn)
+
+            if on_create_attach_to_existing_dynamic_roles:
+                role_names = self.find_dynamic_user_roles()
+                self.attach_policies_to_roles([policy_arn], role_names)
+
+        # If the policy does exist, then update it
+        elif expected_policy_version is None or existing_policy_version < expected_policy_version:
+            logger.info(f"Updating the existing {policy_name} dynamic policy")
+            # Remove unused versions of the policy making room for the new policy if needed
+            self._delete_unused_policy_versions(policy_arn)
+            self.iam_client.create_policy_version(
+                PolicyArn=policy_arn,
+                PolicyDocument=policy,
+                SetAsDefault=True,
+            )
+            self.iam_client.tag_policy(
+                PolicyArn=policy_arn,
+                Tags=[
+                    {"Key": policy_type, "Value": policy_type_identifier},
+                    {
+                        "Key": "policyVersion",
+                        "Value": str(
+                            (existing_policy_version + 1) if expected_policy_version is None else expected_policy_version
+                        ),
+                    },
+                    {"Key": "system", "Value": self.system_tag},
+                ],
+            )
+        else:
+            logger.info(f"Provided inputs didn't meet criteria for updating or creating a new policy")
+
+    def find_dynamic_user_roles(self) -> list[str]:
+        paginator = self.iam_client.get_paginator("list_roles")
+        role_names = []
+
+        for page in paginator.paginate():
+            if "Roles" not in page:
+                continue
+
+            for role in page["Roles"]:
+                tags = self.iam_client.list_role_tags(RoleName=role["RoleName"])
+
+                if "Tags" not in tags:
+                    continue
+
+                # try the simple case first
+                if DYNAMIC_USER_ROLE_TAG in tags["Tags"]:
+                    role_names.append(role["RoleName"])
+                    continue
+
+                # make sure all expected tags exist to try and ensure this is an MLSpace role
+                if not has_tags(tags["Tags"], system_tag=self.system_tag):
+                    continue
+
+                # convert to simple dict
+                tags = dict((tag["Key"], tag["Value"]) for tag in tags["Tags"])
+
+                # some application roles would be tagged properly but should be skipped
+                if tags["user"] == "MLSpaceApplication":
+                    continue
+
+                expected_role_name = self._generate_iam_role_name(tags["user"], tags["project"])
+                if expected_role_name == role["RoleName"]:
+                    role_names.append(role["RoleName"])
+
+        return role_names
+
+    def attach_policies_to_roles(self, policy_arns: list[str], role_names: list[str]):
+        for role_name in role_names:
+            for policy_arn in policy_arns:
+                self._attach_iam_policy(role_name, policy_arn)
 
     def _generate_user_hash(self, username: str) -> str:
         return hashlib.sha256(username.encode()).hexdigest()

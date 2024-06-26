@@ -21,7 +21,7 @@ import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { CfnSecurityConfiguration } from 'aws-cdk-lib/aws-emr';
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
-import { Effect, IRole, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { Effect, IManagedPolicy, IRole, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { IKey } from 'aws-cdk-lib/aws-kms';
 import { Code, Function } from 'aws-cdk-lib/aws-lambda';
 import {
@@ -39,6 +39,8 @@ import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
 import { MLSpaceConfig } from '../../utils/configTypes';
+import { AwsCustomResource, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { generateAppConfig } from '../../utils/initialAppConfig';
 
 export type CoreStackProps = {
     readonly lambdaSourcePath: string;
@@ -51,6 +53,8 @@ export type CoreStackProps = {
     readonly encryptionKey: IKey;
     readonly mlSpaceAppRole: IRole;
     readonly mlSpaceNotebookRole: IRole;
+    readonly mlspaceEndpointConfigInstanceConstraintPolicy?: IManagedPolicy,
+    readonly mlspaceJobInstanceConstraintPolicy?: IManagedPolicy,
     readonly mlSpaceVPC: IVpc;
     readonly mlSpaceDefaultSecurityGroupId: string;
     readonly isIso?: boolean;
@@ -214,6 +218,37 @@ export class CoreStack extends Stack {
                 : undefined,
         });
 
+        const commonLambdaLayer = createLambdaLayer(this, 'common');
+
+        // Save common layer arn to SSM to avoid issue related to cross stack references
+        new StringParameter(this, 'VersionArn', {
+            parameterName: props.mlspaceConfig.COMMON_LAYER_ARN_PARAM,
+            stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
+        });
+
+        // Lambda for populating the initial allowed instances in the app config 
+        const appConfigLambda = new Function(this, 'appConfigDeployment', {
+            functionName: 'mls-lambda-app-config-deployment',
+            description:
+                'Populates the initial app config',
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
+            handler: 'ml_space_lambda.initial_app_config.lambda_function.lambda_handler',
+            code: Code.fromAsset(props.lambdaSourcePath),
+            timeout: Duration.seconds(30),
+            role: props.mlSpaceAppRole,
+            environment: {
+                APP_CONFIG_TABLE: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
+                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceEndpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
+                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceJobInstanceConstraintPolicy?.managedPolicyArn || '',
+                SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
+                MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
+            },
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+        });
+
         const notifierLambdaLayer = createLambdaLayer(this, 'common', 'notifier');
 
         const s3NotificationLambda = new Function(this, 's3Notifier', {
@@ -250,14 +285,6 @@ export class CoreStack extends Stack {
             EventType.OBJECT_CREATED,
             new LambdaDestination(s3NotificationLambda)
         );
-
-        const commonLambdaLayer = createLambdaLayer(this, 'common');
-
-        // Save common layer arn to SSM to avoid issue related to cross stack references
-        new StringParameter(this, 'VersionArn', {
-            parameterName: props.mlspaceConfig.COMMON_LAYER_ARN_PARAM,
-            stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
-        });
 
         const terminateResourcesLambda = new Function(this, 'resourceTerminator', {
             functionName: 'mls-lambda-resource-terminator',
@@ -408,6 +435,42 @@ export class CoreStack extends Stack {
             indexName: 'UserResources',
             sortKey: userAttribute,
             projectionType: ProjectionType.ALL,
+        });
+
+        // App Configuration Table
+        new Table(this, 'mlspace-ddb-app-configuration', {
+            tableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
+            partitionKey: { name: 'configScope', type: AttributeType.STRING },
+            sortKey: { name: 'versionId', type: AttributeType.NUMBER },
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        // Populate the App Config table with default config
+        new AwsCustomResource(this, 'mlspace-init-ddb-app-config', {
+            onCreate: {
+                service: 'DynamoDB',
+                action: 'putItem',
+                parameters: {
+                    TableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
+                    Item: generateAppConfig(props.mlspaceConfig),
+                },
+                physicalResourceId: PhysicalResourceId.of('initAppConfigData'),
+            },
+            role: props.mlSpaceAppRole
+        });
+
+        new AwsCustomResource(this, 'initial-app-config-deployment-001', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                physicalResourceId: PhysicalResourceId.of('initAllowedInstanceTypes'),
+                parameters: {
+                    FunctionName: appConfigLambda.functionName,
+                    Payload: '{}'
+                }, 
+            },
+            role: props.mlSpaceAppRole
         });
 
         // EMR Security Configuration

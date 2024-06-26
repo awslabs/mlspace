@@ -25,8 +25,12 @@ import { EMRResourceMetadata } from '../../shared/model/resource-metadata.model'
 const initialState = {
     clusters: [] as EMRResourceMetadata[],
     cluster: {} as EMRCluster,
+    applications: [] as string[],
+    releaseLabels: [] as string[],
     loadingCluster: true,
     loadingClusters: false,
+    loadingApplications: false,
+    loadingReleaseLabels: false,
     selectClusterModalVisible: false,
 };
 
@@ -54,6 +58,20 @@ export const listEMRClusters = createAsyncThunk('emr/list', async (params: Serve
         addPagingParams(`/project/${params.projectName}/emr`, params)
     );
 });
+
+export const listEMRApplications = createAsyncThunk(
+    'emr/applications',
+    async () => {
+        return await axios.get<string[]>('/emr/applications');
+    }
+);
+
+export const listEMRReleaseLabels = createAsyncThunk(
+    'emr/release',
+    async () => {
+        return await axios.get<ListEMRReleaseLabelsProps>('/emr/release');
+    }
+);
 
 export const getEMRCluster = createAsyncThunk('emr/get_cluster', async (clusterId: string) => {
     const response = await axios.get(`/emr/${clusterId}`);
@@ -107,6 +125,20 @@ export const EMRClusterSlice = createSlice({
                     },
                 };
             })
+            .addMatcher(isFulfilled(listEMRApplications), (state, action) => {
+                return {
+                    ...state,
+                    loadingApplications: false,
+                    applications: action.payload.data,
+                };
+            })
+            .addMatcher(isFulfilled(listEMRReleaseLabels), (state, action) => {
+                return {
+                    ...state,
+                    loadingReleaseLabels: false,
+                    releaseLabels: action.payload.data.ReleaseLabels,
+                };
+            })
             .addMatcher(isPending(getEMRCluster), (state) => {
                 return {
                     ...state,
@@ -118,13 +150,35 @@ export const EMRClusterSlice = createSlice({
                     ...state,
                     loadingClusters: true,
                 };
+            })
+            .addMatcher(isPending(listEMRApplications), (state) => {
+                return {
+                    ...state,
+                    loadingApplications: true,
+                };
+            })
+            .addMatcher(isPending(listEMRReleaseLabels), (state) => {
+                return {
+                    ...state,
+                    loadingReleaseLabels: true,
+                };
             });
+
     },
 });
+
+
+type ListEMRReleaseLabelsProps = {
+    ReleaseLabels: string[];
+};
+
 
 export const { toggleSelectClusterModal, clearClustersList } = EMRClusterSlice.actions;
 export const selectEMRClusters = (state: any) => state.emr.clusters;
 export const selectedEMRCluster = (state: any) => state.emr.cluster;
+export const emrApplications = (state: any) => state.emr.applications;
+export const emrReleaseLabels = (state: any) => state.emr.releaseLabels;
+export const loadingReleaseLabels = (state: any) => state.emr.loadingReleaseLabels;
 export const loadingCluster = (state: any) => state.emr.loadingCluster;
 export const loadingClustersList = (state: any) => state.emr.loadingClusters;
 

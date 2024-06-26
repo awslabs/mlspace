@@ -249,7 +249,7 @@ export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerS
         } as T;
 
         const result = await dispatch(props.fetchDataThunk(params));
-        setLoading({ loadingAdditional: false, loadingEmpty: false, loadingInBackground: false });
+        setLoading({ ...loading, loadingAdditional: false, loadingEmpty: false });
         // Store the latest pagination token from the API response
         if (result.payload) {
             setNextToken(result.payload.data.nextToken);
@@ -268,10 +268,15 @@ export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerS
     }, [loading.loadingEmpty]);
 
     // Refresh data in the background to keep state fresh
-    useBackgroundRefresh(() => {
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await fetchData(false);
         setLoading({ loadingAdditional: false, loadingEmpty: false, loadingInBackground: true });
-        fetchData(false);
-    });
+    }, [fetchData, setLoading]);
+    
+    useEffect(() => {
+        setLoading({ ...loading, loadingInBackground: isBackgroundRefreshing });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isBackgroundRefreshing]);
 
     useEffect(() => {
         setLoading({ ...loading, loadingEmpty: true });

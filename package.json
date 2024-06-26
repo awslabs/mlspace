@@ -11,7 +11,7 @@
         "prepare": "npm run-script build",
         "test": "echo 'No Tests'",
         "lint:fix": "eslint --fix --ext .ts lib/",
-        "config": "node ./bin/scripts/config-helper.js"
+        "config": "node ./bin/scripts/config-helper.mjs"
     },
     "devDependencies": {
         "@aws-sdk/client-s3": "^3.400.0",
@@ -33,7 +33,9 @@
         "typescript": "~4.7.4"
     },
     "dependencies": {
-        "aws-cdk-lib": "^2.93.0"
+        "aws-cdk-lib": "^2.93.0",
+        "fs-extra": "^11.2.0",
+        "jsonschema": "^1.4.1"
     },
     "lint-staged": {
         "**/*.{js,jsx,ts,tsx}": [

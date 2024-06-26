@@ -30,7 +30,7 @@ from ml_space_lambda.data_access_objects.project import ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.enums import DatasetType, Permission, ResourceType
+from ml_space_lambda.enums import DatasetType, Permission, ResourceType, ServiceType
 
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "OIDC_VERIFY_SIGNATURE": "False"}
 MOCK_OIDC_ENV = {
@@ -44,6 +44,7 @@ MOCK_OIDC_ENV = {
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.authorizer.lambda_function import lambda_handler
+    from ml_space_lambda.utils.app_config_utils import get_app_config
 
 MOCK_USERNAME = "test@amazon.com"
 
@@ -73,12 +74,13 @@ def policy_response(
     project: ProjectModel = None,
     username: str = MOCK_USERNAME,
     valid_token: bool = True,
+    default_to_username: bool = False,
 ):
     response_context = {}
     principal_id = "Unknown"
     if valid_token:
-        principal_id = user.username if user else username
-        if user and not user.suspended:
+        principal_id = user.username if user and not default_to_username else username
+        if user and not user.suspended and not default_to_username:
             response_context = {"user": json.dumps(user.to_dict())}
         if project:
             response_context["projectName"] = project.name
@@ -132,6 +134,66 @@ def mock_event(
         "methodArn": "fakeArn",
         "headers": headers,
     }
+
+
+def generate_test_config(config_scope: str = "global", is_project: bool = False, admin_only: bool = False) -> dict:
+    config = {
+        "configScope": config_scope,
+        "versionId": 1,
+        "changeReason": "Testing",
+        "changedBy": "Tester",
+        "createdAt": 1,
+        "configuration": {
+            "EnabledInstanceTypes": {
+                ServiceType.NOTEBOOK.value: [],
+                ServiceType.ENDPOINT.value: [],
+                ServiceType.TRAINING_JOB.value: [],
+                ServiceType.TRANSFORM_JOB.value: [],
+            },
+            "EnabledServices": {
+                ServiceType.REALTIME_TRANSLATE.value: "true",
+                ServiceType.BATCH_TRANSLATE.value: "false",
+                ServiceType.LABELING_JOB.value: "true",
+                ServiceType.EMR_CLUSTER.value: "true",
+                ServiceType.ENDPOINT.value: "true",
+                ServiceType.ENDPOINT_CONFIG.value: "false",
+                ServiceType.HPO_JOB.value: "true",
+                ServiceType.MODEL.value: "true",
+                ServiceType.NOTEBOOK.value: "false",
+                ServiceType.TRAINING_JOB.value: "true",
+                ServiceType.TRANSFORM_JOB.value: "true",
+            },
+            "EMRConfig": {
+                "clusterTypes": [
+                    {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
+                ],
+                "autoScaling": {
+                    "minInstances": 2,
+                    "maxInstances": 15,
+                    "scaleOut": {"increment": 1, "percentageMemAvailable": 15, "evalPeriods": 1, "cooldown": 300},
+                    "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
+                },
+                "applications": [
+                    {"Name": "Hadoop"},
+                    {"Name": "Spark"},
+                ],
+            },
+        },
+    }
+    # If this config is not for a project, add the app-wide specific configurations
+    if not is_project:
+        config["configuration"]["ProjectCreation"] = {
+            "isAdminOnly": admin_only,
+            "allowedGroups": ["Justice League", "Avengers", "TMNT"],
+        }
+        config["configuration"]["SystemBanner"] = {
+            "isEnabled": "true",
+            "textColor": "Red",
+            "backgroundColor": "White",
+            "text": "Jeff Bezos",
+        }
+
+    return config
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
@@ -1637,6 +1699,61 @@ def test_config_routes(mock_user_dao, user: UserModel, method: str, allow: bool)
 
 
 @pytest.mark.parametrize(
+    "user,project_user,method,path_params,allow",
+    [
+        (MOCK_USER, None, "POST", None, False),
+        (MOCK_ADMIN_USER, None, "POST", None, True),
+        (MOCK_USER, None, "GET", None, True),
+        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "GET", {"projectName": MOCK_PROJECT_NAME}, True),
+        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, False),
+        (MOCK_OWNER_USER, MOCK_OWNER_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, True),
+        (None, None, "GET", None, True),
+        (None, None, "POST", None, False),
+    ],
+    ids=[
+        "user_update_app_config",
+        "admin_update_app_config",
+        "user_get_app_config",
+        "user_get_project_config",
+        "user_update_project_config",
+        "project_owner_update_project_config",
+        "non_user_get_app_config",
+        "non_user_update_app_config",
+    ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_app_config_routes(
+    mock_user_dao,
+    mock_project_user_dao,
+    user: UserModel,
+    project_user: ProjectUserModel,
+    method: str,
+    path_params: dict,
+    allow: bool,
+):
+    mock_user_dao.get.return_value = user
+    mock_project_user_dao.get.return_value = project_user
+    # GET requests return an Allow policy immediately, so the user won't be set in the response
+    assert lambda_handler(
+        mock_event(
+            user=user,
+            resource="/app-config",
+            method=method,
+            path_params=path_params,
+        ),
+        {},
+    ) == policy_response(
+        allow=allow, user=user, username="Unknown" if method == "GET" else MOCK_USERNAME, default_to_username=method == "GET"
+    )
+    if user and method != "GET":
+        mock_user_dao.get.assert_called_with(user.username)
+    elif user and method == "GET":
+        mock_user_dao.get.assert_not_called()
+
+
+@pytest.mark.parametrize(
     "user,method,allow",
     [
         (MOCK_USER, "POST", False),
@@ -1865,19 +1982,35 @@ def test_logs_routes(
         mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
 
+@pytest.mark.parametrize(
+    "user,admin_only,allow",
+    [
+        (MOCK_ADMIN_USER, True, True),
+        (MOCK_USER, True, False),
+        (MOCK_USER, False, True),
+    ],
+    ids=["admin_user_admin_only", "normal_user_admin_only", "normal_user_not_admin_only"],
+)
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.utils.app_config_utils.app_configuration_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_create_project(mock_user_dao):
-    mock_user_dao.get.return_value = MOCK_USER
+def test_create_project(mock_user_dao, mock_app_configuration_dao, user: UserModel, admin_only: bool, allow: bool):
+    mock_user_dao.get.return_value = user
+    mock_app_configuration_dao.get.return_value = [generate_test_config(admin_only=admin_only)]
+    get_app_config.cache_clear()
     assert lambda_handler(
         mock_event(
-            user=MOCK_USER,
+            user=user,
             resource="/project",
             method="POST",
         ),
         {},
-    ) == policy_response(allow=True, user=MOCK_USER)
-    mock_user_dao.get.assert_called_with(MOCK_USER.username)
+    ) == policy_response(allow=allow, user=user)
+    mock_user_dao.get.assert_called_with(user.username)
+    if Permission.ADMIN in user.permissions:
+        mock_app_configuration_dao.get.assert_not_called()
+    else:
+        mock_app_configuration_dao.get.assert_called_with(configScope="global", num_versions=1)
 
 
 @pytest.mark.parametrize(
@@ -1980,14 +2113,17 @@ def test_stop_batch_translate_job(
 
 
 @mock.patch.dict("os.environ", MOCK_OIDC_ENV, clear=True)
+@mock.patch("ml_space_lambda.utils.app_config_utils.app_configuration_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.http")
-def test_verified_token(mock_http, mock_user_dao, mock_well_known_config, mock_oidc_jwks_keys):
+def test_verified_token(mock_http, mock_user_dao, mock_app_config, mock_well_known_config, mock_oidc_jwks_keys):
     mock_http.request.side_effect = [
         mock_well_known_config,
         mock_oidc_jwks_keys,
     ]
     mock_user_dao.get.return_value = MOCK_USER
+    mock_app_config.get.return_value = [generate_test_config()]
+    get_app_config.cache_clear()
     assert lambda_handler(mock_event(user=MOCK_USER, resource="/project", method="POST"), {}) == policy_response(
         allow=True, user=MOCK_USER
     )
@@ -2268,7 +2404,6 @@ def test_username_normalization(mock_user_dao, user: UserModel, method: str, all
     modified_policy_response = policy_response(allow=allow, user=user)
     modified_policy_response["principalId"] = response_username
 
-    print(f"caca = {response_username}")
     assert (
         lambda_handler(
             mock_event(

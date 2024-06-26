@@ -23,12 +23,15 @@ import {
     FormField
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { setActiveHref, setItemsForProjectName } from './navigation.reducer';
+import {setActiveHref, setItemsForProjectName} from './navigation.reducer';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import { IProject } from '../../model/project.model';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { colorTextBodyDefault } from '@cloudscape-design/design-tokens';
 import Logo from '../logo/logo';
+import { appConfig } from '../../../entities/configuration/configuration-reducer';
+import { IAppConfiguration } from '../../model/app.configuration.model';
+import HorizontalLine from '../horizontal-line';
 
 export default function SideNavigation () {
     const items: SideNavigationProps.Item[] = useAppSelector((state) => state.navigation.navItems);
@@ -39,6 +42,7 @@ export default function SideNavigation () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const project: IProject = useAppSelector((state) => state.project.project);
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const defaultState: OptionDefinition = {
         label: 'Select a project',
         value: '',
@@ -71,7 +75,7 @@ export default function SideNavigation () {
         { type: 'link', text: 'Notebook instances', href: '#/personal/notebook' },
         { type: 'link', text: 'Datasets', href: '#/personal/dataset' },
     ];
-    if (window.env.ENABLE_TRANSLATE) {
+    if (applicationConfig.configuration.EnabledServices.realtimeTranslate) {
         personalNavItems.push({
             type: 'link',
             text: 'Real-time Translation',
@@ -140,8 +144,9 @@ export default function SideNavigation () {
                         </span>
                     </a>
                 </Header>
+                <HorizontalLine/>
             </div>
-            <hr style={{ opacity: 0.2 }} />
+            
             <div style={{ paddingLeft: '28px', paddingRight: '26px', paddingTop: '12px' }}>
                 <FormField label='Current Project'>
                     <Select

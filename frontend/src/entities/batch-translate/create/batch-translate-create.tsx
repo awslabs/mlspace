@@ -24,7 +24,6 @@ import {
     FormField,
     Input,
     Container,
-    ContentLayout,
     Select,
     Multiselect,
     Toggle,
@@ -57,6 +56,7 @@ import '../../../shared/validation/helpers/uri';
 import { datasetFromS3Uri } from '../../../shared/util/dataset-utils';
 import { isFulfilled } from '@reduxjs/toolkit';
 import { AUTO_SOURCE_LANGUAGE_UNSUPPORTED } from '..';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 export function BatchTranslateCreate () {
     const [errorText] = useState('');
@@ -333,7 +333,7 @@ export function BatchTranslateCreate () {
                     <Container header={<Header variant='h2'>Input data</Header>}>
                         <DatasetResourceSelector
                             fieldLabel={'S3 Location'}
-                            selectableItemsTypes={['objects']}
+                            selectableItemsTypes={['objects', 'prefixes']}
                             onChange={({detail}) => {
                                 setFields({
                                     'InputDataConfig.S3Uri': detail.resource,

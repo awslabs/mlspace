@@ -25,6 +25,7 @@ export const PROJECT_USERS_TABLE_NAME = 'mlspace-project-users';
 export const USERS_TABLE_NAME = 'mlspace-users';
 export const RESOURCE_SCHEDULE_TABLE_NAME = 'mlspace-resource-schedule';
 export const RESOURCE_METADATA_TABLE_NAME = 'mlspace-resource-metadata';
+export const APP_CONFIGURATION_TABLE_NAME = 'mlspace-app-configuration';
 export const CONFIG_BUCKET_NAME = 'mlspace-config';
 export const DATA_BUCKET_NAME = 'mlspace-data';
 export const LOGS_BUCKET_NAME = 'mlspace-logs';
@@ -74,6 +75,7 @@ export const ADDITIONAL_LAMBDA_ENVIRONMENT_VARS: { [key: string]: string } = {};
  */
 export const NOTEBOOK_ROLE_ARN = '';
 export const APP_ROLE_ARN = '';
+export const SYSTEM_ROLE_ARN = '';
 
 /* EMR Configuration */
 // Role that will be used as the "ServiceRole" for all EMR clusters
@@ -81,6 +83,9 @@ export const EMR_DEFAULT_ROLE_ARN = '';
 // Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters
 export const EMR_EC2_INSTANCE_ROLE_ARN = '';
 export const EMR_SECURITY_CONFIG_NAME = 'MLSpace-EMR-SecurityConfig';
+
+// The name of the EC2 key pair that can be used to connect to the master node using SSH as the user called “hadoop.”
+export const EMR_EC2_SSH_KEY = '';
 
 // Set this to false to disable access logging on all MLSpace S3 buckets and the APIGW
 export const ENABLE_ACCESS_LOGGING = true;
@@ -95,13 +100,27 @@ export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = true;
 export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
 
 // Whether or not translate functionality should be include in the deployment
+/**
+ * @deprecated This constant will be removed in the next release. Activating and deactivating the Translate service
+ * is now handled by the app config feature.
+ */
 export const ENABLE_TRANSLATE = true;
 
-// Whether or not GroundTruth labeling functionality should be include in the deployment
+// Whether or not Ground Truth labeling functionality should be include in the deployment
+/**
+ * @deprecated This constant will be removed in the next release. Activating and deactivating the GroundTruth service
+ * is now handled by the app config feature.
+ */
 export const ENABLE_GROUNDTRUTH = true;
 
 // The default name for the application
 export const APPLICATION_NAME = 'MLSpace';
+
+// Policy names attached to NOTEBOOK_ROLE_ARN that restricts instance types that a notebook
+// can use for each service
+export const ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN = '';
+// Training / HPO / Transform
+export const JOB_INSTANCE_CONSTRAINT_POLICY_ARN = '';
 
 /* Web app properties */
 export const IDP_ENDPOINT_SSM_PARAM = '';
@@ -119,6 +138,7 @@ export const OIDC_VERIFY_SIGNATURE = true;
 // This defaults to the APIGW url but if you're using custom DNS you should set this to that
 export const OIDC_REDIRECT_URI = '';
 // Optional system banner which will be displayed at the top and the bottom of MLSpace
+// These Banner settings are deprecated. Use the Dynamic configuration instead.
 export const SYSTEM_BANNER_BACKGROUND_COLOR = 'black';
 export const SYSTEM_BANNER_TEXT = '';   // If this value is not set then no banner will be displayed
 export const SYSTEM_BANNER_TEXT_COLOR = 'white';

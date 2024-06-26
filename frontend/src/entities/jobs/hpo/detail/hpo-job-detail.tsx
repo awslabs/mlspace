@@ -20,7 +20,6 @@ import {
     Button,
     ColumnLayout,
     Container,
-    ContentLayout,
     Grid,
     Header,
     SpaceBetween,
@@ -47,6 +46,7 @@ import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import NotificationService from '../../../../shared/layout/notification/notification.service';
 import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 export function HPOJobDetail () {
     const { projectName, jobName } = useParams();
@@ -54,6 +54,7 @@ export function HPOJobDetail () {
     const navigate = useNavigate();
     const HPOJobDetailsLoading = useAppSelector(loadingHPOJob);
     const notificationService = NotificationService(dispatch);
+    const [initialLoaded, setInitialLoaded] = useState(false);
 
     scrollToPageHeader();
     DocTitle('HPO Job Details: ', jobName);
@@ -88,6 +89,7 @@ export function HPOJobDetail () {
         } else {
             setState((s) => ({ ...s, hpoTrainingJob, trainingJobs }));
         }
+        setInitialLoaded(true);
     }, [dispatch, jobName, navigate]);
 
     useEffect(() => {
@@ -118,13 +120,13 @@ export function HPOJobDetail () {
     }
 
     // Refresh data in the background to keep state fresh
-    const isBackgroundRefreshing = useBackgroundRefresh(() => {
-        loadAll();
-    }, [dispatch], (state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Failed && state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Completed));
+    const isBackgroundRefreshing = useBackgroundRefresh(async () => {
+        await loadAll();
+    }, [dispatch, state.hpoTrainingJob?.HyperParameterTuningJobStatus], (state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Failed && state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Completed));
 
     return (
         <ContentLayout header={<Header variant='h1'>{jobName}</Header>}>
-            {HPOJobDetailsLoading && !isBackgroundRefreshing ? (
+            {HPOJobDetailsLoading && !initialLoaded ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
                 </Container>
@@ -244,9 +246,9 @@ export function HPOJobDetail () {
                                 <SpaceBetween direction='vertical' size='l'>
                                     <div>
                                         <Box color='text-status-inactive'>Status</Box>
-                                        {prettyStatus(
+                                        {prettyStatus(isBackgroundRefreshing ? 'Loading' :
                                             state.hpoTrainingJob?.HyperParameterTuningJobStatus,
-                                            state.hpoTrainingJob?.FailureReason
+                                        state.hpoTrainingJob?.FailureReason
                                         )}
                                     </div>
 
