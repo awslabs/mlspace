@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')
     steps:
+      - name: Checkout Source Tag
+        uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Get Version
         id: get-version
         run: |
