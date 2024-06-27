@@ -55,6 +55,7 @@ export const EXISTING_VPC_NAME = '';
 export const EXISTING_VPC_ID = '';
 export const EXISTING_VPC_DEFAULT_SECURITY_GROUP = '';
 export const EXISTING_KMS_MASTER_KEY_ARN = '';
+export const KMS_INSTANCE_CONDITIONS_POLICY_ARN = '';
 export const S3_READER_ROLE_ARN = '';
 export const BUCKET_DEPLOYMENT_ROLE_ARN = '';
 

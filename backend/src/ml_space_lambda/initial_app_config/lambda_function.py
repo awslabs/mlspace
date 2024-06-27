@@ -17,7 +17,7 @@ import logging
 import boto3
 
 from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
-from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO
+from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, SettingsModel
 from ml_space_lambda.enums import EnvVariable, ServiceType
 from ml_space_lambda.metadata.lambda_functions import get_compute_types
 from ml_space_lambda.utils.common_functions import generate_html_response
@@ -51,19 +51,23 @@ def lambda_handler(event, context):
 
     # if not using dynamic roles then there is no need to update these roles/policies
     if env_vars[EnvVariable.MANAGE_IAM_ROLES]:
-        update_instance_constraint_policies(config, context)
-        update_dynamic_roles_with_notebook_policies()
+        settings = SettingsModel.from_dict(config["configuration"])
+        update_instance_constraint_policies(settings.enabled_instance_types, context)
 
     generate_html_response(200, "Successfully updated app config")
 
 
-def update_dynamic_roles_with_notebook_policies():
+def update_dynamic_roles_with_notebook_policies(event, context):
     env_vars = get_environment_variables()
+    if not env_vars[EnvVariable.MANAGE_IAM_ROLES.value]:
+        return
+
     iam_manager = IAMManager(iam)
     role_names = iam_manager.find_dynamic_user_roles()
     policy_arns = [
-        env_vars[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN],
-        env_vars[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN],
+        env_vars[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value],
+        env_vars[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value],
+        env_vars[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value],
     ]
     iam_manager.attach_policies_to_roles(policy_arns, role_names)
 
