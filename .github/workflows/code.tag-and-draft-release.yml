@@ -13,10 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')
     steps:
-      - name: get-version
+      - name: Get Version
+        id: get-version
         run: |
-          version=$(echo ${{ github.event.pull_request.head.ref }} | cut -d/ -f2)
-          echo "version=version" >> $GITHUB_OUTPUT
+          version=$(echo ${{github.event.pull_request.head.ref}} | cut -d/ -f2)
+          echo "version=$version" >> $GITHUB_OUTPUT
           echo "VERSION = $version"
       - name: Create Release
         run: |
