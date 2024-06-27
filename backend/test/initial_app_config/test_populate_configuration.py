@@ -16,9 +16,10 @@
 
 from unittest import mock
 
-from ml_space_lambda.enums import ServiceType
+from ml_space_lambda.enums import EnvVariable, ServiceType
+from ml_space_lambda.utils import mlspace_config
 
-TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1"}
+TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", EnvVariable.MANAGE_IAM_ROLES.value: "True"}
 
 mock_context = mock.Mock()
 mock_event = mock.Mock()
@@ -54,22 +55,33 @@ MOCK_COMPUTE_TYPES = {
 }
 
 
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.initial_app_config.lambda_function.update_dynamic_roles_with_notebook_policies")
 @mock.patch("ml_space_lambda.initial_app_config.lambda_function.get_compute_types")
+@mock.patch("ml_space_lambda.initial_app_config.lambda_function.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.initial_app_config.lambda_function.app_configuration_dao")
-def test_initial_config_success(mock_app_config_dao, mock_compute_types, update_dynamic_roles_with_notebook_policies):
+def test_initial_config_success(
+    mock_app_config_dao,
+    mock_update_instance_constraint_policies,
+    mock_compute_types,
+    update_dynamic_roles_with_notebook_policies,
+):
+    mlspace_config.env_variables = {}
+
     mock_app_config_dao.get.return_value = [generate_config()]
     mock_app_config_dao.update.return_value = None
     mock_compute_types.return_value = MOCK_COMPUTE_TYPES
 
     lambda_handler(mock_event, mock_context)
 
-    # The outgoing config should now contain the instance types for each service
-    mock_app_config_dao.update.assert_called_with(
-        generate_config(
-            notebook_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["InstanceType"],
-            endpoint_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["ProductionVariantInstanceType"],
-            training_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["TrainingInstanceType"],
-            transform_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["TransformInstanceType"],
-        )
+    generated_config = generate_config(
+        notebook_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["InstanceType"],
+        endpoint_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["ProductionVariantInstanceType"],
+        training_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["TrainingInstanceType"],
+        transform_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["TransformInstanceType"],
     )
+
+    # The outgoing config should now contain the instance types for each service
+    mock_app_config_dao.update.assert_called_with(generated_config)
+
+    mock_update_instance_constraint_policies.assert_called_with(generated_config, mock_context)
