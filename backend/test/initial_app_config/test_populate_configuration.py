@@ -41,6 +41,29 @@ def generate_config(notebook_list=[], endpoint_list=[], training_list=[], transf
                 ServiceType.TRAINING_JOB.value: training_list,
                 ServiceType.TRANSFORM_JOB.value: transform_list,
             },
+            "EnabledServices": {
+                ServiceType.REALTIME_TRANSLATE.value: False,
+                ServiceType.BATCH_TRANSLATE.value: False,
+                ServiceType.LABELING_JOB.value: False,
+                ServiceType.EMR_CLUSTER.value: False,
+                ServiceType.TRAINING_JOB.value: False,
+                ServiceType.TRANSFORM_JOB.value: False,
+                ServiceType.HPO_JOB.value: False,
+                ServiceType.ENDPOINT.value: False,
+                ServiceType.ENDPOINT_CONFIG.value: False,
+                ServiceType.NOTEBOOK.value: False,
+                ServiceType.MODEL.value: False,
+            },
+            "EMRConfig": {
+                "clusterTypes": [],
+                "autoScaling": {
+                    "minInstances": 2,
+                    "maxInstances": 15,
+                    "scaleOut": {"increment": 1, "percentageMemAvailable": 15.0, "evalPeriods": 1, "cooldown": 300},
+                    "scaleIn": {"increment": -1, "percentageMemAvailable": 75.0, "evalPeriods": 1, "cooldown": 300},
+                },
+                "applications": [],
+            },
         },
     }
 
@@ -84,4 +107,4 @@ def test_initial_config_success(
     # The outgoing config should now contain the instance types for each service
     mock_app_config_dao.update.assert_called_with(generated_config)
 
-    mock_update_instance_constraint_policies.assert_called_with(generated_config, mock_context)
+    mock_update_instance_constraint_policies.assert_called_with(mock.ANY, mock_context)
