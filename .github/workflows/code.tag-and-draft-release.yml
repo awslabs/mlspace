@@ -1,9 +1,9 @@
 name: Publish Tag and Draft Release
+
 on:
   pull_request:
     branches: ["release/**", "hotfix/**"]
-    types:
-      - closed
+    types: [closed]
 
 permissions:
   id-token: write
