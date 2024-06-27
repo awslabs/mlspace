@@ -11,7 +11,7 @@ permissions:
 jobs:
   DraftRelease:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')
+    if: (startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')) && github.event.pull_request.merged == true
     steps:
       - name: Checkout Source Tag
         uses: actions/checkout@v4
