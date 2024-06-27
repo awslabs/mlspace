@@ -91,7 +91,7 @@ export class IAMStack extends Stack {
         const mlspaceSystemRoleName = 'mlspace-system-role';
         const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
 
-        
+
         if (props.mlspaceConfig.KMS_INSTANCE_CONDITIONS_POLICY_ARN) {
             this.mlspaceKmsInstanceConditionsPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-kms-instance-constraint-policy', props.mlspaceConfig.KMS_INSTANCE_CONDITIONS_POLICY_ARN);
         } else {
@@ -1079,7 +1079,7 @@ export class IAMStack extends Stack {
                 managedPolicies: [
                     appPolicy, 
                     ...notebookManagedPolicies,
-                    ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
+                    ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')
                 ],
                 description:
                     'Allows ML Space Application to access necessary AWS services (S3, SQS, DynamoDB, ...)',
