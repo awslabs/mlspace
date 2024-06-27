@@ -122,19 +122,19 @@ class ServiceInstanceTypes:
 
     def to_dict(self) -> dict:
         return {
-            ServiceType.NOTEBOOK.value: self.notebook_instance_types,
-            ServiceType.ENDPOINT.value: self.endpoint_instance_types,
-            ServiceType.TRAINING_JOB.value: self.training_job_instance_types,
-            ServiceType.TRANSFORM_JOB.value: self.transform_jobs_instance_types,
+            ServiceType.NOTEBOOK: self.notebook_instance_types,
+            ServiceType.ENDPOINT: self.endpoint_instance_types,
+            ServiceType.TRAINING_JOB: self.training_job_instance_types,
+            ServiceType.TRANSFORM_JOB: self.transform_jobs_instance_types,
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> ServiceInstanceTypes:
         return ServiceInstanceTypes(
-            dict_object[ServiceType.NOTEBOOK.value],
-            dict_object[ServiceType.ENDPOINT.value],
-            dict_object[ServiceType.TRAINING_JOB.value],
-            dict_object[ServiceType.TRANSFORM_JOB.value],
+            dict_object[ServiceType.NOTEBOOK],
+            dict_object[ServiceType.ENDPOINT],
+            dict_object[ServiceType.TRAINING_JOB],
+            dict_object[ServiceType.TRANSFORM_JOB],
         )
 
 
@@ -167,33 +167,33 @@ class EnabledServices:
 
     def to_dict(self) -> dict:
         return {
-            ServiceType.REALTIME_TRANSLATE.value: self.realtime_translate,
-            ServiceType.BATCH_TRANSLATE.value: self.batch_translate,
-            ServiceType.LABELING_JOB.value: self.labeling_job,
-            ServiceType.EMR_CLUSTER.value: self.emr,
-            ServiceType.TRAINING_JOB.value: self.training_job,
-            ServiceType.TRANSFORM_JOB.value: self.transform_job,
-            ServiceType.HPO_JOB.value: self.hpo_job,
-            ServiceType.ENDPOINT.value: self.endpoint,
-            ServiceType.ENDPOINT_CONFIG.value: self.endpoint_congig,
-            ServiceType.NOTEBOOK.value: self.notebook,
-            ServiceType.MODEL.value: self.model,
+            ServiceType.REALTIME_TRANSLATE: self.realtime_translate,
+            ServiceType.BATCH_TRANSLATE: self.batch_translate,
+            ServiceType.LABELING_JOB: self.labeling_job,
+            ServiceType.EMR_CLUSTER: self.emr,
+            ServiceType.TRAINING_JOB: self.training_job,
+            ServiceType.TRANSFORM_JOB: self.transform_job,
+            ServiceType.HPO_JOB: self.hpo_job,
+            ServiceType.ENDPOINT: self.endpoint,
+            ServiceType.ENDPOINT_CONFIG: self.endpoint_congig,
+            ServiceType.NOTEBOOK: self.notebook,
+            ServiceType.MODEL: self.model,
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> EnabledServices:
         return EnabledServices(
-            dict_object[ServiceType.REALTIME_TRANSLATE.value],
-            dict_object[ServiceType.BATCH_TRANSLATE.value],
-            dict_object[ServiceType.LABELING_JOB.value],
-            dict_object[ServiceType.EMR_CLUSTER.value],
-            dict_object[ServiceType.TRAINING_JOB.value],
-            dict_object[ServiceType.TRANSFORM_JOB.value],
-            dict_object[ServiceType.HPO_JOB.value],
-            dict_object[ServiceType.ENDPOINT.value],
-            dict_object[ServiceType.ENDPOINT_CONFIG.value],
-            dict_object[ServiceType.NOTEBOOK.value],
-            dict_object[ServiceType.MODEL.value],
+            dict_object[ServiceType.REALTIME_TRANSLATE],
+            dict_object[ServiceType.BATCH_TRANSLATE],
+            dict_object[ServiceType.LABELING_JOB],
+            dict_object[ServiceType.EMR_CLUSTER],
+            dict_object[ServiceType.TRAINING_JOB],
+            dict_object[ServiceType.TRANSFORM_JOB],
+            dict_object[ServiceType.HPO_JOB],
+            dict_object[ServiceType.ENDPOINT],
+            dict_object[ServiceType.ENDPOINT_CONFIG],
+            dict_object[ServiceType.NOTEBOOK],
+            dict_object[ServiceType.MODEL],
         )
 
 

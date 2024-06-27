@@ -187,7 +187,7 @@ def create_dataset(event, context):
     dataset_name = body.get("datasetName")
     env_variables = get_environment_variables()
 
-    if dataset_type == DatasetType.GLOBAL.value:
+    if dataset_type == DatasetType.GLOBAL:
         scope = "global"
         directory_name = f"global/datasets/{dataset_name}/"
     else:
@@ -217,7 +217,7 @@ def list_resources(event, context):
     username = event["requestContext"]["authorizer"]["principalId"]
     datasets = []
     # Get global datasets
-    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
+    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
     # Get the users private datasets
     datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
 

@@ -115,7 +115,7 @@ class TestDatasetDAO(TestCase):
 
     def test_create_dataset(self):
         new_ds = DatasetModel(
-            DatasetType.GLOBAL.value,
+            DatasetType.GLOBAL,
             "test-dataset",
             "Dataset for unit test.",
             "s3://mlspace-datasets-123456789/global/test-dataset",
@@ -124,7 +124,7 @@ class TestDatasetDAO(TestCase):
         self.dataset_dao.create(new_ds)
         dynamo_response = self.ddb.get_item(
             TableName=self.TEST_TABLE,
-            Key={"scope": {"S": DatasetType.GLOBAL.value}, "name": {"S": new_ds.name}},
+            Key={"scope": {"S": DatasetType.GLOBAL}, "name": {"S": new_ds.name}},
         )
         assert dynamo_response["Item"]
 

@@ -444,7 +444,7 @@ def update_project_user(event, context):
     if not project_user:
         raise ResourceNotFound(f"User {username} is not a member of {project_name}")
 
-    if Permission.PROJECT_OWNER in project_user.permissions and Permission.PROJECT_OWNER.value not in updates["permissions"]:
+    if Permission.PROJECT_OWNER in project_user.permissions and Permission.PROJECT_OWNER not in updates["permissions"]:
         if total_project_owners(project_user_dao, project_name) < 2:
             raise Exception(f"Cannot remove last Project Owner from {project_name}.")
 

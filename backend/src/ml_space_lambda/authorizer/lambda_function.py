@@ -305,16 +305,16 @@ def lambda_handler(event, context):
                 if "x-mlspace-dataset-type" in event["headers"] and "x-mlspace-dataset-scope" in event["headers"]:
                     target_type = event["headers"]["x-mlspace-dataset-type"]
                     target_scope = event["headers"]["x-mlspace-dataset-scope"]
-                    if target_type == DatasetType.GLOBAL.value:
+                    if target_type == DatasetType.GLOBAL:
                         policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.PROJECT.value:
+                    elif target_type == DatasetType.PROJECT:
                         if Permission.ADMIN in user.permissions:
                             policy_statement["Effect"] = "Allow"
                         else:
                             project_user = project_user_dao.get(target_scope, username)
                             if project_user:
                                 policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.PRIVATE.value and username == target_scope:
+                    elif target_type == DatasetType.PRIVATE and username == target_scope:
                         policy_statement["Effect"] = "Allow"
                 else:
                     logger.info(

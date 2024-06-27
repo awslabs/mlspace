@@ -34,14 +34,14 @@ def lambda_handler(event, context):
     resp = app_configuration_dao.get("global")
     config = resp[0]
 
-    config["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK.value] = instances["InstanceTypes"]["InstanceType"]
-    config["configuration"]["EnabledInstanceTypes"][ServiceType.TRAINING_JOB.value] = instances["InstanceTypes"][
+    config["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK] = instances["InstanceTypes"]["InstanceType"]
+    config["configuration"]["EnabledInstanceTypes"][ServiceType.TRAINING_JOB] = instances["InstanceTypes"][
         "TrainingInstanceType"
     ]
-    config["configuration"]["EnabledInstanceTypes"][ServiceType.TRANSFORM_JOB.value] = instances["InstanceTypes"][
+    config["configuration"]["EnabledInstanceTypes"][ServiceType.TRANSFORM_JOB] = instances["InstanceTypes"][
         "TransformInstanceType"
     ]
-    config["configuration"]["EnabledInstanceTypes"][ServiceType.ENDPOINT.value] = instances["InstanceTypes"][
+    config["configuration"]["EnabledInstanceTypes"][ServiceType.ENDPOINT] = instances["InstanceTypes"][
         "ProductionVariantInstanceType"
     ]
 

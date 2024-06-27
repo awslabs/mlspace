@@ -37,7 +37,7 @@ def create(event, context):
     entity = json.loads(event["body"])
     username = entity["username"]
     suspended_state = get_environment_variables().get("NEW_USER_SUSPENSION_DEFAULT") == "True"
-    preferences = {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL.value}
+    preferences = {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL}
 
     existing_user = user_dao.get(username)
     if existing_user:

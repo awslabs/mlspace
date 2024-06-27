@@ -35,10 +35,10 @@ def generate_config(notebook_list=[], endpoint_list=[], training_list=[], transf
         "createdAt": 1,
         "configuration": {
             "EnabledInstanceTypes": {
-                ServiceType.NOTEBOOK.value: notebook_list,
-                ServiceType.ENDPOINT.value: endpoint_list,
-                ServiceType.TRAINING_JOB.value: training_list,
-                ServiceType.TRANSFORM_JOB.value: transform_list,
+                ServiceType.NOTEBOOK: notebook_list,
+                ServiceType.ENDPOINT: endpoint_list,
+                ServiceType.TRAINING_JOB: training_list,
+                ServiceType.TRANSFORM_JOB: transform_list,
             },
         },
     }

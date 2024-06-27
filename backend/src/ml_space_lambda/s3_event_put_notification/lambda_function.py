@@ -39,11 +39,11 @@ def _create_dataset_record(metadata, key):
 
     env_variables = get_environment_variables()
 
-    if dataset_type == DatasetType.GLOBAL.value:
-        scope = DatasetType.GLOBAL.value
+    if dataset_type == DatasetType.GLOBAL:
+        scope = DatasetType.GLOBAL
         dataset_name = split_key[2]
         dataset_location = f's3://{env_variables["DATA_BUCKET"]}/global/datasets/{dataset_name}/'
-    elif dataset_type in [DatasetType.PRIVATE.value, DatasetType.PROJECT.value]:
+    elif dataset_type in [DatasetType.PRIVATE, DatasetType.PROJECT]:
         scope = split_key[1]
         dataset_name = split_key[3]
         dataset_location = f's3://{env_variables["DATA_BUCKET"]}/{dataset_type}/{scope}/datasets/{dataset_name}/'
@@ -95,9 +95,9 @@ def _handle_notebook_upload(bucket, key, username):
     # TODO: Is there anyway we can get the actual dataset creator here?
     type = split_key[0].lower()
     values = {}
-    if type == DatasetType.GLOBAL.value:
-        values = {"dataset-scope": DatasetType.GLOBAL.value, "dataset-name": split_key[2]}
-    elif type == DatasetType.PRIVATE.value or type == DatasetType.PROJECT.value:
+    if type == DatasetType.GLOBAL:
+        values = {"dataset-scope": DatasetType.GLOBAL, "dataset-name": split_key[2]}
+    elif type == DatasetType.PRIVATE or type == DatasetType.PROJECT:
         values = {"dataset-scope": split_key[1], "dataset-name": split_key[3]}
     else:
         logger.error(f"Unrecognized dataset type {type} (Bucket: {bucket}, Key: {key}")

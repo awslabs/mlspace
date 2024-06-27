@@ -46,7 +46,7 @@ class DatasetModel:
         self.created_by = created_by
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
-        if scope == DatasetType.GLOBAL.value:
+        if scope == DatasetType.GLOBAL:
             self.type = DatasetType.GLOBAL
         elif scope == created_by:
             self.type = DatasetType.PRIVATE
@@ -61,7 +61,7 @@ class DatasetModel:
         return {
             "name": self.name,
             "scope": self.scope,
-            "type": self.type.value,
+            "type": self.type,
             "description": self.description,
             "location": self.location,
             "createdBy": self.created_by,
@@ -133,7 +133,7 @@ class DatasetDAO(DynamoDBObjectStore):
             key_condition_expression="#s = :scope",
             filter_expression="#t = :type",
             expression_names={"#s": "scope", "#t": "type"},
-            expression_values=json.loads(dynamodb_json.dumps({":scope": scope, ":type": dataset_type.value})),
+            expression_values=json.loads(dynamodb_json.dumps({":scope": scope, ":type": dataset_type})),
         ).records
 
         return [DatasetModel.from_dict(entry) for entry in json_response]

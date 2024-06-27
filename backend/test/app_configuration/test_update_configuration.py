@@ -59,23 +59,23 @@ def generate_event(config_scope: str, version_id: int, overrides: dict[str, any]
         "createdAt": mock_time,
         "configuration": {
             "EnabledInstanceTypes": {
-                ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
-                ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
-                ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
-                ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig", "ml.r5.kindasmall"],
+                ServiceType.NOTEBOOK: ["ml.t3.medium", "ml.r5.large"],
+                ServiceType.ENDPOINT: ["ml.t3.large", "ml.r5.medium"],
+                ServiceType.TRAINING_JOB: ["ml.t3.xlarge", "ml.r5.small"],
+                ServiceType.TRANSFORM_JOB: ["ml.t3.kindabig", "ml.r5.kindasmall"],
             },
             "EnabledServices": {
-                ServiceType.REALTIME_TRANSLATE.value: True,
-                ServiceType.BATCH_TRANSLATE.value: True,
-                ServiceType.LABELING_JOB.value: True,
-                ServiceType.EMR_CLUSTER.value: True,
-                ServiceType.ENDPOINT.value: True,
-                ServiceType.ENDPOINT_CONFIG.value: True,
-                ServiceType.HPO_JOB.value: True,
-                ServiceType.MODEL.value: True,
-                ServiceType.NOTEBOOK.value: True,
-                ServiceType.TRAINING_JOB.value: True,
-                ServiceType.TRANSFORM_JOB.value: True,
+                ServiceType.REALTIME_TRANSLATE: True,
+                ServiceType.BATCH_TRANSLATE: True,
+                ServiceType.LABELING_JOB: True,
+                ServiceType.EMR_CLUSTER: True,
+                ServiceType.ENDPOINT: True,
+                ServiceType.ENDPOINT_CONFIG: True,
+                ServiceType.HPO_JOB: True,
+                ServiceType.MODEL: True,
+                ServiceType.NOTEBOOK: True,
+                ServiceType.TRAINING_JOB: True,
+                ServiceType.TRANSFORM_JOB: True,
             },
             "ProjectCreation": {"isAdminOnly": "true", "allowedGroups": ["Justice League", "Avengers", "TMNT"]},
             "EMRConfig": {
@@ -148,19 +148,24 @@ def test_update_config_success(
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
-# @mock.pathc("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
 @mock.patch(
     "ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager.ActiveServicePolicyManager.update_activated_services_policy"
 )
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_success_with_suspend_resources_issues(
-    mock_app_config_dao, mock_update_instance_constraint_policies, mock_update_activated_services_policy
+    mock_app_config_dao, mock_update_instance_constraint_policies, mock_update_activated_services_policy, suspend_all_of_type
 ):
     version_id = 1
     mock_event = generate_event("global", version_id)
     mock_app_config_dao.create.return_value = None
     mock_update_activated_services_policy.return_value = [ResourceType.BATCH_TRANSLATE_JOB]
+
+    def raise_exception(event, context):
+        raise Exception()
+
+    suspend_all_of_type.side_effect = raise_exception
 
     # Add 1 to version ID as it's incremented as part of the update
     success_response = "Successfully updated configuration for global, version 2, but issues were encountered when suspending resources for a deactivated service. Please contact your system administrator for assistance in suspending resources for deactivated services."
@@ -335,17 +340,17 @@ def test_update_active_services_single_deny_success(
     overrides = {
         "configuration": {
             "EnabledServices": {
-                ServiceType.REALTIME_TRANSLATE.value: True,
-                ServiceType.BATCH_TRANSLATE.value: True,
-                ServiceType.LABELING_JOB.value: True,
-                ServiceType.EMR_CLUSTER.value: True,
-                ServiceType.ENDPOINT.value: True,
-                ServiceType.ENDPOINT_CONFIG.value: True,
-                ServiceType.HPO_JOB.value: True,
-                ServiceType.MODEL.value: True,
-                ServiceType.NOTEBOOK.value: True,
-                ServiceType.TRAINING_JOB.value: True,
-                ServiceType.TRANSFORM_JOB.value: True,
+                ServiceType.REALTIME_TRANSLATE: True,
+                ServiceType.BATCH_TRANSLATE: True,
+                ServiceType.LABELING_JOB: True,
+                ServiceType.EMR_CLUSTER: True,
+                ServiceType.ENDPOINT: True,
+                ServiceType.ENDPOINT_CONFIG: True,
+                ServiceType.HPO_JOB: True,
+                ServiceType.MODEL: True,
+                ServiceType.NOTEBOOK: True,
+                ServiceType.TRAINING_JOB: True,
+                ServiceType.TRANSFORM_JOB: True,
             },
         }
     }
@@ -390,17 +395,17 @@ def test_update_active_services_group_deny_success(
         overrides={
             "configuration": {
                 "EnabledServices": {
-                    ServiceType.REALTIME_TRANSLATE.value: False,
-                    ServiceType.BATCH_TRANSLATE.value: False,
-                    ServiceType.LABELING_JOB.value: True,
-                    ServiceType.EMR_CLUSTER.value: True,
-                    ServiceType.ENDPOINT.value: True,
-                    ServiceType.ENDPOINT_CONFIG.value: True,
-                    ServiceType.HPO_JOB.value: True,
-                    ServiceType.MODEL.value: True,
-                    ServiceType.NOTEBOOK.value: True,
-                    ServiceType.TRAINING_JOB.value: True,
-                    ServiceType.TRANSFORM_JOB.value: True,
+                    ServiceType.REALTIME_TRANSLATE: False,
+                    ServiceType.BATCH_TRANSLATE: False,
+                    ServiceType.LABELING_JOB: True,
+                    ServiceType.EMR_CLUSTER: True,
+                    ServiceType.ENDPOINT: True,
+                    ServiceType.ENDPOINT_CONFIG: True,
+                    ServiceType.HPO_JOB: True,
+                    ServiceType.MODEL: True,
+                    ServiceType.NOTEBOOK: True,
+                    ServiceType.TRAINING_JOB: True,
+                    ServiceType.TRANSFORM_JOB: True,
                 },
             }
         },

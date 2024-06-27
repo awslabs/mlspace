@@ -117,7 +117,7 @@ class TestUserDAO(TestCase):
             "Arthur Shelby",
             False,
             permissions=[Permission.ADMIN],
-            preferences={TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL.value},
+            preferences={TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL},
         )
         self.user_dao.create(new_user)
         dynamo_response = self.ddb.get_item(
