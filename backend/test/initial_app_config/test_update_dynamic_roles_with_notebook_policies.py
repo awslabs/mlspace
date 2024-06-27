@@ -16,14 +16,16 @@
 
 from unittest import mock
 
+from ml_space_lambda.enums import EnvVariable
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG
 
 TEST_ENV_CONFIG = {
-    "AWS_DEFAULT_REGION": "us-east-1",
-    "SYSTEM_TAG": "MLSpace",
-    "JOB_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::123456789012:policy/notebook-job-constraints",
-    "ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN": "arn:aws:iam::123456789012:policy/notebook-endpoint-constraints",
+    EnvVariable.AWS_DEFAULT_REGION.value: "us-east-1",
+    EnvVariable.SYSTEM_TAG.value: "MLSpace",
+    EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value: "arn:aws:iam::123456789012:policy/notebook-job-constraints",
+    EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value: "arn:aws:iam::123456789012:policy/notebook-endpoint-constraints",
+    EnvVariable.MANAGE_IAM_ROLES.value: "True",
 }
 
 mock_context = mock.Mock()
@@ -76,19 +78,19 @@ def test_initial_config_success(mock_iam):
         [
             mock.call(
                 RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value],
             ),
             mock.call(
                 RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value],
             ),
             mock.call(
                 RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value],
             ),
             mock.call(
                 RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value],
             ),
         ]
     )
