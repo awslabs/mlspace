@@ -24,7 +24,7 @@ import pytest
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
-from ml_space_lambda.enums import ServiceType
+from ml_space_lambda.enums import EnvVariable, ServiceType
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
@@ -133,7 +133,7 @@ class TestAppConfigDAO(TestCase):
         from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
         env_vars = get_environment_variables()
-        self.TEST_TABLE = env_vars["APP_CONFIGURATION_TABLE"]
+        self.TEST_TABLE = env_vars[EnvVariable.APP_CONFIGURATION_TABLE]
         self.ddb = boto3.client(
             "dynamodb",
             config=retry_config,

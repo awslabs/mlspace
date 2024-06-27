@@ -19,6 +19,7 @@ import logging
 
 import boto3
 
+from ml_space_lambda.enums import EnvVariable
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
 
@@ -63,14 +64,16 @@ def update_instance_constraint_policies(new_configuration, context) -> None:
     )
 
     create_instance_constraint_policy_version(
-        env_vars["JOB_INSTANCE_CONSTRAINT_POLICY_ARN"], [training_statement, transform_statement]
+        env_vars[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN], [training_statement, transform_statement]
     )
 
     # endpoint config
     actions = ["sagemaker:CreateEndpointConfig"]
     resources = [create_sagemaker_resource_arn("endpoint-config", context)]
     endpoint_statement = create_instance_constraint_statement(actions, resources, new_configuration.endpoint_instance_types)
-    create_instance_constraint_policy_version(env_vars["ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN"], [endpoint_statement])
+    create_instance_constraint_policy_version(
+        env_vars[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN], [endpoint_statement]
+    )
 
 
 def create_instance_constraint_policy_version(policy_arn: str, statements: list) -> None:

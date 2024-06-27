@@ -25,7 +25,7 @@ from botocore.exceptions import ClientError
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import event_wrapper
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
 
@@ -92,7 +92,7 @@ def _convert_timestamp(event, timestamp_key):
 def _process_notebook_event(details):
     if details["NotebookInstanceStatus"] == "Deleted":
         resource_metadata_dao.delete(details["NotebookInstanceName"], ResourceType.NOTEBOOK)
-    elif "system" in details["Tags"] and details["Tags"]["system"] == env_variables["SYSTEM_TAG"]:
+    elif "system" in details["Tags"] and details["Tags"]["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
         if "user" in details["Tags"] and "project" in details["Tags"]:
             metadata = {
                 "NotebookInstanceArn": details["NotebookInstanceArn"],
@@ -134,7 +134,7 @@ def _process_notebook_event(details):
 def _process_endpoint_event(details):
     if details["EndpointStatus"] == "DELETED":
         resource_metadata_dao.delete(details["EndpointName"], ResourceType.ENDPOINT)
-    elif "system" in details["Tags"] and details["Tags"]["system"] == env_variables["SYSTEM_TAG"]:
+    elif "system" in details["Tags"] and details["Tags"]["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
         if "user" in details["Tags"] and "project" in details["Tags"]:
             endpoint_name = details["EndpointName"]
             project_name = details["Tags"]["project"]
@@ -204,7 +204,7 @@ def _process_model_event(details):
                     return
 
         raise ValueError("Error processing model event - missing all tags.")
-    elif "system" in details["Tags"] and details["Tags"]["system"] == env_variables["SYSTEM_TAG"]:
+    elif "system" in details["Tags"] and details["Tags"]["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
         if "user" in details["Tags"] and "project" in details["Tags"]:
             metadata = {
                 "CreationTime": _convert_timestamp(details, "CreationTime"),
@@ -224,7 +224,7 @@ def _process_model_event(details):
 
 
 def _process_training_job_event(details):
-    if "system" in details["Tags"] and details["Tags"]["system"] == env_variables["SYSTEM_TAG"]:
+    if "system" in details["Tags"] and details["Tags"]["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
         if "user" in details["Tags"] and "project" in details["Tags"]:
             metadata = {
                 "CreationTime": _convert_timestamp(details, "CreationTime"),
@@ -250,7 +250,7 @@ def _process_training_job_event(details):
 
 
 def _process_transform_job_event(details):
-    if "system" in details["Tags"] and details["Tags"]["system"] == env_variables["SYSTEM_TAG"]:
+    if "system" in details["Tags"] and details["Tags"]["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
         if "user" in details["Tags"] and "project" in details["Tags"]:
             metadata = {
                 "CreationTime": _convert_timestamp(details, "CreationTime"),
@@ -290,7 +290,7 @@ def _process_endpoint_config_event(details):
                     return
 
         raise ValueError("Error processing endpoint config event - missing all tags.")
-    elif "system" in details["Tags"] and details["Tags"]["system"] == env_variables["SYSTEM_TAG"]:
+    elif "system" in details["Tags"] and details["Tags"]["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
         if "user" in details["Tags"] and "project" in details["Tags"]:
             metadata = {
                 "CreationTime": _convert_timestamp(details, "CreationTime"),
@@ -319,7 +319,7 @@ def _process_emr_event(details):
     else:
         cluster_details = emr.describe_cluster(ClusterId=cluster_id)
         tags = _parse_tags(cluster_details["Cluster"]["Tags"])
-        if "system" in tags and tags["system"] == env_variables["SYSTEM_TAG"]:
+        if "system" in tags and tags["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
             if "user" in tags and "project" in tags:
                 user = tags["user"]
                 project = tags["project"]
@@ -363,7 +363,7 @@ def _process_batch_translate_event(details):
         job_id = details["requestParameters"]["jobId"]
     elif (
         details["eventName"] == "StartTextTranslationJob"
-        and env_variables["MANAGE_IAM_ROLES"]
+        and env_variables[EnvVariable.MANAGE_IAM_ROLES]
         and details.get("userIdentity", {}).get("principalId", "").endswith("SageMaker")
         and details.get("responseElements", {}).get("jobId", None) is not None
         and details.get("userIdentity", {}).get("sessionContext", {}).get("sessionIssuer", {}).get("type", "") == "Role"
@@ -424,7 +424,7 @@ def _process_batch_translate_event(details):
 
 
 def _process_hpo_event(details):
-    if "system" in details["Tags"] and details["Tags"]["system"] == env_variables["SYSTEM_TAG"]:
+    if "system" in details["Tags"] and details["Tags"]["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
         if "user" in details["Tags"] and "project" in details["Tags"]:
             # While the event details contains TrainingJobStatusCounters it appears that the value
             # is never populated so we need to describe the job to ensure we have accurate count
@@ -476,7 +476,7 @@ def _process_labeling_job_event(event):
         labeling_job_name = job_arn.split("/")[-1].strip()
         job_details = sagemaker.describe_labeling_job(LabelingJobName=labeling_job_name)
         tags = _parse_tags(job_details["Tags"])
-        if "system" in tags and tags["system"] == env_variables["SYSTEM_TAG"]:
+        if "system" in tags and tags["system"] == env_variables[EnvVariable.SYSTEM_TAG]:
             if "user" in tags and "project" in tags:
                 owner = tags["user"]
                 project = tags["project"]

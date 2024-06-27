@@ -21,7 +21,7 @@ from typing import List, Optional
 
 import boto3
 
-from ml_space_lambda.enums import IAMResourceType
+from ml_space_lambda.enums import EnvVariable, IAMResourceType
 from ml_space_lambda.utils.common_functions import generate_tags, has_tags, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -190,12 +190,12 @@ class IAMManager:
         """
 
         env_variables = get_environment_variables()
-        self.data_bucket = env_variables["DATA_BUCKET"]
-        self.system_tag = env_variables["SYSTEM_TAG"]
-        self.app_role_name = env_variables["APP_ROLE_NAME"]
-        self.notebook_role_name = env_variables["NOTEBOOK_ROLE_NAME"]
+        self.data_bucket = env_variables[EnvVariable.DATA_BUCKET]
+        self.system_tag = env_variables[EnvVariable.SYSTEM_TAG]
+        self.app_role_name = env_variables[EnvVariable.APP_ROLE_NAME]
+        self.notebook_role_name = env_variables[EnvVariable.NOTEBOOK_ROLE_NAME]
         self.default_notebook_role_policy_arns = []
-        self.permissions_boundary_arn = env_variables["PERMISSIONS_BOUNDARY_ARN"]
+        self.permissions_boundary_arn = env_variables[EnvVariable.PERMISSIONS_BOUNDARY_ARN]
 
     def add_iam_role(self, project_name: str, username: str) -> str:
         iam_role_name = self._generate_iam_role_name(username, project_name)

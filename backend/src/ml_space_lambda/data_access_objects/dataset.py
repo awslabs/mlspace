@@ -23,7 +23,7 @@ from typing import List, Optional
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
-from ml_space_lambda.enums import DatasetType
+from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
@@ -53,7 +53,7 @@ class DatasetModel:
         else:
             self.type = DatasetType.PROJECT
         env_variables = get_environment_variables()
-        self.prefix = self.location.replace(f's3://{env_variables["DATA_BUCKET"]}/', "")
+        self.prefix = self.location.replace(f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/", "")
         if not self.prefix.endswith("/"):
             self.prefix = self.prefix + "/"
 
@@ -85,7 +85,7 @@ class DatasetModel:
 class DatasetDAO(DynamoDBObjectStore):
     def __init__(self, table_name: Optional[str] = None, client=None):
         self.env_vars = get_environment_variables()
-        table_name = table_name if table_name else self.env_vars["DATASETS_TABLE"]
+        table_name = table_name if table_name else self.env_vars[EnvVariable.DATASETS_TABLE]
         DynamoDBObjectStore.__init__(self, table_name=table_name, client=client)
 
     def create(self, dataset: DatasetModel) -> None:

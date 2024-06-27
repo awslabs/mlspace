@@ -21,7 +21,7 @@ from urllib.parse import unquote_plus
 import boto3
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
-from ml_space_lambda.enums import DatasetType
+from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.common_functions import event_wrapper, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -42,11 +42,11 @@ def _create_dataset_record(metadata, key):
     if dataset_type == DatasetType.GLOBAL:
         scope = DatasetType.GLOBAL
         dataset_name = split_key[2]
-        dataset_location = f's3://{env_variables["DATA_BUCKET"]}/global/datasets/{dataset_name}/'
+        dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/global/datasets/{dataset_name}/"
     elif dataset_type in [DatasetType.PRIVATE, DatasetType.PROJECT]:
         scope = split_key[1]
         dataset_name = split_key[3]
-        dataset_location = f's3://{env_variables["DATA_BUCKET"]}/{dataset_type}/{scope}/datasets/{dataset_name}/'
+        dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{dataset_type}/{scope}/datasets/{dataset_name}/"
     else:
         logger.error(f"Failed to determine dataset from key '{key}'")
         raise KeyError("Failed to determine corresponding dataset")

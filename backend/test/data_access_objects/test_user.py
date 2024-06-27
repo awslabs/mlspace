@@ -25,7 +25,7 @@ from botocore.exceptions import ClientError
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserModel
-from ml_space_lambda.enums import Permission, TimezonePreference
+from ml_space_lambda.enums import EnvVariable, Permission, TimezonePreference
 from ml_space_lambda.utils.common_functions import serialize_permissions
 
 TEST_ENV_CONFIG = {
@@ -63,7 +63,7 @@ class TestUserDAO(TestCase):
         from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
         env_vars = get_environment_variables()
-        self.TEST_TABLE = env_vars["USERS_TABLE"]
+        self.TEST_TABLE = env_vars[EnvVariable.USERS_TABLE]
         self.ddb = boto3.client(
             "dynamodb",
             config=retry_config,
