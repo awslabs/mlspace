@@ -242,6 +242,8 @@ export class CoreStack extends Stack {
                 APP_CONFIG_TABLE: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
                 SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
                 MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
+                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceEndpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
+                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceJobInstanceConstraintPolicy?.managedPolicyArn || '',
             },
             layers: [commonLambdaLayer.layerVersion],
             vpc: props.mlSpaceVPC,

@@ -17,7 +17,7 @@ import logging
 import boto3
 
 from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
-from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO
+from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, SettingsModel
 from ml_space_lambda.enums import EnvVariable, ServiceType
 from ml_space_lambda.metadata.lambda_functions import get_compute_types
 from ml_space_lambda.utils.common_functions import generate_html_response
@@ -51,7 +51,8 @@ def lambda_handler(event, context):
 
     # if not using dynamic roles then there is no need to update these roles/policies
     if env_vars[EnvVariable.MANAGE_IAM_ROLES]:
-        update_instance_constraint_policies(config, context)
+        settings = SettingsModel.from_dict(config["configuration"])
+        update_instance_constraint_policies(settings.enabled_instance_types, context)
 
     generate_html_response(200, "Successfully updated app config")
 
