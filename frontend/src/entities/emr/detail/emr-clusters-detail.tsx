@@ -124,7 +124,7 @@ function EMRDetail () {
                 header={
                     <Header variant='h1'>
                         {' '}
-                        Cluster: {cluster.Name} ({clusterId}){' '}
+                        Cluster: {clusterName} ({clusterId}){' '}
                     </Header>
                 }
             >
