@@ -1052,8 +1052,8 @@ export class IAMStack extends Stack {
                 assumedBy: appPolicyAllowPrinciples,
                 managedPolicies: [
                     appPolicy, 
-                    notebookPolicy,
-                    ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')
+                    ...notebookManagedPolicies,
+                    ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
                 ],
                 description:
                     'Allows ML Space Application to access necessary AWS services (S3, SQS, DynamoDB, ...)',

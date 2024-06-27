@@ -16,6 +16,7 @@ import logging
 
 import boto3
 
+from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO
 from ml_space_lambda.enums import ServiceType
 from ml_space_lambda.metadata.lambda_functions import get_compute_types
@@ -46,6 +47,7 @@ def lambda_handler(event, context):
     ]
 
     app_configuration_dao.update(config)
+    update_instance_constraint_policies(config, context)
     update_dynamic_roles_with_notebook_policies()
 
     generate_html_response(200, "Successfully updated app config")
