@@ -20,4 +20,4 @@ jobs:
         run: |
           gh release create v0.0.0 --generate-notes -d -t "${{ github.event.pull_request.base.ref }}"
         env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
+          GH_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
