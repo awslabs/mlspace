@@ -958,6 +958,7 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
                 "ec2:DescribeInstances",
                 "ec2:DescribeRouteTables",
                 "ec2:DescribeInstanceTypeOfferings",
+                "ec2:DescribeInstanceTypes",
                 "ec2:DescribeVpcEndpoints"
             ],
             "Resource": "*",
