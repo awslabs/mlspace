@@ -9,16 +9,19 @@ permissions:
   contents: write
 
 jobs:
-  TagAndDraftRelease:
+  DraftRelease:
     runs-on: ubuntu-latest
     if: startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')
+    env:
+      RELEASE_VERSION: ${{steps.get-version.outputs.version}}
     steps:
-      - name: Checkout Source Tag
-        uses: actions/checkout@v4
-        with:
-          ref: main
+      - name: get-version
+        run: |
+          version=$(echo ${{ github.event.pull_request.head.ref }} | cut -d/ -f2)
+          echo "version=version" >> $GITHUB_OUTPUT
+          echo "VERSION = $version"
       - name: Create Release
         run: |
-          gh release create v0.0.0 --generate-notes -d -t "${{ github.event.pull_request.head.ref }}"
+          gh release create ${{ env.RELEASE_VERSION }} --generate-notes -d -t "${{ env.RELEASE_VERSION }}" --target main
         env:
           GH_TOKEN: ${{ github.token }}
