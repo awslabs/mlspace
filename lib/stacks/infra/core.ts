@@ -284,7 +284,7 @@ export class CoreStack extends Stack {
         });
 
         const updateInstanceKmsConditionsLambda = new Function(this, 'updateInstanceKmsConditionsLambda', {
-            functionName: 'mls-instance-kms-conditions',
+            functionName: 'mls-lambda-instance-kms-conditions',
             description: '',
             runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
             architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,

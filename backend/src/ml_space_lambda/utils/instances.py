@@ -62,4 +62,9 @@ def kms_unsupported_instances() -> list[str]:
         Filters=[{"Name": "hypervisor", "Values": ["nitro"]}, {"Name": "instance-storage-supported", "Values": ["true"]}]
     )
 
-    return [instance_type["InstanceType"] for page in response_iterator for instance_type in page["InstanceTypes"]]
+    return [
+        instance_type["InstanceType"]
+        for page in response_iterator
+        for instance_type in page["InstanceTypes"]
+        if not instance_type["InstanceType"].endswith(".metal")
+    ]

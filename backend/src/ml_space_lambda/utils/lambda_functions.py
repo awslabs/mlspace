@@ -59,7 +59,10 @@ def update_instance_kms_key_conditions(event, ctx):
     paginator = ec2.get_paginator("describe_instance_types")
     response_iterator = paginator.paginate()
     standard_instances = [
-        instance_type["InstanceType"] for page in response_iterator for instance_type in page["InstanceTypes"]
+        instance_type["InstanceType"]
+        for page in response_iterator
+        for instance_type in page["InstanceTypes"]
+        if not instance_type["InstanceType"].endswith(".metal")
     ]
 
     unsupported_instances = kms_unsupported_instances()
@@ -91,8 +94,12 @@ def update_instance_kms_key_conditions(event, ctx):
         }
     )
 
-    policy_arn = env_variables[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value]
-    iam.create_policy_version(PolicyArn=policy_arn, SetAsDefault=True, PolicyDocument=policy_document)
-    iam_manager._delete_unused_policy_versions(policy_arn)
+    try:
+        policy_arn = env_variables[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value]
+        iam.create_policy_version(PolicyArn=policy_arn, SetAsDefault=True, PolicyDocument=policy_document)
+        iam_manager._delete_unused_policy_versions(policy_arn)
+    except Exception as e:
+        log.error("Unable{}", e)
+        return "unable to update kms policy"
 
-    return policy_document
+    return "success"
