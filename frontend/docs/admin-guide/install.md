@@ -204,8 +204,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
                 "Null": {
                     "aws:RequestTag/user": "true",
                     "aws:RequestTag/system": "true",
-                    "aws:RequestTag/project": "true",
-                    "sagemaker:VolumeKmsKey": "true"
+                    "aws:RequestTag/project": "true"
                 }
             },
             "Action": "sagemaker:CreateEndpointConfig",
@@ -233,8 +232,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
                     "aws:RequestTag/user": "true",
                     "aws:RequestTag/system": "true",
                     "aws:RequestTag/project": "true",
-                    "sagemaker:VpcSecurityGroupIds": "true",
-                    "sagemaker:VolumeKmsKey": "true"
+                    "sagemaker:VpcSecurityGroupIds": "true"
                 }
             },
             "Action": [
@@ -252,8 +250,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
                 "Null": {
                     "aws:RequestTag/user": "true",
                     "aws:RequestTag/system": "true",
-                    "aws:RequestTag/project": "true",
-                    "sagemaker:VolumeKmsKey": "true"
+                    "aws:RequestTag/project": "true"
                 }
             },
             "Action": "sagemaker:CreateTransformJob",
@@ -265,8 +262,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
                 "Null": {
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
-                    "aws:RequestTag/project": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "aws:RequestTag/project": "false"
                 }
             },
             "Action": "sagemaker:CreateLabelingJob",
@@ -450,8 +446,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
                 "Null": {
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
-                    "aws:RequestTag/project": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "aws:RequestTag/project": "false"
                 }
             },
             "Action": "sagemaker:CreateEndpointConfig",
@@ -479,8 +474,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
                     "aws:RequestTag/project": "false",
-                    "sagemaker:VpcSecurityGroupIds": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "sagemaker:VpcSecurityGroupIds": "false"
                 }
             },
             "Action": [
@@ -495,8 +489,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
                 "Null": {
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
-                    "aws:RequestTag/project": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "aws:RequestTag/project": "false"
                 }
             },
             "Action": "sagemaker:CreateTransformJob",
@@ -508,8 +501,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
                 "Null": {
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
-                    "aws:RequestTag/project": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "aws:RequestTag/project": "false"
                 }
             },
             "Action": "sagemaker:CreateLabelingJob",
@@ -778,8 +770,7 @@ Using the JSON editor, paste the following into the text area (after replacing t
                 "Null": {
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
-                    "aws:RequestTag/project": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "aws:RequestTag/project": "false"
                 }
             },
             "Action": "sagemaker:CreateEndpointConfig",
@@ -807,8 +798,7 @@ Using the JSON editor, paste the following into the text area (after replacing t
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
                     "aws:RequestTag/project": "false",
-                    "sagemaker:VpcSecurityGroupIds": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "sagemaker:VpcSecurityGroupIds": "false"
                 }
             },
             "Action": [
@@ -823,8 +813,7 @@ Using the JSON editor, paste the following into the text area (after replacing t
                 "Null": {
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
-                    "aws:RequestTag/project": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "aws:RequestTag/project": "false"
                 }
             },
             "Action": "sagemaker:CreateTransformJob",
@@ -836,8 +825,7 @@ Using the JSON editor, paste the following into the text area (after replacing t
                 "Null": {
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
-                    "aws:RequestTag/project": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "aws:RequestTag/project": "false"
                 }
             },
             "Action": "sagemaker:CreateLabelingJob",
@@ -998,8 +986,7 @@ policy. From the IAM Service page, click "Policies" on the left-hand side.
                     "aws:RequestTag/user": "false",
                     "aws:RequestTag/system": "false",
                     "aws:RequestTag/project": "false",
-                    "sagemaker:VpcSecurityGroupIds": "false",
-                    "sagemaker:VolumeKmsKey": "false"
+                    "sagemaker:VpcSecurityGroupIds": "false"
                 }
             },
             "Action": "sagemaker:CreateNotebookInstance",
@@ -1647,7 +1634,7 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `NOTEBOOK_PARAMETERS_FILE_NAME` | Filename of the default notebook parameters that is generated as part of the CDK deployment | `mlspace-website` |
 | `PERMISSIONS_BOUNDARY_POLICY_NAME` | Name of the managed policy used as a permissions boundary for dynamically created {{ $params.APPLICATION_NAME }} roles | `mlspace-project-user-permission-boundary` |
 | `KEY_MANAGER_ROLE_NAME` | Name of the IAM role with permissions to manage the KMS Key. If this property is set, you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
-| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with {{ $params.APPLICATION_NAME }}. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN`, `APP_ROLE_ARN`, `SYSTEM_ROLE_ARN`, `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN`, and `JOB_INSTANCE_CONSTRAINT_POLICY_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set, you _do not_ need to set `KEY_MANAGER_ROLE_NAME` |
+| `EXISTING_KMS_MASTER_KEY_ARN` | ARN of existing KMS key to use with {{ $params.APPLICATION_NAME }}. This key should allow the roles associated with the `NOTEBOOK_ROLE_ARN`, `APP_ROLE_ARN`, and `SYSTEM_ROLE_ARN` usage of the key. This value takes precedence over `KEY_MANAGER_ROLE_NAME` if both are set. If this property is set, you _do not_ need to set `KEY_MANAGER_ROLE_NAME` |
 | `SYSTEM_TAG` | Tag which will be applied to all {{ $params.APPLICATION_NAME }} resources created with the AWS account to which {{ $params.APPLICATION_NAME }} is deployed | `MLSpace` |
 | `IAM_RESOURCE_PREFIX` | Value prepended to {{ $params.APPLICATION_NAME }} dynamic roles and policies when `MANAGE_IAM_ROLES` is set to `true` | `MLSpace` |
 | `MANAGE_IAM_ROLES` | This setting determines whether or not {{ $params.APPLICATION_NAME }} will dynamically create unique roles per project/user combinations | `true` |
@@ -1659,6 +1646,7 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `SYSTEM_ROLE_ARN` | ARN of an existing IAM role to use for executing the {{ $params.APPLICATION_NAME }} system lambdas. System lambdas are responsible for maintaining the {{ $params.APPLICATION_NAME }} system by cleaning up resources when a project is suspended or deleted, when a user is suspended, or when services are activated/deactivated. | - |
 | `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN` | ARN for policy constraining the instance size that can be used when creating Endpoint configurations from a notebook. | - |
 | `JOB_INSTANCE_CONSTRAINT_POLICY_ARN` | ARN for policy constraining the instance size that can be used when creating HPO/Training/Transform jobs from a notebook. | - |
+| `KMS_INSTANCE_CONDITIONS_POLICY_ARN` | ARN for a policy conditionally requiring a KMS key to be used for volume encryption with relevant instance types. | - |
 | `S3_READER_ROLE_ARN` | ARN of an existing IAM role to use for reading from the static website S3 bucket. If not specified, a new role with the correct privileges will be created | - |
 | `EMR_DEFAULT_ROLE_ARN` | Role that will be used as the "ServiceRole" for all EMR clusters | - |
 | `EMR_EC2_INSTANCE_ROLE_ARN` | Role that will be used as the "JobFlowRole" and "AutoScalingRole" for all EMR clusters | - |
@@ -1684,7 +1672,7 @@ There are no web application specific configuration parameters that need to be s
 
 ## Deploying the CDK Application
 
-Enusre that the required role ARNs (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`, `SYSTSTEM_ROLE_ARN`, `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN`, `JOB_INSTANCE_CONSTRAINT_POLICY_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
+If you are pre-creating roles you will need to ensure that the required role ARNs (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`, and `SYSTSTEM_ROLE_ARN`), policy ARNs ( `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN`, `JOB_INSTANCE_CONSTRAINT_POLICY_ARN`, and `KMS_INSTANCE_CONDITIONS_POLICY_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
 
 
 

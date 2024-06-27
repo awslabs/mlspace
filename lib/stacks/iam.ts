@@ -53,6 +53,7 @@ export class IAMStack extends Stack {
     public mlspaceEndpointConfigInstanceConstraintPolicy?: IManagedPolicy;
     public mlspaceJobInstanceConstraintPolicy?: IManagedPolicy;
     public mlSpaceSystemRole: IRole;
+    public mlspaceKmsInstanceConditionsPolicy: IManagedPolicy;
 
     constructor (parent: App, name: string, props: IAMStackProp) {
         super(parent, name, {
@@ -89,6 +90,33 @@ export class IAMStack extends Stack {
         // Role names
         const mlspaceSystemRoleName = 'mlspace-system-role';
         const mlSpaceNotebookRoleName = 'mlspace-notebook-role';
+
+        
+        if (props.mlspaceConfig.KMS_INSTANCE_CONDITIONS_POLICY_ARN) {
+            this.mlspaceKmsInstanceConditionsPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-kms-instance-constraint-policy', props.mlspaceConfig.KMS_INSTANCE_CONDITIONS_POLICY_ARN);
+        } else {
+            this.mlspaceKmsInstanceConditionsPolicy = new ManagedPolicy(this, 'mlspace-kms-instance-constraint-policy', {
+                managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-kms-instance-constraint-policy`,
+                statements:  [
+                    new PolicyStatement({
+                        effect: Effect.DENY,
+                        actions: [
+                            'sagemaker:CreateEndpointConfig',
+                            'sagemaker:CreateHyperParameterTuningJob',
+                            'sagemaker:CreateNotebookInstance',
+                            'sagemaker:CreateTrainingJob',
+                            'sagemaker:CreateTransformJob'
+                        ],
+                        resources: ['*'],
+                        conditions: {
+                            'Null': {
+                                'sagemaker:VolumeKmsKey': 'true'
+                            },
+                        },
+                    }),
+                ]
+            });
+        }
 
         const invertedBooleanConditions = (conditions: {[key: string]: string}) => Object.fromEntries(Object.entries(conditions).map(([key, value]) => {
             return [key, value === 'true' ? 'false' : 'true'];
@@ -376,7 +404,6 @@ export class IAMStack extends Stack {
                         ],
                         conditions: {
                             Null: {
-                                'sagemaker:VolumeKmsKey': 'false',
                                 ...requestTagsConditions,
                             },
                         },
@@ -397,7 +424,6 @@ export class IAMStack extends Stack {
                             Null: {
                                 'sagemaker:VpcSecurityGroupIds': 'false',
                                 'sagemaker:VpcSubnets': 'false',
-                                'sagemaker:VolumeKmsKey': 'false',
                                 ...requestTagsConditions,
                             },
                         },
@@ -412,7 +438,6 @@ export class IAMStack extends Stack {
                         ],
                         conditions: {
                             Null: {
-                                'sagemaker:VolumeKmsKey': 'false',
                                 ...requestTagsConditions,
                             },
                         },
@@ -428,7 +453,6 @@ export class IAMStack extends Stack {
                         ],
                         conditions: {
                             Null: {
-                                'sagemaker:VolumeKmsKey': 'true',
                                 ...invertedBooleanConditions(requestTagsConditions),
                             },
                         },
@@ -449,7 +473,6 @@ export class IAMStack extends Stack {
                             Null: {
                                 'sagemaker:VpcSecurityGroupIds': 'true',
                                 'sagemaker:VpcSubnets': 'true',
-                                'sagemaker:VolumeKmsKey': 'true',
                                 ...invertedBooleanConditions(requestTagsConditions),
                             },
                         },
@@ -464,7 +487,6 @@ export class IAMStack extends Stack {
                         ],
                         conditions: {
                             Null: {
-                                'sagemaker:VolumeKmsKey': 'true',
                                 ...invertedBooleanConditions(requestTagsConditions),
                             },
                         },
@@ -502,7 +524,11 @@ export class IAMStack extends Stack {
             statements: notebookPolicyStatements(this.partition, Aws.REGION),
             description: 'Enables general MLSpace actions in notebooks and across the entire application.'
         });
-        const notebookManagedPolicies: IManagedPolicy[] = [notebookPolicy];      
+        const notebookManagedPolicies: IManagedPolicy[] = [notebookPolicy];
+
+        if (this.mlspaceKmsInstanceConditionsPolicy) {
+            notebookManagedPolicies.push(this.mlspaceKmsInstanceConditionsPolicy);
+        }
 
         if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
             if (props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN) {
@@ -744,6 +770,7 @@ export class IAMStack extends Stack {
                          * notebooks, training jobs, and others
                          */
                         'ec2:DescribeInstanceTypeOfferings',
+                        'ec2:DescribeInstanceTypes',
                         /**
                          * Notebook Permissions
                          * Additional EC2 permission needed to start/stop/delete SageMaker Notebook
@@ -792,7 +819,6 @@ export class IAMStack extends Stack {
                         Null: {
                             'sagemaker:VpcSecurityGroupIds': 'false',
                             'sagemaker:VpcSubnets': 'false',
-                            'sagemaker:VolumeKmsKey': 'false',
                             ...requestTagsConditions,
                         },
                     },

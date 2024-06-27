@@ -52,6 +52,7 @@ export type CoreStackProps = {
     readonly accessLogsBucketName: string;
     readonly encryptionKey: IKey;
     readonly mlSpaceAppRole: IRole;
+    readonly mlspaceKmsInstanceConditionsPolicy: IManagedPolicy;
     readonly mlSpaceNotebookRole: IRole;
     readonly mlspaceEndpointConfigInstanceConstraintPolicy?: IManagedPolicy,
     readonly mlspaceJobInstanceConstraintPolicy?: IManagedPolicy,
@@ -239,8 +240,6 @@ export class CoreStack extends Stack {
             role: props.mlSpaceAppRole,
             environment: {
                 APP_CONFIG_TABLE: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
-                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceEndpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
-                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceJobInstanceConstraintPolicy?.managedPolicyArn || '',
                 SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
                 MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
             },
@@ -248,6 +247,79 @@ export class CoreStack extends Stack {
             vpc: props.mlSpaceVPC,
             securityGroups: props.lambdaSecurityGroups,
         });
+
+        const dynamicRolesAttachPoliciesOnDeployLambda = new Function(this, 'drAttachPoliciesOnDeployLambda', {
+            functionName: 'mls-lambda-dr-attach-policies-on-deploy',
+            description: 'Attaches policies from notebook role to all dynamic user roles.',
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
+            handler: 'ml_space_lambda.initial_app_config.lambda_function.update_dynamic_roles_with_notebook_policies',
+            code: Code.fromAsset(props.lambdaSourcePath),
+            timeout: Duration.seconds(30),
+            role: props.mlSpaceAppRole,
+            environment: {
+                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceEndpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
+                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceJobInstanceConstraintPolicy?.managedPolicyArn || '',
+                KMS_INSTANCE_CONDITIONS_POLICY_ARN: props.mlspaceKmsInstanceConditionsPolicy.managedPolicyArn,
+                SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
+                MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
+            },
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+        });
+
+        // run dynamicRolesAttachPoliciesOnDeployLambda every deploy
+        new AwsCustomResource(this, 'drAttachPoliciesOnDeploy', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                physicalResourceId: PhysicalResourceId.of(`drAttachPoliciesOnDeployLambda-${Date.now()}`),
+                parameters: {
+                    FunctionName: dynamicRolesAttachPoliciesOnDeployLambda.functionName,
+                    Payload: '{}'
+                }, 
+            },
+            role: props.mlSpaceAppRole
+        });
+
+        const updateInstanceKmsConditionsLambda = new Function(this, 'updateInstanceKmsConditionsLambda', {
+            functionName: 'mls-instance-kms-conditions',
+            description: '',
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
+            handler: 'ml_space_lambda.utils.lambda_functions.update_instance_kms_key_conditions',
+            code: Code.fromAsset(props.lambdaSourcePath),
+            timeout: Duration.seconds(30),
+            role: props.mlSpaceAppRole,
+            environment: {
+                MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
+                KMS_INSTANCE_CONDITIONS_POLICY_ARN: props.mlspaceKmsInstanceConditionsPolicy.managedPolicyArn
+            },
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+        });
+
+        // run updateInstanceKmsConditionsLambda every deploy
+        new AwsCustomResource(this, 'kms-key-constraints', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                physicalResourceId: PhysicalResourceId.of(`kmsKeyConstraints-${Date.now()}`),
+                parameters: {
+                    FunctionName: updateInstanceKmsConditionsLambda.functionName,
+                    Payload: '{}'
+                }, 
+            },
+            role: props.mlSpaceAppRole
+        });
+
+        // schedule updateInstanceKmsConditionsLambda to run every day
+        const updateInstanceKmsConditionsLambdaScheduleRule = new Rule(this, 'updateInstanceKmsConditionsLambdaScheduleRule', {
+            schedule: Schedule.cron({hour: '2', minute: '45'})
+        });
+        updateInstanceKmsConditionsLambdaScheduleRule.addTarget(new LambdaFunction(updateInstanceKmsConditionsLambda));
 
         const notifierLambdaLayer = createLambdaLayer(this, 'common', 'notifier');
 
