@@ -69,8 +69,7 @@ def test_abbreviated_instance_union():
     ]
 
     abbreviated_union = abbreviated_instance_union(s1_instances, s2_instances)
-    print("\n")
-    print(abbreviated_union)
+
     assert len(abbreviated_union) == 3
     assert "g5.*" in abbreviated_union
     assert "g5cs1.large" in abbreviated_union
