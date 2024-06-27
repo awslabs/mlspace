@@ -12,8 +12,6 @@ jobs:
   DraftRelease:
     runs-on: ubuntu-latest
     if: startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')
-    env:
-      RELEASE_VERSION: ${{steps.get-version.outputs.version}}
     steps:
       - name: get-version
         run: |
@@ -22,6 +20,6 @@ jobs:
           echo "VERSION = $version"
       - name: Create Release
         run: |
-          gh release create ${{ env.RELEASE_VERSION }} --generate-notes -d -t "${{ env.RELEASE_VERSION }}" --target main
+          gh release create ${{ steps.get-version.outputs.version }} --generate-notes -d -t "${{ steps.get-version.outputs.version }}" --target main
         env:
           GH_TOKEN: ${{ github.token }}
