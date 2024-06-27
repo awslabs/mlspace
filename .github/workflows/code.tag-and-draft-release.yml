@@ -2,7 +2,7 @@ name: Publish Tag and Draft Release
 
 on:
   pull_request:
-    types: [closed]
+    branches: [ "release/**", "hotfix/**" ]
 
 permissions:
   id-token: write
@@ -11,17 +11,14 @@ permissions:
 jobs:
   TagAndDraftRelease:
     runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
     steps:
       - name: Checkout Source Tag
         uses: actions/checkout@v4
         with:
           ref: main
       - name: Create Release
-        uses: actions/create-release@v1
+        run: |
+          gh release create v0.0.0 --generate-notes -d
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-          commitish: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
