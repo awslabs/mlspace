@@ -16,6 +16,7 @@ import logging
 
 import boto3
 
+from ml_space_lambda.app_configuration.policy_helper.notebook import update_instance_constraint_policies
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO
 from ml_space_lambda.enums import EnvVariable, ServiceType
 from ml_space_lambda.metadata.lambda_functions import get_compute_types
@@ -30,6 +31,7 @@ iam = boto3.client("iam", config=retry_config)
 
 
 def lambda_handler(event, context):
+    env_vars = get_environment_variables()
     instances = get_compute_types()
     resp = app_configuration_dao.get("global")
     config = resp[0]
@@ -47,12 +49,15 @@ def lambda_handler(event, context):
 
     app_configuration_dao.update(config)
 
+    # if not using dynamic roles then there is no need to update these roles/policies
+    if env_vars[EnvVariable.MANAGE_IAM_ROLES]:
+        update_instance_constraint_policies(config, context)
+
     generate_html_response(200, "Successfully updated app config")
 
 
 def update_dynamic_roles_with_notebook_policies(event, context):
     env_vars = get_environment_variables()
-
     if env_vars[EnvVariable.MANAGE_IAM_ROLES.value]:
         return
 

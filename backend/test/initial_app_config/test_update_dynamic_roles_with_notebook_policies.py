@@ -21,11 +21,12 @@ from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG
 
 TEST_ENV_CONFIG = {
-    "AWS_DEFAULT_REGION": "us-east-1",
+    EnvVariable.AWS_DEFAULT_REGION.value: "us-east-1",
     EnvVariable.SYSTEM_TAG.value: "MLSpace",
     EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value: "arn:aws:iam::123456789012:policy/notebook-job-constraints",
     EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value: "arn:aws:iam::123456789012:policy/notebook-endpoint-constraints",
     EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value: "arn:aws:iam:12345678912:policy/kms-instance-conditions",
+    EnvVariable.MANAGE_IAM_ROLES.value: "True",
 }
 
 mock_context = mock.Mock()
