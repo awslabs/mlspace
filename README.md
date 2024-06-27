@@ -149,7 +149,7 @@ If the config-helper doesn't provide the level of customization you need for you
 | SYSTEM_BANNER_BACKGROUND_COLOR | The background color of the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and rgb values. | `black` |
 | SYSTEM_BANNER_TEXT_COLOR | The color of the text displayed in the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and rgb values. | `white` |
 | RESOURCE_TERMINATION_INTERVAL | Interval (in minutes) to run the resource termination cleanup lambda | `60` |
-| BACKGROUND_REFRESH_INTERVAL | Interval (in minutes) to run background resource data updates | `60` |
+| BACKGROUND_REFRESH_INTERVAL | Interval (in seconds) to run background resource data updates | `60` |
 | DATASETS_TABLE_NAME |  Dynamo DB table to hold dataset related metadata | `mlspace-datasets` |
 | PROJECTS_TABLE_NAME |  Dynamo DB table to hold project related metadata | `mlspace-projects` |
 | PROJECT_USERS_TABLE_NAME |  Dynamo DB table to hold project membership related metadata. Including permissions and project/user specific IAM role data. | `mlspace-project-users` |

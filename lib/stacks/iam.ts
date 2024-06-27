@@ -1052,7 +1052,7 @@ export class IAMStack extends Stack {
                 assumedBy: appPolicyAllowPrinciples,
                 managedPolicies: [
                     appPolicy, 
-                    notebookPolicy,
+                    ...notebookManagedPolicies,
                     ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')
                 ],
                 description:

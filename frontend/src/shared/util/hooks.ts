@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
  * @param {Array} deps - The dependencies of the action function
  * @param {boolean} condition - A condition that must be true for the action to run
 */
-export function useBackgroundRefresh (action: () => void, deps: readonly unknown[] = [], condition = true): boolean {
+export function useBackgroundRefresh (action: () => void, deps: readonly unknown[] = [], condition = true, interval = window.env.BACKGROUND_REFRESH_INTERVAL): boolean {
     const callbackAction = useCallback(action, [action, ...deps]);
     const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false);
 
@@ -46,13 +46,13 @@ export function useBackgroundRefresh (action: () => void, deps: readonly unknown
                 setTimeout(() => {
                     setIsBackgroundRefreshing(false);
                 }, waitTime);
-            }, (window.env.BACKGROUND_REFRESH_INTERVAL || 60) * 1000);
+            }, (interval || 60) * 1000);
             
             return () => {
                 clearInterval(timerId);
             };
         }
-    }, [callbackAction, condition]);
+    }, [callbackAction, condition, interval]);
     return isBackgroundRefreshing;
 }
 
