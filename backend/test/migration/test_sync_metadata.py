@@ -956,9 +956,21 @@ def test_sync_emr(mock_emr, mock_resource_metadata_dao):
         "Name": "cluster3",
         "NormalizedInstanceHours": 3,
     }
+    job4_details = {
+        "Id": "cluster4Id",
+        "ClusterArn": "arn::cluster4",
+        "Status": {
+            "State": "TERMINATED_WITH_ERRORS",
+            "Timeline": {
+                "CreationDateTime": "2023-08-11 09:33:05.109000+00:00",
+            },
+        },
+        "Name": "cluster4",
+        "NormalizedInstanceHours": 3,
+    }
     mock_paginator = mock.Mock()
     mock_paginator.paginate.return_value = [
-        {"Clusters": [job1_details, job2_details, job3_details]},
+        {"Clusters": [job1_details, job2_details, job3_details, job4_details]},
     ]
     mock_emr.get_paginator.return_value = mock_paginator
     mock_cluster_details = {"Cluster": {"Tags": mock_tags_respones[0], "ReleaseLabel": "emr-6.6.0"}}
@@ -1001,7 +1013,7 @@ def test_sync_emr(mock_emr, mock_resource_metadata_dao):
                     "NormalizedInstanceHours": job2_details["NormalizedInstanceHours"],
                 },
             ),
-            # cluster3 should be skipped due to being in a TERMINATED state
+            # cluster3 and cluster4 should be skipped due to being in a TERMINATED state
         ]
     )
     mock_emr.describe_cluster.assert_has_calls(
