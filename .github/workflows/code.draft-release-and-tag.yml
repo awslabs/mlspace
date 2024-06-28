@@ -50,3 +50,4 @@ jobs:
           MSG_MINIMAL: true
           SLACK_MESSAGE_ON_FAILURE: '<!here> FAILED to publish Draft release for ${{ steps.get-version.outputs.version }}'
           SLACK_MESSAGE_ON_SUCCESS: '<!here> Draft release published for ${{ steps.get-version.outputs.version }}'
+          SLACK_MESSAGE: '<!here> Draft release finished with status ${{ job.status }} for ${{ steps.get-version.outputs.version }}'
