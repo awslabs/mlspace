@@ -23,7 +23,7 @@ jobs:
           ref: refs/tags/${{ github.event.inputs.source_tag }}
       - name: Create Hotfix Branch and Update Version
         run: |
-          git config --global user.email "github_actions@amazon.com"
+          git config --global user.email "evmann@amazon.com"
           git config --global user.name "github_actions_mlspace"
           SRC_TAG=${{ github.event.inputs.source_tag }}
           DST_TAG=${{ github.event.inputs.dest_tag }}
@@ -32,4 +32,4 @@ jobs:
           git commit -a -m "updating version for hotfix ${{ github.event.inputs.dest_tag }}"
           git push origin hotfix/${{ github.event.inputs.dest_tag }}
         env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.LEAD_ACCESS_TOKEN }}

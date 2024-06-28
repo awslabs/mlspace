@@ -127,6 +127,7 @@ jobs:
     name: Send Final Slack Notification
     needs: [pre-commit, cypress_build, deployment_build, frontend_build, backend_build]
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - name: Send GitHub Action trigger data to Slack workflow
         uses: rtCamp/action-slack-notify@v2
