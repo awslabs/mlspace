@@ -22,7 +22,7 @@ from typing import List, Optional
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
-from ml_space_lambda.enums import Permission
+from ml_space_lambda.enums import Permission, EnvVariable
 from ml_space_lambda.utils.common_functions import serialize_permissions
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -35,11 +35,11 @@ class GroupUserModel:
             role: Optional[str] = None,
             permissions: Optional[List[Permission]] = None,
     ):
-        permissions = permissions if permissions else []
+        permissions = permissions or []
         self.user = username
         self.group = group_name
         self.permissions = permissions
-        self.role = role if role else ""
+        self.role = role or ""
 
     def to_dict(self) -> dict:
         return {
@@ -63,7 +63,7 @@ class GroupUserModel:
 class GroupUserDAO(DynamoDBObjectStore):
     def __init__(self, table_name: Optional[str] = None, client=None):
         self.env_vars = get_environment_variables()
-        table_name = table_name if table_name else self.env_vars["GROUP_USERS_TABLE"]
+        table_name = table_name or self.env_vars[EnvVariable.GROUP_USERS_TABLE]
         DynamoDBObjectStore.__init__(self, table_name=table_name, client=client)
 
     def create(self, group_user: GroupUserModel) -> None:
