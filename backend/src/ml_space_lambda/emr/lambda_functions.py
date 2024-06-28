@@ -273,3 +273,11 @@ def delete(event, context):
     resource_scheduler_dao.delete(resource_id=cluster_id, resource_type=ResourceType.EMR_CLUSTER)
 
     return f"Successfully terminated {cluster_id}"
+
+
+@api_wrapper
+def remove(event, context):
+    cluster_id = event["pathParameters"]["clusterId"]
+    resource_metadata_dao.delete(cluster_id, ResourceType.EMR_CLUSTER)
+
+    return f"Successfully removed {cluster_id}"
