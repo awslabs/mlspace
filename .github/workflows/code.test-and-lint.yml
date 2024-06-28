@@ -138,6 +138,6 @@ jobs:
           SLACK_FOOTER: ''
           SLACKIFY_MARKDOWN: true
           MSG_MINIMAL: 'actions url,commit'
-          SLACK_MESSAGE_ON_FAILURE: '<!here> Build FAILED on branch ${{ GITHUB_REF_NAME }} for [commit](${{ github.event.pull_request.html_url || github.event.head_commit.url }})'
-          SLACK_MESSAGE_ON_SUCCESS: 'Build SUCCESS on branch ${{ GITHUB_REF_NAME }} for [commit](${{ github.event.pull_request.html_url || github.event.head_commit.url }})'
-          SLACK_MESSAGE: 'Build Finished on branch ${{ GITHUB_REF_NAME }} for [commit](${{ github.event.pull_request.html_url || github.event.head_commit.url }})'
+          SLACK_MESSAGE_ON_FAILURE: '<!here> Build FAILED on branch ${{ env.GITHUB_REF_NAME }} for [commit](${{ github.event.pull_request.html_url || github.event.head_commit.url }})'
+          SLACK_MESSAGE_ON_SUCCESS: 'Build SUCCESS on branch ${{ env.GITHUB_REF_NAME }} for [commit](${{ github.event.pull_request.html_url || github.event.head_commit.url }})'
+          SLACK_MESSAGE: 'Build Finished on branch ${{ env.GITHUB_REF_NAME }} for [commit](${{ github.event.pull_request.html_url || github.event.head_commit.url }})'
