@@ -73,6 +73,7 @@ def create(event, context):
     if "AlgorithmName" in algorithm_specs and "TrainingImage" in algorithm_specs:
         del algorithm_specs["AlgorithmName"]
 
+    instance_type = resource_config["InstanceType"].removeprefix("ml.")
     training_job_definition = dict(
         TrainingJobName=training_job_name,
         HyperParameters=hyper_parameters,
@@ -87,9 +88,7 @@ def create(event, context):
             "InstanceType": resource_config["InstanceType"],
             "InstanceCount": int(resource_config["InstanceCount"]),
             "VolumeSizeInGB": int(resource_config["VolumeSizeInGB"]),
-            "VolumeKmsKeyId": (
-                "" if resource_config["InstanceType"] in kms_unsupported_instances() else param_file["pSMSKMSKeyId"]
-            ),
+            "VolumeKmsKeyId": ("" if instance_type in kms_unsupported_instances() else param_file["pSMSKMSKeyId"]),
         },
         VpcConfig={
             "SecurityGroupIds": param_file["pSMSSecurityGroupId"],
