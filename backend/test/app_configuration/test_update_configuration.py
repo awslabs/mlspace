@@ -148,19 +148,24 @@ def test_update_config_success(
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
-# @mock.pathc("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.suspend_all_of_type")
 @mock.patch(
     "ml_space_lambda.app_configuration.policy_helper.active_service_policy_manager.ActiveServicePolicyManager.update_activated_services_policy"
 )
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.update_instance_constraint_policies")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
 def test_update_config_success_with_suspend_resources_issues(
-    mock_app_config_dao, mock_update_instance_constraint_policies, mock_update_activated_services_policy
+    mock_app_config_dao, mock_update_instance_constraint_policies, mock_update_activated_services_policy, suspend_all_of_type
 ):
     version_id = 1
     mock_event = generate_event("global", version_id)
     mock_app_config_dao.create.return_value = None
     mock_update_activated_services_policy.return_value = [ResourceType.BATCH_TRANSLATE_JOB]
+
+    def raise_exception(event, context):
+        raise Exception()
+
+    suspend_all_of_type.side_effect = raise_exception
 
     # Add 1 to version ID as it's incremented as part of the update
     success_response = "Successfully updated configuration for global, version 2, but issues were encountered when suspending resources for a deactivated service. Please contact your system administrator for assistance in suspending resources for deactivated services."
