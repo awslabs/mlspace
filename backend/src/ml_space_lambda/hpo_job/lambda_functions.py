@@ -39,8 +39,9 @@ resource_metadata_dao = ResourceMetadataDAO()
 def _normalize_job_definition(definition, iam_role, param_file):
     definition["RoleArn"] = iam_role
     definition["OutputDataConfig"]["KmsKeyId"] = param_file["pSMSKMSKeyId"]
+    instance_type = definition["ResourceConfig"]["InstanceType"].removeprefix("ml.")
     definition["ResourceConfig"]["VolumeKmsKeyId"] = (
-        "" if definition["ResourceConfig"]["InstanceType"] in kms_unsupported_instances() else param_file["pSMSKMSKeyId"]
+        "" if instance_type in kms_unsupported_instances() else param_file["pSMSKMSKeyId"]
     )
     definition["VpcConfig"] = {
         "SecurityGroupIds": param_file["pSMSSecurityGroupId"],
