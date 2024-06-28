@@ -970,7 +970,7 @@ def test_sync_emr(mock_emr, mock_resource_metadata_dao):
     }
     mock_paginator = mock.Mock()
     mock_paginator.paginate.return_value = [
-        {"Clusters": [job1_details, job2_details, job3_details]},
+        {"Clusters": [job1_details, job2_details, job3_details, job4_details]},
     ]
     mock_emr.get_paginator.return_value = mock_paginator
     mock_cluster_details = {"Cluster": {"Tags": mock_tags_respones[0], "ReleaseLabel": "emr-6.6.0"}}

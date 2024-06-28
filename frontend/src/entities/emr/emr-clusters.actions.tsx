@@ -44,7 +44,7 @@ function EMRActionButton (props?: any) {
     return (
         <ButtonDropdown
             items={[
-                { text: 'Terminate', id: 'terminate' },
+                { text: 'Terminate', id: 'terminate', disabled: !isTerminatedCluster(selectedCluster) },
                 { text: 'Remove', id: 'remove', disabled: isTerminatedCluster(selectedCluster) }, 
             ]}
             variant='primary'
