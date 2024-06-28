@@ -127,6 +127,7 @@
                     "convolutional",
                     "cpu",
                     "cooldown",
+                    "cron",
                     "csv",
                     "ctx",
                     "cwl",

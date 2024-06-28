@@ -322,7 +322,7 @@ def _sync_emr_jobs(env_variables):
         if "Clusters" in page:
             for cluster in page["Clusters"]:
                 status = cluster["Status"]["State"]
-                if status != "TERMINATED":
+                if "TERMINATED" not in status:
                     # Describe the cluster so we can get the ReleaseLabel value and Tags
                     cluster_details = emr.describe_cluster(ClusterId=cluster["Id"])
                     # Check if this is an MLSpace resource based on tags

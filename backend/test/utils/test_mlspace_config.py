@@ -64,6 +64,7 @@ def test_environment_variables():
             EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: "",
             EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN: "",
             EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
+            EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN: "",
             EnvVariable.MANAGE_IAM_ROLES: "",
             EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
             EnvVariable.NOTEBOOK_ROLE_NAME: "",
