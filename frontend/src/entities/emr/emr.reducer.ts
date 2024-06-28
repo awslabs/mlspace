@@ -83,6 +83,11 @@ export const terminateEMRCluster = createAsyncThunk('emr/terminate', async (clus
     return response.data;
 });
 
+export const removeEMRCluster = createAsyncThunk('emr/remove', async (clusterId: string) => {
+    const response = await axios.delete(`/emr/${clusterId}/remove`);
+    return response.data;
+});
+
 export const EMRClusterSlice = createSlice({
     name: 'emr',
     initialState,

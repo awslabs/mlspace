@@ -56,6 +56,13 @@ export class EmrApiStack extends Stack {
                 method: 'DELETE',
             },
             {
+                name: 'remove',
+                resource: 'emr',
+                description: 'Remove an EMR Cluster from the resource metadata table',
+                path: 'emr/{clusterId}/remove',
+                method: 'DELETE',
+            },
+            {
                 name: 'set_resource_termination',
                 resource: 'resource_scheduler',
                 description: 'Update the termination time of an EMR Cluster',
