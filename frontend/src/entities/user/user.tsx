@@ -41,7 +41,7 @@ export function User (props: UserTableProps) {
     const dispatch = useAppDispatch();
     const { projectName } = useParams();
     const actions = (e: any) => UserActions({ ...e });
-    const isEmbedded = props.variant !== 'embedded';
+    const isEmbedded = props.variant === 'embedded';
 
     if (!isEmbedded) {
         DocTitle('Users');
