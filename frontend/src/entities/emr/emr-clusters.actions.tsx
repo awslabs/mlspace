@@ -18,11 +18,12 @@ import React, { RefObject } from 'react';
 import { useAppDispatch } from '../../config/store';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, SpaceBetween, ButtonDropdown } from '@cloudscape-design/components';
-import { terminateEMRCluster } from './emr.reducer';
+import { listEMRClusters, removeEMRCluster, terminateEMRCluster } from './emr.reducer';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
 import { deletionDescription } from '../../shared/util/form-utils';
 import { EMRResourceMetadata } from '../../shared/model/resource-metadata.model';
+import { EMRStatusState } from './emr.model';
 
 export default function EMRClusterActions (props?: any) {
     const createEmrRef = props?.focusProps?.createEmrRef;
@@ -42,7 +43,10 @@ function EMRActionButton (props?: any) {
     const selectedCluster: EMRResourceMetadata = props?.selectedItems[0];
     return (
         <ButtonDropdown
-            items={[{ text: 'Terminate', id: 'terminate' }]}
+            items={[
+                { text: 'Terminate', id: 'terminate', disabled: !isTerminatedCluster(selectedCluster) },
+                { text: 'Remove', id: 'remove', disabled: isTerminatedCluster(selectedCluster) }, 
+            ]}
             variant='primary'
             disabled={!selectedCluster}
             onItemClick={(e) =>
@@ -52,6 +56,14 @@ function EMRActionButton (props?: any) {
             Actions
         </ButtonDropdown>
     );
+}
+
+function isTerminatedCluster (cluster: EMRResourceMetadata) {
+    if (cluster && cluster.metadata) {
+        return (cluster.metadata.Status !== EMRStatusState.TERMINATED && cluster.metadata.Status !== EMRStatusState.TERMINATED_WITH_ERRORS);
+    } else {
+        return true;
+    }
 }
 
 const EMRClusterActionHandler = (
@@ -68,8 +80,22 @@ const EMRClusterActionHandler = (
                     resourceName: cluster.metadata.Name,
                     resourceType: 'EMR Cluster',
                     onConfirm: () => dispatch(terminateEMRCluster(cluster.resourceId)),
-                    postConfirm: () => nav(`/project/${projectName}/emr`),
+                    postConfirm: () => {
+                        dispatch(listEMRClusters({}));
+                        nav(`/project/${projectName}/emr`);
+                    },
                     description: deletionDescription('EMR Cluster'),
+                })
+            );
+            break;
+        case 'remove':
+            dispatch(
+                setDeleteModal({
+                    resourceName: cluster.metadata.Name,
+                    resourceType: 'EMR Cluster',
+                    onConfirm: () => dispatch(removeEMRCluster(cluster.resourceId)),
+                    postConfirm: () => nav(`/project/${projectName}/emr`),
+                    description: `This will permanently remove the cluster "${cluster.metadata.Name}". After this operation it can no longer be viewed.`,
                 })
             );
             break;

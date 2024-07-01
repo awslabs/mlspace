@@ -26,6 +26,7 @@ from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetada
 from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.image_uri_utils import delete_metric_definition_for_builtin_algorithms
+from ml_space_lambda.utils.instances import kms_unsupported_instances
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,7 @@ def create(event, context):
     if "AlgorithmName" in algorithm_specs and "TrainingImage" in algorithm_specs:
         del algorithm_specs["AlgorithmName"]
 
+    instance_type = resource_config["InstanceType"].removeprefix("ml.")
     training_job_definition = dict(
         TrainingJobName=training_job_name,
         HyperParameters=hyper_parameters,
@@ -86,7 +88,7 @@ def create(event, context):
             "InstanceType": resource_config["InstanceType"],
             "InstanceCount": int(resource_config["InstanceCount"]),
             "VolumeSizeInGB": int(resource_config["VolumeSizeInGB"]),
-            "VolumeKmsKeyId": "" if "ml.g" in resource_config["InstanceType"] else param_file["pSMSKMSKeyId"],
+            "VolumeKmsKeyId": ("" if instance_type in kms_unsupported_instances() else param_file["pSMSKMSKeyId"]),
         },
         VpcConfig={
             "SecurityGroupIds": param_file["pSMSSecurityGroupId"],

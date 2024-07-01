@@ -1,0 +1,31 @@
+name: Make Release Branch
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'New Release Name'
+        required: true
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  MakeNewReleaseBranch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Develop Branch
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+      - name: Create Release Branch and Update Version
+        run: |
+          git config --global user.email "evmann@amazon.com"
+          git config --global user.name "github_actions_mlspace"
+          RELEASE_TAG=${{ github.event.inputs.release_tag }}
+          git checkout -b release/${{ github.event.inputs.release_tag }}
+          echo "$( jq --arg version ${RELEASE_TAG:1} '.version = $version' frontend/package.json )" > frontend/package.json 
+          git commit -a -m "updating version for release ${{ github.event.inputs.release_tag }}"
+          git push origin release/${{ github.event.inputs.release_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.LEAD_ACCESS_TOKEN }}

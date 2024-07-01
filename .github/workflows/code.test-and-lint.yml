@@ -4,9 +4,9 @@ name: Build and Test
 
 on:
   push:
-    branches: [ "main", "develop", "v[0-9]+.[0-9]+.x" ]
+    branches: [ "main", "develop", "release/**" , "hotfix/**" ]
   pull_request:
-    branches: [ "main", "develop", "v[0-9]+.[0-9]+.x" ]
+    branches: [ "main", "develop", "release/**", "hotfix/**" ]
 
 permissions:
   contents: read
@@ -25,16 +25,6 @@ jobs:
           SLACK_FOOTER: ''
           MSG_MINIMAL: true
           SLACK_MESSAGE: 'PR Created ${{ github.event.pull_request.html_url }}'
-      - name: Send GitHub Action trigger data to Slack workflow
-        if: github.event_name != 'pull_request'
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK:  ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: 'dbab09'
-          SLACK_TITLE: 'Build Starting'
-          SLACK_FOOTER: ''
-          MSG_MINIMAL: 'actions url,commit'
-          SLACK_MESSAGE: 'Build Starting for ${{ github.event.pull_request.html_url || github.event.head_commit.url }}'
   backend_build:
     name: Backend Tests
     runs-on: ubuntu-latest
@@ -137,6 +127,7 @@ jobs:
     name: Send Final Slack Notification
     needs: [pre-commit, cypress_build, deployment_build, frontend_build, backend_build]
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - name: Send GitHub Action trigger data to Slack workflow
         uses: rtCamp/action-slack-notify@v2
@@ -147,6 +138,6 @@ jobs:
           SLACK_TITLE: 'Build Finished'
           SLACK_FOOTER: ''
           MSG_MINIMAL: 'actions url,commit'
-          SLACK_MESSAGE_ON_FAILURE: 'Build FAILED for ${{ github.event.pull_request.html_url || github.event.head_commit.url }}'
-          SLACK_MESSAGE_ON_SUCCESS: 'Build SUCCESS for ${{ github.event.pull_request.html_url || github.event.head_commit.url }}'
-          SLACK_MESSAGE: 'Build Finished for ${{ github.event.pull_request.html_url || github.event.head_commit.url }}'
+          SLACK_MESSAGE_ON_FAILURE: '<!here> Build FAILED on branch ${{ github.head_ref || github.ref_name }} for <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|commit>'
+          SLACK_MESSAGE_ON_SUCCESS: 'Build SUCCESS on branch ${{ github.head_ref || github.ref_name }} for <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|commit>'
+          SLACK_MESSAGE: 'Build Finished with status ${{ job.status }} on branch ${{ github.head_ref || github.ref_name }} for <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|commit>'

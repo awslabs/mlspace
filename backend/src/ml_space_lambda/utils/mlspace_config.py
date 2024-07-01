@@ -41,6 +41,7 @@ ENV_DEFAULTS = {
     EnvVariable.EMR_SERVICE_ROLE_NAME: "EMR_DefaultRole",
     EnvVariable.EMR_SECURITY_CONFIGURATION: "MLSpace-EMR-SecurityConfig",
     EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+    EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN: "",
     EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
     EnvVariable.MANAGE_IAM_ROLES: "",
     EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",

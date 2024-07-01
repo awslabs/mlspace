@@ -15,7 +15,7 @@
 */
 
 import axios from '../../shared/util/axios-utils';
-import { createSlice, createAsyncThunk, isFulfilled, isPending } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, isFulfilled, isPending, isRejected } from '@reduxjs/toolkit';
 import { EMRCluster } from './emr.model';
 import { PagedResponsePayload, ServerRequestProps } from '../../shared/util/table-utils';
 import { addPagingParams } from '../../shared/util/url-utils';
@@ -83,6 +83,11 @@ export const terminateEMRCluster = createAsyncThunk('emr/terminate', async (clus
     return response.data;
 });
 
+export const removeEMRCluster = createAsyncThunk('emr/remove', async (clusterId: string) => {
+    const response = await axios.delete(`/emr/${clusterId}/remove`);
+    return response.data;
+});
+
 export const EMRClusterSlice = createSlice({
     name: 'emr',
     initialState,
@@ -143,6 +148,13 @@ export const EMRClusterSlice = createSlice({
                 return {
                     ...state,
                     loadingCluster: true,
+                };
+            })
+            .addMatcher(isRejected(getEMRCluster), (state) => {
+                return {
+                    ...state,
+                    loadingCluster: true, // Continue loading until a call goes through
+                    cluster: {} as EMRCluster,
                 };
             })
             .addMatcher(isPending(listEMRClusters), (state) => {
