@@ -79,27 +79,27 @@ def test_initial_config_success(mock_iam):
         [
             mock.call(
                 RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN],
             ),
             mock.call(
                 RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN],
             ),
             mock.call(
                 RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN],
             ),
             mock.call(
                 RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN],
             ),
             mock.call(
                 RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN],
             ),
             mock.call(
                 RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value],
+                PolicyArn=TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN],
             ),
         ]
     )

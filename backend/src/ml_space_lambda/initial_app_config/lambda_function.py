@@ -60,7 +60,7 @@ def lambda_handler(event, context):
 def update_dynamic_roles_with_notebook_policies(event, context):
     env_vars = get_environment_variables()
 
-    if env_vars[EnvVariable.MANAGE_IAM_ROLES]:
+    if not env_vars[EnvVariable.MANAGE_IAM_ROLES]:
         return
 
     iam_manager = IAMManager(iam)
