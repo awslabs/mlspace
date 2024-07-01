@@ -1617,7 +1617,11 @@ Use the MLSpace Config Wizard by running `npm run config` and select "Advanced C
 | `KEY_MANAGER_ROLE_NAME` | Name of the IAM role with permissions to manage the KMS Key. If this property is set, you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
 
 <details>
-    <summary><h4>Optional Parameters</h4></summary>
+<summary>
+
+#### Optional Parameters
+
+</summary>
 
 | Variable   |      Description      |  Default |
 |----------|:-------------|------:|

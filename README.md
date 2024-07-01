@@ -145,7 +145,11 @@ If the config-helper doesn't provide the level of customization you need for you
 | OIDC_CLIENT_NAME | The OIDC client name that should be used by MLSpace for authentication | - |
 
 <details>
-    <summary><h3>Optional Parameters</h3></summary>
+<summary>
+
+### Optional Parameters
+
+</summary>
 
 | Variable   |      Description      |  Default |
 |----------|:-------------:|------:|
