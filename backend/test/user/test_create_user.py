@@ -73,9 +73,7 @@ def test_create_new_user_success(mock_user_dao, mock_user, mock_event):
     assert create_args["displayName"] == response_body["displayName"] == mock_user.display_name
     assert create_args["permissions"] == response_body["permissions"] == serialize_permissions(mock_user.permissions)
     assert create_args["suspended"] == response_body["suspended"] == mock_user.suspended
-    assert (
-        create_args["preferences"] == response_body["preferences"] == {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL.value}
-    )
+    assert create_args["preferences"] == response_body["preferences"] == {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL}
     # Ocassionally the tests and mocks may wind up off by 1 second so handle that instead of looking
     # for exact equality
     assert abs(response_body["lastLogin"] >= mock_user.last_login) <= 1

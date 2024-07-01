@@ -33,7 +33,7 @@ TEST_ENV_CONFIG = {
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.dataset.lambda_functions import edit as lambda_handler
 
-mock_ds_scope = DatasetType.GLOBAL.value
+mock_ds_scope = DatasetType.GLOBAL
 mock_ds_name = "example_dataset"
 event_body = {
     "scope": mock_ds_scope,

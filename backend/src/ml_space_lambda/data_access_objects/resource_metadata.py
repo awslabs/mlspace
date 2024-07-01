@@ -23,7 +23,7 @@ from botocore.exceptions import ClientError
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
@@ -71,7 +71,7 @@ class ResourceMetadataModel:
 class ResourceMetadataDAO(DynamoDBObjectStore):
     def __init__(self, table_name: Optional[str] = None, client=None):
         self.env_vars = get_environment_variables()
-        table_name = table_name if table_name else self.env_vars["RESOURCE_METADATA_TABLE"]
+        table_name = table_name if table_name else self.env_vars[EnvVariable.RESOURCE_METADATA_TABLE]
         DynamoDBObjectStore.__init__(self, table_name=table_name, client=client)
 
     def create(self, resource_metadata: ResourceMetadataModel) -> None:

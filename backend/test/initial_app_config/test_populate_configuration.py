@@ -19,7 +19,7 @@ from unittest import mock
 from ml_space_lambda.enums import EnvVariable, ServiceType
 from ml_space_lambda.utils import mlspace_config
 
-TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", EnvVariable.MANAGE_IAM_ROLES.value: "True"}
+TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", EnvVariable.MANAGE_IAM_ROLES: "True"}
 
 mock_context = mock.Mock()
 mock_event = mock.Mock()
@@ -36,23 +36,23 @@ def generate_config(notebook_list=[], endpoint_list=[], training_list=[], transf
         "createdAt": 1,
         "configuration": {
             "EnabledInstanceTypes": {
-                ServiceType.NOTEBOOK.value: notebook_list,
-                ServiceType.ENDPOINT.value: endpoint_list,
-                ServiceType.TRAINING_JOB.value: training_list,
-                ServiceType.TRANSFORM_JOB.value: transform_list,
+                ServiceType.NOTEBOOK: notebook_list,
+                ServiceType.ENDPOINT: endpoint_list,
+                ServiceType.TRAINING_JOB: training_list,
+                ServiceType.TRANSFORM_JOB: transform_list,
             },
             "EnabledServices": {
-                ServiceType.REALTIME_TRANSLATE.value: False,
-                ServiceType.BATCH_TRANSLATE.value: False,
-                ServiceType.LABELING_JOB.value: False,
-                ServiceType.EMR_CLUSTER.value: False,
-                ServiceType.TRAINING_JOB.value: False,
-                ServiceType.TRANSFORM_JOB.value: False,
-                ServiceType.HPO_JOB.value: False,
-                ServiceType.ENDPOINT.value: False,
-                ServiceType.ENDPOINT_CONFIG.value: False,
-                ServiceType.NOTEBOOK.value: False,
-                ServiceType.MODEL.value: False,
+                ServiceType.REALTIME_TRANSLATE: False,
+                ServiceType.BATCH_TRANSLATE: False,
+                ServiceType.LABELING_JOB: False,
+                ServiceType.EMR_CLUSTER: False,
+                ServiceType.TRAINING_JOB: False,
+                ServiceType.TRANSFORM_JOB: False,
+                ServiceType.HPO_JOB: False,
+                ServiceType.ENDPOINT: False,
+                ServiceType.ENDPOINT_CONFIG: False,
+                ServiceType.NOTEBOOK: False,
+                ServiceType.MODEL: False,
             },
             "EMRConfig": {
                 "clusterTypes": [],

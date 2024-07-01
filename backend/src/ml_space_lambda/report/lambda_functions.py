@@ -27,7 +27,7 @@ from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
-from ml_space_lambda.enums import Permission, ResourceType
+from ml_space_lambda.enums import EnvVariable, Permission, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -395,9 +395,9 @@ def create_personnel_report(personnel: List[UserModel]):
                 ]
             )
     key = "mlspace-report/{}.csv".format(file_name)
-    s3.upload_file(Filename=f"/tmp/{file_name}.csv", Bucket=env_variables["DATA_BUCKET"], Key=key)
+    s3.upload_file(Filename=f"/tmp/{file_name}.csv", Bucket=env_variables[EnvVariable.DATA_BUCKET], Key=key)
 
-    return "s3://" + env_variables["DATA_BUCKET"] + "/" + key
+    return "s3://" + env_variables[EnvVariable.DATA_BUCKET] + "/" + key
 
 
 def _create_report(report_key: str, content):
@@ -618,9 +618,9 @@ def _create_report(report_key: str, content):
                             )
 
     key = f"mlspace-report/{file_name}.csv"
-    s3.upload_file(Filename=f"/tmp/{file_name}.csv", Bucket=env_variables["DATA_BUCKET"], Key=key)
+    s3.upload_file(Filename=f"/tmp/{file_name}.csv", Bucket=env_variables[EnvVariable.DATA_BUCKET], Key=key)
 
-    return "s3://" + env_variables["DATA_BUCKET"] + "/" + key
+    return "s3://" + env_variables[EnvVariable.DATA_BUCKET] + "/" + key
 
 
 # create-report
@@ -674,7 +674,7 @@ def list(event, context):
     env_variables = get_environment_variables()
 
     paginator = s3.get_paginator("list_objects_v2")
-    pages = paginator.paginate(Bucket=env_variables["DATA_BUCKET"], Prefix="mlspace-report")
+    pages = paginator.paginate(Bucket=env_variables[EnvVariable.DATA_BUCKET], Prefix="mlspace-report")
 
     for page in pages:
         if "Contents" in page:
@@ -695,7 +695,7 @@ def download(event, context):
 
     return s3.generate_presigned_url(
         ClientMethod="get_object",
-        Params={"Bucket": env_variables["DATA_BUCKET"], "Key": f"mlspace-report/{report_name}"},
+        Params={"Bucket": env_variables[EnvVariable.DATA_BUCKET], "Key": f"mlspace-report/{report_name}"},
         ExpiresIn=120,
     )
 
@@ -705,6 +705,6 @@ def delete(event, context):
     report = event["pathParameters"]["reportName"]
     env_variables = get_environment_variables()
 
-    s3.delete_object(Bucket=env_variables["DATA_BUCKET"], Key=f"mlspace-report/{report}")
+    s3.delete_object(Bucket=env_variables[EnvVariable.DATA_BUCKET], Key=f"mlspace-report/{report}")
 
     return f"Successfully deleted {report}"

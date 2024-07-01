@@ -21,7 +21,7 @@ import urllib.parse
 import boto3
 
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
@@ -53,7 +53,7 @@ def create(event, context):
         "S3Uri": request["OutputDataConfig"]["S3Uri"],
         "EncryptionKey": {"Type": "KMS", "Id": param_file["pSMSKMSKeyId"]},
     }
-    args["DataAccessRoleArn"] = env_variables["TRANSLATE_DATE_ROLE_ARN"]
+    args["DataAccessRoleArn"] = env_variables[EnvVariable.TRANSLATE_DATE_ROLE_ARN]
     args["SourceLanguageCode"] = request["SourceLanguageCode"]
     args["TargetLanguageCodes"] = request["TargetLanguageCodes"]
     # Optional args
