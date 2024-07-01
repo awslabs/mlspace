@@ -98,7 +98,7 @@ def _assert_update_params(
 @mock.patch("ml_space_lambda.user.lambda_functions.user_dao")
 def test_update_user_modify_permissions(mock_user_dao, mock_project_user_dao, mock_user):
     mock_user_dao.get.return_value = mock_user
-    mock_event = _mock_event({"permissions": [Permission.PROJECT_OWNER.value]}, mock_user)
+    mock_event = _mock_event({"permissions": [Permission.PROJECT_OWNER]}, mock_user)
 
     assert lambda_handler(mock_event, mock_context) == mock_success(mock_event)
 
@@ -110,7 +110,7 @@ def test_update_user_modify_permissions(mock_user_dao, mock_project_user_dao, mo
     assert mock_user_dao.update.call_args.args[0] == MOCK_USERNAME
     _assert_update_params(
         mock_user_dao.update.call_args.args[1].to_dict(),
-        [Permission.PROJECT_OWNER.value],
+        [Permission.PROJECT_OWNER],
         False,
         {},
     )
@@ -122,8 +122,8 @@ def test_update_user_modify_preferences(mock_user_dao, mock_project_user_dao, mo
     mock_user_dao.get.return_value = mock_user
     mock_event = _mock_event(
         {
-            "preferences": {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC.value},
-            "permissions": [Permission.PROJECT_OWNER.value],
+            "preferences": {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC},
+            "permissions": [Permission.PROJECT_OWNER],
         }
     )
 
@@ -140,9 +140,9 @@ def test_update_user_modify_preferences(mock_user_dao, mock_project_user_dao, mo
     assert mock_user_dao.update.call_args.args[0] == MOCK_USERNAME
     _assert_update_params(
         mock_user_dao.update.call_args.args[1].to_dict(),
-        [Permission.PROJECT_OWNER.value],
+        [Permission.PROJECT_OWNER],
         False,
-        {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC.value},
+        {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC},
     )
 
 
@@ -153,8 +153,8 @@ def test_update_user_modify_preferences_non_admin(mock_user_dao, mock_project_us
     mock_user_dao.get.return_value = mock_user
     mock_event = _mock_event(
         {
-            "preferences": {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC.value},
-            "permissions": [Permission.PROJECT_OWNER.value],
+            "preferences": {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC},
+            "permissions": [Permission.PROJECT_OWNER],
             "suspended": True,
         },
         False,
@@ -175,7 +175,7 @@ def test_update_user_modify_preferences_non_admin(mock_user_dao, mock_project_us
         mock_user_dao.update.call_args.args[1].to_dict(),
         [],  # this should remain the same since the invoking user can't change permissions
         False,
-        {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC.value},
+        {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC},
     )
 
 

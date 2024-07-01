@@ -24,7 +24,7 @@ from botocore.exceptions import ClientError
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.project import ProjectModel
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 
 TEST_ENV_CONFIG = {
     # Moto doesn't work with iso regions...
@@ -61,7 +61,7 @@ class TestProjectDAO(TestCase):
         from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
         env_vars = get_environment_variables()
-        self.TEST_TABLE = env_vars["PROJECTS_TABLE"]
+        self.TEST_TABLE = env_vars[EnvVariable.PROJECTS_TABLE]
         self.ddb = boto3.client(
             "dynamodb",
             config=retry_config,

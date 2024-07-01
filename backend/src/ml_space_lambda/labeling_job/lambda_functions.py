@@ -21,7 +21,7 @@ import boto3
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.groundtruth_utils import (
     LambdaTypes,
@@ -90,7 +90,7 @@ def create(event, context):
     )
 
     labeling_job["RoleArn"] = param_file["pSMSRoleARN"]
-    if env_variables["MANAGE_IAM_ROLES"]:
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         project_user = project_user_dao.get(project_name, username)
         labeling_job["RoleArn"] = project_user.role
 
@@ -124,7 +124,7 @@ def create(event, context):
             param_file["pSMSSubnetIds"].split(",")[0]
         ]
 
-    labeling_job["Tags"] = generate_tags(username, project_name, env_variables["SYSTEM_TAG"])
+    labeling_job["Tags"] = generate_tags(username, project_name, env_variables[EnvVariable.SYSTEM_TAG])
 
     response = sagemaker.create_labeling_job(**labeling_job)
 

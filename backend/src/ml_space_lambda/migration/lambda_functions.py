@@ -20,7 +20,7 @@ import logging
 import boto3
 
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, get_tags_for_resource
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
 
@@ -86,7 +86,7 @@ def _sync_notebooks(env_variables):
             for notebook in page["NotebookInstances"]:
                 # Check if this is an MLSpace resource based on tags
                 (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                    notebook["NotebookInstanceArn"], env_variables["SYSTEM_TAG"]
+                    notebook["NotebookInstanceArn"], env_variables[EnvVariable.SYSTEM_TAG]
                 )
                 if project and owner and is_mlspace_resource:
                     notebook_metadata = {
@@ -119,7 +119,7 @@ def _sync_endpoints(env_variables):
             for endpoint in page["Endpoints"]:
                 # Check if this is an MLSpace resource based on tags
                 (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                    endpoint["EndpointArn"], env_variables["SYSTEM_TAG"]
+                    endpoint["EndpointArn"], env_variables[EnvVariable.SYSTEM_TAG]
                 )
                 if project and owner and is_mlspace_resource:
                     endpoint_metadata = {
@@ -150,7 +150,7 @@ def _sync_models(env_variables):
             for model in page["Models"]:
                 # Check if this is an MLSpace resource based on tags
                 (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                    model["ModelArn"], env_variables["SYSTEM_TAG"]
+                    model["ModelArn"], env_variables[EnvVariable.SYSTEM_TAG]
                 )
                 if project and owner and is_mlspace_resource:
                     model_metadata = {
@@ -179,7 +179,7 @@ def _sync_training_jobs(env_variables):
             for job in page["TrainingJobSummaries"]:
                 # Check if this is an MLSpace resource based on tags
                 (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                    job["TrainingJobArn"], env_variables["SYSTEM_TAG"]
+                    job["TrainingJobArn"], env_variables[EnvVariable.SYSTEM_TAG]
                 )
                 if project and owner and is_mlspace_resource:
                     job_details = sagemaker.describe_training_job(TrainingJobName=job["TrainingJobName"])
@@ -214,7 +214,7 @@ def _sync_transform_jobs(env_variables):
             for job in page["TransformJobSummaries"]:
                 # Check if this is an MLSpace resource based on tags
                 (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                    job["TransformJobArn"], env_variables["SYSTEM_TAG"]
+                    job["TransformJobArn"], env_variables[EnvVariable.SYSTEM_TAG]
                 )
                 if project and owner and is_mlspace_resource:
                     job_metadata = {
@@ -250,7 +250,7 @@ def _sync_endpoint_configs(env_variables):
             for config in page["EndpointConfigs"]:
                 # Check if this is an MLSpace resource based on tags
                 (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                    config["EndpointConfigArn"], env_variables["SYSTEM_TAG"]
+                    config["EndpointConfigArn"], env_variables[EnvVariable.SYSTEM_TAG]
                 )
                 if project and owner and is_mlspace_resource:
                     config_metadata = {
@@ -286,7 +286,7 @@ def _sync_hpo_jobs(env_variables):
                 )
                 # Check if this is an MLSpace resource based on tags
                 (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                    job_details["HyperParameterTuningJobArn"], env_variables["SYSTEM_TAG"]
+                    job_details["HyperParameterTuningJobArn"], env_variables[EnvVariable.SYSTEM_TAG]
                 )
                 if project and owner and is_mlspace_resource:
                     job_metadata = {
@@ -327,7 +327,7 @@ def _sync_emr_jobs(env_variables):
                     cluster_details = emr.describe_cluster(ClusterId=cluster["Id"])
                     # Check if this is an MLSpace resource based on tags
                     (is_mlspace_resource, project, owner) = _get_system_owner_and_project(
-                        cluster["ClusterArn"], env_variables["SYSTEM_TAG"], cluster_details["Cluster"]["Tags"]
+                        cluster["ClusterArn"], env_variables[EnvVariable.SYSTEM_TAG], cluster_details["Cluster"]["Tags"]
                     )
                     if project and owner and is_mlspace_resource:
                         metadata = {

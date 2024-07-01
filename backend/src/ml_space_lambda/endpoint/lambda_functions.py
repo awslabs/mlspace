@@ -24,7 +24,7 @@ import boto3
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import (
     api_wrapper,
     generate_tags,
@@ -62,7 +62,7 @@ def create(event, context):
     response = sagemaker.create_endpoint(
         EndpointName=endpoint_name,
         EndpointConfigName=endpoint_config_name,
-        Tags=generate_tags(user_name, project_name, env_variables["SYSTEM_TAG"]),
+        Tags=generate_tags(user_name, project_name, env_variables[EnvVariable.SYSTEM_TAG]),
     )
     project = project_dao.get(project_name)
     if (

@@ -450,7 +450,7 @@ class TestProjectDAO(TestCase):
         assert ticonderoga_membership.role == ""
 
         datasets_dao = DatasetDAO(DATASETS_TABLE_NAME, self.ddb)
-        global_datasets = datasets_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
+        global_datasets = datasets_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
         admin_datasets = datasets_dao.get_all_for_scope(DatasetType.PRIVATE, ADMIN_USER)
         project_datasets = datasets_dao.get_all_for_scope(DatasetType.PROJECT, TEST_PROJECT_NAME)
         assert len(global_datasets) == 1
