@@ -95,7 +95,7 @@ def update_instance_kms_key_conditions(event, ctx):
     )
 
     try:
-        policy_arn = env_variables[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value]
+        policy_arn = env_variables[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN]
         iam.create_policy_version(PolicyArn=policy_arn, SetAsDefault=True, PolicyDocument=policy_document)
         iam_manager._delete_unused_policy_versions(policy_arn)
     except Exception as e:

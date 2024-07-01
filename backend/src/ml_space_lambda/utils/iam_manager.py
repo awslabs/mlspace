@@ -592,8 +592,8 @@ class IAMManager:
             max_length = IAM_ROLE_NAME_MAX_LENGTH
         if len(name) > max_length:
             raise ValueError(
-                f"IAM {resource_type.value} name '{name}' ({len(name)} characters) is "
-                + f"over the {max_length} character limit for IAM {resource_type.value} names."
+                f"IAM {resource_type} name '{name}' ({len(name)} characters) is "
+                + f"over the {max_length} character limit for IAM {resource_type} names."
             )
 
     def _delete_unused_policy_versions(self, policy_arn: str) -> None:

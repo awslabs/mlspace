@@ -22,8 +22,8 @@ from ml_space_lambda.utils import mlspace_config
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
-    EnvVariable.MANAGE_IAM_ROLES.value: "True",
-    EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value: "arn:aws::iam:policy/kms-instance-conditions-policy",
+    EnvVariable.MANAGE_IAM_ROLES: "True",
+    EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN: "arn:aws::iam:policy/kms-instance-conditions-policy",
 }
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
@@ -70,7 +70,7 @@ def test_update_instance_kms_key_conditions_success(
     )
 
     mock_iam.create_policy_version.assert_called_with(
-        PolicyArn=TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value],
+        PolicyArn=TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN],
         SetAsDefault=True,
         PolicyDocument=json.dumps(
             {
