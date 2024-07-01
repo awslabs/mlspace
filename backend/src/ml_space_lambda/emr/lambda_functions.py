@@ -26,7 +26,7 @@ import boto3
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.app_config_utils import get_app_config, get_emr_application_list
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
@@ -138,7 +138,7 @@ def create(event, context):
                 },
             },
         ],
-        "Ec2KeyName": env_variables["EMR_EC2_SSH_KEY"],
+        "Ec2KeyName": env_variables[EnvVariable.EMR_EC2_SSH_KEY],
         "KeepJobFlowAliveWhenNoSteps": True,
         "TerminationProtected": False,
         "Ec2SubnetId": subnet,
@@ -150,13 +150,13 @@ def create(event, context):
             instance_group["CustomAmiId"] = custom_ami_id
 
     args["VisibleToAllUsers"] = True
-    args["JobFlowRole"] = env_variables["EMR_EC2_ROLE_NAME"]
-    args["ServiceRole"] = env_variables["EMR_SERVICE_ROLE_NAME"]
-    args["AutoScalingRole"] = env_variables["EMR_EC2_ROLE_NAME"]
-    args["Tags"] = generate_tags(user_name, project_name, env_variables["SYSTEM_TAG"])
+    args["JobFlowRole"] = env_variables[EnvVariable.EMR_EC2_ROLE_NAME]
+    args["ServiceRole"] = env_variables[EnvVariable.EMR_SERVICE_ROLE_NAME]
+    args["AutoScalingRole"] = env_variables[EnvVariable.EMR_EC2_ROLE_NAME]
+    args["Tags"] = generate_tags(user_name, project_name, env_variables[EnvVariable.SYSTEM_TAG])
 
     # Use a security configuration to disable IMDSv1
-    args["SecurityConfiguration"] = env_variables["EMR_SECURITY_CONFIGURATION"]
+    args["SecurityConfiguration"] = env_variables[EnvVariable.EMR_SECURITY_CONFIGURATION]
 
     response = emr.run_job_flow(**args)
     project = project_dao.get(project_name)

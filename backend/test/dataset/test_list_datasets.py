@@ -56,10 +56,10 @@ def _build_dataset(scope: str, name: str, user_name: str) -> DatasetModel:
 
 
 def mock_get_all_for_scope(dataset_type: DatasetType, scope: str):
-    if scope == DatasetType.GLOBAL.value:
+    if scope == DatasetType.GLOBAL:
         return [
             _build_dataset(
-                scope=DatasetType.GLOBAL.value,
+                scope=DatasetType.GLOBAL,
                 name="example_global_dataset1",
                 user_name="jdoe",
             )
@@ -91,7 +91,7 @@ def mock_get_all_for_scope(dataset_type: DatasetType, scope: str):
 def test_list_datasets(mock_dataset_dao):
     mock_dataset_dao.get_all_for_scope.side_effect = mock_get_all_for_scope
 
-    expected_datasets = mock_get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
+    expected_datasets = mock_get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
     expected_datasets.extend(mock_get_all_for_scope(DatasetType.PRIVATE, user_name))
     expected_datasets.extend(mock_get_all_for_scope(DatasetType.PROJECT, project_name))
     expected_response = generate_html_response(
@@ -106,7 +106,7 @@ def test_list_datasets(mock_dataset_dao):
 def test_list_user_datasets(mock_dataset_dao):
     mock_dataset_dao.get_all_for_scope.side_effect = mock_get_all_for_scope
 
-    expected_datasets = mock_get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
+    expected_datasets = mock_get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
     expected_datasets.extend(mock_get_all_for_scope(DatasetType.PRIVATE, user_name))
     expected_response = generate_html_response(
         200,
@@ -131,7 +131,7 @@ def test_list_datasets_success_no_datasets(mock_dataset_dao):
 
     mock_dataset_dao.get_all_for_scope.assert_has_calls(
         [
-            mock.call(DatasetType.GLOBAL, DatasetType.GLOBAL.value),
+            mock.call(DatasetType.GLOBAL, DatasetType.GLOBAL),
             mock.call(DatasetType.PRIVATE, user_name),
             mock.call(DatasetType.PROJECT, project_name),
         ]
@@ -152,4 +152,4 @@ def test_list_datasets_client_error(mock_dataset_dao):
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_dataset_dao.get_all_for_scope.assert_called_with(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
+    mock_dataset_dao.get_all_for_scope.assert_called_with(DatasetType.GLOBAL, DatasetType.GLOBAL)

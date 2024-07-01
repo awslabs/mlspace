@@ -29,7 +29,7 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.resource_scheduler import ResourceSchedulerDAO, ResourceSchedulerModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.enums import Permission, ResourceType
+from ml_space_lambda.enums import EnvVariable, Permission, ResourceType
 from ml_space_lambda.utils.common_functions import (
     api_wrapper,
     generate_tags,
@@ -73,7 +73,7 @@ def create(event, context):
 
     # IAM role to be used when creating the instance depends on the deployment type/customer
     iam_role = param_file["pSMSRoleARN"]
-    if env_variables["MANAGE_IAM_ROLES"]:
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         project_user = project_user_dao.get(proj_name, user_name)
         iam_role = project_user.role
 
@@ -84,7 +84,7 @@ def create(event, context):
     else:
         subnet = random.choice(param_file["pSMSSubnetIds"].split(","))
 
-    tags_list = generate_tags(user_name, proj_name, env_variables["SYSTEM_TAG"])
+    tags_list = generate_tags(user_name, proj_name, env_variables[EnvVariable.SYSTEM_TAG])
 
     # If the user did not select a lifecycle config, do not request one.
     if not lifecycle_config or lifecycle_config.lower() == "no configuration":
@@ -365,7 +365,7 @@ def _render_emr_script(emr_master_ip: str) -> str:
 
     # PARAMETERS
     EMR_MASTER_IP={emr_master_ip}
-    S3_CONFIG_BUCKET={env_variables["BUCKET"]}
+    S3_CONFIG_BUCKET={env_variables[EnvVariable.BUCKET]}
 
     cd /home/ec2-user/.sparkmagic
 
@@ -379,7 +379,7 @@ def _render_emr_script(emr_master_ip: str) -> str:
     # curl "$EMR_MASTER_IP:8998/sessions"
 
     # Use the AWS S3 sync command to retrieve global resources
-    aws s3 sync s3://{env_variables["DATA_BUCKET"]}/global-read-only/resources /home/ec2-user/SageMaker/global-resources/
+    aws s3 sync s3://{env_variables[EnvVariable.DATA_BUCKET]}/global-read-only/resources /home/ec2-user/SageMaker/global-resources/
     echo "Global resources downloaded and stored in /home/ec2-user/SageMaker/global-resources/ which includes notebook parameters and an example notebook for high-side repo access instructions."
     """
 
