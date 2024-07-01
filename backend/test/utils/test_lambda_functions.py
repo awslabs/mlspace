@@ -36,7 +36,7 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 @mock.patch("ml_space_lambda.utils.lambda_functions.iam")
 @mock.patch("ml_space_lambda.utils.lambda_functions.ec2")
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-def test_update_instance_kms_key_conditions(
+def test_update_instance_kms_key_conditions_success(
     mock_ec2, mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_union
 ):
     mlspace_config.env_variables = {}
@@ -97,5 +97,59 @@ def test_update_instance_kms_key_conditions(
     )
 
     mock_iam_manager._delete_unused_policy_versions.assert_called_with(
-        TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value]
+        TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN]
     )
+
+
+@mock.patch("ml_space_lambda.utils.lambda_functions.abbreviated_instance_union")
+@mock.patch("ml_space_lambda.utils.lambda_functions.kms_unsupported_instances")
+@mock.patch("ml_space_lambda.utils.lambda_functions.iam_manager")
+@mock.patch("ml_space_lambda.utils.lambda_functions.iam")
+@mock.patch.dict("os.environ", {EnvVariable.MANAGE_IAM_ROLES: ""}, clear=True)
+def test_update_instance_kms_key_conditions_no_dynamic_roles(
+    mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_union
+):
+    mlspace_config.env_variables = {}
+
+    update_instance_kms_key_conditions(mock.Mock(), mock.Mock())
+
+    kms_unsupported_instances.assert_not_called()
+    abbreviated_instance_union.assert_not_called()
+    mock_iam.create_policy_version.assert_not_called()
+    mock_iam_manager._delete_unused_policy_versions.assert_not_called()
+
+
+@mock.patch("ml_space_lambda.utils.lambda_functions.abbreviated_instance_union")
+@mock.patch("ml_space_lambda.utils.lambda_functions.kms_unsupported_instances")
+@mock.patch("ml_space_lambda.utils.lambda_functions.iam_manager")
+@mock.patch("ml_space_lambda.utils.lambda_functions.iam")
+@mock.patch("ml_space_lambda.utils.lambda_functions.ec2")
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+def test_update_instance_kms_key_conditions_fail(
+    mock_ec2, mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_union
+):
+    mlspace_config.env_variables = {}
+
+    mock_iam_manager._delete_unused_policy_versions.side_effect = Exception("test failure")
+
+    paginator = mock.Mock()
+    unsupported_instances = ["g5.large", "g5ad.large"]
+    kms_unsupported_instances.return_value = unsupported_instances
+    mock_ec2.get_paginator.return_value = paginator
+
+    instance_types = [
+        {"InstanceType": "g5.large"},
+        {"InstanceType": "g5.xlarge"},
+        {"InstanceType": "g5.2xlarge"},
+        {"InstanceType": "g5.4xlarge"},
+    ]
+
+    paginator.paginate.return_value = [{"InstanceTypes": instance_types[:2]}, {"InstanceTypes": instance_types[2:]}]
+
+    abbreviated_instance_union.side_effect = [["g5.large"], ["g6.large"]]
+
+    assert "unable to update kms policy" == update_instance_kms_key_conditions(mock.Mock(), mock.Mock())
+
+    kms_unsupported_instances.assert_called()
+    mock_iam.create_policy_version.assert_called()
+    mock_iam_manager._delete_unused_policy_versions.assert_called()
