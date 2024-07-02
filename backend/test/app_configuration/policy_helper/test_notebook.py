@@ -47,10 +47,10 @@ def test_update_instance_constraint_policies(create_instance_constraint_policy_v
 
     new_configuration = ServiceInstanceTypes.from_dict(
         {
-            ServiceType.NOTEBOOK.value: ["ml.t3.medium"],
-            ServiceType.ENDPOINT.value: ["ml.t3.large"],
-            ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge"],
-            ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig"],
+            ServiceType.NOTEBOOK: ["ml.t3.medium"],
+            ServiceType.ENDPOINT: ["ml.t3.large"],
+            ServiceType.TRAINING_JOB: ["ml.t3.xlarge"],
+            ServiceType.TRANSFORM_JOB: ["ml.t3.kindabig"],
         }
     )
 
@@ -66,8 +66,8 @@ def test_update_instance_constraint_policies(create_instance_constraint_policy_v
 def test_create_instance_constraint_statement():
     actions = ["sagemaker:CreateTraningJob", "sagemaker:CreateTransformJob"]
     resources = [
-        create_sagemaker_resource_arn(ResourceType.TRAINING_JOB.value, mock_context),
-        create_sagemaker_resource_arn(ResourceType.ENDPOINT_CONFIG.value, mock_context),
+        create_sagemaker_resource_arn(ResourceType.TRAINING_JOB, mock_context),
+        create_sagemaker_resource_arn(ResourceType.ENDPOINT_CONFIG, mock_context),
     ]
     allowed_instances = ["ml.m4.large"]
     expectedResponse = {

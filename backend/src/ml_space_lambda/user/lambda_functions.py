@@ -21,7 +21,7 @@ from typing import List, Optional
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserDAO, UserModel
-from ml_space_lambda.enums import Permission, TimezonePreference
+from ml_space_lambda.enums import EnvVariable, Permission, TimezonePreference
 from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permissions, total_project_owners
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
@@ -37,7 +37,7 @@ def create(event, context):
     entity = json.loads(event["body"])
     username = entity["username"]
     suspended_state = get_environment_variables().get("NEW_USER_SUSPENSION_DEFAULT") == "True"
-    preferences = {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL.value}
+    preferences = {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL}
 
     existing_user = user_dao.get(username)
     if existing_user:
@@ -78,7 +78,7 @@ def delete(event, context):
     for project in project_list:
         project_user_dao.delete(username, project.project)
 
-    if project_list and env_variables["MANAGE_IAM_ROLES"]:
+    if project_list and env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         iam_manager.remove_all_user_roles(username, [project.project for project in project_list])
 
     user_dao.delete(username)

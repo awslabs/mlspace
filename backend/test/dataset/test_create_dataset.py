@@ -65,9 +65,9 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str):
 @pytest.mark.parametrize(
     "dataset_type,scope",
     [
-        (DatasetType.GLOBAL.value, "global"),
-        (DatasetType.PROJECT.value, "project_name"),
-        (DatasetType.PRIVATE.value, "username"),
+        (DatasetType.GLOBAL, "global"),
+        (DatasetType.PROJECT, "project_name"),
+        (DatasetType.PRIVATE, "username"),
     ],
     ids=[
         "create_global_dataset",
@@ -81,7 +81,7 @@ def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, sc
     mock_event = generate_event(dataset_type, scope)
     mock_dataset_dao.get.return_value = None
 
-    if scope == DatasetType.GLOBAL.value:
+    if scope == DatasetType.GLOBAL:
         directory_name = f"{scope}/datasets/{test_dataset_name}/"
     else:
         directory_name = f"{dataset_type}/{scope}/datasets/{test_dataset_name}/"
@@ -98,7 +98,7 @@ def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, sc
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 def test_create_dataset_already_exists(mock_dataset_dao):
     scope = "global"
-    mock_event = generate_event(DatasetType.GLOBAL.value, scope)
+    mock_event = generate_event(DatasetType.GLOBAL, scope)
     mock_dataset_dao.get.return_value = True
     error_message = f"Bad Request: Dataset {test_dataset_name} already exists."
 
@@ -109,7 +109,7 @@ def test_create_dataset_already_exists(mock_dataset_dao):
 
 def test_create_dataset_manipulated_type():
     scope = "global"
-    mock_event = generate_event(DatasetType.GLOBAL.value, scope)
+    mock_event = generate_event(DatasetType.GLOBAL, scope)
     mock_event["headers"] = {"x-mlspace-dataset-type": "private", "x-mlspace-dataset-scope": scope}
 
     expected_response = generate_html_response(400, "Bad Request: Dataset headers do not match expected type and scope.")
@@ -120,7 +120,7 @@ def test_create_dataset_manipulated_type():
 def test_create_dataset_manipulated_scope():
     scope = "global"
 
-    mock_event = generate_event(DatasetType.GLOBAL.value, scope)
+    mock_event = generate_event(DatasetType.GLOBAL, scope)
     mock_event["headers"] = {"x-mlspace-dataset-type": "private", "x-mlspace-dataset-scope": "jdoe"}
 
     expected_response = generate_html_response(400, "Bad Request: Dataset headers do not match expected type and scope.")

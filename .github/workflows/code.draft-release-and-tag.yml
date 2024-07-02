@@ -42,6 +42,7 @@ jobs:
           echo "VERSION = $version"
       - name: Send Notification that Draft Release is Ready
         uses: rtCamp/action-slack-notify@v2
+        if: (startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')) && github.event.pull_request.merged == true
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_COLOR: ${{ job.status }}
