@@ -15,6 +15,7 @@
 */
 
 import user from './user/user.reducer';
+import group from './group/group.reducer';
 import notebook from './notebook/notebook.reducer';
 import project from './project/project.reducer';
 import projectCard from './project/card/project-card.reducer';
@@ -31,6 +32,7 @@ import appConfig from './configuration/configuration-reducer';
 
 const entitiesReducers = {
     user,
+    group,
     notebook,
     project,
     projectCard,
