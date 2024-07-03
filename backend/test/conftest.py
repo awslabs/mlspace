@@ -33,7 +33,7 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture
 def mock_global_dataset():
     return DatasetModel(
-        scope=DatasetType.GLOBAL.value,
+        scope=DatasetType.GLOBAL,
         name="example_dataset",
         description="example_dataset for unit tests",
         location="s3://mlspace-data-bucket/global/datasets/example_dataset",

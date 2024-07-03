@@ -254,6 +254,11 @@ def lambda_handler(event, context):
                                 # if user is part of the project, they can view this translate job
                                 if project_user:
                                     policy_statement["Effect"] = "Allow"
+                elif "groupName" in path_params:
+                    if Permission.ADMIN in user.permissions and request_method in ["POST", "PUT", "DELETE"]:
+                        policy_statement["Effect"] = "Allow"
+                    elif request_method == "GET":
+                        policy_statement["Effect"] = "Allow"
                 else:
                     # All other sagemaker resources have the same general handling, GET calls
                     # typically require ADMIN or project membership, PUT/POST/DELETE typically
@@ -298,6 +303,9 @@ def lambda_handler(event, context):
                     # Check if project creation is admin only; if not, anyone can create a project
                     if not app_config.configuration.project_creation.admin_only:
                         policy_statement["Effect"] = "Allow"
+            elif requested_resource == "/group" and request_method == "POST":
+                if Permission.ADMIN in user.permissions:
+                    policy_statement["Effect"] = "Allow"
             elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
                 # If this is a request for a dataset related presigned url or for
                 # creating a new dataset, we need to determine the underlying dataset
@@ -305,16 +313,16 @@ def lambda_handler(event, context):
                 if "x-mlspace-dataset-type" in event["headers"] and "x-mlspace-dataset-scope" in event["headers"]:
                     target_type = event["headers"]["x-mlspace-dataset-type"]
                     target_scope = event["headers"]["x-mlspace-dataset-scope"]
-                    if target_type == DatasetType.GLOBAL.value:
+                    if target_type == DatasetType.GLOBAL:
                         policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.PROJECT.value:
+                    elif target_type == DatasetType.PROJECT:
                         if Permission.ADMIN in user.permissions:
                             policy_statement["Effect"] = "Allow"
                         else:
                             project_user = project_user_dao.get(target_scope, username)
                             if project_user:
                                 policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.PRIVATE.value and username == target_scope:
+                    elif target_type == DatasetType.PRIVATE and username == target_scope:
                         policy_statement["Effect"] = "Allow"
                 else:
                     logger.info(
@@ -361,6 +369,7 @@ def lambda_handler(event, context):
                     "/metadata/subnets",
                     "/translate/list-languages",
                     "/project",
+                    "/group",
                     "/emr",
                     "/emr/applications",
                     "/emr/release",

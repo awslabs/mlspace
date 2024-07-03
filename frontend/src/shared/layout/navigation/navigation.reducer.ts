@@ -48,6 +48,7 @@ const navigationSlice = createSlice({
                     defaultExpanded: true,
                     items: [
                         { type: 'link', text: 'Users', href: '#/admin/users' },
+                        { type: 'link', text: 'Groups', href: '#/admin/groups' },
                         { type: 'link', text: 'Configuration', href: '#/admin/configuration' },
                         { type: 'link', text: 'Reports', href: '#/admin/reports' },
                     ],

@@ -22,7 +22,7 @@ import boto3
 from botocore.config import Config
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
-from ml_space_lambda.enums import DatasetType
+from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, rename_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
@@ -57,7 +57,7 @@ def delete(event, context):
     dataset_name = event["pathParameters"]["datasetName"].replace('"', "")
 
     env_variables = get_environment_variables()
-    bucket = s3_resource.Bucket(env_variables["DATA_BUCKET"])
+    bucket = s3_resource.Bucket(env_variables[EnvVariable.DATA_BUCKET])
     # Grab the dataset info from dynamo and do the delete using the metadata
     s3_prefix = get_dataset_prefix(scope, dataset_name)
     bucket.objects.filter(Prefix=s3_prefix).delete()
@@ -74,7 +74,7 @@ def delete_file(event, context):
     env_variables = get_environment_variables()
     key = f"{get_dataset_prefix(scope, dataset_name)}{file}"
 
-    return s3.delete_object(Bucket=env_variables["DATA_BUCKET"], Key=key)
+    return s3.delete_object(Bucket=env_variables[EnvVariable.DATA_BUCKET], Key=key)
 
 
 @api_wrapper
@@ -164,7 +164,7 @@ def presigned_url(event, context):
         conditions.append({"tagging": tagging_value})
 
         response = s3.generate_presigned_post(
-            Bucket=env_variables["DATA_BUCKET"],
+            Bucket=env_variables[EnvVariable.DATA_BUCKET],
             Key=key,
             Fields=fields,
             Conditions=conditions,
@@ -174,7 +174,7 @@ def presigned_url(event, context):
     else:
         response = s3.generate_presigned_url(
             ClientMethod="get_object",
-            Params={"Bucket": env_variables["DATA_BUCKET"], "Key": key},
+            Params={"Bucket": env_variables[EnvVariable.DATA_BUCKET], "Key": key},
             ExpiresIn=3600,
         )
     return response
@@ -187,7 +187,7 @@ def create_dataset(event, context):
     dataset_name = body.get("datasetName")
     env_variables = get_environment_variables()
 
-    if dataset_type == DatasetType.GLOBAL.value:
+    if dataset_type == DatasetType.GLOBAL:
         scope = "global"
         directory_name = f"global/datasets/{dataset_name}/"
     else:
@@ -198,7 +198,7 @@ def create_dataset(event, context):
         raise Exception("Dataset headers do not match expected type and scope.")
 
     if not dataset_dao.get(scope, dataset_name):
-        dataset_location = f's3://{env_variables["DATA_BUCKET"]}/{directory_name}'
+        dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
         dataset = DatasetModel(
             scope=scope,
             name=dataset_name,
@@ -217,7 +217,7 @@ def list_resources(event, context):
     username = event["requestContext"]["authorizer"]["principalId"]
     datasets = []
     # Get global datasets
-    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
+    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
     # Get the users private datasets
     datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
 
@@ -246,7 +246,7 @@ def list_files(event, context):
     computed_prefix = "".join([dataset_prefix, query_string_parameters.get("Prefix", "")])
 
     query_parameters = {
-        "Bucket": env_variables["DATA_BUCKET"],
+        "Bucket": env_variables[EnvVariable.DATA_BUCKET],
         "Prefix": computed_prefix,
         "Delimiter": "/",
     }
@@ -267,7 +267,7 @@ def list_files(event, context):
     # copy over values with updated keys to response
     response["pageSize"] = s3_response["MaxKeys"]
     response["prefix"] = s3_response["Prefix"]
-    response["bucket"] = env_variables["DATA_BUCKET"]
+    response["bucket"] = env_variables[EnvVariable.DATA_BUCKET]
 
     if "NextContinuationToken" in s3_response:
         response["nextToken"] = s3_response["NextContinuationToken"]

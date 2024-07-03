@@ -301,7 +301,7 @@ def has_tags(tags: list, user_name: str = None, project_name: str = None, system
 
 def serialize_permissions(permissions: Optional[List[Permission]]) -> List[str]:
     if permissions:
-        return [entry.value for entry in permissions]
+        return [entry for entry in permissions]
     else:
         return []
 

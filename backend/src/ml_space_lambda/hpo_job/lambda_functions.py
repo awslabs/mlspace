@@ -22,7 +22,7 @@ import boto3
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.image_uri_utils import delete_metric_definition_for_builtin_algorithms
 from ml_space_lambda.utils.instances import kms_unsupported_instances
@@ -76,7 +76,7 @@ def create(event, context):
     env_variables = get_environment_variables()
 
     iam_role = param_file["pSMSRoleARN"]
-    if env_variables["MANAGE_IAM_ROLES"]:
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         project_user = project_user_dao.get(project_name, user_name)
         iam_role = project_user.role
 
@@ -96,7 +96,7 @@ def create(event, context):
     if "WarmStartConfig" in hpo_job:
         args["WarmStartConfig"] = hpo_job["WarmStartConfig"]
 
-    args["Tags"] = generate_tags(user_name, project_name, env_variables["SYSTEM_TAG"])
+    args["Tags"] = generate_tags(user_name, project_name, env_variables[EnvVariable.SYSTEM_TAG])
 
     response = sagemaker.create_hyper_parameter_tuning_job(**args)
 

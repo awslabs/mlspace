@@ -22,7 +22,7 @@ import boto3
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import (
     api_wrapper,
     generate_tags,
@@ -70,7 +70,7 @@ def create(event, context):
     enable_network_isolation = event_body.get("EnableNetworkIsolation", True)
 
     iam_role = param_file["pSMSRoleARN"]
-    if env_variables["MANAGE_IAM_ROLES"]:
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         project_user = project_user_dao.get(project_name, user_name)
         iam_role = project_user.role
 
@@ -91,7 +91,7 @@ def create(event, context):
         ModelName=model_name,
         PrimaryContainer=primary_container_dict,
         ExecutionRoleArn=iam_role,
-        Tags=generate_tags(user_name, project_name, env_variables["SYSTEM_TAG"]),
+        Tags=generate_tags(user_name, project_name, env_variables[EnvVariable.SYSTEM_TAG]),
         VpcConfig={
             "SecurityGroupIds": param_file["pSMSSecurityGroupId"],
             "Subnets": subnets,

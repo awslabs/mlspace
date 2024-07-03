@@ -236,7 +236,7 @@ def remove_user(event, context):
                 translate.stop_text_translation_job(JobId=translation_job.id)
 
         # Remove IAM role for project user
-        if env_variables["MANAGE_IAM_ROLES"]:
+        if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
             iam_manager.remove_project_user_roles([project_member.role])
 
         project_user_dao.delete(project_name, username)
@@ -378,12 +378,12 @@ def delete(event, context):
 
     for dataset in project_datasets:
         # Get the files to be deleted
-        dataset_files = s3.list_objects_v2(Bucket=env_variables["DATA_BUCKET"], Prefix=dataset.prefix)
+        dataset_files = s3.list_objects_v2(Bucket=env_variables[EnvVariable.DATA_BUCKET], Prefix=dataset.prefix)
 
         if "Contents" in dataset_files:
             for file in dataset_files["Contents"]:
                 # Delete the s3 item
-                s3.delete_object(Bucket=env_variables["DATA_BUCKET"], Key=file["Key"])
+                s3.delete_object(Bucket=env_variables[EnvVariable.DATA_BUCKET], Key=file["Key"])
 
         # Delete the dataset
         dataset_dao.delete(dataset.scope, dataset.name)
@@ -413,7 +413,7 @@ def delete(event, context):
     # Delete users associations and project itself
     project_users = project_user_dao.get_users_for_project(project_name)
     # Check the deployment type to confirm IAM Vendor usage
-    if env_variables["MANAGE_IAM_ROLES"]:
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         iam_manager.remove_project_user_roles([user.role for user in project_users], project=project_name)
 
     # Remove all project related entries from the user/project table
@@ -437,7 +437,7 @@ def update_project_user(event, context):
     if not project_user:
         raise ResourceNotFound(f"User {username} is not a member of {project_name}")
 
-    if Permission.PROJECT_OWNER in project_user.permissions and Permission.PROJECT_OWNER.value not in updates["permissions"]:
+    if Permission.PROJECT_OWNER in project_user.permissions and Permission.PROJECT_OWNER not in updates["permissions"]:
         if total_project_owners(project_user_dao, project_name) < 2:
             raise Exception(f"Cannot remove last Project Owner from {project_name}.")
 

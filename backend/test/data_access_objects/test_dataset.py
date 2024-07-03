@@ -24,7 +24,7 @@ from botocore.exceptions import ClientError
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
-from ml_space_lambda.enums import DatasetType
+from ml_space_lambda.enums import DatasetType, EnvVariable
 
 TEST_ENV_CONFIG = {
     # Moto doesn't work with iso regions...
@@ -67,7 +67,7 @@ class TestDatasetDAO(TestCase):
         from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
         env_vars = get_environment_variables()
-        self.TEST_TABLE = env_vars["DATASETS_TABLE"]
+        self.TEST_TABLE = env_vars[EnvVariable.DATASETS_TABLE]
         self.ddb = boto3.client(
             "dynamodb",
             config=retry_config,
@@ -115,7 +115,7 @@ class TestDatasetDAO(TestCase):
 
     def test_create_dataset(self):
         new_ds = DatasetModel(
-            DatasetType.GLOBAL.value,
+            DatasetType.GLOBAL,
             "test-dataset",
             "Dataset for unit test.",
             "s3://mlspace-datasets-123456789/global/test-dataset",
@@ -124,7 +124,7 @@ class TestDatasetDAO(TestCase):
         self.dataset_dao.create(new_ds)
         dynamo_response = self.ddb.get_item(
             TableName=self.TEST_TABLE,
-            Key={"scope": {"S": DatasetType.GLOBAL.value}, "name": {"S": new_ds.name}},
+            Key={"scope": {"S": DatasetType.GLOBAL}, "name": {"S": new_ds.name}},
         )
         assert dynamo_response["Item"]
 
