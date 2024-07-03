@@ -26,6 +26,7 @@ from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permissions, validate_input
 from ml_space_lambda.utils.exceptions import ResourceNotFound
+from ml_space_lambda.utils.iam_manager import IAMManager
 
 logger = logging.getLogger(__name__)
 group_dao = GroupDAO()
@@ -38,6 +39,8 @@ group_desc_regex = re.compile(r"/[^ -~]/")
 
 def _add_group_user(group_name: str, username: str, permissions: Optional[List[Permission]] = None):
     # TODO: add IAM Management here, like we are doing in project user creation
+    iam_manager = IAMManager()
+    iam_manager.create_user_policy(username)
     iam_role_arn = None
 
     if not user_dao.get(username):
@@ -98,9 +101,7 @@ def create(event, context):
         existing_goup = group_dao.get(group_name)
 
         if existing_goup:
-            raise Exception(
-                "Group name already exists."
-            )
+            raise Exception("Group name already exists.")
 
         # set group creator
         event_body.update({"createdBy": username})

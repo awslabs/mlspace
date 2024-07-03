@@ -45,9 +45,10 @@ mock_event = {
 mock_context = mock.Mock()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_add_users_to_group_with_iam(mock_user_dao, mock_group_user_dao):
+def test_add_users_to_group_with_iam(mock_user_dao, mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully added 1 user(s) to {MOCK_GROUP_NAME}")
     mock_user_dao.get.return_value = MOCK_USER
@@ -69,9 +70,10 @@ def test_add_users_to_group_with_iam(mock_user_dao, mock_group_user_dao):
     )
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_add_users_to_group(mock_user_dao, mock_group_user_dao):
+def test_add_users_to_group(mock_user_dao, mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully added 1 user(s) to {MOCK_GROUP_NAME}")
     mock_user_dao.get.return_value = MOCK_USER
@@ -92,9 +94,10 @@ def test_add_users_to_group(mock_user_dao, mock_group_user_dao):
     )
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_add_users_to_group_multiple(mock_user_dao, mock_group_user_dao):
+def test_add_users_to_group_multiple(mock_user_dao, mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully added 3 user(s) to {MOCK_GROUP_NAME}")
     mock_user_dao.get.return_value = [
@@ -146,9 +149,10 @@ def test_add_users_to_group_multiple(mock_user_dao, mock_group_user_dao):
     )
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_add_users_to_group_client_error(mock_user_dao, mock_group_user_dao):
+def test_add_users_to_group_client_error(mock_user_dao, mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
@@ -177,9 +181,10 @@ def test_add_users_to_group_client_error(mock_user_dao, mock_group_user_dao):
     )
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_add_nonexistent_user_to_group_error(mock_user_dao, mock_group_user_dao):
+def test_add_nonexistent_user_to_group_error(mock_user_dao, mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(
         400,
@@ -193,8 +198,9 @@ def test_add_nonexistent_user_to_group_error(mock_user_dao, mock_group_user_dao)
     mock_group_user_dao.create.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_add_users_to_group_missing_parameters(mock_group_user_dao):
+def test_add_users_to_group_missing_parameters(mock_group_user_dao, mock_iam_manager):
     expected_response = generate_html_response(400, "Missing event parameter: 'pathParameters'")
     assert lambda_handler({}, mock_context) == expected_response
     mock_group_user_dao.create.assert_not_called()

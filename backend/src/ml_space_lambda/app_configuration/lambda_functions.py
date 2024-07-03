@@ -41,11 +41,11 @@ app_configuration_dao = AppConfigurationDAO()
 env_variables = get_environment_variables()
 translate_client = boto3.client("translate", config=retry_config)
 resource_metadata_dao = ResourceMetadataDAO()
-iam_manager = IAMManager()
 
 
 @event_wrapper
 def update_configuration(event, context):
+    iam_manager = IAMManager()
     active_service_policy_manager = ActiveServicePolicyManager(context)
     status_code = 200
     execution_error = None

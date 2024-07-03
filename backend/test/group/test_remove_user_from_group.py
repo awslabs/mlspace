@@ -39,18 +39,16 @@ MOCK_GO_USER = GroupUserModel(
     username=MOCK_USERNAME,
     permissions=[Permission.GROUP_OWNER],
 )
-MOCK_CO_USER = GroupUserModel(
-    group_name=MOCK_GROUP_NAME,
-    username="jane-doe",
-    permissions=[Permission.COLLABORATOR]
-)
+MOCK_CO_USER = GroupUserModel(group_name=MOCK_GROUP_NAME, username="jane-doe", permissions=[Permission.COLLABORATOR])
 
 mock_event = {"pathParameters": {"groupName": MOCK_GROUP_NAME, "username": MOCK_USERNAME}}
 mock_context = mock.Mock()
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_success_not_owner(mock_group_user_dao,):
+def test_remove_user_from_group_success_not_owner(
+    mock_group_user_dao,
+):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully removed {MOCK_CO_USER.user} from {MOCK_GROUP_NAME}")
 

@@ -44,8 +44,9 @@ def generate_app_config_model(config_scope: str):
     return AppConfigurationModel(config_scope, 1, None, "tester", "testing", mock_time)
 
 
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_get_config_success(mock_app_config_dao):
+def test_get_config_success(mock_app_config_dao, mock_iam_manager):
     config_scope = "global"
     mock_event = generate_event(config_scope)
     mock_app_model = generate_app_config_model(config_scope)
@@ -57,8 +58,9 @@ def test_get_config_success(mock_app_config_dao):
     assert lambda_handler(mock_event, mock_context) == expected_response
 
 
+@mock.patch("ml_space_lambda.app_configuration.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.app_configuration.lambda_functions.app_configuration_dao")
-def test_get_config_unexpected_exception(mock_app_config_dao):
+def test_get_config_unexpected_exception(mock_app_config_dao, mock_iam_manager):
     config_scope = "global"
     mock_event = generate_event(config_scope)
 
