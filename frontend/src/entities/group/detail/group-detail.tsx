@@ -31,18 +31,18 @@ import NotificationService from '../../../shared/layout/notification/notificatio
 export function GroupDetail () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const notificationService = NotificationService(dispatch);
     const {groupName} = useParams();
     const [group, setGroup] = useState<IGroup>(null);
     const [groupUsers, setGroupUsers] = useState<IGroupUser>([]);
     const [initialLoaded, setInitialLoaded] = useState(false);
     const [groupUsersLoaded, setGroupUsersLoaded] = useState(true);
+    const notificationService = useMemo(() => NotificationService(dispatch), [dispatch]);
 
     const groupDetails = new Map<string, ReactNode>();
     groupDetails.set('Name', group?.name);
     groupDetails.set('Description', group?.description);
 
-    useMemo(() => {
+    useEffect(() => {
         if (initialLoaded === false) {
             dispatch(getGroup(groupName)).then((response) => {
                 if (response.payload) {
@@ -53,8 +53,7 @@ export function GroupDetail () {
                 }
             });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [groupName, initialLoaded]);
+    }, [groupName, initialLoaded, dispatch, navigate]);
 
     useEffect(() => {
         if (initialLoaded === true) {
@@ -70,8 +69,7 @@ export function GroupDetail () {
                 setGroupUsersLoaded(true);
             });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [initialLoaded, groupName]);
+    }, [initialLoaded, groupName, dispatch, notificationService]);
 
     return (
         <ContentLayout header={<Header variant='h1'>{groupName}</Header>}>

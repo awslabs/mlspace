@@ -14,9 +14,9 @@
  limitations under the License.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { issuesToErrors, useValidationReducer } from '../../../shared/validation';
+import { useValidationReducer } from '../../../shared/validation';
 import { useAppDispatch } from '../../../config/store';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -58,12 +58,12 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
             .max(4000, {
                 message: 'Group description cannot be more than 4000 characters.',
             })
-            .regex(/[ -~]/, {
+            .regex(/^[ -~]+$/, {
                 message: 'Group description can only contain printable characters',
             }),
     });
 
-    const {state, setState, setFields, touchFields} = useValidationReducer(groupSchema, {
+    const {state, setState, errors, isValid, setFields, touchFields} = useValidationReducer(groupSchema, {
         validateAll: false,
         needsValidation: false,
         form: {
@@ -75,7 +75,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
         formSubmitting: false,
     });
 
-    useMemo(() => {
+    useEffect(() => {
         if (isEdit && !initialLoaded) {
             setState({formSubmitting: true});
             dispatch(getGroup(groupName)).then((response) => {
@@ -94,17 +94,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isEdit, groupName, initialLoaded]);
-
-
-    state.formErrors = {};
-    const parseResult = groupSchema.safeParse(state.form);
-    if (!parseResult.success) {
-        state.formErrors = issuesToErrors(
-            parseResult.error.issues,
-            state.validateAll === true ? undefined : state.touched
-        );
-    }
+    }, [isEdit, groupName, initialLoaded, dispatch, navigate]);
 
     async function handleSubmit () {
         setState({formSubmitting: true});
@@ -169,7 +159,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                             onClick={() => {
                                 handleSubmit();
                             }}
-                            disabled={state.formSubmitting || !parseResult.success}
+                            disabled={state.formSubmitting || !isValid}
                         >
                             Submit
                         </Button>
@@ -180,7 +170,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                     <SpaceBetween direction='vertical' size='m'>
                         <FormField
                             description='The name can only contain alphanumeric characters.'
-                            errorText={state.formErrors.name}
+                            errorText={errors.name}
                             label='Group name'
                         >
                             <Input
@@ -195,7 +185,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                         </FormField>
                         <FormField
                             description='Set a description for your group.'
-                            errorText={state.formErrors.description}
+                            errorText={errors.description}
                             label='Group description'
                         >
                             <Textarea
