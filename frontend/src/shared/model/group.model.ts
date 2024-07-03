@@ -22,7 +22,7 @@ export type IGroup = {
 };
 
 
-export const defaultProject: IGroup = {
+export const defaultGroup: IGroup = {
     name: '',
     description: '',
 };
