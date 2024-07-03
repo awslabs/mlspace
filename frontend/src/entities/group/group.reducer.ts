@@ -64,13 +64,13 @@ export const GroupSlice = createSlice({
                     loading: false,
                 };
             })
-            .addMatcher(isFulfilled(deleteGroup, createGroup, updateGroup, getGroup, getGroupUsers), (state) => {
+            .addMatcher(isFulfilled(deleteGroup, createGroup, updateGroup), (state) => {
                 return {
                     ...state,
                     loading: false,
                 };
             })
-            .addMatcher(isPending(getAllGroups, deleteGroup, createGroup, updateGroup, getGroup, getGroupUsers), (state) => {
+            .addMatcher(isPending(getAllGroups, deleteGroup, createGroup, updateGroup), (state) => {
                 return {
                     ...state,
                     loading: true,
