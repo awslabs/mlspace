@@ -27,6 +27,7 @@ import Model from './model';
 import ModelCreate from './model/create';
 import ModelDetail from './model/detail';
 import User from './user';
+import Group from './group';
 import ProjectDetail from './project/detail';
 import ProjectCreate from './project/create';
 import ProjectUser from './project/users/project-user';
@@ -56,6 +57,8 @@ import BatchTranslateDetail from './batch-translate/detail';
 import TranslateRealtime from './translate-realtime/translate-realtime';
 import { appConfig } from './configuration/configuration-reducer';
 import { IAppConfiguration } from '../shared/model/app.configuration.model';
+import GroupCreate from './group/create';
+import GroupDetail from './group/detail';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -67,6 +70,10 @@ const EntityRoutes = () => {
             <ErrorBoundaryRoutes>
                 <Route element={<RequireAdmin />}>
                     <Route path='admin/users' element={<User />} />
+                    <Route path='admin/groups' element={<Group />} />
+                    <Route path='admin/groups/create' element={<GroupCreate />} />
+                    <Route path='admin/groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />
+                    <Route path='admin/groups/:groupName' element={<GroupDetail />} />
                     <Route path='admin/configuration' element={<Configuration />} />
                     <Route path='admin/reports' element={<Report />} />
                 </Route>
