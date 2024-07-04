@@ -45,10 +45,9 @@ mock_event = {"pathParameters": {"groupName": MOCK_GROUP_NAME, "username": MOCK_
 mock_context = mock.Mock()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_success_not_owner(
-    mock_group_user_dao,
-):
+def test_remove_user_from_group_success_not_owner(mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully removed {MOCK_CO_USER.user} from {MOCK_GROUP_NAME}")
 
@@ -71,10 +70,12 @@ def test_remove_user_from_group_success_not_owner(
     mock_group_user_dao.get.assert_called_with(MOCK_GROUP_NAME, MOCK_CO_USER.user)
     mock_group_user_dao.get_users_for_group.assert_not_called()
     mock_group_user_dao.delete.assert_called_with(MOCK_GROUP_NAME, MOCK_CO_USER.user)
+    mock_iam_manager.update_user_policy.assert_called_with(MOCK_CO_USER.user)
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_success_multiple_owners(mock_group_user_dao):
+def test_remove_user_from_group_success_multiple_owners(mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully removed {MOCK_USERNAME} from {MOCK_GROUP_NAME}")
 
@@ -95,10 +96,12 @@ def test_remove_user_from_group_success_multiple_owners(mock_group_user_dao):
     mock_group_user_dao.get.assert_called_with(MOCK_GROUP_NAME, MOCK_USERNAME)
     mock_group_user_dao.get_users_for_group.assert_called_with(MOCK_GROUP_NAME)
     mock_group_user_dao.delete.assert_called_with(MOCK_GROUP_NAME, MOCK_USERNAME)
+    mock_iam_manager.update_user_policy.assert_called_with(MOCK_USERNAME)
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_failure_only_owner(mock_group_user_dao):
+def test_remove_user_from_group_failure_only_owner(mock_group_user_dao, mock_iam_manager):
     expected_response = generate_html_response(400, "Bad Request: You cannot delete the last owner of a group")
 
     mock_group_user_dao.get.return_value = MOCK_GO_USER
@@ -112,10 +115,12 @@ def test_remove_user_from_group_failure_only_owner(mock_group_user_dao):
     mock_group_user_dao.get.assert_called_with(MOCK_GROUP_NAME, MOCK_USERNAME)
     mock_group_user_dao.get_users_for_group.assert_called_with(MOCK_GROUP_NAME)
     mock_group_user_dao.delete.assert_not_called()
+    mock_iam_manager.update_user_policy.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_failure_not_in_group(mock_group_user_dao):
+def test_remove_user_from_group_failure_not_in_group(mock_group_user_dao, mock_iam_manager):
     expected_response = generate_html_response(400, f"Bad Request: {MOCK_USERNAME} is not a member of {MOCK_GROUP_NAME}")
     mock_group_user_dao.get.return_value = None
 
@@ -124,10 +129,12 @@ def test_remove_user_from_group_failure_not_in_group(mock_group_user_dao):
     mock_group_user_dao.get.assert_called_with(MOCK_GROUP_NAME, MOCK_USERNAME)
     mock_group_user_dao.get_users_for_group.assert_not_called()
     mock_group_user_dao.delete.assert_not_called()
+    mock_iam_manager.update_user_policy.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_client_error(mock_group_user_dao):
+def test_remove_user_from_group_client_error(mock_group_user_dao, mock_iam_manager):
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
         "ResponseMetadata": {"HTTPStatusCode": 400},
@@ -143,12 +150,15 @@ def test_remove_user_from_group_client_error(mock_group_user_dao):
     mock_group_user_dao.get.assert_called_with(MOCK_GROUP_NAME, MOCK_USERNAME)
     mock_group_user_dao.get_users_for_group.assert_not_called()
     mock_group_user_dao.delete.assert_not_called()
+    mock_iam_manager.update_user_policy.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_missing_parameters(mock_group_user_dao):
+def test_remove_user_from_group_missing_parameters(mock_group_user_dao, mock_iam_manager):
     expected_response = generate_html_response(400, "Missing event parameter: 'pathParameters'")
     assert lambda_handler({}, mock_context) == expected_response
     mock_group_user_dao.get.assert_not_called()
     mock_group_user_dao.get_users_for_group.assert_not_called()
     mock_group_user_dao.delete.assert_not_called()
+    mock_iam_manager.update_user_policy.assert_not_called()

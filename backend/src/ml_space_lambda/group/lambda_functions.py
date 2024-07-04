@@ -32,17 +32,13 @@ logger = logging.getLogger(__name__)
 group_dao = GroupDAO()
 group_user_dao = GroupUserDAO()
 user_dao = UserDAO()
+iam_manager = IAMManager()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
 group_desc_regex = re.compile(r"/[^ -~]/")
 
 
 def _add_group_user(group_name: str, username: str, permissions: Optional[List[Permission]] = None):
-    # TODO: add IAM Management here, like we are doing in project user creation
-    iam_manager = IAMManager()
-    iam_manager.create_user_policy(username)
-    iam_role_arn = None
-
     if not user_dao.get(username):
         raise ValueError("Username specified is not associated with an active user.")
     try:
@@ -50,11 +46,10 @@ def _add_group_user(group_name: str, username: str, permissions: Optional[List[P
             group_name=group_name,
             username=username,
             permissions=permissions,
-            role=iam_role_arn,
         )
         group_user_dao.create(group_user)
+        iam_manager.update_user_policy(username)
     except Exception as e:
-        # TODO: add IAM Management cleanup here, like we are doing in project user creation
         raise e
 
 
@@ -151,8 +146,9 @@ def remove_user(event, context):
         raise Exception(f"{username} is not a member of {group_name}")
 
     if Permission.GROUP_OWNER not in group_member.permissions or _total_group_owners(group_name) > 1:
-        # TODO: Remove IAM role for group user, like we do for projects
         group_user_dao.delete(group_name, username)
+        # Removes the group permissions for this user
+        iam_manager.update_user_policy(username)
         return f"Successfully removed {username} from {group_name}"
 
     raise Exception("You cannot delete the last owner of a group")
@@ -202,6 +198,8 @@ def delete(event, context):
     # Remove all group related entries from the user/group table
     for group_user in to_delete_group_users:
         group_user_dao.delete(group_name, group_user.user)
+        # Removes the group permissions for this user
+        iam_manager.update_user_policy(group_user.user)
 
     # Delete the group record last
     group_dao.delete(group_name)

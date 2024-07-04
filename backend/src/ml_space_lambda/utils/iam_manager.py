@@ -41,7 +41,6 @@ group_user_dao = GroupUserDAO()
 class IAMManager:
     def __init__(self, iam_client=None, sts_client=None):
         self.sts_client = sts_client if sts_client else boto3.client("sts", config=retry_config)
-        self.aws_account = self.sts_client.get_caller_identity()["Account"]
         self.aws_partition = boto3.Session().get_partition_for_region(boto3.Session().region_name)
         self.iam_client = iam_client if iam_client else boto3.client("iam", config=retry_config)
 
@@ -128,10 +127,10 @@ class IAMManager:
         # Build additional resource name variables
         project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{project_name}"
 
-        project_policy_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{project_policy_name}"
+        aws_account = self.sts_client.get_caller_identity()["Account"]
+        project_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
 
         # Confirm policy name lengths are compliant
-
         self._check_name_length(IAMResourceType.POLICY, project_policy_name)
         self._check_name_length(IAMResourceType.ROLE, iam_role_name)
 
@@ -161,7 +160,7 @@ class IAMManager:
                     {"Key": "system", "Value": self.system_tag},
                 ],
             )
-        user_policy_arn = self.create_user_policy(username)
+        user_policy_arn = self.update_user_policy(username)
 
         # The notebook policy and pass role policies don't support/need dynamic
         # policy updates between versions. The notebook policy is updated by CDK
@@ -214,12 +213,13 @@ class IAMManager:
         return iam_role_arn
 
     # Create or update the user policy
-    def create_user_policy(
+    def update_user_policy(
         self,
         username: str,
     ) -> str:
         user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
-        user_policy_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{user_policy_name}"
+        aws_account = self.sts_client.get_caller_identity()["Account"]
+        user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
         self._check_name_length(IAMResourceType.POLICY, user_policy_name)
         # Check if the user policy exists
         existing_user_policy_version = self._get_policy_version(user_policy_arn)
@@ -252,6 +252,7 @@ class IAMManager:
     # Removes the passed in roles and deletes any detached user specific policies. If a
     # project is passed in then the project policy is removed as well.
     def remove_project_user_roles(self, role_identifiers: List[str], project: str = None) -> None:
+        aws_account = self.sts_client.get_caller_identity()["Account"]
         for role_identifier in role_identifiers:
             # This may be a friendly role name alredy if we're doing user cleanup
             # spliting this way supports both arns and freindly role names
@@ -265,7 +266,7 @@ class IAMManager:
         if project:
             project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{project}"
             self.iam_client.delete_policy(
-                PolicyArn=f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{project_policy_name}"
+                PolicyArn=f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
             )
 
     # Removes all roles for the given user and deletes user specific policies
@@ -277,8 +278,9 @@ class IAMManager:
 
         self.remove_project_user_roles(roles_to_delete)
         # Delete user policy
+        aws_account = self.sts_client.get_caller_identity()["Account"]
         user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
-        user_policy_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{user_policy_name}"
+        user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
         self.iam_client.delete_policy(PolicyArn=user_policy_arn)
 
     # Creates the IAM role for the MLSpace user/project context
@@ -458,9 +460,10 @@ class IAMManager:
         on_create_attach_to_existing_dynamic_roles: bool = False,
         expected_policy_version: int = None,
     ):
+        aws_account = self.sts_client.get_caller_identity()["Account"]
         prefixed_policy_name = f"{IAM_RESOURCE_PREFIX}-{policy_name}"
         self._check_name_length(IAMResourceType.POLICY, prefixed_policy_name)
-        policy_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:policy/{prefixed_policy_name}"
+        policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{prefixed_policy_name}"
         logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
         # Create the policy if it doesn't exist
         existing_policy_version = self._get_policy_version(policy_arn)

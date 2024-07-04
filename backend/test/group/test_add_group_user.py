@@ -57,6 +57,7 @@ def test_add_users_to_group_with_iam(mock_user_dao, mock_group_user_dao, mock_ia
         assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
+    mock_iam_manager.update_user_policy.assert_called_with(MOCK_USERNAME)
     # The create arg is the GroupUserModel, we can't do a normal assert_called_with
     # because the arg is a class so the comparison will fail due to pointer issues
     mock_group_user_dao.create.assert_called_once()
@@ -81,6 +82,7 @@ def test_add_users_to_group(mock_user_dao, mock_group_user_dao, mock_iam_manager
     assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
+    mock_iam_manager.update_user_policy.assert_called_with(MOCK_USERNAME)
     # The create arg is the GroupUserModel, we can't do a normal assert_called_with
     # because the arg is a class so the comparison will fail due to pointer issues
     mock_group_user_dao.create.assert_called_once()
@@ -120,6 +122,7 @@ def test_add_users_to_group_multiple(mock_user_dao, mock_group_user_dao, mock_ia
     )
 
     mock_user_dao.get.assert_has_calls([mock.call("user1"), mock.call("user2"), mock.call("user3")])
+    mock_iam_manager.update_user_policy.assert_has_calls([mock.call("user1"), mock.call("user2"), mock.call("user3")])
     # The create arg is the GroupUserModel, we can't do a normal assert_called_with
     # because the arg is a class so the comparison will fail due to pointer issues
     assert mock_group_user_dao.create.call_count == 3
@@ -171,6 +174,7 @@ def test_add_users_to_group_client_error(mock_user_dao, mock_group_user_dao, moc
     # The create arg is the GroupUserModel, we can't do a normal assert_called_with
     # because the arg is a class so the comparison will fail due to pointer issues
     mock_group_user_dao.create.assert_called_once()
+    mock_iam_manager.update_user_policy.assert_not_called()
     assert (
         mock_group_user_dao.create.call_args.args[0].to_dict()
         == GroupUserModel(
@@ -196,11 +200,11 @@ def test_add_nonexistent_user_to_group_error(mock_user_dao, mock_group_user_dao,
 
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
     mock_group_user_dao.create.assert_not_called()
+    mock_iam_manager.update_user_policy.assert_not_called()
 
 
-@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_add_users_to_group_missing_parameters(mock_group_user_dao, mock_iam_manager):
+def test_add_users_to_group_missing_parameters(mock_group_user_dao):
     expected_response = generate_html_response(400, "Missing event parameter: 'pathParameters'")
     assert lambda_handler({}, mock_context) == expected_response
     mock_group_user_dao.create.assert_not_called()
