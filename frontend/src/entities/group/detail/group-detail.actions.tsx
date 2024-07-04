@@ -24,7 +24,7 @@ import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import Modal, { ModalProps } from '../../../modules/modal';
-import { deleteGroup } from '../group.reducer';
+import { deleteGroup, getAllGroups } from '../group.reducer';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
 
 function GroupDetailActions () {
@@ -104,6 +104,7 @@ const GroupActionHandler = (
                 setDeleteModal({
                     resourceName: 'Group',
                     resourceType: 'group',
+                    postConfirm: () => dispatch(getAllGroups()),
                     onConfirm: async () =>
                         dispatch(deleteGroup(groupName!)).then((result) => {
                             setModalState({

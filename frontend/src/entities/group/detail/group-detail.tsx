@@ -14,9 +14,9 @@
  limitations under the License.
  */
 
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAppDispatch } from '../../../config/store';
+import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { getGroup, getGroupUsers } from '../group.reducer';
 import { Header, SpaceBetween } from '@cloudscape-design/components';
 import DetailsContainer from '../../../modules/details-container';
@@ -26,17 +26,19 @@ import GroupDetailActions from './group-detail.actions';
 import Table from '../../../modules/table';
 import { groupUserColumns, visibleGroupUserColumns } from '../../user/user.columns';
 import { IGroupUser } from '../../../shared/model/groupUser.model';
-import NotificationService from '../../../shared/layout/notification/notification.service';
+import { GroupDetailUserActions } from './group-detail-user.actions';
+import { DocTitle } from '../../../shared/doc';
 
 export function GroupDetail () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const {groupName} = useParams();
     const [group, setGroup] = useState<IGroup>(null);
-    const [groupUsers, setGroupUsers] = useState<IGroupUser>([]);
+    const groupUsers: IGroupUser[] = useAppSelector((state) => state.group.currentGroupUsers) || [];
+    const loadingGroupUsers = useAppSelector((state) => state.group.loading);
     const [initialLoaded, setInitialLoaded] = useState(false);
-    const [groupUsersLoaded, setGroupUsersLoaded] = useState(true);
-    const notificationService = useMemo(() => NotificationService(dispatch), [dispatch]);
+    const actions = (e: any) => GroupDetailUserActions({...e});
+    DocTitle(`Group Details: ${groupName}`);
 
     const groupDetails = new Map<string, ReactNode>();
     groupDetails.set('Name', group?.name);
@@ -47,6 +49,7 @@ export function GroupDetail () {
             dispatch(getGroup(groupName)).then((response) => {
                 if (response.payload) {
                     setGroup(response.payload.data.group);
+                    dispatch(getGroupUsers(groupName));
                     setInitialLoaded(true);
                 } else {
                     navigate('/404');
@@ -54,22 +57,6 @@ export function GroupDetail () {
             });
         }
     }, [groupName, initialLoaded, dispatch, navigate]);
-
-    useEffect(() => {
-        if (initialLoaded === true) {
-            dispatch(getGroupUsers(groupName)).then((response) => {
-                if (response.payload) {
-                    setGroupUsers(response.payload.data);
-                } else {
-                    notificationService.generateNotification(
-                        `Failed to fetch ${groupName} users.`,
-                        'error'
-                    );
-                }
-                setGroupUsersLoaded(true);
-            });
-        }
-    }, [initialLoaded, groupName, dispatch, notificationService]);
 
     return (
         <ContentLayout header={<Header variant='h1'>{groupName}</Header>}>
@@ -81,20 +68,18 @@ export function GroupDetail () {
                     info={groupDetails}
                     loading={!initialLoaded}
                 />
-                {/*<Container>*/}
                 <Table
                     tableName='Group member'
-                    // tableType={tableType}
-                    // actions={actions}
+                    tableType='single'
+                    actions={actions}
                     itemNameProperty='user'
                     trackBy='user'
                     allItems={groupUsers}
                     columnDefinitions={groupUserColumns}
                     visibleColumns={visibleGroupUserColumns}
-                    loadingItems={!groupUsersLoaded}
+                    loadingItems={loadingGroupUsers || !initialLoaded}
                     loadingText='Loading Group members'
                 />
-                {/*</Container>*/}
             </SpaceBetween>
         </ContentLayout>
     );

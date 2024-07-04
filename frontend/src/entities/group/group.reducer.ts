@@ -21,7 +21,13 @@ import { IGroupUser } from '../../shared/model/groupUser.model';
 
 const initialState = {
     allGroups: [] as IGroup[],
+    currentGroupUsers: [] as IGroupUser[],
     loading: false,
+};
+
+export type AddGroupUserRequest = {
+    groupName: string;
+    usernames: string[];
 };
 
 
@@ -52,6 +58,15 @@ export const getGroupUsers = createAsyncThunk('group/group_users', async (groupN
     return axios.get<IGroupUser[]>(requestUrl);
 });
 
+export const removeGroupUser = createAsyncThunk('group/remove_user', async (data: IGroupUser) => {
+    return axios.delete(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`);
+});
+
+export const addGroupUsers = createAsyncThunk('group/add_users', async (data: AddGroupUserRequest) => {
+    const requestUrl = `/group/${data.groupName}/users`;
+    return axios.post(requestUrl, JSON.stringify(data));
+});
+
 export const GroupSlice = createSlice({
     name: 'group',
     initialState,
@@ -64,13 +79,20 @@ export const GroupSlice = createSlice({
                     loading: false,
                 };
             })
-            .addMatcher(isFulfilled(deleteGroup, createGroup, updateGroup), (state) => {
+            .addMatcher(isFulfilled(getGroupUsers), (state, action) => {
+                return {
+                    ...state,
+                    currentGroupUsers: action.payload.data,
+                    loading: false,
+                };
+            })
+            .addMatcher(isFulfilled(deleteGroup, createGroup, updateGroup, removeGroupUser, addGroupUsers), (state) => {
                 return {
                     ...state,
                     loading: false,
                 };
             })
-            .addMatcher(isPending(getAllGroups, deleteGroup, createGroup, updateGroup), (state) => {
+            .addMatcher(isPending(getAllGroups, deleteGroup, createGroup, updateGroup, getGroupUsers, removeGroupUser, addGroupUsers), (state) => {
                 return {
                     ...state,
                     loading: true,
