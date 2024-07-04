@@ -24,9 +24,8 @@ import { IUser } from '../../../shared/model/user.model';
 import Table from '../../../modules/table';
 import { addUserVisibleColumns, userColumns } from '../../user/user.columns';
 import React, { useState } from 'react';
-import { AddGroupUserRequest, addGroupUsers, getGroupUsers } from '../group.reducer';
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
-import NotificationService from '../../../shared/layout/notification/notification.service';
+import { addUsersToGroup } from '../user/group-user-functions';
 
 export type AddGroupUserModalProps = {
     dispatch:  ThunkDispatch<any, any, Action>,
@@ -38,7 +37,6 @@ export type AddGroupUserModalProps = {
 
 export function AddGroupUserModal (props: AddGroupUserModalProps) {
     const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
-    const notificationService = NotificationService(props.dispatch);
     return (
         <Modal
             visible={props.visible}
@@ -51,29 +49,11 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                         <Button
                             variant='primary'
                             disabled={selectedUsers.length === 0}
-                            onClick={async () => {
-                                const request: AddGroupUserRequest = {
-                                    groupName: props.groupName,
-                                    usernames: selectedUsers.map((user) => user.username)
-                                };
-                                props.dispatch(addGroupUsers(request)).then((result) => {
-                                    notificationService.showActionNotification(
-                                        'add group users',
-                                        `Users added to group: ${props.groupName}.`,
-                                        result
-                                    );
-                                }).catch((e) => {
-                                    notificationService.showActionNotification(
-                                        'remove group user',
-                                        `Unable to add users to group: ${props.groupName} with error ${e}.`,
-                                        'error'
-                                    );
-                                }).finally(() => {
-                                    props.dispatch(getGroupUsers(props.groupName));
+                            onClick={ async () => {
+                                await addUsersToGroup(props.dispatch, props.groupName, selectedUsers).finally(() => {
                                     setSelectedUsers([]);
                                     props.setVisible(false);
                                 });
-
                             }}>
                             Add members
                         </Button>
@@ -83,7 +63,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
         >
             <SpaceBetween direction='vertical' size='s'>
                 <Table
-                    tableName='Users'
+                    tableName='User'
                     header={<></>}
                     tableType='multi'
                     selectItemsCallback={(e) => {

@@ -17,13 +17,26 @@
 import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { useValidationReducer } from '../../../shared/validation';
-import { useAppDispatch } from '../../../config/store';
+import { useAppDispatch, useAppSelector } from '../../../config/store';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Container, FormField, Header, Input, SpaceBetween, Textarea, } from '@cloudscape-design/components';
+import {
+    Box,
+    Button,
+    Container,
+    FormField,
+    Header,
+    Input,
+    SpaceBetween,
+    Textarea,
+} from '@cloudscape-design/components';
 import Form from '@cloudscape-design/components/form';
 import ContentLayout from '../../../shared/layout/content-layout';
 import { createGroup, getGroup, updateGroup } from '../group.reducer';
+import { addUserVisibleColumns, userColumns } from '../../user/user.columns';
+import Table from '../../../modules/table';
+import { IUser } from '../../../shared/model/user.model';
+import { addUsersToGroup } from '../user/group-user-functions';
 
 export type GroupCreateProperties = {
     isEdit?: boolean;
@@ -35,6 +48,8 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
     const navigate = useNavigate();
     const {groupName} = useParams();
     const [initialLoaded, setInitialLoaded] = useState(false);
+    const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers) || [];
+    const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
 
     const groupSchema = z.object({
         name: z
@@ -110,7 +125,10 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                     `Successfully ${isEdit ? 'updated' : 'created'} group ${state.form.name}`,
                     'success'
                 );
-                navigate('/admin/groups');
+                if (!isEdit && selectedUsers.length > 0){
+                    await addUsersToGroup(dispatch, state.form.name, selectedUsers);
+                }
+                navigate(`/admin/groups/${state.form.name}`);
             } else {
                 notificationService.generateNotification(
                     `Failed to ${isEdit ? 'update' : 'create'} group ${state.form.name} with error: ${response.error.message}`,
@@ -124,6 +142,36 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
             );
         } finally {
             setState({formSubmitting: false});
+        }
+    }
+
+    function addGroupUserTable (){
+        if (!isEdit){
+            return (
+                <Box margin={{top: 'l'}}>
+                    <SpaceBetween direction='vertical' size='m'>
+                        <Header
+                            description='Select users to be added to the group upon creation'
+                            variant='h2'
+                        >
+                            Group users
+                        </Header>
+                        <Table
+                            tableName='User'
+                            header={<></>}
+                            tableType='multi'
+                            selectItemsCallback={(e) => {
+                                setSelectedUsers(e);
+                            }}
+                            trackBy='username'
+                            allItems={allUsers}
+                            columnDefinitions={userColumns}
+                            visibleColumns={addUserVisibleColumns}
+                            variant='embedded'
+                        />
+                    </SpaceBetween>
+                </Box>
+            );
         }
     }
 
@@ -198,6 +246,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                             />
                         </FormField>
                     </SpaceBetween>
+                    {addGroupUserTable()}
                 </Container>
             </Form>
         </ContentLayout>
