@@ -13,13 +13,19 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+import { Permission } from './user.model';
 
 export type IGroup = {
-    name?: string;
-    description?: string;
+    name: string;
+    description: string;
     isOwner?: boolean;
     isCollaborator?: boolean;
 };
+
+export type IGroupWithPermissions = {
+    group: IGroup;
+    permissions?: Permission[];
+}
 
 
 export const defaultGroup: IGroup = {
@@ -27,4 +33,4 @@ export const defaultGroup: IGroup = {
     description: '',
 };
 
-export const defaultValue: Readonly<IGroup> = defaultProject;
+export const defaultValue: Readonly<IGroup> = defaultGroup;

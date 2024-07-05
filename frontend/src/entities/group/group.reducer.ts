@@ -16,7 +16,7 @@
 
 import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/toolkit';
 import axios from '../../shared/util/axios-utils';
-import { IGroup } from '../../shared/model/group.model';
+import { IGroup, IGroupWithPermissions } from '../../shared/model/group.model';
 import { IGroupUser } from '../../shared/model/groupUser.model';
 
 const initialState = {
@@ -36,7 +36,7 @@ export const getAllGroups = createAsyncThunk('group/fetch_all_groups', async () 
 });
 
 export const getGroup = createAsyncThunk('group/fetch_group', async (groupName: string) => {
-    return axios.get<IGroup>(`/group/${groupName}`);
+    return axios.get<IGroupWithPermissions>(`/group/${groupName}`);
 });
 
 export const deleteGroup = createAsyncThunk('group/delete_group', async (groupName: string) => {
@@ -102,3 +102,4 @@ export const GroupSlice = createSlice({
 });
 
 export default GroupSlice.reducer;
+export const currentGroupUsers = (state: any): IGroupUser[] => state.group.currentGroupUsers;

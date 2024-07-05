@@ -86,7 +86,7 @@ function GroupActionButton (
 }
 
 const GroupActionHandler = (
-    e: any,
+    e: CustomEvent<ButtonDropdownProps.ItemClickDetails>,
     groupName: string,
     nav: (endpoint: string) => void,
     dispatch: ThunkDispatch<any, any, Action>,

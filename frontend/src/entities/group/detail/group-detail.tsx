@@ -17,7 +17,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { getGroup, getGroupUsers } from '../group.reducer';
+import { currentGroupUsers, getGroup, getGroupUsers } from '../group.reducer';
 import { Header, SpaceBetween } from '@cloudscape-design/components';
 import DetailsContainer from '../../../modules/details-container';
 import { IGroup } from '../../../shared/model/group.model';
@@ -34,7 +34,7 @@ export function GroupDetail () {
     const navigate = useNavigate();
     const {groupName} = useParams();
     const [group, setGroup] = useState<IGroup>(null);
-    const groupUsers: IGroupUser[] = useAppSelector((state) => state.group.currentGroupUsers) || [];
+    const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
     const loadingGroupUsers = useAppSelector((state) => state.group.loading);
     const [initialLoaded, setInitialLoaded] = useState(false);
     const actions = (e: any) => GroupDetailUserActions({...e});

@@ -17,8 +17,8 @@
 import { Permission } from './user.model';
 
 export type IGroupUser = {
-    user?: string;
-    group?: string;
+    user: string;
+    group: string;
     permissions?: Permission[];
     role?: string;
 };

@@ -48,7 +48,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
     const navigate = useNavigate();
     const {groupName} = useParams();
     const [initialLoaded, setInitialLoaded] = useState(false);
-    const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers) || [];
+    const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
     const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
 
     const groupSchema = z.object({

@@ -14,7 +14,7 @@
  limitations under the License.
  */
 import { useAppDispatch } from '../../config/store';
-import { Button, ButtonDropdown, Icon, SpaceBetween } from '@cloudscape-design/components';
+import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { deleteGroup, getAllGroups } from './group.reducer';
 import React from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
@@ -44,7 +44,7 @@ function GroupActions (props?: any) {
 
 function GroupActionButton (navigate: NavigateFunction, dispatch: Dispatch, props?: any) {
     const selectedGroup: IGroup = props?.selectedItems[0];
-    const items = [];
+    const items: ButtonDropdownProps.Item[] = [];
     if (selectedGroup) {
         items.push({
             text: 'Delete Group',
@@ -69,7 +69,7 @@ function GroupActionButton (navigate: NavigateFunction, dispatch: Dispatch, prop
 }
 
 const GroupActionHandler = async (
-    e: any,
+    e: CustomEvent<ButtonDropdownProps.ItemClickDetails>,
     selectedGroup: IGroup,
     dispatch: ThunkDispatch<any, any, Action>,
     navigate: NavigateFunction

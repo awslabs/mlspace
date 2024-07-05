@@ -15,7 +15,7 @@
  */
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { Button, ButtonDropdown, Icon, SpaceBetween } from '@cloudscape-design/components';
-import { getGroupUsers, removeGroupUser } from '../group.reducer';
+import { currentGroupUsers, getGroupUsers, removeGroupUser } from '../group.reducer';
 import React, { useState } from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { NavigateFunction, useNavigate, useParams } from 'react-router-dom';
@@ -30,8 +30,8 @@ function GroupDetailUserActions (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const {groupName} = useParams();
-    const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers) || [];
-    const groupUsers: IGroupUser[] = useAppSelector((state) => state.group.currentGroupUsers) || [];
+    const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
+    const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
     const groupUsernames = groupUsers.map((user) => user.user);
     const addableUsers = allUsers.filter((user) => !groupUsernames.includes(user.username!));
     const [addUserModalVisible, setAddUserModalVisible] = useState(false);
