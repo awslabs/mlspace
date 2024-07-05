@@ -36,10 +36,10 @@ export type IPreferences = {
 };
 
 export type IUser = {
-    username?: string;
-    email?: string;
-    displayName?: string;
-    suspended?: boolean;
+    username: string;
+    email: string;
+    displayName: string;
+    suspended: boolean;
     permissions?: Permission[];
     lastLogin?: number;
     preferences?: IPreferences;
