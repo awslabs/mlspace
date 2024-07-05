@@ -22,7 +22,7 @@ import moto
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
-from ml_space_lambda.enums import Permission, EnvVariable
+from ml_space_lambda.enums import EnvVariable, Permission
 from ml_space_lambda.utils.common_functions import serialize_permissions
 
 TEST_ENV_CONFIG = {

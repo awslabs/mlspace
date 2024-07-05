@@ -48,11 +48,12 @@ def _mock_event(group_name: str = MOCK_GROUP_NAME):
     }
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.data_access_objects.group.time")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_create_group(mock_user_dao, mock_group_dao, mock_group_user_dao, mock_time):
+def test_create_group(mock_user_dao, mock_group_dao, mock_group_user_dao, mock_time, mock_iam_manager):
     mlspace_config.env_variables = {}
     mock_group_dao.get.return_value = None
     expected_response = generate_html_response(200, f"Successfully created group '{MOCK_GROUP_NAME}'")
@@ -63,6 +64,7 @@ def test_create_group(mock_user_dao, mock_group_dao, mock_group_user_dao, mock_t
     assert lambda_handler(_mock_event(), mock_context) == expected_response
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
+    mock_iam_manager.update_user_policy.assert_called_with(MOCK_USERNAME)
 
     # The create arg is the GroupUserModel or GroupModel, we can't do a normal assert_called_with
     # because the arg is a class so the comparison will fail due to pointer issues
@@ -136,10 +138,11 @@ def test_create_group_client_error(mock_group_dao):
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_create_group_client_error_adding_user(mock_user_dao, mock_group_dao, mock_group_user_dao):
+def test_create_group_client_error_adding_user(mock_user_dao, mock_group_dao, mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
@@ -155,6 +158,7 @@ def test_create_group_client_error_adding_user(mock_user_dao, mock_group_dao, mo
 
     assert lambda_handler(_mock_event(), mock_context) == expected_response
 
+    mock_iam_manager.update_user_policy.assert_not_called()
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
     # The create arg is the GroupUserModel or GroupModel, we can't do a normal assert_called_with

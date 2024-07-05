@@ -23,7 +23,6 @@ from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
-from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
@@ -43,17 +42,18 @@ mock_event = {
 mock_context = mock.Mock()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_delete_group(mock_group_dao, mock_group_user_dao):
+def test_delete_group(mock_group_dao, mock_group_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
-    env_vars = get_environment_variables()
     expected_response = generate_html_response(200, f"Successfully deleted {MOCK_GROUP_NAME}.")
     mock_group_dao.get.return_value = MOCK_GROUP
 
+    mock_username = "jdoe@example.com"
     mock_group_user_dao.get_users_for_group.return_value = [
         GroupUserModel(
-            username="jdoe@example.com",
+            username=mock_username,
             group_name=MOCK_GROUP_NAME,
             permissions=[Permission.GROUP_OWNER],
         )
@@ -65,11 +65,13 @@ def test_delete_group(mock_group_dao, mock_group_user_dao):
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
     mock_group_dao.delete.assert_called_with(MOCK_GROUP_NAME)
     mock_group_user_dao.get_users_for_group.assert_called_with(MOCK_GROUP_NAME)
-    mock_group_user_dao.delete.assert_called_with(MOCK_GROUP_NAME, "jdoe@example.com")
+    mock_group_user_dao.delete.assert_called_with(MOCK_GROUP_NAME, mock_username)
+    mock_iam_manager.update_user_policy.assert_called_with(mock_username)
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_delete_group_nonexistent(mock_group_dao):
+def test_delete_group_nonexistent(mock_group_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(
         400,
@@ -80,10 +82,12 @@ def test_delete_group_nonexistent(mock_group_dao):
 
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
     mock_group_dao.delete.assert_not_called()
+    mock_iam_manager.update_user_policy.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_delete_group_client_error(mock_group_dao):
+def test_delete_group_client_error(mock_group_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
@@ -99,12 +103,15 @@ def test_delete_group_client_error(mock_group_dao):
     assert lambda_handler(mock_event, mock_context) == expected_response
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
     mock_group_dao.delete.assert_not_called()
+    mock_iam_manager.update_user_policy.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_delete_group_missing_param(mock_group_dao):
+def test_delete_group_missing_param(mock_group_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(400, "Missing event parameter: 'pathParameters'")
     assert lambda_handler({}, mock_context) == expected_response
     mock_group_dao.get.assert_not_called()
     mock_group_dao.delete.assert_not_called()
+    mock_iam_manager.update_user_policy.assert_not_called()

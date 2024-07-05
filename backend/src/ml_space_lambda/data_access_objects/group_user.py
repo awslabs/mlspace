@@ -22,18 +22,18 @@ from typing import List, Optional
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
-from ml_space_lambda.enums import Permission, EnvVariable
+from ml_space_lambda.enums import EnvVariable, Permission
 from ml_space_lambda.utils.common_functions import serialize_permissions
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
 class GroupUserModel:
     def __init__(
-            self,
-            username: str,
-            group_name: str,
-            role: Optional[str] = None,
-            permissions: Optional[List[Permission]] = None,
+        self,
+        username: str,
+        group_name: str,
+        role: Optional[str] = None,
+        permissions: Optional[List[Permission]] = None,
     ):
         permissions = permissions or []
         self.user = username
