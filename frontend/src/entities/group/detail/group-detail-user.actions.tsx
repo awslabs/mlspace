@@ -97,7 +97,7 @@ const GroupDetailUserActionHandler = async (
                     resourceName: 'Group User',
                     resourceType: 'groupUser',
                     postConfirm: () => dispatch(getGroupUsers(selectedUser.group)),
-                    onConfirm: async () =>
+                    onConfirm: async () => {
                         dispatch(removeGroupUser(selectedUser)).then((result) => {
                             setModalState({
                                 ...modalState,
@@ -108,7 +108,8 @@ const GroupDetailUserActionHandler = async (
                                 `User ${selectedUser.user} removed from ${selectedUser.group}.`,
                                 result
                             );
-                        }),
+                        });
+                    },
                     description: `This will remove user: ${selectedUser.user} from the following group: ${selectedUser.group}.`
                 })
             );

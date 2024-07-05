@@ -23,4 +23,4 @@ export type IGroupUser = {
     role?: string;
 };
 
-export const defaultValue: Readonly<IGroupUser> = {};
+export const defaultValue: Readonly<Partial<IGroupUser>> = {};
