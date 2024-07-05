@@ -55,7 +55,7 @@ function GroupDetailUserActions (props?: any) {
 
 function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dispatch, props?: any) {
     const selectedUser: IGroupUser = props?.selectedItems[0];
-    const items = [];
+    const items: ButtonDropdownProps.Item[] = [];
     if (selectedUser) {
         items.push({
             text: 'Remove from Group',
