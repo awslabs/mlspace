@@ -14,7 +14,7 @@
  limitations under the License.
  */
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { Button, ButtonDropdown, Icon, SpaceBetween } from '@cloudscape-design/components';
+import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { currentGroupUsers, getGroupUsers, removeGroupUser } from '../group.reducer';
 import React, { useState } from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
@@ -82,7 +82,7 @@ function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dis
 }
 
 const GroupDetailUserActionHandler = async (
-    e: any,
+    e: CustomEvent<ButtonDropdownProps.ItemClickDetails>,
     dispatch:  ThunkDispatch<any, any, Action>,
     modalState: ModalProps,
     setModalState: (state: Partial<ModalProps>) => void,
