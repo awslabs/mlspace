@@ -144,7 +144,7 @@ class TestGroupUserDAO(TestCase):
             "add-unit-test@example.com",
             MOCK_GROUP_NAME,
             "newRoleName",
-            [Permission.COLLABORATOR, Permission.GROUP_OWNER],
+            [Permission.COLLABORATOR],
         )
         self.group_user_dao.create(new_record)
         dynamo_response = self.ddb.get_item(
@@ -166,7 +166,7 @@ class TestGroupUserDAO(TestCase):
         updated = GroupUserModel.from_dict(self.UPDATE_RECORD.to_dict())
         updated.user = "username-that-will-get-dropped"
         updated.group = "group-name-that-will-get-dropped"
-        updated.permissions = [Permission.COLLABORATOR, Permission.GROUP_OWNER]
+        updated.permissions = [Permission.ADMIN]
         self.group_user_dao.update(self.UPDATE_RECORD.group, self.UPDATE_RECORD.user, updated)
 
         post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])

@@ -70,13 +70,6 @@ export class GroupsApiStack extends Stack {
                 method: 'POST',
             },
             {
-                name: 'update_group_user',
-                resource: 'group',
-                description: 'Change the role of an MLSpace user within a group',
-                path: 'group/{groupName}/users/{username}',
-                method: 'PUT',
-            },
-            {
                 name: 'delete',
                 resource: 'group',
                 description: 'Delete an MLSpace group',

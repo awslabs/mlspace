@@ -39,7 +39,7 @@ MOCK_GROUP = GroupModel(
 MOCK_GROUP_USER = GroupUserModel(
     username=MOCK_GROUP.created_by,
     group_name=MOCK_GROUP.name,
-    permissions=[Permission.GROUP_OWNER],
+    permissions=[Permission.COLLABORATOR],  # type: ignore
 )
 
 MOCK_USER = UserModel(MOCK_GROUP.created_by, MOCK_GROUP.created_by, "John Doe", False)
