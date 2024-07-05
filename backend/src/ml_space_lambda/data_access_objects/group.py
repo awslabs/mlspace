@@ -29,12 +29,12 @@ from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 class GroupModel:
     def __init__(
-            self,
-            name: str,
-            description: str,
-            created_by: str,
-            created_at: Optional[float] = None,
-            last_updated_at: Optional[float] = None,
+        self,
+        name: str,
+        description: str,
+        created_by: str,
+        created_at: Optional[float] = None,
+        last_updated_at: Optional[float] = None,
     ):
         now = int(time.time())
         self.name = name
@@ -75,9 +75,7 @@ class GroupDAO(DynamoDBObjectStore):
     def update(self, name: str, group: GroupModel) -> GroupModel:
         json_key = {"name": name}
         # Only a subset of fields can be modified
-        update_exp = (
-            "SET description = :description, lastUpdatedAt = :lastUpdatedAt"
-        )
+        update_exp = "SET description = :description, lastUpdatedAt = :lastUpdatedAt"
         exp_names = {"#name": "name"}
         exp_values = json.loads(
             dynamodb_json.dumps(
@@ -110,9 +108,7 @@ class GroupDAO(DynamoDBObjectStore):
             # If we get a KeyError then the item doesn't exist in dynamo
             return None
 
-    def get_all(
-            self, group_names: Optional[List[str]] = None
-    ) -> List[GroupModel]:
+    def get_all(self, group_names: Optional[List[str]] = None) -> List[GroupModel]:
         expression_attribute_values: Dict[str, Any] = {}
         filter_expressions = []
 

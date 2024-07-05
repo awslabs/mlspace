@@ -627,6 +627,7 @@ export class IAMStack extends Stack {
                                 ],
                                 resources: [
                                     `arn:*:s3:::${props.dataBucketName}/project/*`,
+                                    `arn:*:s3:::${props.dataBucketName}/group/*`,
                                     `arn:*:s3:::${props.dataBucketName}/global/*`,
                                     `arn:*:s3:::${props.dataBucketName}/private/*`,
                                 ],
@@ -643,7 +644,7 @@ export class IAMStack extends Stack {
                                 resources: [`arn:*:s3:::${props.dataBucketName}`],
                                 conditions: {
                                     StringLike: {
-                                        's3:prefix': ['global/*', 'index/*', 'private/*', 'project/*'],
+                                        's3:prefix': ['global/*', 'index/*', 'private/*', 'project/*', 'group/*'],
                                     },
                                 },
                             }),

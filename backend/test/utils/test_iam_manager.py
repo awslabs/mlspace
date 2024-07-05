@@ -21,6 +21,8 @@ import boto3
 import moto
 import pytest
 
+from ml_space_lambda.data_access_objects.group import GroupModel
+from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.utils.common_functions import generate_tags
 from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG, PROJECT_POLICY_VERSION, USER_POLICY_VERSION
 
@@ -67,6 +69,34 @@ DENY_TRANSLATE_STATEMENT = {
     IAMStatementProperty.ACTION: ["translate:*"],
     IAMStatementProperty.RESOURCE: "*",
 }
+
+MOCK_GROUPS = [
+    GroupModel(
+        name="example_group_1",
+        description="example description 1",
+        created_by="polly@example.com",
+    ),
+    GroupModel(
+        name="example_group_2",
+        description="example description 2",
+        created_by="finn@example.com",
+    ),
+    GroupModel(
+        name="example_group_3",
+        description="example description 3",
+        created_by="finn@example.com",
+    ),
+    GroupModel(
+        name="example_group_4",
+        description="example description 4",
+        created_by="gina@example.com",
+    ),
+]
+
+MOCK_GROUP_USERS = [
+    GroupUserModel(group_name=MOCK_GROUPS[1].name, username=MOCK_USER_NAME),
+    GroupUserModel(group_name=MOCK_GROUPS[2].name, username=MOCK_USER_NAME),
+]
 
 mock.patch.TEST_PREFIX = (
     "test",
@@ -182,7 +212,9 @@ class TestIAMSupport(TestCase):
         self.sts_client = None
         self.iam_manager = None
 
-    def test_add_iam_role(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_add_iam_role(self, mock_group_user_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
         self.iam_manager.add_iam_role(MOCK_PROJECT_NAME, MOCK_USER_NAME)
 
         # Check that expected iam role and policies were created
@@ -209,7 +241,9 @@ class TestIAMSupport(TestCase):
         assert f"{IAM_RESOURCE_PREFIX}-project-{MOCK_PROJECT_NAME}" in policy_names
         assert f"{IAM_RESOURCE_PREFIX}-user-{MOCK_USER_NAME}" in policy_names
 
-    def test_add_iam_role_exists(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_add_iam_role_exists(self, mock_group_user_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
         test_user = "existing@amazon.com"
         # Add role initially
         self.iam_manager.add_iam_role(MOCK_PROJECT_NAME, test_user)
@@ -235,7 +269,9 @@ class TestIAMSupport(TestCase):
         assert f"IAM role name 'MLSpace-{long_name}-" in str(e_info.value)
         assert "' (127 characters) is over the 64 character limit for IAM role names." in str(e_info.value)
 
-    def test_add_iam_role_exists_outdated_policies(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_add_iam_role_exists_outdated_policies(self, mock_group_user_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
         test_user = "old-user"
         policy_arns = []
         # Add role initially
@@ -335,9 +371,11 @@ class TestIAMSupport(TestCase):
         assert user_tags == 1
         assert project_tags == 1
 
-    def test_remove_project_user_roles_single_user(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_remove_project_user_roles_single_user(self, mock_group_user_dao):
         # Add a new user
         test_user = "matt@example.com"
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
         new_role_arn = self.iam_manager.add_iam_role(MOCK_PROJECT_NAME, test_user)
 
         # Verify role and policies exist
@@ -374,7 +412,9 @@ class TestIAMSupport(TestCase):
         assert notebook_policy_found
         assert project_policy_found
 
-    def test_remove_project_user_roles_multi_user_with_project(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_remove_project_user_roles_multi_user_with_project(self, mock_group_user_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
         # Add some users to a new project
         test_user = "matt@example.com"
         test_user2 = "bill@example.com"
@@ -403,7 +443,9 @@ class TestIAMSupport(TestCase):
         for policy_arn in self.iam_manager.default_notebook_role_policy_arns:
             self.iam_client.get_policy(PolicyArn=policy_arn)
 
-    def test_remove_all_user_roles(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_remove_all_user_roles(self, mock_group_user_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
         # Add a few roles for the same user
         test_user = "bob@example.com"
         test_project_1 = "test_project_1"
