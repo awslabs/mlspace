@@ -26,6 +26,7 @@ import pytest
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
+from ml_space_lambda.data_access_objects.group import GroupModel
 from ml_space_lambda.data_access_objects.project import ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataModel
@@ -66,6 +67,9 @@ MOCK_SUSPENDED_PROJECT = ProjectModel(
 )
 MOCK_OWNER_PROJECT_USER = ProjectUserModel(MOCK_OWNER_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.PROJECT_OWNER])
 MOCK_REGULAR_PROJECT_USER = ProjectUserModel(MOCK_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.COLLABORATOR])
+
+MOCK_GROUP_NAME = "UnitTestGroup"
+MOCK_GROUP = GroupModel(MOCK_GROUP_NAME, "Group used for unit tests", MOCK_USER.username)
 
 
 def policy_response(
@@ -388,6 +392,74 @@ def test_project_management(
     ) == policy_response(allow=allow, user=user)
     mock_user_dao.get.assert_called_with(user.username)
     mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
+
+
+@pytest.mark.parametrize(
+    "user,allow",
+    [
+        (MOCK_ADMIN_USER, True),
+        (MOCK_USER, False),
+    ],
+    ids=[
+         "admin_user",
+         "normal_user",
+         ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_create_group(mock_user_dao, user: UserModel, allow: bool):
+    mock_user_dao.get.return_value = user
+
+    assert lambda_handler(
+        mock_event(
+            user=user,
+            resource="/group",
+            method="POST",
+        ),
+        {},
+    ) == policy_response(allow=allow, user=user)
+    mock_user_dao.get.assert_called_with(user.username)
+
+
+@pytest.mark.parametrize(
+    "user,method,allow",
+    [
+        (MOCK_ADMIN_USER, "DELETE", True),
+        (MOCK_ADMIN_USER, "PUT", True),
+        (MOCK_ADMIN_USER, "GET", True),
+        (MOCK_USER, "DELETE", False),
+        (MOCK_USER, "PUT", False),
+        (MOCK_USER, "GET", True),
+    ],
+    ids=[
+        "admin_delete_project",
+        "admin_update_project",
+        "admin_get_project",
+        "non_admin_delete_project",
+        "non_admin_update_project",
+        "non_admin_get_project",
+    ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_group_management(
+        mock_user_dao,
+        user: UserModel,
+        method: str,
+        allow: bool,
+):
+    mock_user_dao.get.return_value = user
+
+    assert lambda_handler(
+        mock_event(
+            user=user,
+            resource=f"/group/{MOCK_GROUP_NAME}",
+            method=method,
+            path_params={"groupName": MOCK_GROUP_NAME},
+        ),
+        {},
+    ) == policy_response(allow=allow, user=user)
+    mock_user_dao.get.assert_called_with(user.username)
 
 
 @pytest.mark.parametrize(

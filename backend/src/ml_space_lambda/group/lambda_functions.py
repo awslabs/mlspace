@@ -35,7 +35,7 @@ user_dao = UserDAO()
 iam_manager = IAMManager()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
-group_desc_regex = re.compile(r"/[^ -~]/")
+group_desc_regex = re.compile(r"[^ -~]")
 
 
 def _add_group_user(group_name: str, username: str, permissions: Optional[List[Permission]] = None):
@@ -152,7 +152,7 @@ def update(event, context):
     if not existing_group:
         raise ValueError("Specified group does not exist")
     if "description" in event_body:
-        validate_input(event_body["description"], 4000, "description", group_desc_regex)
+        validate_input(event_body["description"], 4000, "Group description", group_desc_regex)
         existing_group.description = event_body["description"]
 
     group_dao.update(group_name, existing_group)

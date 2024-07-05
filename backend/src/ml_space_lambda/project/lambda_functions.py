@@ -56,7 +56,7 @@ s3 = boto3.client("s3", config=retry_config)
 translate = boto3.client("translate", config=retry_config)
 
 project_name_regex = re.compile(r"[^a-zA-Z0-9]")
-project_desc_regex = re.compile(r"/[^ -~]/")
+project_desc_regex = re.compile(r"[^ -~]")
 project_deny_list = ["global", "project", "private", "global-read-only", "logs", "create"]
 
 
