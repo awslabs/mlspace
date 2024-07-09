@@ -38,7 +38,6 @@ import {
     updateNotebookInstance,
 } from '../notebook.reducer';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { z } from 'zod';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { issuesToErrors, scrollToInvalid, useValidationReducer } from '../../../shared/validation';
@@ -67,6 +66,7 @@ import { convertDailyStopTime, timezoneDisplayString } from '../../../shared/uti
 import { EMRResourceMetadata } from '../../../shared/model/resource-metadata.model';
 import { ServiceTypes } from '../../../shared/model/app.configuration.model';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export type NotebookCreateProps = {
     update?: boolean;
@@ -88,7 +88,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
     const loadingEMRClusters: boolean = useAppSelector(loadingClustersList);
     const [selectedCluster, setSelectedCluster] = useState({} as EMRResourceMetadata);
 
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     const { projectName, name } = useParams();
 

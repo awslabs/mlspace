@@ -33,7 +33,6 @@ import { useAppDispatch } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { createBatchTranslateJob } from '../batch-translate.reducer';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { issuesToErrors, scrollToInvalid, useValidationReducer } from '../../../shared/validation';
 import { z } from 'zod';
 import { DocTitle, scrollToPageHeader } from '../../../shared/doc';
@@ -57,6 +56,7 @@ import { datasetFromS3Uri } from '../../../shared/util/dataset-utils';
 import { isFulfilled } from '@reduxjs/toolkit';
 import { AUTO_SOURCE_LANGUAGE_UNSUPPORTED } from '..';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export function BatchTranslateCreate () {
     const [errorText] = useState('');
@@ -66,7 +66,7 @@ export function BatchTranslateCreate () {
     const autoOption: SelectProps.Option = { label: 'Auto (auto)', value: 'auto' };
     const { projectName } = useParams();
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
     const auth = useAuth();
     const userName = auth.user!.profile.preferred_username;

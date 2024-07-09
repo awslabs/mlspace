@@ -19,10 +19,10 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { AxiosResponse } from 'axios';
 import React, { useState } from 'react';
 import { useAppDispatch } from '../../config/store';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { CallbackFunction } from '../../types';
 import { dismissModal } from './modal.reducer';
 import { deleteButtonAriaLabel } from '../../entities/dataset/dataset.utils';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export type DeleteModalProps = {
     resourceName: string;
@@ -52,7 +52,7 @@ function DeleteModal ({
 }: DeleteModalProps) {
     const [processing, setProcessing] = useState(false);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const responseHandler = (
         response: PayloadAction<any, string> | AxiosResponse<any, any> | undefined
     ) => {
