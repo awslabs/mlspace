@@ -19,7 +19,7 @@ import boto3
 
 from ml_space_lambda.enums import EnvVariable
 from ml_space_lambda.utils.iam_manager import IAMManager
-from ml_space_lambda.utils.instances import abbreviated_instance_union, kms_unsupported_instances
+from ml_space_lambda.utils.instances import abbreviated_instance_intersection, kms_unsupported_instances
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, retry_config
 
 log = logging.getLogger(__name__)
@@ -66,10 +66,10 @@ def update_instance_kms_key_conditions(event, ctx):
     ]
 
     unsupported_instances = kms_unsupported_instances()
-    ml_instances = abbreviated_instance_union(
+    ml_instances = abbreviated_instance_intersection(
         sagemaker_instances, [".".join(["ml", instance_type]) for instance_type in unsupported_instances]
     )
-    std_instances = abbreviated_instance_union(standard_instances, unsupported_instances)
+    std_instances = abbreviated_instance_intersection(standard_instances, unsupported_instances)
 
     policy_document = json.dumps(
         {
