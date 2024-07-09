@@ -77,6 +77,8 @@ const EntityRoutes = () => {
                     <Route path='admin/configuration' element={<Configuration />} />
                     <Route path='admin/reports' element={<Report />} />
                 </Route>
+                <Route path='personal/group' element={<Group />} />
+                <Route path='personal/group/:groupName' element={<GroupDetail />} />
                 <Route path='personal/dataset' element={<Dataset />} />
                 <Route path='personal/dataset/create' element={<DatasetCreate />} />
                 <Route path='personal/dataset/:scope/:name/edit' element={<DatasetUpdate />} />

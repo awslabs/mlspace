@@ -28,6 +28,9 @@ import { groupUserColumns, visibleGroupUserColumns } from '../../user/user.colum
 import { IGroupUser } from '../../../shared/model/groupUser.model';
 import { GroupDetailUserActions } from './group-detail-user.actions';
 import { DocTitle } from '../../../shared/doc';
+import { selectCurrentUser } from '../../user/user.reducer';
+import { hasPermission } from '../../../shared/util/permission-utils';
+import { Permission } from '../../../shared/model/user.model';
 
 export function GroupDetail () {
     const dispatch = useAppDispatch();
@@ -36,6 +39,7 @@ export function GroupDetail () {
     const [group, setGroup] = useState<IGroup>(null);
     const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
     const loadingGroupUsers = useAppSelector((state) => state.group.loading);
+    const currentUser = useAppSelector(selectCurrentUser);
     const [initialLoaded, setInitialLoaded] = useState(false);
     const actions = (e: any) => GroupDetailUserActions({...e});
     DocTitle(`Group Details: ${groupName}`);
@@ -70,7 +74,7 @@ export function GroupDetail () {
                 />
                 <Table
                     tableName='Group member'
-                    tableType='single'
+                    tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
                     actions={actions}
                     itemNameProperty='user'
                     trackBy='user'
