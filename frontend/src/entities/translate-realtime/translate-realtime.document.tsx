@@ -25,10 +25,10 @@ import {
 } from '../../shared/model/translate.model';
 import { scrollToInvalid } from '../../shared/validation';
 import { AxiosError, AxiosResponse } from 'axios';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { useAppDispatch } from '../../config/store';
 import { findOptionByValue } from '../../shared/util/select-utils';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
+import { useNotificationService } from '../../shared/util/hooks';
 
 /**
  * The React component that populates the 'Document' tab for Translate real-time
@@ -57,7 +57,7 @@ export const TranslateRealtimeDocument = () => {
     const [formSubmitting, setFormSubmitting] = useState(false);
     const translateDocErrorRegex = /TranslateDocument operation: /gm;
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     const documentFormSchema = z.object({
         Document: z.object({

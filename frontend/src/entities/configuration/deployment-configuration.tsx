@@ -33,7 +33,7 @@ import { getEnvironmentConfig } from './configuration.service';
 import { getBase } from '../../shared/util/breadcrumb-utils';
 import { useParams } from 'react-router-dom';
 import axios from '../../shared/util/axios-utils';
-import NotificationService from '../../shared/layout/notification/notification.service';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export function DeploymentConfiguration () {
     const [config, setEnvConfig] = useState(defaultEnvConfig);
@@ -41,7 +41,7 @@ export function DeploymentConfiguration () {
     const dispatch = useAppDispatch();
     const { projectName } = useParams();
     const [syncingMetadata, setSyncingMetadata] = useState(false);
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     const generateDescription = (service: string) => {
         return `Sync metadata for all ${service} associated with ${window.env.APPLICATION_NAME}`;

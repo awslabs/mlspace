@@ -38,7 +38,6 @@ import {
 } from '../../../shared/validation';
 import { defaultModel } from '../../../shared/model/model.model';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { IModelContainerMode } from '../../../shared/model/container.model';
 import { AttributeEditorSchema } from '../../../modules/environment-variables/environment-variables';
@@ -46,10 +45,11 @@ import { NetworkSettings } from '../../jobs/hpo/create/training-definitions/netw
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
 import '../../../shared/validation/helpers/uri';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export function ModelCreate () {
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
     const { projectName } = useParams();
     const currentLocation = useLocation();

@@ -33,7 +33,7 @@ import { IProjectUser } from '../../../shared/model/projectUser.model';
 import { useParams } from 'react-router-dom';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle } from '../../../../src/shared/doc';
-import NotificationService from '../../../shared/layout/notification/notification.service';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export function ProjectUser () {
     const { projectName } = useParams();
@@ -47,7 +47,7 @@ export function ProjectUser () {
     const addableUsers = allUsers.filter((user) => !projectUsernames.includes(user.username!));
 
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     DocTitle(projectName!.concat(' Project Members'));
 

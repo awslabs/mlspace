@@ -21,15 +21,15 @@ import { useAuth } from 'react-oidc-context';
 import Condition from '../../../modules/condition';
 import { Timezone } from '../../model/user.model';
 import { selectCurrentUser, updateUser } from '../../../entities/user/user.reducer';
-import NotificationService from '../notification/notification.service';
 import { Mode, applyMode } from '@cloudscape-design/global-styles';
+import { useNotificationService } from '../../util/hooks';
 
 export default function Header () {
     const auth = useAuth();
     const currentUser = useAppSelector(selectCurrentUser);
 
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     return (
         <CloudscapeHeader

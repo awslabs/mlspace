@@ -14,8 +14,10 @@
   limitations under the License.
 */
 
+import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { DebouncedFunc, debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import NotificationService from '../layout/notification/notification.service';
 
 /**
  * A custom hook that runs an action periodically in the background to refresh data.
@@ -72,4 +74,11 @@ export function useDebounce<T extends (...args: any[]) => void> (callback: T, de
     const debounced = useMemo(() => debounce(callback, delay), [callback, delay]);
     
     return useCallback(debounced, [debounced]);
+}
+
+/**
+ * Creates a memoized NotificationService based on {@link dispatch}
+ */
+export function useNotificationService (dispatch: ThunkDispatch<any, any, Action>) {
+    return useMemo(() => NotificationService(dispatch), [dispatch]);
 }

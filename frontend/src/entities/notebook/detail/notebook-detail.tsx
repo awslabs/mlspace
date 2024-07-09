@@ -32,7 +32,6 @@ import { prettyStatus } from '../../../shared/util/table-utils';
 import DetailsContainer from '../../../modules/details-container';
 import { formatDate, formatTerminationTimestamp } from '../../../shared/util/date-utils';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { setDeleteModal, setResourceScheduleModal } from '../../../modules/modal/modal.reducer';
 import { getNotebookInstanceUrl, notebookCluster } from '../notebook.service';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
@@ -44,7 +43,7 @@ import { getProject } from '../../project/project.reducer';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { hasPermission, isAdminOrProjectOwner } from '../../../shared/util/permission-utils';
 import { deletionDescription } from '../../../shared/util/form-utils';
-import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import { useBackgroundRefresh, useNotificationService } from '../../../shared/util/hooks';
 import ContentLayout from '../../../shared/layout/content-layout';
 
 function NotebookDetail () {
@@ -60,7 +59,7 @@ function NotebookDetail () {
     const [initialLoaded, setInitialLoaded] = useState(false);
 
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
     const basePath = projectName ? `/project/${projectName}` : '/personal';
 

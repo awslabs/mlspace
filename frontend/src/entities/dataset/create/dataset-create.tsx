@@ -49,9 +49,9 @@ import DatasetBrowser from '../../../modules/dataset/dataset-browser';
 import { DatasetBrowserActions } from '../dataset.actions';
 import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-browser.types';
 import { DatasetResourceObject } from '../../../modules/dataset/dataset-browser.reducer';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useUsername } from '../../../shared/util/auth-utils';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 const formSchema = z.object({
     name: z
@@ -82,7 +82,7 @@ export function DatasetCreate () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     const { state, setState, errors, isValid, touchFields, setFields } = useValidationReducer(formSchema, {
         validateAll: false,

@@ -15,15 +15,15 @@
 */
 
 import { deleteReport } from './report.service';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
+import { useNotificationService } from '../../shared/util/hooks';
 
 function ReportActionHandler (
     e: any,
     reportName: string,
     dispatch: ThunkDispatch<any, any, Action>
 ) {
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     switch (e.detail.id) {
         case 'deleteReport':
