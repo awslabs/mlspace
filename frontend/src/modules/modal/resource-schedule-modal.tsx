@@ -28,13 +28,13 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { AxiosResponse } from 'axios';
 import React, { useState } from 'react';
 import { useAppDispatch } from '../../config/store';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { dismissModal } from './modal.reducer';
 import { formatTerminationTimestamp, timezoneDisplayString } from '../../shared/util/date-utils';
 import { CallbackFunction } from '../../types';
 import { initCap } from '../../shared/util/enum-utils';
 import { getTerminationHourDate } from '../../shared/util/resource-schedule.service';
 import { Timezone } from '../../shared/model/user.model';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export const editScheduleButtonAriaLabel = 'Edit resource auto-termination schedule';
 
@@ -70,7 +70,7 @@ function ResourceScheduleModal ({
 }: ResourceScheduleModalProps) {
     const [processing, setProcessing] = useState(false);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const existingTerminationTimestamp =
         resourceTerminationTime && new Date(resourceTerminationTime * 1000);
     const responseHandler = (

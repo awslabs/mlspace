@@ -20,8 +20,8 @@ import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { Button, ButtonDropdown, SpaceBetween } from '@cloudscape-design/components';
 import { stopBatchTranslateJob } from './batch-translate.reducer';
 import { useAppDispatch } from '../../config/store';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { BatchTranslateResourceMetadata } from '../../shared/model/resource-metadata.model';
+import { useNotificationService } from '../../shared/util/hooks';
 
 function BatchTranslateActions (props?: any) {
     const navigate = useNavigate();
@@ -86,7 +86,7 @@ const BatchTranslateActionHandler = async (
     dispatch: ThunkDispatch<any, any, Action>,
     projectName: string
 ) => {
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     let response: any | undefined = undefined;
     switch (e.detail.id) {
         case 'details':

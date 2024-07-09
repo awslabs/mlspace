@@ -30,7 +30,6 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import z from 'zod';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { issuesToErrors, scrollToInvalid, useValidationReducer } from '../../../shared/validation';
 import { createEMRCluster, emrReleaseLabels, listEMRReleaseLabels } from '../emr.reducer';
 import { setBreadcrumbs } from '../../../../src/shared/layout/navigation/navigation.reducer';
@@ -46,6 +45,7 @@ import { LoadingStatus } from '../../../shared/loading-status';
 import { ClusterType, IAppConfiguration } from '../../../shared/model/app.configuration.model';
 import { appConfig } from '../../configuration/configuration-reducer';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 enum ClusterAmi {
     BUILT_IN = 'built-in',
@@ -57,7 +57,7 @@ export default function EMRClusterCreate () {
     const { projectName } = useParams();
     const basePath = `/project/${projectName}/emr`;
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const subnets = useAppSelector(selectSubnets);
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const releaseLabels: string[] = useAppSelector(emrReleaseLabels);

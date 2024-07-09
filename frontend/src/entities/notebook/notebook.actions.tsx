@@ -24,13 +24,13 @@ import {
 import { Button, ButtonDropdown, SpaceBetween } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { Action, Dispatch, ThunkDispatch, isFulfilled } from '@reduxjs/toolkit';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
 import { openNotebookInstance } from './notebook.service';
 import { selectCurrentUser } from '../user/user.reducer';
 import { NotebookResourceMetadata } from '../../shared/model/resource-metadata.model';
 import { isAdminOrProjectOwner } from '../../shared/util/permission-utils';
 import { deletionDescription } from '../../shared/util/form-utils';
+import { useNotificationService } from '../../shared/util/hooks';
 
 function NotebookActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -146,7 +146,7 @@ const NotebookActionHandler = async (
     projectName?: string
 ) => {
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     let response: any | undefined = undefined;
     switch (e.detail.id) {

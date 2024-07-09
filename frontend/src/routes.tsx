@@ -35,14 +35,14 @@ import keyLogo  from './shared/media/key.png';
 import groupLogo  from './shared/media/group.png';
 import docsLogo  from './shared/media/docs.png';
 import './routes.css';
-import NotificationService from './shared/layout/notification/notification.service';
 import { failedToLoadConfig, getConfiguration } from './entities/configuration/configuration-reducer';
+import { useNotificationService } from './shared/util/hooks';
 
 export default function AppRoutes () {
     const auth = useAuth();
     const currentUser = useAppSelector(selectCurrentUser);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const notifiedError = useRef(false);
     const configLoadError: boolean = useAppSelector(failedToLoadConfig);
 

@@ -29,7 +29,6 @@ import { useAppDispatch, useAppSelector } from '../../config/store';
 import { copyButtonAriaLabel, deleteButtonAriaLabel, downloadButtonAriaLabel } from './dataset.utils';
 import Condition from '../../modules/condition';
 import { determineScope, getDownloadUrl, uploadResources } from './dataset.service';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
 import { deletionDescription } from '../../shared/util/form-utils';
 import { selectCurrentUser } from '../user/user.reducer';
@@ -44,6 +43,7 @@ import { Dispatch as ReactDispatch } from 'react';
 import { DatasetContext } from '../../shared/util/dataset-utils';
 import './dataset.scss';
 import { FullScreenDragAndDrop } from './dataset-drag-and-drop';
+import { useNotificationService } from '../../shared/util/hooks';
 
 function DatasetActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -115,7 +115,7 @@ type UploadButtonProperties = {
 
 const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, disableUpload, setDisableUpload, children}: UploadButtonProperties): React.ReactNode => {
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const {manageMode} = state;
     const uploadFile: RefObject<HTMLInputElement> = useRef(null);
 

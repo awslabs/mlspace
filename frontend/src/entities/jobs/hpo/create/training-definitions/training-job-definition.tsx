@@ -39,9 +39,9 @@ import { HyperParameters } from './hyperparameters';
 import _ from 'lodash';
 import z from 'zod';
 import { ML_ALGORITHMS } from '../../../algorithms';
-import NotificationService from '../../../../../shared/layout/notification/notification.service';
 import { useAppDispatch } from '../../../../../config/store';
 import '../../../../../shared/validation/helpers/uri';
+import { useNotificationService } from '../../../../../shared/util/hooks';
 
 export type TrainingJobDefinitionProps = FormProps<ITrainingJobDefinition> & {
     onSubmit(): void;
@@ -116,7 +116,7 @@ export function TrainingJobDefinition (props: TrainingJobDefinitionProps) {
             : AlgorithmSource.CUSTOM
     );
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     const [state, setState] = React.useReducer(
         (state: any, action: { type: string; payload: any }) => {

@@ -20,8 +20,8 @@ import { NavigateFunction, useNavigate, useParams } from 'react-router-dom';
 import { stopTransformJob } from './transform.service';
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { useAppDispatch } from '../../../config/store';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { TransformJobResourceMetadata } from '../../../shared/model/resource-metadata.model';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 function BatchTransformJobActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -83,7 +83,7 @@ const BatchTransformJobActionHandler = (
     dispatch: ThunkDispatch<any, any, Action>,
     navigate: NavigateFunction
 ) => {
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     switch (e.detail.id) {
         case 'stop':
             stopTransformJob({ jobName: transform.resourceId, projectName: projectName }).then(
