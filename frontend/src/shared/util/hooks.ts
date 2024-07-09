@@ -79,6 +79,6 @@ export function useDebounce<T extends (...args: any[]) => void> (callback: T, de
 /**
  * Creates a memoized NotificationService based on {@link dispatch}
  */
-export function useNotificationService (dispatch: ThunkDispatch<any, any, Action>) {
+export function useNotificationService (dispatch: ThunkDispatch<any, any, Action>): ReturnType<typeof NotificationService> {
     return useMemo(() => NotificationService(dispatch), [dispatch]);
 }
