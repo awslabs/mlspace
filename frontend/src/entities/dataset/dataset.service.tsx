@@ -92,6 +92,7 @@ export const buildS3KeysForResourceObjects = (
     datasetContext: DatasetContext,
 ): [string, DatasetResourceObject][] => {
     return resourceObjects.map((resourceObject) => {
+        console.log(`Scope: ${datasetContext.scope}, Name: ${datasetContext.name}, Key: ${resourceObject.key}`);
         switch (datasetContext.type!) {
             case DatasetType.PROJECT:
                 return [`project/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
@@ -99,6 +100,8 @@ export const buildS3KeysForResourceObjects = (
                 return [`private/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
             case DatasetType.GLOBAL:
                 return [`global/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
+            case DatasetType.GROUP:
+                return [`group/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
         }
     });
 };
@@ -121,6 +124,7 @@ export const fetchPresignedURL = async (s3Key: string) => {
 export const determineScope = (
     type: DatasetType | undefined,
     projectName: string | undefined,
+    groupName: string | undefined,
     username: string
 ): string => {
     switch (type) {
@@ -128,6 +132,8 @@ export const determineScope = (
             return DatasetType.GLOBAL;
         case DatasetType.PROJECT:
             return projectName!;
+        case DatasetType.GROUP:
+            return groupName!;
         default:
             // Default to private
             return username;
@@ -139,12 +145,12 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
     const failedUploads: string[] = [];
     let stopUpload = false;
 
+    console.log(`Uploading ${resourceObjects.length} resources`);
     for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
-        
         if (stopUpload) {
             break;
         }
-
+        console.log(`Fetching presigned url for S3 URI ${s3Uri}`);
         const presignedUrl = await fetchPresignedURL(s3Uri);
 
         if (presignedUrl?.data) {

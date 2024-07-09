@@ -24,6 +24,7 @@ class DatasetType(str, Enum):
     GLOBAL = "global"
     PRIVATE = "private"
     PROJECT = "project"
+    GROUP = "group"
 
 
 # Updating the ResourceType enumeration will likely require an update to the

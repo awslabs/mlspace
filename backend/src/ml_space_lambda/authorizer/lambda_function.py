@@ -25,6 +25,7 @@ import jwt
 import urllib3
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -40,6 +41,7 @@ project_dao = ProjectDAO()
 user_dao = UserDAO()
 dataset_dao = DatasetDAO()
 resource_metadata_dao = ResourceMetadataDAO()
+group_user_dao = GroupUserDAO()
 
 oidc_keys: Dict[str, str] = {}
 # If using self signed certs on the OIDC endpoint we need to skip ssl verification
@@ -324,6 +326,15 @@ def lambda_handler(event, context):
                                 policy_statement["Effect"] = "Allow"
                     elif target_type == DatasetType.PRIVATE and username == target_scope:
                         policy_statement["Effect"] = "Allow"
+                    elif target_type == DatasetType.GROUP:
+                        if Permission.ADMIN in user.permissions:
+                            policy_statement["Effect"] = "Allow"
+                        else:
+                            # TODO: check if this user is a member of the Group
+                            logger.info(f"Checking if user {username} is member of group {target_scope}")
+                            group_user = group_user_dao.get(target_scope, username)
+                            if group_user:
+                                policy_statement["Effect"] = "Allow"
                 else:
                     logger.info(
                         "Missing one or more required headers 'x-mlspace-dataset-type', "
@@ -417,6 +428,11 @@ def _handle_dataset_request(request_method, path_params, user):
                 # It's a project dataset so the user needs access to the project
                 project_user = project_user_dao.get(dataset_scope, user.username)
                 if project_user:
+                    return True
+            elif dataset.type == DatasetType.GROUP:
+                # It's a group dataset so the user needs access to the group
+                group_user = group_user_dao.get(dataset_scope, user.username)
+                if group_user:
                     return True
 
     logger.info("Access Denied. The specified dataset does not exist or the user does not have access.")

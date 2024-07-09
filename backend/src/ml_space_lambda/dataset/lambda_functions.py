@@ -22,6 +22,7 @@ import boto3
 from botocore.config import Config
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, rename_dict_keys
@@ -40,6 +41,7 @@ s3 = boto3.client(
 )
 s3_resource = boto3.resource("s3", config=retry_config)
 dataset_dao = DatasetDAO()
+group_user_dao = GroupUserDAO()
 
 dataset_description_regex = re.compile(r"[^\w\-\s'.]")
 
@@ -191,7 +193,7 @@ def create_dataset(event, context):
         scope = "global"
         directory_name = f"global/datasets/{dataset_name}/"
     else:
-        scope = body.get("datasetScope")  # username or project name for private/project scope respectively
+        scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
         directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
 
     if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
@@ -205,6 +207,7 @@ def create_dataset(event, context):
             description=body.get("datasetDescription", ""),
             location=dataset_location,
             created_by=event["requestContext"]["authorizer"]["principalId"],
+            is_group=dataset_type == DatasetType.GROUP,
         )
         dataset_dao.create(dataset)
         return {"status": "success", "dataset": dataset.to_dict()}
@@ -220,6 +223,10 @@ def list_resources(event, context):
     datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
     # Get the users private datasets
     datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
+    # Get the group datasets for groups this user is a member of
+    groups = group_user_dao.get_groups_for_user(username)
+    for group in groups:
+        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.GROUP, group.group))
 
     if event["pathParameters"] and "projectName" in event["pathParameters"]:
         project_name = event["pathParameters"]["projectName"].replace('"', "")

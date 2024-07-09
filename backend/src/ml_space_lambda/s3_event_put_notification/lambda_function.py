@@ -43,7 +43,7 @@ def _create_dataset_record(metadata, key):
         scope = DatasetType.GLOBAL
         dataset_name = split_key[2]
         dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/global/datasets/{dataset_name}/"
-    elif dataset_type in [DatasetType.PRIVATE, DatasetType.PROJECT]:
+    elif dataset_type in [DatasetType.PRIVATE, DatasetType.PROJECT, DatasetType.GROUP]:
         scope = split_key[1]
         dataset_name = split_key[3]
         dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{dataset_type}/{scope}/datasets/{dataset_name}/"
@@ -58,6 +58,7 @@ def _create_dataset_record(metadata, key):
             description=metadata.get("dataset-description", ""),
             location=dataset_location,
             created_by=metadata.get("user", "default-user"),
+            is_group=dataset_type == DatasetType.GROUP,
         )
         dataset_dao.create(dataset)
 
@@ -97,7 +98,7 @@ def _handle_notebook_upload(bucket, key, username):
     values = {}
     if type == DatasetType.GLOBAL:
         values = {"dataset-scope": DatasetType.GLOBAL, "dataset-name": split_key[2]}
-    elif type == DatasetType.PRIVATE or type == DatasetType.PROJECT:
+    elif type in [DatasetType.PRIVATE, DatasetType.PROJECT, DatasetType.GROUP]:
         values = {"dataset-scope": split_key[1], "dataset-name": split_key[3]}
     else:
         logger.error(f"Unrecognized dataset type {type} (Bucket: {bucket}, Key: {key}")

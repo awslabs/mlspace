@@ -30,14 +30,14 @@ import {
     Alert,
     Textarea,
 } from '@cloudscape-design/components';
-import { useAppDispatch } from '../../../config/store';
+import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import {
     IDataset,
     defaultDataset,
     DatasetType,
 } from '../../../shared/model/dataset.model';
-import { enumToOptions, initCap } from '../../../shared/util/enum-utils';
+import { initCap } from '../../../shared/util/enum-utils';
 import './dataset-create.styles.css';
 import { createDataset, uploadResources } from '../dataset.service';
 import { z } from 'zod';
@@ -52,6 +52,8 @@ import { DatasetResourceObject } from '../../../modules/dataset/dataset-browser.
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useUsername } from '../../../shared/util/auth-utils';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { getAllGroups } from '../../group/group.reducer';
+import { IGroup } from '../../../shared/model/group.model';
 
 const formSchema = z.object({
     name: z
@@ -74,6 +76,7 @@ export function DatasetCreate () {
     const username = useUsername();
     const [dataset] = useState(defaultDataset as IDataset);
     const [datasetFileList, setDatasetFileList] = useState([] as DatasetResourceObject[]);
+    const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
     const { projectName = '' } = useParams();
 
     scrollToPageHeader();
@@ -90,6 +93,7 @@ export function DatasetCreate () {
             name: '',
             description: '',
             type: DatasetType.PRIVATE,
+            groupName: '',
         },
         touched: {},
         formSubmitting: false,
@@ -107,6 +111,32 @@ export function DatasetCreate () {
         scrollToPageHeader('h1', 'dataset');
     }, [dispatch, basePath, projectName]);
 
+    useEffect(() => {
+        dispatch(getAllGroups());
+    }, [dispatch]);
+
+    function generateOptions () {
+        // Standard options always available
+        const options: { label: string; value?: string; options?: any[] }[] = [
+            { label: 'Global', value: 'global' },
+            { label: 'Private', value: 'private' },
+        ];
+
+        if (projectName) {
+            options.push({ label: 'Project', value: 'project' });
+        }
+
+        if (groups) {
+            const groupLabels: { label: string; value: string }[] = [];
+            groups.map((group, index) => {
+                groupLabels.push({ label: group.name, value: `group${index}`});
+            });
+            options.push({ label: 'Groups', options: groupLabels});
+        }
+
+        return options;
+    }
+
     async function handleSubmit () {
         if (isValid) {
             setState({ formSubmitting: true });
@@ -122,6 +152,7 @@ export function DatasetCreate () {
             });
 
             if (response?.status === 200) {
+                console.log(JSON.stringify(datasetFileList[0]));
                 const resourceObjects = datasetFileList.filter((item): item is DatasetResourceObject => item.type === 'object');
                 await uploadResources(newDataset, resourceObjects, notificationService);
 
@@ -222,8 +253,9 @@ export function DatasetCreate () {
                                 description={
                                     window.env.MANAGE_IAM_ROLES ? (
                                         'Global datasets are accessible from any project, project datasets ' +
-                                        'are accessible only to the project they were created in, and ' +
-                                        'private datasets are accessible to the user that created them.'
+                                        'are accessible only to the project they were created in, group datasets ' +
+                                        'are accessible only to members of that group, and private datasets ' +
+                                        'are accessible only to the user that created them.'
                                     ) : (
                                         <Alert
                                             statusIconAriaLabel='Info'
@@ -243,19 +275,13 @@ export function DatasetCreate () {
                                 <Select
                                     data-cy='dataset-type-select'
                                     selectedOption={{
-                                        label: initCap(state.form.type || ''),
+                                        label: state.form.groupName ? state.form.groupName : initCap(state.form.type || ''),
                                         value: state.form.type,
                                     }}
-                                    options={
-                                        projectName!
-                                            ? enumToOptions(DatasetType, true)
-                                            : [
-                                                { label: 'Global', value: 'global' },
-                                                { label: 'Private', value: 'private' },
-                                            ]
-                                    }
+                                    options={generateOptions()}
                                     onChange={({ detail }) => {
                                         setFields({type: detail.selectedOption.value as keyof typeof DatasetType});
+                                        setFields({groupName: detail.selectedOption.value?.startsWith('group')  ? detail.selectedOption.label : ''});
                                     }}
                                     onBlur={() => touchFields(['type'])}
                                 />
