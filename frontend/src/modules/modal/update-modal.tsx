@@ -21,9 +21,9 @@ import React, { useState } from 'react';
 import { IProjectUser } from '../../shared/model/projectUser.model';
 import { IUser } from '../../shared/model/user.model';
 import { useAppDispatch } from '../../config/store';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { CallbackFunction } from '../../types';
 import { dismissModal } from './modal.reducer';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export type UpdateModalProps = {
     selectedUser: IUser | IProjectUser;
@@ -35,7 +35,7 @@ export type UpdateModalProps = {
 function UpdateModal ({ selectedUser, onConfirm, postConfirm, description }: UpdateModalProps) {
     const [processing, setProcessing] = useState(false);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const username = (selectedUser as IUser).username || (selectedUser as IProjectUser).user;
 
     const responseHandler = (

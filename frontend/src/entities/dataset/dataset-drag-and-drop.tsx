@@ -17,13 +17,13 @@
 import React, { useRef } from 'react';
 import { useEffect } from 'react';
 import { useAppDispatch } from '../../config/store';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { fileHandler } from './dataset.actions';
+import { useNotificationService } from '../../shared/util/hooks';
 
 
 export const FullScreenDragAndDrop = ({state, setState, updateDatasetContext, setDisableUpload}): React.ReactNode => {
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const dropzone = useRef<HTMLDivElement>(null);
     const {manageMode} = state;
 

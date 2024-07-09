@@ -44,8 +44,7 @@ import { describeTrainingJob } from '../../training/training-job.reducer';
 import { prettyStatus } from '../../../../shared/util/table-utils';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
-import NotificationService from '../../../../shared/layout/notification/notification.service';
-import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import { useBackgroundRefresh, useNotificationService } from '../../../../shared/util/hooks';
 import ContentLayout from '../../../../shared/layout/content-layout';
 
 export function HPOJobDetail () {
@@ -53,7 +52,7 @@ export function HPOJobDetail () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const HPOJobDetailsLoading = useAppSelector(loadingHPOJob);
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const [initialLoaded, setInitialLoaded] = useState(false);
 
     scrollToPageHeader();

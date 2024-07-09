@@ -57,7 +57,6 @@ import {
     getPaddedNumberString,
 } from '../../../../shared/util/date-utils';
 import { createTrainingJob as createTrainingJobThunk } from '../training-job.reducer';
-import NotificationService from '../../../../shared/layout/notification/notification.service';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { setBreadcrumbs } from '../../../../shared/layout/navigation/navigation.reducer';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
@@ -77,6 +76,7 @@ import '../../../../shared/validation/helpers/uri';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 import { ServiceTypes } from '../../../../shared/model/app.configuration.model';
 import ContentLayout from '../../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../../shared/util/hooks';
 
 const ALGORITHMS: { [key: string]: Algorithm } = {};
 ML_ALGORITHMS.filter((algorithm) => algorithm.defaultHyperParameters.length > 0).map(
@@ -87,7 +87,7 @@ export default function TrainingJobCreate () {
     const { projectName } = useParams();
     const userName = useUsername();
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
     const location = useLocation();
     const [algorithmSource, setAlgorithmSource] = useState(AlgorithmSource.BUILT_IN);
