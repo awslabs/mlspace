@@ -27,6 +27,11 @@ def abbreviated_instance_intersection(superset: list[str], subset: list[str]) ->
     #
     # If all instance types for a family (ie. "m4.") in superset are present in subset the resulting list
     # will be abbreviated with a single "m4.*" value instead of individual instance types for that family.
+    #
+    # Example:
+    #   superset: ["m4.medium", "m4.large", "m4.xlarge", "m5.medium, "m5.large", "m5.xlarge"]
+    #   subset:   ["m4.medium", "m4.large", "m4.xlarge", "m5.medium, "m5.large", "m6.medium"]
+    #   result:   ["m4.*", "m5.medium", "m5.large"]
 
     abbreviated_instances = {}
 
