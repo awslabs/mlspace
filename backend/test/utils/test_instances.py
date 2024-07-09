@@ -19,7 +19,7 @@ from unittest import mock
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1"}
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.utils.instances import abbreviated_instance_union, kms_unsupported_instances
+    from ml_space_lambda.utils.instances import abbreviated_instance_intersection, kms_unsupported_instances
 
 
 @mock.patch("ml_space_lambda.utils.instances.ec2")
@@ -39,7 +39,7 @@ def test_kms_unsupported_instances(mock_ec2):
     assert len(instances) == 4
 
 
-def test_abbreviated_instance_union():
+def test_abbreviated_instance_intersection():
     s1_instances = [
         # common among both lists
         "g5.large",
@@ -68,9 +68,16 @@ def test_abbreviated_instance_union():
         "g5cs2.xlarge",
     ]
 
-    abbreviated_union = abbreviated_instance_union(s1_instances, s2_instances)
+    abbreviated_union = abbreviated_instance_intersection(s1_instances, s2_instances)
 
     assert len(abbreviated_union) == 3
     assert "g5.*" in abbreviated_union
     assert "g5cs1.large" in abbreviated_union
     assert "g5cs2.*" in abbreviated_union
+
+    abbreviated_union = abbreviated_instance_intersection(s2_instances, s1_instances)
+
+    assert len(abbreviated_union) == 3
+    assert "g5.*" in abbreviated_union
+    assert "g5cs2.large" in abbreviated_union
+    assert "g5cs1.*" in abbreviated_union

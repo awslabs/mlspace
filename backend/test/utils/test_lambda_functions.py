@@ -30,14 +30,14 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.utils.lambda_functions import update_instance_kms_key_conditions
 
 
-@mock.patch("ml_space_lambda.utils.lambda_functions.abbreviated_instance_union")
+@mock.patch("ml_space_lambda.utils.lambda_functions.abbreviated_instance_intersection")
 @mock.patch("ml_space_lambda.utils.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.utils.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.utils.lambda_functions.iam")
 @mock.patch("ml_space_lambda.utils.lambda_functions.ec2")
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 def test_update_instance_kms_key_conditions_success(
-    mock_ec2, mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_union
+    mock_ec2, mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_intersection
 ):
     mlspace_config.env_variables = {}
 
@@ -55,14 +55,14 @@ def test_update_instance_kms_key_conditions_success(
 
     paginator.paginate.return_value = [{"InstanceTypes": instance_types[:2]}, {"InstanceTypes": instance_types[2:]}]
 
-    abbreviated_instance_union.side_effect = [["g5.large"], ["g6.large"]]
+    abbreviated_instance_intersection.side_effect = [["g5.large"], ["g6.large"]]
 
     update_instance_kms_key_conditions(mock.Mock(), mock.Mock())
 
     kms_unsupported_instances.assert_called()
 
     standard_instances = [instance_type["InstanceType"] for instance_type in instance_types]
-    abbreviated_instance_union.assert_has_calls(
+    abbreviated_instance_intersection.assert_has_calls(
         [
             mock.call(mock.ANY, [".".join(["ml", instance_type]) for instance_type in unsupported_instances]),
             mock.call(standard_instances, unsupported_instances),
@@ -101,32 +101,32 @@ def test_update_instance_kms_key_conditions_success(
     )
 
 
-@mock.patch("ml_space_lambda.utils.lambda_functions.abbreviated_instance_union")
+@mock.patch("ml_space_lambda.utils.lambda_functions.abbreviated_instance_intersection")
 @mock.patch("ml_space_lambda.utils.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.utils.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.utils.lambda_functions.iam")
 @mock.patch.dict("os.environ", {EnvVariable.MANAGE_IAM_ROLES: ""}, clear=True)
 def test_update_instance_kms_key_conditions_no_dynamic_roles(
-    mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_union
+    mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_intersection
 ):
     mlspace_config.env_variables = {}
 
     update_instance_kms_key_conditions(mock.Mock(), mock.Mock())
 
     kms_unsupported_instances.assert_not_called()
-    abbreviated_instance_union.assert_not_called()
+    abbreviated_instance_intersection.assert_not_called()
     mock_iam.create_policy_version.assert_not_called()
     mock_iam_manager._delete_unused_policy_versions.assert_not_called()
 
 
-@mock.patch("ml_space_lambda.utils.lambda_functions.abbreviated_instance_union")
+@mock.patch("ml_space_lambda.utils.lambda_functions.abbreviated_instance_intersection")
 @mock.patch("ml_space_lambda.utils.lambda_functions.kms_unsupported_instances")
 @mock.patch("ml_space_lambda.utils.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.utils.lambda_functions.iam")
 @mock.patch("ml_space_lambda.utils.lambda_functions.ec2")
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 def test_update_instance_kms_key_conditions_fail(
-    mock_ec2, mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_union
+    mock_ec2, mock_iam, mock_iam_manager, kms_unsupported_instances, abbreviated_instance_intersection
 ):
     mlspace_config.env_variables = {}
 
@@ -146,7 +146,7 @@ def test_update_instance_kms_key_conditions_fail(
 
     paginator.paginate.return_value = [{"InstanceTypes": instance_types[:2]}, {"InstanceTypes": instance_types[2:]}]
 
-    abbreviated_instance_union.side_effect = [["g5.large"], ["g6.large"]]
+    abbreviated_instance_intersection.side_effect = [["g5.large"], ["g6.large"]]
 
     assert "unable to update kms policy" == update_instance_kms_key_conditions(mock.Mock(), mock.Mock())
 

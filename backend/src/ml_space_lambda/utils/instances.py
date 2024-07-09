@@ -22,22 +22,22 @@ from ml_space_lambda.utils.mlspace_config import retry_config
 ec2 = boto3.client("ec2", config=retry_config)
 
 
-def abbreviated_instance_union(s1_instances: list[str], s2_instances: list[str]) -> list[str]:
-    # Finds the list of instances common among s1_instances and s2_instances and returns an abbreviated list.
+def abbreviated_instance_intersection(superset: list[str], subset: list[str]) -> list[str]:
+    # Finds the intersectinon of instances between superset and subset and returns an abbreviated list.
     #
-    # If all instance types for a family (ie. "m4.large", "m4.xlarge") are common between both lists the resulting
-    # list will be abbreviated with a "m4.*" value instead of all the instance types for that family.
+    # If all instance types for a family (ie. "m4.") in superset are present in subset the resulting list
+    # will be abbreviated with a single "m4.*" value instead of individual instance types for that family.
 
     abbreviated_instances = {}
 
     s1_compiled = {}
-    for instance_type in s1_instances:
+    for instance_type in superset:
         family_name = ".".join(instance_type.split(".")[:-1])
         family = s1_compiled.get(family_name, set())
         family.add(instance_type)
         s1_compiled[family_name] = family
 
-    for instance_type in s2_instances:
+    for instance_type in subset:
         family_name = ".".join(instance_type.split(".")[:-1])
         family = s1_compiled.get(family_name, set())
 
