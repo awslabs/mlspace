@@ -152,12 +152,11 @@ export function DatasetCreate () {
             });
 
             if (response?.status === 200) {
-                console.log(JSON.stringify(datasetFileList[0]));
                 const resourceObjects = datasetFileList.filter((item): item is DatasetResourceObject => item.type === 'object');
                 await uploadResources(newDataset, resourceObjects, notificationService);
 
                 // Need to clear state/reset the form
-                navigate(`${basePath}/dataset/${newDataset.scope}/${newDataset.name}`);
+                navigate(`${basePath}/dataset/${newDataset.type}/${newDataset.scope}/${newDataset.name}`);
             }
             
             setState({ formSubmitting: false });

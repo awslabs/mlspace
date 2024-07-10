@@ -16,7 +16,7 @@
 
 import { DatasetType, IDataset } from '../model';
 
-export type DatasetContext = IDataset & Required<Pick<IDataset, 'name' | 'type'>>;
+export type DatasetContext = IDataset & Required<Pick<IDataset, 'name' | 'type' | 'scope'>>;
 
 export const datasetFromS3Uri = (s3Uri: string): DatasetContext | undefined => {
     // Example: s3://mlspace-data-<acc-id>/<type(/subtype - optional)>/datasets/<ds-name>/train/

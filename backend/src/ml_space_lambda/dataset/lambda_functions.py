@@ -203,11 +203,11 @@ def create_dataset(event, context):
         dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
         dataset = DatasetModel(
             scope=scope,
+            type=dataset_type,
             name=dataset_name,
             description=body.get("datasetDescription", ""),
             location=dataset_location,
             created_by=event["requestContext"]["authorizer"]["principalId"],
-            is_group=dataset_type == DatasetType.GROUP,
         )
         dataset_dao.create(dataset)
         return {"status": "success", "dataset": dataset.to_dict()}

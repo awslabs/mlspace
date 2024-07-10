@@ -65,7 +65,7 @@ export class DatasetsApiStack extends Stack {
                 id: 'dataset-personal',
                 name: 'list_resources',
                 resource: 'dataset',
-                description: 'List all datasets global and private datasets for user',
+                description: 'List all global, group, and private datasets for user',
                 path: 'dataset',
                 method: 'GET',
             },

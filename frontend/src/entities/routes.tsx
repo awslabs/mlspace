@@ -79,8 +79,8 @@ const EntityRoutes = () => {
                 </Route>
                 <Route path='personal/dataset' element={<Dataset />} />
                 <Route path='personal/dataset/create' element={<DatasetCreate />} />
-                <Route path='personal/dataset/:scope/:name/edit' element={<DatasetUpdate />} />
-                <Route path='personal/dataset/:scope/:name' element={<DatasetDetail />} />
+                <Route path='personal/dataset/:type/:scope/:name/edit' element={<DatasetUpdate />} />
+                <Route path='personal/dataset/:type/:scope/:name' element={<DatasetDetail />} />
                 <Route path='personal/notebook' element={<Notebook />} />
                 <Route path='personal/notebook/create' element={<NotebookCreate />} />
                 <Route path='personal/notebook/:name' element={<NotebookDetail />} />
@@ -119,11 +119,11 @@ const EntityRoutes = () => {
                 <Route path='project/:projectName/dataset' element={<Dataset />} />
                 <Route path='project/:projectName/dataset/create' element={<DatasetCreate />} />
                 <Route
-                    path='project/:projectName/dataset/:scope/:name'
+                    path='project/:projectName/dataset/:type/:scope/:name'
                     element={<DatasetDetail />}
                 />
                 <Route
-                    path='project/:projectName/dataset/:scope/:name/edit'
+                    path='project/:projectName/dataset/:type/:scope/:name/edit'
                     element={<DatasetUpdate />}
                 />
                 <Route path='project/:projectName/model' element={<Model />} />

@@ -17,7 +17,7 @@ import { Reducer } from 'react';
 import { ServerRequestProps } from '../../shared/util/table-utils';
 import { DatasetContext } from '../../shared/util/dataset-utils';
 import { PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { DatasetType, IDataset } from '../../shared/model/dataset.model';
+import { IDataset } from '../../shared/model/dataset.model';
 import axios from '../../shared/util/axios-utils';
 import { PaginationProps } from '@cloudscape-design/components';
 import { lastComponent } from './dataset-browser.utils';
@@ -147,16 +147,7 @@ export type DatasetBrowserState = {
 export const getDatasetContents = createAsyncThunk(
     'dataset/list_files',
     async (props: DatasetServerRequestProps) => {
-        const { datasetContext, projectName, username } = props;
-        let scope: string | undefined = datasetContext.type;
-
-        switch (datasetContext.type) {
-            case DatasetType.PROJECT:
-                scope = projectName;
-                break;
-            case DatasetType.PRIVATE:
-                scope = username;
-        }
+        const { datasetContext } = props;
 
         const searchParams = new URLSearchParams();
 
@@ -171,7 +162,7 @@ export const getDatasetContents = createAsyncThunk(
             searchParams.set('prefix', datasetContext.location);
         }
 
-        return axios.get<ListFilesResponse>(`/dataset/${scope}/${datasetContext.name}/files?${searchParams.toString()}`).then((response) => {
+        return axios.get<ListFilesResponse>(`/dataset/${datasetContext.type}/${datasetContext.scope}/${datasetContext.name}/files?${searchParams.toString()}`).then((response) => {
             response.data.contents.forEach((resource) => {
                 // copy bucket from top level of response to individual resources for easier management
                 resource.bucket = response.data.bucket;

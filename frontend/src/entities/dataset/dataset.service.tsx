@@ -92,7 +92,6 @@ export const buildS3KeysForResourceObjects = (
     datasetContext: DatasetContext,
 ): [string, DatasetResourceObject][] => {
     return resourceObjects.map((resourceObject) => {
-        console.log(`Scope: ${datasetContext.scope}, Name: ${datasetContext.name}, Key: ${resourceObject.key}`);
         switch (datasetContext.type!) {
             case DatasetType.PROJECT:
                 return [`project/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
@@ -150,7 +149,6 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
         if (stopUpload) {
             break;
         }
-        console.log(`Fetching presigned url for S3 URI ${s3Uri}`);
         const presignedUrl = await fetchPresignedURL(s3Uri);
 
         if (presignedUrl?.data) {

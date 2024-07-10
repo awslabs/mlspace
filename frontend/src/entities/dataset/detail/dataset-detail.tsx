@@ -41,7 +41,7 @@ import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-brows
 import ContentLayout from '../../../shared/layout/content-layout';
 
 function DatasetDetail () {
-    const { projectName, scope, name } = useParams();
+    const { projectName, type, scope, name } = useParams();
     const basePath = projectName ? `/project/${projectName}` : '/personal';
 
     const dataset: IDataset = useAppSelector(datasetBinding);
@@ -68,15 +68,15 @@ function DatasetDetail () {
             setBreadcrumbs([
                 getBase(projectName),
                 { text: 'Datasets', href: `#${basePath}/dataset` },
-                { text: `${name}`, href: `#${basePath}/dataset/${scope}/${name}` },
+                { text: `${name}`, href: `#${basePath}/dataset/${type}/${scope}/${name}` },
             ])
         );
-        dispatch(getDatasetByScopeAndName({ scope: scope, name: name }))
+        dispatch(getDatasetByScopeAndName({ type: type, scope: scope, name: name }))
             .unwrap()
             .catch(() => {
                 navigate('/404');
             });
-    }, [dispatch, navigate, basePath, name, projectName, scope]);
+    }, [dispatch, navigate, basePath, name, projectName, scope, type]);
 
     return (
         <ContentLayout header={<Header variant='h1'>{dataset.name}</Header>}>
@@ -89,7 +89,7 @@ function DatasetDetail () {
                         <Button
                             onClick={() =>
                                 navigate(
-                                    `${basePath}/dataset/${dataset.scope}/${dataset.name}/edit`
+                                    `${basePath}/dataset/${dataset.type}/${dataset.scope}/${dataset.name}/edit`
                                 )
                             }
                         >
