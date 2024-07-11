@@ -21,6 +21,7 @@ import pytest
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
+from ml_space_lambda.enums import DatasetType
 
 DATA_BUCKET = "mlspace-data-bucket"
 TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "DATA_BUCKET": DATA_BUCKET}
@@ -39,6 +40,7 @@ MOCK_DATASET_TAGS = {
 MOCK_DATASET_SAMPLE_KEY = "private/lchangretta@example.com/datasets/black-hand/file.txt"
 MOCK_DATASET = DatasetModel(
     scope="lchangretta@example.com",
+    type=DatasetType.PRIVATE,
     name="black-hand",
     description="Profiles on associates making the journey to Birmingham",
     location=f"s3://{DATA_BUCKET}/private/lchangretta@example.com/datasets/black-hand/",
@@ -52,6 +54,7 @@ def _validate_dataset_create_call(call_args: List[Any], dataset: DatasetModel):
     dataset_arg = call_args.args[0]
     assert dataset_arg.name == dataset.name
     assert dataset_arg.scope == dataset.scope
+    assert dataset_arg.type == dataset.type
     assert dataset_arg.description == dataset.description
     assert dataset_arg.location == dataset.location
 
@@ -212,6 +215,7 @@ def test_handle_notebook_upload(mock_dataset_dao, mock_s3):
     mock_s3.put_object_tagging.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
     dataset = DatasetModel(
         scope="global",
+        type=DatasetType.GLOBAL,
         name="more-testing",
         description="",
         location=f"s3://{DATA_BUCKET}/{MOCK_DATASET_BASE_KEY}",
@@ -328,6 +332,7 @@ def test_key_training_job_output(mock_dataset_dao, mock_s3):
     mock_s3.put_object_tagging.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
     dataset = DatasetModel(
         scope=project_name,
+        type=DatasetType.PROJECT,
         name=dataset_name,
         description="",
         location=f"s3://{DATA_BUCKET}/{dataset_type}/{project_name}/datasets/{dataset_name}/",

@@ -51,10 +51,11 @@ def generate_event(dataset_type: str, dataset_scope: str):
     }
 
 
-def generate_dataset_model(event: dict, scope: str, dataset_location: str):
+def generate_dataset_model(event: dict, scope: str, dataset_location: str, type: str):
     body = json.loads(event["body"])
     return DatasetModel(
         scope=scope,
+        type=type,
         name=test_dataset_name,
         description=body.get("datasetDescription", ""),
         location=dataset_location,
@@ -88,7 +89,7 @@ def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, sc
 
     dataset_location = f's3://{TEST_ENV_CONFIG["DATA_BUCKET"]}/{directory_name}'
 
-    test_dataset = generate_dataset_model(event=mock_event, scope=scope, dataset_location=dataset_location)
+    test_dataset = generate_dataset_model(event=mock_event, scope=scope, dataset_location=dataset_location, type=dataset_type)
     success_response = {"status": "success", "dataset": test_dataset.to_dict()}
     expected_response = generate_html_response(200, success_response)
 

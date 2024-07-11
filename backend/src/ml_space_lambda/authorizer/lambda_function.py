@@ -414,11 +414,22 @@ def _handle_dataset_request(request_method, path_params, user):
     if dataset:
         # Owners can do whatever - this check also handles private datasets
         if dataset.created_by == user.username:
+            logger.info("User is an owner, returning True")
             return True
         else:
+            # All admins can perform any action on any Group
+            if dataset.type == DatasetType.GROUP:
+                logger.info("Group dataset")
+                if Permission.ADMIN in user.permissions:
+                    return True
+                group_user = group_user_dao.get(dataset_scope, user.username)
+                logger.info(f"Found group_user {group_user.user}")
+                # Non-admins can only view group datasets
+                if group_user and request_method not in ["PUT", "DELETE"]:
+                    return True
             # If it's a global or project dataset and they aren't the owner
             # they can't update or delete the dataset or any files
-            if request_method in ["PUT", "DELETE"]:
+            elif request_method in ["PUT", "DELETE"]:
                 logger.info(f"Access Denied. User: '{user.username}' does not own the specified dataset.")
             elif dataset.type == DatasetType.GLOBAL:
                 # If it's not a delete or update but it's a global dataset
@@ -428,11 +439,6 @@ def _handle_dataset_request(request_method, path_params, user):
                 # It's a project dataset so the user needs access to the project
                 project_user = project_user_dao.get(dataset_scope, user.username)
                 if project_user:
-                    return True
-            elif dataset.type == DatasetType.GROUP:
-                # It's a group dataset so the user needs access to the group
-                group_user = group_user_dao.get(dataset_scope, user.username)
-                if group_user:
                     return True
 
     logger.info("Access Denied. The specified dataset does not exist or the user does not have access.")

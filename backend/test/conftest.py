@@ -34,6 +34,7 @@ def pytest_generate_tests(metafunc):
 def mock_global_dataset():
     return DatasetModel(
         scope=DatasetType.GLOBAL,
+        type=DatasetType.GLOBAL,
         name="example_dataset",
         description="example_dataset for unit tests",
         location="s3://mlspace-data-bucket/global/datasets/example_dataset",
@@ -45,6 +46,7 @@ def mock_global_dataset():
 def mock_private_dataset():
     return DatasetModel(
         scope="tshelby",
+        type=DatasetType.PRIVATE,
         name="example_private_dataset",
         description="example_private_dataset for unit tests",
         location="s3://mlspace-data-bucket/private/tshelby/datasets/example_private_dataset",

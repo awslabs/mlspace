@@ -82,6 +82,7 @@ class TestDatasetDAO(TestCase):
         # Seed 2 datasets for testing update/delete
         self.UPDATE_DS = DatasetModel(
             SAMPLE_DATASET_PROJECT,
+            DatasetType.PROJECT,
             "sample-dataset",
             "Dataset for testing update.",
             "s3://mlspace-datasets-123456789/project/fake-project/sample-dataset",
@@ -94,6 +95,7 @@ class TestDatasetDAO(TestCase):
 
         self.DELETE_DS = DatasetModel(
             "testUser3@amazon.com",
+            DatasetType.PRIVATE,
             "bad-dataset",
             "Dataset for testing delete.",
             "s3://mlspace-datasets-123456789/private/testUser3/bad-dataset",
@@ -115,6 +117,7 @@ class TestDatasetDAO(TestCase):
 
     def test_create_dataset(self):
         new_ds = DatasetModel(
+            DatasetType.GLOBAL,
             DatasetType.GLOBAL,
             "test-dataset",
             "Dataset for unit test.",
