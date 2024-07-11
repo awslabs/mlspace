@@ -36,12 +36,12 @@ import EndpointConfigCreate from '../../endpoint-config/create';
 import { IEndpointConfig } from '../../../shared/model/endpoint-config.model';
 import { NewEndpointConfigDetails } from './new-config-details';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
 import { z } from 'zod';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export function EndpointCreate () {
     const [endpoint, setEndpoint] = useState(defaultEndpoint as IEndpoint);
@@ -52,7 +52,7 @@ export function EndpointCreate () {
     const [endpointConfigType, setEndpointConfigType] = useState('existing');
     const { projectName } = useParams();
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
 
     scrollToPageHeader();

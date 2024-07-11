@@ -20,9 +20,7 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.group import GroupModel
-from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -48,35 +46,18 @@ def _mock_event(group_name: str = MOCK_GROUP_NAME):
     }
 
 
-@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.data_access_objects.group.time")
-@mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-@mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_create_group(mock_user_dao, mock_group_dao, mock_group_user_dao, mock_time, mock_iam_manager):
+def test_create_group(mock_group_dao, mock_time):
     mlspace_config.env_variables = {}
     mock_group_dao.get.return_value = None
     expected_response = generate_html_response(200, f"Successfully created group '{MOCK_GROUP_NAME}'")
 
-    mock_user_dao.get.return_value = MOCK_USER
     mock_time.time.return_value = MOCK_TIMESTAMP
 
     assert lambda_handler(_mock_event(), mock_context) == expected_response
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
-    mock_user_dao.get.assert_called_with(MOCK_USERNAME)
-    mock_iam_manager.update_user_policy.assert_called_with(MOCK_USERNAME)
 
-    # The create arg is the GroupUserModel or GroupModel, we can't do a normal assert_called_with
-    # because the arg is a class so the comparison will fail due to pointer issues
-    mock_group_user_dao.create.assert_called_once()
-    assert (
-        mock_group_user_dao.create.call_args.args[0].to_dict()
-        == GroupUserModel(
-            group_name=MOCK_GROUP_NAME,
-            username=MOCK_USERNAME,
-            permissions=[Permission.GROUP_OWNER, Permission.COLLABORATOR],
-        ).to_dict()
-    )
     mock_group_dao.create.assert_called_once()
     assert (
         mock_group_dao.create.call_args.args[0].to_dict()
@@ -136,53 +117,6 @@ def test_create_group_client_error(mock_group_dao):
 
     assert lambda_handler(_mock_event(), mock_context) == expected_response
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
-
-
-@mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
-@mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-@mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-@mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_create_group_client_error_adding_user(mock_user_dao, mock_group_dao, mock_group_user_dao, mock_iam_manager):
-    mlspace_config.env_variables = {}
-    error_msg = {
-        "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
-        "ResponseMetadata": {"HTTPStatusCode": 400},
-    }
-    expected_response = generate_html_response(
-        400,
-        "An error occurred (ThrottlingException) when calling" " the PutItem operation: Dummy error message.",
-    )
-    mock_user_dao.get.return_value = MOCK_USER
-    mock_group_user_dao.create.side_effect = ClientError(error_msg, "PutItem")
-    mock_group_dao.get.return_value = None
-
-    assert lambda_handler(_mock_event(), mock_context) == expected_response
-
-    mock_iam_manager.update_user_policy.assert_not_called()
-    mock_user_dao.get.assert_called_with(MOCK_USERNAME)
-    mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
-    # The create arg is the GroupUserModel or GroupModel, we can't do a normal assert_called_with
-    # because the arg is a class so the comparison will fail due to pointer issues
-    mock_group_user_dao.create.assert_called_once()
-    assert (
-        mock_group_user_dao.create.call_args.args[0].to_dict()
-        == GroupUserModel(
-            group_name=MOCK_GROUP_NAME,
-            username=MOCK_USERNAME,
-            permissions=[Permission.GROUP_OWNER, Permission.COLLABORATOR],
-        ).to_dict()
-    )
-    mock_group_dao.create.assert_called_once()
-    assert (
-        mock_group_dao.create.call_args.args[0].to_dict()
-        == GroupModel(
-            name=MOCK_GROUP_NAME,
-            description="Group for unit tests",
-            created_by=MOCK_USERNAME,
-        ).to_dict()
-    )
-    # Since the group created before the user add failed we should also clean up the group
-    mock_group_dao.delete.assert_called_with(MOCK_GROUP_NAME)
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")

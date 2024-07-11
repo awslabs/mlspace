@@ -26,8 +26,8 @@ import { deleteProject, getProject, listProjectsForUser, updateProject } from '.
 import { useAuth } from 'react-oidc-context';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import Modal, { ModalProps } from '../../../modules/modal';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 function ProjectDetailActions () {
     const dispatch = useAppDispatch();
@@ -123,7 +123,7 @@ const ProjectActionHandler = (
     modalState: ModalProps,
     setModalState: (state: Partial<ModalProps>) => void
 ) => {
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     switch (e.detail.id) {
         case 'update':

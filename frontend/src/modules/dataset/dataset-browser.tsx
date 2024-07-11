@@ -31,9 +31,9 @@ import { upperFirst } from 'lodash';
 import { getMatchesCountText } from '../../shared/util/table-utils';
 import { EmptyState } from '../table';
 import { DatasetBrowserProps } from './dataset-browser.types';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { useUsername } from '../../shared/util/auth-utils';
 import '../../entities/dataset/dataset.scss';
+import { useNotificationService } from '../../shared/util/hooks';
 
 
 export function DatasetBrowser (props: DatasetBrowserProps) {
@@ -66,9 +66,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
     const displayMode = displayModeForDatasetContext(state.datasetContext);
 
     // memoize notification service so it doesn't cause infinite loops when used in react hooks for fetchDatasetResources & fetchDatasets
-    const notificationService = useMemo(() => {
-        return NotificationService(dispatch);
-    }, [dispatch]);
+    const notificationService = useNotificationService(dispatch);
 
     const fetchDatasetResources = useCallback((datasetContext: Partial<DatasetContext>, nextToken?: string, existingItems?: (DatasetResource | IDataset)[]) => {
         if (!isCreating) {

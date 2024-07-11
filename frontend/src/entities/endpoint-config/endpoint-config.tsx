@@ -31,12 +31,12 @@ import { useParams } from 'react-router-dom';
 import { EmbeddedableComponent } from './common-components';
 import { Box, Button } from '@cloudscape-design/components';
 import { CallbackFunction } from '../../types';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { getEndpointConfigByName } from './endpoint-config.service';
 import { getBase } from '../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../src/shared/doc';
 import { focusOnCreateButton } from '../../shared/util/url-utils';
 import { EndpointConfigResourceMetadata } from '../../shared/model/resource-metadata.model';
+import { useNotificationService } from '../../shared/util/hooks';
 
 type EndpointConfigComponentOptions = {
     selectEndpointConfig?: CallbackFunction;
@@ -55,7 +55,7 @@ export const EndpointConfig = ({
     const { projectName } = useParams();
 
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     if (isEmbedded === false) {
         DocTitle(projectName!.concat(' Endpoint Configs'));

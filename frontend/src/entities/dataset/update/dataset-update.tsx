@@ -37,12 +37,12 @@ import {
     datasetBinding,
     loadingDataset,
 } from '../dataset.reducer';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { z } from 'zod';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { selectCurrentUser } from '../../user/user.reducer';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 const formSchema = z.object({
     description: z.string().regex(/^[\w\-\s']+$/, {
@@ -57,7 +57,7 @@ export function DatasetUpdate () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const loadingDatasetEditPage = useAppSelector(loadingDataset);
 
     scrollToPageHeader();

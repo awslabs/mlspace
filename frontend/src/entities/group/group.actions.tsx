@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import { useAppDispatch } from '../../config/store';
+import { useAppDispatch, useAppSelector } from '../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { deleteGroup, getAllGroups } from './group.reducer';
 import React from 'react';
@@ -21,28 +21,26 @@ import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { IGroup } from '../../shared/model/group.model';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
 import { NavigateFunction, useNavigate } from 'react-router-dom';
+import { selectCurrentUser } from '../user/user.reducer';
+import { IUser, Permission } from '../../shared/model/user.model';
+import { hasPermission } from '../../shared/util/permission-utils';
 
 function GroupActions (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const currentUser = useAppSelector(selectCurrentUser);
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
             <Button onClick={() => dispatch(getAllGroups())} ariaLabel={'Refresh groups list'}>
                 <Icon name='refresh'/>
             </Button>
-            {GroupActionButton(navigate, dispatch, props)}
-            <Button
-                variant='primary'
-                onClick={() => navigate('/admin/groups/create')}
-            >
-                Create Group
-            </Button>
+            {GroupActionButton(navigate, dispatch, currentUser, props)}
         </SpaceBetween>
     );
 }
 
-function GroupActionButton (navigate: NavigateFunction, dispatch: Dispatch, props?: any) {
+function GroupActionButton (navigate: NavigateFunction, dispatch: Dispatch, currentUser: IUser, props?: any) {
     const selectedGroup: IGroup = props?.selectedItems[0];
     const items: ButtonDropdownProps.Item[] = [];
     if (selectedGroup) {
@@ -57,14 +55,25 @@ function GroupActionButton (navigate: NavigateFunction, dispatch: Dispatch, prop
     }
 
     return (
-        <ButtonDropdown
-            items={items}
-            variant='primary'
-            disabled={!selectedGroup}
-            onItemClick={(e) => GroupActionHandler(e, selectedGroup, dispatch, navigate)}
-        >
-            Actions
-        </ButtonDropdown>
+        <> { hasPermission(Permission.ADMIN, currentUser.permissions) && (
+            <>
+                <ButtonDropdown
+                    items={items}
+                    variant='primary'
+                    disabled={!selectedGroup}
+                    onItemClick={(e) => GroupActionHandler(e, selectedGroup, dispatch, navigate)}
+                >
+                    Actions
+                </ButtonDropdown>
+                <Button
+                    variant='primary'
+                    onClick={() => navigate('/admin/groups/create')}
+                >
+                    Create Group
+                </Button>
+            </>
+        )}
+        </>
     );
 }
 

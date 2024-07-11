@@ -85,6 +85,27 @@ def test_update_group_description(mock_group_dao):
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
+def test_update_group_no_description(mock_group_dao):
+    expected_response = generate_html_response(200, f"Successfully updated {MOCK_GROUP_NAME}")
+    mock_group_dao.get.return_value = mock_group()
+
+    assert lambda_handler(_mock_event(), mock_context) == expected_response
+
+    expected_group = mock_group().to_dict()
+    mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
+    # The create arg is the GroupModel, we can't do a normal assert_called_with
+    # because the arg is a class so the comparison will fail due to pointer issues
+    mock_group_dao.update.assert_called_once()
+    assert mock_group_dao.update.call_args.args[0] == MOCK_GROUP_NAME
+    actual = mock_group_dao.update.call_args.args[1].to_dict()
+    assert actual["name"] == expected_group["name"]
+    assert actual["description"] == expected_group["description"]
+    assert actual["createdBy"] == expected_group["createdBy"]
+    assert actual["createdAt"] <= actual["lastUpdatedAt"]
+    assert actual["lastUpdatedAt"] >= expected_group["lastUpdatedAt"]
+
+
+@mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 def test_update_group_nonexistent(mock_group_dao):
     expected_response = generate_html_response(
         400,
@@ -94,6 +115,14 @@ def test_update_group_nonexistent(mock_group_dao):
     assert lambda_handler(_mock_event(), mock_context) == expected_response
 
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
+    mock_group_dao.update.assert_not_called()
+
+
+@mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
+def test_update_group_invalid_characters(mock_group_dao):
+    expected_response = generate_html_response(400, "Bad Request: Group description contains invalid character.")
+
+    assert lambda_handler(_mock_event("Crazy!Description ßß"), mock_context) == expected_response
     mock_group_dao.update.assert_not_called()
 
 

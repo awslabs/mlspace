@@ -35,9 +35,10 @@ import {
 import { IUser, Permission } from '../../../shared/model/user.model';
 import { IProjectUser } from '../../../shared/model/projectUser.model';
 import { isAdminOrProjectOwner, togglePermission } from '../../../shared/util/permission-utils';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useParams } from 'react-router-dom';
 import { setUpdateModal } from '../../../modules/modal/modal.reducer';
+import { useNotificationService } from '../../../shared/util/hooks';
+import NotificationService from '../../../shared/layout/notification/notification.service';
 
 function ProjectUserActions (props?: any) {
     const projectName = props?.projectName;
@@ -113,9 +114,9 @@ function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
 async function addProjectUsers (
     projectName: string,
     users: IUser[],
+    notificationService: ReturnType<typeof NotificationService>,
     dispatch: ThunkDispatch<any, any, Action>
 ) {
-    const notificationService = NotificationService(dispatch);
     const response = await dispatch(
         addUsersToProject({
             usernames: users.map((user) => user.username!),
@@ -134,6 +135,7 @@ async function addProjectUsers (
 function AddProjectUserActionButton (dispatch: Dispatch, props?: any) {
     const { projectName } = useParams();
     const selectedUsers: IUser[] = props?.selectedItems;
+    const notificationService = useNotificationService(dispatch);
 
     const items = [{ text: 'Add to Project', id: 'add_member' }];
 
@@ -142,7 +144,7 @@ function AddProjectUserActionButton (dispatch: Dispatch, props?: any) {
             items={items}
             variant='primary'
             disabled={!selectedUsers}
-            onItemClick={() => addProjectUsers(projectName!, selectedUsers, dispatch)}
+            onItemClick={() => addProjectUsers(projectName!, selectedUsers, notificationService, dispatch)}
         >
             Actions
         </ButtonDropdown>

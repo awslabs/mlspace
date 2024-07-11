@@ -20,14 +20,14 @@ import { IAppConfiguration, defaultConfiguration } from '../../shared/model/app.
 import { appConfig, appConfigList, getConfiguration, listConfigurations, loadingAppConfigList, updateConfiguration } from './configuration-reducer';
 import { Box, Button, FormField, Header, Input, Modal, SpaceBetween } from '@cloudscape-design/components';
 import Table from '../../modules/table';
-import NotificationService from '../../shared/layout/notification/notification.service';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export function ConfigurationHistoryTable () {
     const configList: IAppConfiguration[] = useAppSelector(appConfigList);
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const loadingConfigList: boolean = useAppSelector(loadingAppConfigList);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const [modal, setModal] = React.useState<{ visible: boolean; prevConfig: IAppConfiguration, newConfig: IAppConfiguration }>({
         visible: false,
         prevConfig: defaultConfiguration,

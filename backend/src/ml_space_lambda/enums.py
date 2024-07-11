@@ -126,7 +126,6 @@ class Permission(str, Enum):
     PROJECT_OWNER = "MO"
     ADMIN = "PMO"
     ACTING_PMO = "actingPMO"
-    GROUP_OWNER = "GO"
 
 
 class IAMResourceType(str, Enum):
