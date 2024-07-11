@@ -64,7 +64,7 @@ class GroundTruthUtilsTest(unittest.TestCase):
         bucket_name = "bucketName"
         job_name = "JobName"
         output_dir = "outputDir"
-        s3_key = f"{output_dir}/{job_name}/annotation-tool/data.json"
+        s3_key = f"{output_dir}{job_name}/annotation-tool/data.json"
         labels = [{"Key": "Value"}]
         assert generate_labels_configuration_file(labels, job_name, bucket_name, "outputDir") == f"s3://{bucket_name}/{s3_key}"
         mock_s3.put_object.assert_called_with(
