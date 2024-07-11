@@ -51,4 +51,6 @@ function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
     };
 }
 
+export type INotificationService = ReturnType<typeof NotificationService>;
+
 export default NotificationService;

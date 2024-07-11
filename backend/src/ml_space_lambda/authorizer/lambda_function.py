@@ -160,7 +160,7 @@ def lambda_handler(event, context):
                 if (
                     requested_resource.startswith("/user/")
                     and "username" in path_params
-                    and request_method in ["PUT", "DELETE"]
+                    and request_method in ["GET", "PUT", "DELETE"]
                 ):
                     if Permission.ADMIN in user.permissions:
                         policy_statement["Effect"] = "Allow"

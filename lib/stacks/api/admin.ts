@@ -66,6 +66,27 @@ export class AdminApiStack extends Stack {
                 },
             },
             {
+                name: 'get',
+                resource: 'user',
+                description: 'Get an MLSpace user',
+                path: 'user/{username}',
+                method: 'GET',
+            },
+            {
+                name: 'get_projects',
+                resource: 'user',
+                description: 'Get an MLSpace user\'s projects',
+                path: 'user/{username}/projects',
+                method: 'GET',
+            },
+            {
+                name: 'get_groups',
+                resource: 'user',
+                description: 'Get an MLSpace user\'s groups',
+                path: 'user/{username}/groups',
+                method: 'GET',
+            },
+            {
                 name: 'update',
                 resource: 'user',
                 description: 'Update an MLSpace user',

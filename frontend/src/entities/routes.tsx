@@ -59,6 +59,7 @@ import { appConfig } from './configuration/configuration-reducer';
 import { IAppConfiguration } from '../shared/model/app.configuration.model';
 import GroupCreate from './group/create';
 import GroupDetail from './group/detail';
+import UserDetail from './user/detail';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -70,6 +71,7 @@ const EntityRoutes = () => {
             <ErrorBoundaryRoutes>
                 <Route element={<RequireAdmin />}>
                     <Route path='admin/users' element={<User />} />
+                    <Route path='admin/users/:username' element={<UserDetail />} />
                     <Route path='admin/groups' element={<Group />} />
                     <Route path='admin/groups/create' element={<GroupCreate />} />
                     <Route path='admin/groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />

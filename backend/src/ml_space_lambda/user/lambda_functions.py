@@ -19,6 +19,7 @@ import time
 import urllib.parse
 from typing import List, Optional
 
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserDAO, UserModel
 from ml_space_lambda.enums import EnvVariable, Permission, TimezonePreference
@@ -28,6 +29,7 @@ from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 project_user_dao = ProjectUserDAO()
+group_user_dao = GroupUserDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()
 
@@ -84,6 +86,35 @@ def delete(event, context):
     user_dao.delete(username)
 
     return f"User {username} deleted"
+
+
+@api_wrapper
+def get(event, context):
+    username = urllib.parse.unquote(event["pathParameters"]["username"])
+
+    user = user_dao.get(username)
+    if not user:
+        raise ResourceNotFound("Specified user does not exist.")
+
+    return user.to_dict()
+
+
+@api_wrapper
+def get_groups(event, context):
+    username = urllib.parse.unquote(event["pathParameters"]["username"])
+
+    projects = group_user_dao.get_groups_for_user(username)
+
+    return [project.to_dict() for project in projects]
+
+
+@api_wrapper
+def get_projects(event, context):
+    username = urllib.parse.unquote(event["pathParameters"]["username"])
+
+    projects = project_user_dao.get_projects_for_user(username)
+
+    return [project.to_dict() for project in projects]
 
 
 @api_wrapper

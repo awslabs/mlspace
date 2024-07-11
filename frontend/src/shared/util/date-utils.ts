@@ -128,7 +128,7 @@ export const formatDateDiff = (start: string, end: string) => {
  * @param target date object to convert into display string
  * @returns display friendly string of date in the users preferred timezone
  */
-const dateToDisplayString = (target: Date) => {
+export const dateToDisplayString = (target: Date) => {
     let timezone = Timezone.UTC.toString();
     try {
         const currentUser = JSON.parse(

@@ -59,7 +59,7 @@ export const getGroupUsers = createAsyncThunk('group/group_users', async (groupN
 });
 
 export const removeGroupUser = createAsyncThunk('group/remove_user', async (data: IGroupUser) => {
-    return axios.delete(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`);
+    return axios.delete<void>(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`);
 });
 
 export const addGroupUsers = createAsyncThunk('group/add_users', async (data: AddGroupUserRequest) => {
@@ -70,6 +70,7 @@ export const addGroupUsers = createAsyncThunk('group/add_users', async (data: Ad
 export const GroupSlice = createSlice({
     name: 'group',
     initialState,
+    reducers: {},
     extraReducers (builder) {
         builder
             .addMatcher(isFulfilled(getAllGroups), (state, action) => {
@@ -98,8 +99,9 @@ export const GroupSlice = createSlice({
                     loading: true,
                 };
             });
-    },
+    }
 });
 
 export default GroupSlice.reducer;
 export const currentGroupUsers = (state: any): IGroupUser[] => state.group.currentGroupUsers;
+export const selectAllGroups = (state: any): IGroup[] => state.group.allGroups;

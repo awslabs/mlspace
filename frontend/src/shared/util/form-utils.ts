@@ -14,11 +14,34 @@
   limitations under the License.
 */
 
+import { dateToDisplayString } from './date-utils';
+
+export const formatDisplayTimestamp = (date?: number) => {
+    if (date === undefined) {
+        return formatDisplayText();
+    }
+    
+    const minDate = new Date('1971');
+    if (date < minDate.getTime()) {
+        return formatDisplayDate(new Date(date * 1000));
+    }
+
+    return formatDisplayDate(new Date(date));
+};
+
+export const formatDisplayDate = (date?: Date) => {
+    if (date === undefined) {
+        return formatDisplayText();
+    }
+
+    return dateToDisplayString(date);
+};
+
 export const formatDisplayBoolean = (bool: any, defaultText = ['True', 'False']) => {
     return bool ? defaultText[0] : defaultText[1];
 };
 
-export const formatDisplayText = (text: any, defaultText = '-') => {
+export const formatDisplayText = (text?: any, defaultText = '-') => {
     return text ? String(text) : defaultText;
 };
 

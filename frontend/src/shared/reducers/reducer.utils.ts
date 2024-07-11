@@ -21,7 +21,11 @@ import {
     createSlice,
     SliceCaseReducers,
     ValidateSliceCaseReducers,
+    AsyncThunkAction,
+    isFulfilled,
 } from '@reduxjs/toolkit';
+import { AsyncThunkFulfilledActionCreator } from '@reduxjs/toolkit/dist/createAsyncThunk';
+import { AxiosResponse } from 'axios';
 
 /**
  * Model for redux actions with pagination
@@ -58,6 +62,16 @@ export function isPendingAction (action: AnyAction) {
 /* istanbul ignore next */
 export function isFulfilledAction (action: AnyAction) {
     return action.type.endsWith('/fulfilled');
+}
+
+export function isSuccessfulResponse<T, Returned extends AxiosResponse<T>, ThunkArg, ThunkApiConfig extends object> (response: Awaited<ReturnType<AsyncThunkAction<Returned, ThunkArg, ThunkApiConfig>>>): response is ReturnType<AsyncThunkFulfilledActionCreator<Returned, ThunkArg>>  {
+    if (isFulfilled(response)) {
+        if (200 <= response.payload.status && response.payload.status < 300) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 export type EntityState<T> = {
