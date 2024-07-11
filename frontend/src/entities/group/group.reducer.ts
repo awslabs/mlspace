@@ -31,8 +31,8 @@ export type AddGroupUserRequest = {
 };
 
 
-export const getAllGroups = createAsyncThunk('group/fetch_all_groups', async () => {
-    return axios.get<IGroup[]>('/group');
+export const getAllGroups = createAsyncThunk('group/fetch_all_groups', async (adminGetAll?: boolean) => {
+    return axios.get<IGroup[]>(`/group${adminGetAll ? '?adminGetAll=true' : ''}`);
 });
 
 export const getGroup = createAsyncThunk('group/fetch_group', async (groupName: string) => {

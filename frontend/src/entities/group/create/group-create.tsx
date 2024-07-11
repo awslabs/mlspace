@@ -37,6 +37,7 @@ import { addUserVisibleColumns, userColumns } from '../../user/user.columns';
 import Table from '../../../modules/table';
 import { IUser } from '../../../shared/model/user.model';
 import { addUsersToGroup } from '../user/group-user-functions';
+import { getAllUsers } from '../../user/user.reducer';
 
 export type GroupCreateProperties = {
     isEdit?: boolean;
@@ -50,6 +51,12 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
     const [initialLoaded, setInitialLoaded] = useState(false);
     const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
     const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
+
+    useEffect(() => {
+        if (!isEdit){
+            dispatch(getAllUsers());
+        }
+    }, [dispatch, isEdit]);
 
     const groupSchema = z.object({
         name: z
