@@ -263,6 +263,7 @@ export class CoreStack extends Stack {
                 ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceEndpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
                 JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceJobInstanceConstraintPolicy?.managedPolicyArn || '',
                 KMS_INSTANCE_CONDITIONS_POLICY_ARN: props.mlspaceKmsInstanceConditionsPolicy.managedPolicyArn,
+                NOTEBOOK_ROLE_NAME: props.mlSpaceNotebookRole.roleName,
                 SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
                 MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
             },
