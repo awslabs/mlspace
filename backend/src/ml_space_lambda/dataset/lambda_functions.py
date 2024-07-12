@@ -189,8 +189,6 @@ def create_dataset(event, context):
     dataset_name = body.get("datasetName")
     env_variables = get_environment_variables()
 
-    print(f"Event: {event}")
-
     if dataset_type == DatasetType.GLOBAL:
         scope = "global"
         directory_name = f"global/datasets/{dataset_name}/"

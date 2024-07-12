@@ -30,7 +30,8 @@ export type DatasetInlineCreateProps = {
 export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
     const {username, projectName, onChange} = props;
 
-    const createOptions = enumToOptions(DatasetType, true).filter((option) => option.value !== DatasetType.GLOBAL);
+    //TODO: remove Group from the filter in the future once we support creating group datasets inline
+    const createOptions = enumToOptions(DatasetType, true).filter((option) => option.value !== DatasetType.GLOBAL && option.value !== DatasetType.GROUP);
 
     const formSchema = z.object({
         name: z
@@ -49,7 +50,8 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
         validateAll: false,
         form: {
             type: DatasetType.PRIVATE,
-            name: ''
+            name: '',
+            //groupName: ''
         }
     });
 
@@ -66,6 +68,10 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
                     scope += `/${projectName}`;
                     break;
                 //TODO: need a GROUP case - requires a group name
+                // case DatasetType.GROUP:
+                //    scope += `/${form.groupName}`;
+                // add Group to the in-line Create dataset selector. If Group is selected, go to another
+                // interface where the user selects a group from a list of groups
             }
 
             onChange(new CustomEvent('onChange', { cancelable: false, detail: { value: `s3://${window.env.DATASET_BUCKET}/${datasetContext.type}/${scope}/datasets/${datasetContext.name}/` } }));
