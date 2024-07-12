@@ -98,7 +98,7 @@ def test_create_labeling_job(
         "tags": generate_tags("auser", "myproject", "mlspace"),
     }
     mock_sagemaker.create_labeling_job.assert_called_with(**create_labeling_job(**args))
-    mock_generate_labels_configuration_file.assert_called_with([], "myjob", data_bucket_name, "s3://mybucket/path/to/output")
+    mock_generate_labels_configuration_file.assert_called_with([], "myjob", data_bucket_name, "path/to/output")
 
     # check happy path with app role
     mock_get_environment_variables.return_value = {
