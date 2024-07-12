@@ -144,7 +144,6 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
     const failedUploads: string[] = [];
     let stopUpload = false;
 
-    console.log(`Uploading ${resourceObjects.length} resources`);
     for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
         if (stopUpload) {
             break;

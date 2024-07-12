@@ -69,11 +69,13 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str, type:
         (DatasetType.GLOBAL, "global"),
         (DatasetType.PROJECT, "project_name"),
         (DatasetType.PRIVATE, "username"),
+        (DatasetType.GROUP, "group_name"),
     ],
     ids=[
         "create_global_dataset",
         "create_project_dataset",
         "create_private_dataset",
+        "create_group_dataset",
     ],
 )
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")

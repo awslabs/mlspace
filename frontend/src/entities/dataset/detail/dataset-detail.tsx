@@ -24,7 +24,7 @@ import {
 } from '@cloudscape-design/components';
 import {
     datasetBinding,
-    getDatasetByScopeAndName,
+    getDataset,
     loadingDataset,
 } from '../../../entities/dataset/dataset.reducer';
 import { IDataset } from '../../../shared/model/dataset.model';
@@ -71,7 +71,7 @@ function DatasetDetail () {
                 { text: `${name}`, href: `#${basePath}/dataset/${type}/${scope}/${name}` },
             ])
         );
-        dispatch(getDatasetByScopeAndName({ type: type, scope: scope, name: name }))
+        dispatch(getDataset({ type: type, scope: scope, name: name }))
             .unwrap()
             .catch(() => {
                 navigate('/404');

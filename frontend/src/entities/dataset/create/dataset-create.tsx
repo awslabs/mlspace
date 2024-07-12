@@ -118,12 +118,12 @@ export function DatasetCreate () {
     function generateOptions () {
         // Standard options always available
         const options: { label: string; value?: string; options?: any[] }[] = [
-            { label: 'Global', value: 'global' },
-            { label: 'Private', value: 'private' },
+            {label: initCap(DatasetType.GLOBAL), value: DatasetType.GLOBAL},
+            {label: initCap(DatasetType.PRIVATE), value: DatasetType.PRIVATE},
         ];
 
         if (projectName) {
-            options.push({ label: 'Project', value: 'project' });
+            options.push({ label: initCap(DatasetType.PROJECT), value: DatasetType.PROJECT });
         }
 
         if (groups) {

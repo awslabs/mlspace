@@ -330,8 +330,6 @@ def lambda_handler(event, context):
                         if Permission.ADMIN in user.permissions:
                             policy_statement["Effect"] = "Allow"
                         else:
-                            # TODO: check if this user is a member of the Group
-                            logger.info(f"Checking if user {username} is member of group {target_scope}")
                             group_user = group_user_dao.get(target_scope, username)
                             if group_user:
                                 policy_statement["Effect"] = "Allow"
@@ -414,16 +412,13 @@ def _handle_dataset_request(request_method, path_params, user):
     if dataset:
         # Owners can do whatever - this check also handles private datasets
         if dataset.created_by == user.username:
-            logger.info("User is an owner, returning True")
             return True
         else:
             # All admins can perform any action on any Group
             if dataset.type == DatasetType.GROUP:
-                logger.info("Group dataset")
                 if Permission.ADMIN in user.permissions:
                     return True
                 group_user = group_user_dao.get(dataset_scope, user.username)
-                logger.info(f"Found group_user {group_user.user}")
                 # Non-admins can only view group datasets
                 if group_user and request_method not in ["PUT", "DELETE"]:
                     return True

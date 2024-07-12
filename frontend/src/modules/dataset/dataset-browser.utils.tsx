@@ -161,7 +161,7 @@ function tablePropertiesForScopes (state: DatasetBrowserState, updateDatasetCont
             cell (item) {
                 return (
                     <Link data-cy={item.name} onFollow={() => {
-                        updateDatasetContext({ ...state.datasetContext, type: item.type }, '', false);
+                        updateDatasetContext({type: item.type }, '', false);
                     } }>{item.name}</Link>
                 );
             },

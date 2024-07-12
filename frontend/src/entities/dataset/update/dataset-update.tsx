@@ -32,7 +32,7 @@ import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { IDataset } from '../../../shared/model/dataset.model';
 import {
-    getDatasetByScopeAndName,
+    getDataset,
     editDataset,
     datasetBinding,
     loadingDataset,
@@ -85,7 +85,7 @@ export function DatasetUpdate () {
                 { text: `${name}`, href: `#${basePath}/dataset/${type}/${scope}/${name}/edit` },
             ])
         );
-        dispatch(getDatasetByScopeAndName({ type: type, scope: scope, name: name }))
+        dispatch(getDataset({ type: type, scope: scope, name: name }))
             .unwrap()
             .catch(() => {
                 navigate('/404');

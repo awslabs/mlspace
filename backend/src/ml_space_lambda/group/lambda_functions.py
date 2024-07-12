@@ -172,7 +172,6 @@ def delete(event, context):
     # Delete users associations and group itself
     to_delete_group_users = group_user_dao.get_users_for_group(group_name)
 
-    # TODO: Update IAM Roles, like we do for project users
     # Remove all group related entries from the user/group table
     for group_user in to_delete_group_users:
         group_user_dao.delete(group_name, group_user.user)

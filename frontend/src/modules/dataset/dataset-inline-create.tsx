@@ -65,9 +65,10 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
                 case DatasetType.PROJECT:
                     scope += `/${projectName}`;
                     break;
+                //TODO: need a GROUP case - requires a group name
             }
 
-            onChange(new CustomEvent('onChange', { cancelable: false, detail: { value: `s3://${window.env.DATASET_BUCKET}/${scope}/datasets/${datasetContext.name}/` } }));
+            onChange(new CustomEvent('onChange', { cancelable: false, detail: { value: `s3://${window.env.DATASET_BUCKET}/${datasetContext.type}/${scope}/datasets/${datasetContext.name}/` } }));
         } else {
             onChange(new CustomEvent('onChange', { cancelable: false, detail: { value: undefined } }));
         }

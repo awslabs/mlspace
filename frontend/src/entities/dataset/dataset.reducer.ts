@@ -49,7 +49,7 @@ export const getDatasetsList = createAsyncThunk(
     }
 );
 
-export const getDatasetByScopeAndName = createAsyncThunk(
+export const getDataset = createAsyncThunk(
     'dataset/fetch_entity_by_id',
     async ({ type, scope, name }: any) => {
         const requestUrl = `dataset/${type}/${scope}/${name}`;
@@ -108,7 +108,7 @@ export const DatasetSlice = createSlice({
                     datasetsList: data,
                 };
             })
-            .addMatcher(isFulfilled(getDatasetByScopeAndName), (state, action) => {
+            .addMatcher(isFulfilled(getDataset), (state, action) => {
                 const { data } = action.payload;
                 return {
                     ...state,
@@ -140,7 +140,7 @@ export const DatasetSlice = createSlice({
                     loadingDatasetsList: true,
                 };
             })
-            .addMatcher(isPending(getDatasetByScopeAndName), (state) => {
+            .addMatcher(isPending(getDataset), (state) => {
                 return {
                     ...state,
                     loadingDataset: true,
