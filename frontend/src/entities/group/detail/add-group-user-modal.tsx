@@ -74,6 +74,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                     columnDefinitions={userColumns}
                     visibleColumns={addUserVisibleColumns}
                     variant='embedded'
+                    keepSelection={props.visible}
                 />
             </SpaceBetween>
         </Modal>
