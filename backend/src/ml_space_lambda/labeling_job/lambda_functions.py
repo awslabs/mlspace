@@ -16,6 +16,7 @@
 
 import json
 import logging
+import os
 
 import boto3
 
@@ -84,7 +85,9 @@ def create(event, context):
     labeling_job["LabelingJobName"] = labeling_job_name
 
     # Generate labels config file and store in S3 bucket
-    output_path = labeling_job["OutputConfig"]["S3OutputPath"].replace("s3://{}/".format(data_bucket_name), "")
+    stripped_protocol_output_path = labeling_job["OutputConfig"]["S3OutputPath"].removeprefix("s3://")
+    stripped_bucket_output_path = os.path.join(*stripped_protocol_output_path.split("/")[1:])
+    output_path = os.path.normpath(stripped_bucket_output_path)
     labeling_job["LabelCategoryConfigS3Uri"] = generate_labels_configuration_file(
         labeling_job_request["Labels"], labeling_job_name, data_bucket_name, output_path
     )

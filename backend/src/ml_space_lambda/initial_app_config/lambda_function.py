@@ -59,17 +59,22 @@ def lambda_handler(event, context):
 
 def update_dynamic_roles_with_notebook_policies(event, context):
     env_vars = get_environment_variables()
-    if not env_vars[EnvVariable.MANAGE_IAM_ROLES.value]:
+    if not env_vars[EnvVariable.MANAGE_IAM_ROLES]:
         return
+
+    result = iam.list_attached_role_policies(RoleName=env_vars[EnvVariable.NOTEBOOK_ROLE_NAME])
+    policy_arns = set([policy["PolicyArn"] for policy in result["AttachedPolicies"]])
 
     iam_manager = IAMManager(iam)
     role_names = iam_manager.find_dynamic_user_roles()
-    policy_arns = [
-        env_vars[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value],
-        env_vars[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value],
-        env_vars[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value],
-    ]
-    iam_manager.attach_policies_to_roles(policy_arns, role_names)
+    policy_arns.update(
+        [
+            env_vars[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN],
+            env_vars[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN],
+            env_vars[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN],
+        ]
+    )
+    iam_manager.attach_policies_to_roles(policy_arns, list(role_names))
 
     for role_name in role_names:
         iam.tag_role(RoleName=role_name, Tags=[DYNAMIC_USER_ROLE_TAG])
