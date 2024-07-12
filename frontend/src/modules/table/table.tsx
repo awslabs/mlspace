@@ -70,6 +70,7 @@ export default function Table ({
     serverFetch,
     serverRequestProps,
     storeClear,
+    keepSelection = true,
 }: TableProps) {
     const currentUser = useAppSelector(selectCurrentUser);
     const dispatch = useDispatch();
@@ -89,7 +90,7 @@ export default function Table ({
             },
             pagination: { pageSize: preferences.pageSize },
             sorting: {},
-            selection: {keepSelection: true},
+            selection: {keepSelection},
         });
 
     const { selectedItems } = collectionProps;
