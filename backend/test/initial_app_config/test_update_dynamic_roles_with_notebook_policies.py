@@ -73,44 +73,27 @@ def test_initial_config_success(mock_iam):
         {"Tags": [DYNAMIC_USER_ROLE_TAG]},
     ]
 
+    notebook_policy_arn = "arn:aws:iam:12345678912:policy/mlspace-notebook-policy"
+    mock_iam.list_attached_role_policies.return_value = {"AttachedPolicies": [{"PolicyArn": notebook_policy_arn}]}
+
     update_dynamic_roles_with_notebook_policies(mock.Mock(), mock.Mock())
 
+    roles = [
+        "MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
+        "MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
+    ]
+    policies = [
+        TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN.value],
+        TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN.value],
+        TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN.value],
+        notebook_policy_arn,
+    ]
+
     mock_iam.attach_role_policy.assert_has_calls(
-        [
-            mock.call(
-                RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN],
-            ),
-            mock.call(
-                RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN],
-            ),
-            mock.call(
-                RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN],
-            ),
-            mock.call(
-                RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN],
-            ),
-            mock.call(
-                RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN],
-            ),
-            mock.call(
-                RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa",
-                PolicyArn=TEST_ENV_CONFIG[EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN],
-            ),
-        ]
+        [mock.call(**{"RoleName": role_name, "PolicyArn": policy_arn}) for policy_arn in policies for role_name in roles],
+        any_order=True,
     )
 
     mock_iam.tag_role.assert_has_calls(
-        [
-            mock.call(
-                RoleName="MLSpace-myproject3-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa", Tags=[DYNAMIC_USER_ROLE_TAG]
-            ),
-            mock.call(
-                RoleName="MLSpace-myproject4-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa", Tags=[DYNAMIC_USER_ROLE_TAG]
-            ),
-        ]
+        [mock.call(**{"RoleName": role_name, "Tags": [DYNAMIC_USER_ROLE_TAG]}) for role_name in roles]
     )
