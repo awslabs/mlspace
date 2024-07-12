@@ -13,12 +13,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-from typing import Dict
+from typing import Dict, Any
 
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import Permission
 
 
-def is_admin_get_all(user: UserModel, query_params: Dict[str, str]):
+def is_admin_get_all(user: UserModel, event: Dict[str, Dict[str, Any]]):
+    query_params = event.get("queryStringParameters", {})
     return (Permission.ADMIN in user.permissions and query_params is not None
             and query_params.get("adminGetAll", "false") == "true")

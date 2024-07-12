@@ -136,7 +136,7 @@ def remove_user(event, context):
 @api_wrapper
 def list_all(event, context):
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
-    if is_admin_get_all(user, event.get("queryStringParameters", {})):
+    if is_admin_get_all(user, event):
         groups = group_dao.get_all()
     else:
         group_names = [group.group for group in group_user_dao.get_groups_for_user(user.username)]
