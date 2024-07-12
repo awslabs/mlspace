@@ -26,6 +26,8 @@ import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { IProject } from '../../../shared/model/project.model';
 import { addUsersToProject } from '../user.reducer';
 import { projectColumns } from '../../project/project.columns';
+import { useAppDispatch } from '../../../config/store';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export type AddProjectUserModalProps = {
     dispatch:  ThunkDispatch<any, any, Action>,
@@ -38,6 +40,9 @@ export type AddProjectUserModalProps = {
 
 export function AddProjectUserModal (props: AddProjectUserModalProps) {
     const [selectedProjects, setSelectedProjects] = useState<IProject[]>([]);
+    const dispatch = useAppDispatch();
+    const notificationService = useNotificationService(dispatch);
+    const [performingAction, setPerformingAction] = useState(false);
 
     return (
         <Modal
@@ -50,17 +55,29 @@ export function AddProjectUserModal (props: AddProjectUserModalProps) {
                         <Button onClick={() => props.setVisible(false)}>Cancel</Button>
                         <Button
                             variant='primary'
-                            disabled={selectedProjects.length === 0}
+                            loading={performingAction}
+                            loadingText={'Adding project'}
+                            disabled={selectedProjects.length === 0 || performingAction}
                             onClick={() => {
-                                Promise.allSettled(
-                                    selectedProjects.map((project) => props.dispatch(addUsersToProject({projectName: project.name!, usernames: [props.username]})))
-                                ).finally(() => {
+                                setPerformingAction(true);
+
+                                Promise.allSettled(selectedProjects.map((project) => props.dispatch(addUsersToProject({
+                                    projectName: project.name!,
+                                    usernames: [props.username]
+                                })).then((response) => {
+                                    notificationService.showAxiosActionNotification(
+                                        'add member to project',
+                                        `Added ${props.username} to project: ${project.name}.`,
+                                        response
+                                    );
+                                }))).finally(() => {
+                                    setPerformingAction(false);
                                     setSelectedProjects([]);
                                     props?.refresh?.();
                                     props.setVisible(false);
                                 });
                             }}>
-                            Add projects
+                            Add project
                         </Button>
                     </SpaceBetween>
                 </Box>
@@ -78,6 +95,7 @@ export function AddProjectUserModal (props: AddProjectUserModalProps) {
                     allItems={props.addableProjects}
                     columnDefinitions={projectColumns}
                     variant='embedded'
+                    keepSelection={props?.visible}
                 />
             </SpaceBetween>
         </Modal>

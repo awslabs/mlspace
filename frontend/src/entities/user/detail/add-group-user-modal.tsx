@@ -25,7 +25,9 @@ import { groupColumns } from '../../group/group.columns';
 import React, { useState } from 'react';
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { IGroup } from '../../../shared/model/group.model';
-import { addUsersToGroup } from '../../group/user/group-user-functions';
+import { addGroupUsers } from '../../group/group.reducer';
+import { useAppDispatch } from '../../../config/store';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export type AddGroupUserModalProps = {
     dispatch:  ThunkDispatch<any, any, Action>,
@@ -38,6 +40,9 @@ export type AddGroupUserModalProps = {
 
 export function AddGroupUserModal (props: AddGroupUserModalProps) {
     const [selectedGroups, setSelectedGroups] = useState<IGroup[]>([]);
+    const dispatch = useAppDispatch();
+    const notificationService = useNotificationService(dispatch);
+    const [performingAction, setPerformingAction] = useState(false);
 
     return (
         <Modal
@@ -47,20 +52,32 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
             footer={
                 <Box float='right'>
                     <SpaceBetween direction='horizontal' size='xs'>
-                        <Button onClick={() => props.setVisible(false)}>Cancel</Button>
+                        <Button disabled={performingAction} onClick={() => props.setVisible(false)}>Cancel</Button>
                         <Button
                             variant='primary'
-                            disabled={selectedGroups.length === 0}
+                            loading={performingAction}
+                            loadingText={'Adding group'}
+                            disabled={selectedGroups.length === 0 || performingAction}
                             onClick={() => {
-                                Promise.allSettled(
-                                    selectedGroups.map((group) => addUsersToGroup(props.dispatch, group.name, [{username: props.username, email: '', displayName: '', suspended: false}]))
-                                ).finally(() => {
+                                setPerformingAction(true);
+
+                                Promise.allSettled(selectedGroups.map((group) => dispatch(addGroupUsers({
+                                    groupName: group.name,
+                                    usernames: [props.username]
+                                })).then((response) => {
+                                    notificationService.showAxiosActionNotification(
+                                        'add member to group',
+                                        `Added ${props.username} to group: ${group.name}.`,
+                                        response
+                                    );
+                                }))).finally(() => {
+                                    setPerformingAction(false);
                                     setSelectedGroups([]);
                                     props.setVisible(false);
-                                    props?.refresh?.();
+                                    props?.refresh?.(); 
                                 });
                             }}>
-                            Add groups
+                            Add group
                         </Button>
                     </SpaceBetween>
                 </Box>
@@ -70,7 +87,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                 <Table
                     tableName='Group'
                     header={<></>}
-                    tableType='multi'
+                    tableType='single'
                     selectItemsCallback={(e) => {
                         setSelectedGroups(e);
                     }}
@@ -78,6 +95,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                     allItems={props.addableGroups}
                     columnDefinitions={groupColumns}
                     variant='embedded'
+                    keepSelection={props.visible}
                 />
             </SpaceBetween>
         </Modal>

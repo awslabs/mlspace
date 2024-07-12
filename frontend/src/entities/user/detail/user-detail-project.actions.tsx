@@ -14,18 +14,18 @@
  limitations under the License.
  */
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { Button, Icon, SpaceBetween } from '@cloudscape-design/components';
+import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { getUserProjects, removeUserFromProject } from '../user.reducer';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TableActionProps } from '../../../modules/table/table.types';
-import { isSuccessfulResponse } from '../../../shared/reducers/reducer.utils';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
 import { IProjectUser } from '../../../shared/model/projectUser.model';
 import { IProject } from '../../../shared/model';
 import { listProjectsForUser, selectUserProjects } from '../../project/project.reducer';
 import AddProjectUserModal from './add-project-user-modal';
 import { useNotificationService } from '../../../shared/util/hooks';
+import { isFulfilled } from '@reduxjs/toolkit';
 
 function UserDetailProjectActions (props?: TableActionProps<IProjectUser>) {
     const dispatch = useAppDispatch();
@@ -36,6 +36,7 @@ function UserDetailProjectActions (props?: TableActionProps<IProjectUser>) {
     const allProjects: IProject[] = useAppSelector(selectUserProjects);
     const projectNames = props?.allItems.map((project) => project.project) || [];
     const addableProjects = allProjects.filter((project) => !projectNames.includes(project.name!));
+    const [performingAction, setPerformingAction] = useState(false);
 
 
     useEffect(() => {
@@ -45,12 +46,19 @@ function UserDetailProjectActions (props?: TableActionProps<IProjectUser>) {
     const refreshHandler = () => {
         if (username !== undefined) {
             dispatch(getUserProjects(username)).then((response) => {
-                if (isSuccessfulResponse(response)) {
+                if (isFulfilled(response)) {
                     props?.setItemsOverride?.(response.payload.data);
                 }
             });
         }
     };
+
+    const buttonItems: ButtonDropdownProps.Item[] = [{
+        id: 'removeProject',
+        text: 'Remove Project',
+        disabled: (props?.selectedItems?.length || 0) === 0,
+        disabledReason: 'No Project selected.'
+    }];
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
@@ -58,36 +66,36 @@ function UserDetailProjectActions (props?: TableActionProps<IProjectUser>) {
             <Button onClick={refreshHandler} ariaLabel={'Refresh projects list'}>
                 <Icon name='refresh'/>
             </Button>
-            <Button
-                disabled={(props?.selectedItems?.length || 0) < 1}
-                onClick={() => dispatch(
-                    setDeleteModal({
-                        resourceName: 'Project User',
-                        resourceType: 'projectUser',
-                        description: `This will remove user: ${username} from the project: ${props?.selectedItems?.[0].project}.`,
-                        onConfirm: async () => {
-                            const projectUser = props?.selectedItems?.[0];
-                            if (projectUser) {
-                                dispatch(removeUserFromProject(projectUser)).then((response) => {
-                                    if (isSuccessfulResponse(response)) {
-                                        notificationService.showActionNotification(
-                                            'remove project user',
-                                            `User ${username} removed from ${props?.selectedItems?.[0].project}.`,
+
+            <ButtonDropdown
+                items={buttonItems}
+                onItemClick={({detail}) => {
+                    switch (detail.id) {
+                        case 'removeProject':
+                            props?.selectedItems?.forEach((projectUser) => dispatch(setDeleteModal({
+                                resourceName: 'Project User',
+                                resourceType: 'projectUser',
+                                description: `This will remove user: ${projectUser.user} from the project: ${projectUser.project}.`,
+                                disabled: performingAction,
+                                onConfirm: async () => {
+                                    setPerformingAction(true);
+
+                                    await dispatch(removeUserFromProject(projectUser)).then((response) => {
+                                        notificationService.showAxiosActionNotification(
+                                            'remove member from project',
+                                            `User ${projectUser.user} removed from ${projectUser.project}.`,
                                             response
                                         );
-    
-                                    }
-                                }).finally(() => {
-                                    dispatch(refreshHandler);
-                                });
-                            }
-                        }
-                    })
-                )}
-                variant='normal'
-            >
-                Remove Project
-            </Button>
+                                    }).finally(() => {
+                                        setPerformingAction(false);
+                                        dispatch(refreshHandler);
+                                    });
+                                }
+                            })));
+                            break;
+                    }
+                }}>Actions</ButtonDropdown>
+
             <Button
                 disabled={addableProjects.length < 1}
                 variant='primary'

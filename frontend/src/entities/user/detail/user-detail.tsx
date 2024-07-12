@@ -26,10 +26,10 @@ import { useAppDispatch } from '../../../config/store';
 import { formatDisplayBoolean, formatDisplayText, formatDisplayTimestamp } from '../../../shared/util/form-utils';
 import Table from '../../../modules/table';
 import { IGroupUser } from '../../../shared/model/groupUser.model';
-import { isSuccessfulResponse } from '../../../shared/reducers/reducer.utils';
 import { IProjectUser } from '../../../shared/model/projectUser.model';
 import { UserDetailGroupActions } from './user-detail-group.actions';
 import { UserDetailProjectActions } from './user-detail-project.actions';
+import { isFulfilled } from '@reduxjs/toolkit';
 
 export function UserDetail () {
     const dispatch = useAppDispatch();
@@ -55,7 +55,7 @@ export function UserDetail () {
             setInitialLoaded(true);
             
             dispatch(getUser(username)).then((response) => {
-                if (isSuccessfulResponse(response)) {
+                if (isFulfilled(response)) {
                     setUser(response.payload.data);
                 } else {
                     navigate('/404');
@@ -63,14 +63,14 @@ export function UserDetail () {
             });
 
             dispatch(getUserGroups(username)).then((response) => {
-                if (isSuccessfulResponse(response)) {
+                if (isFulfilled(response)) {
                     setGroups(response.payload.data);
                     setLoadingGroups(false);
                 }
             });
 
             dispatch(getUserProjects(username)).then((response) => {
-                if (isSuccessfulResponse(response)) {
+                if (isFulfilled(response)) {
                     setProjects(response.payload.data);
                     setLoadingProjects(false);
                 }

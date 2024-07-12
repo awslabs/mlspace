@@ -15,7 +15,7 @@
  */
 
 import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/toolkit';
-import axios from '../../shared/util/axios-utils';
+import axios, { axiosCatch } from '../../shared/util/axios-utils';
 import { IGroup, IGroupWithPermissions } from '../../shared/model/group.model';
 import { IGroupUser } from '../../shared/model/groupUser.model';
 
@@ -59,7 +59,7 @@ export const getGroupUsers = createAsyncThunk('group/group_users', async (groupN
 });
 
 export const removeGroupUser = createAsyncThunk('group/remove_user', async (data: IGroupUser) => {
-    return axios.delete<void>(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`);
+    return axios.delete(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`).catch(axiosCatch);
 });
 
 export const addGroupUsers = createAsyncThunk('group/add_users', async (data: AddGroupUserRequest) => {

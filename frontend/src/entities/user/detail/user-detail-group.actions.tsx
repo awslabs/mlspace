@@ -14,29 +14,28 @@
  limitations under the License.
  */
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { Button, Icon, SpaceBetween } from '@cloudscape-design/components';
+import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { getUserGroups } from '../user.reducer';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { IGroupUser } from '../../../shared/model/groupUser.model';
 import { TableActionProps } from '../../../modules/table/table.types';
-import { isSuccessfulResponse } from '../../../shared/reducers/reducer.utils';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
 import { getAllGroups, removeGroupUser, selectAllGroups } from '../../group/group.reducer';
 import AddGroupUserModal from './add-group-user-modal';
 import { IGroup } from '../../../shared/model/group.model';
 import { useNotificationService } from '../../../shared/util/hooks';
+import { isFulfilled } from '@reduxjs/toolkit';
 
 function UserDetailGroupActions (props?: TableActionProps<IGroupUser>) {
     const dispatch = useAppDispatch();
     const {username} = useParams();
     const [addUserModalVisible, setAddUserModalVisible] = useState(false);
     const notificationService = useNotificationService(dispatch);
-
     const allGroups: IGroup[] = useAppSelector(selectAllGroups);
-    const groupNames = props?.allItems.map((group) => group.group) || [];
-    const addableGroups = allGroups.filter((group) => !groupNames.includes(group.name!));
-
+    const groupNames = useMemo(() => props?.allItems.map((group) => group.group) || [], [props?.allItems]);
+    const addableGroups = useMemo(() => allGroups.filter((group) => !groupNames.includes(group.name!)), [groupNames, allGroups]);
+    const [performingAction, setPerformingAction] = useState(false);
 
     useEffect(() => {
         dispatch(getAllGroups());
@@ -45,12 +44,19 @@ function UserDetailGroupActions (props?: TableActionProps<IGroupUser>) {
     const refreshHandler = () => {
         if (username !== undefined) {
             dispatch(getUserGroups(username)).then((response) => {
-                if (isSuccessfulResponse(response)) {
+                if (isFulfilled(response)) {
                     props?.setItemsOverride?.(response.payload.data);
                 }
             });
         }
     };
+
+    const buttonItems: ButtonDropdownProps.Item[] = [{
+        id: 'removeGroup',
+        text: 'Remove Group',
+        disabled: (props?.selectedItems?.length || 0) === 0,
+        disabledReason: 'No Group selected.'
+    }];
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
@@ -58,36 +64,37 @@ function UserDetailGroupActions (props?: TableActionProps<IGroupUser>) {
             <Button onClick={refreshHandler} ariaLabel={'Refresh groups list'}>
                 <Icon name='refresh'/>
             </Button>
-            <Button
-                disabled={(props?.selectedItems?.length || 0) < 1}
-                onClick={() => dispatch(
-                    setDeleteModal({
-                        resourceName: 'Group User',
-                        resourceType: 'groupUser',
-                        description: `This will remove user: ${username} from the group: ${props?.selectedItems?.[0].group}.`,
-                        onConfirm: async () => {
-                            const groupUser = props?.selectedItems?.[0];
-                            if (groupUser) {
-                                dispatch(removeGroupUser(groupUser)).then((response) => {
-                                    if (isSuccessfulResponse(response)) {
-                                        notificationService.showActionNotification(
-                                            'remove group user',
-                                            `User ${username} removed from ${props?.selectedItems?.[0].group}.`,
+
+            <ButtonDropdown
+                items={buttonItems}
+                onItemClick={({detail}) => {
+                    switch (detail.id) {
+                        case 'removeGroup':
+                            props?.selectedItems?.forEach((groupUser) => dispatch(setDeleteModal({
+                                resourceName: 'Group User',
+                                resourceType: 'groupUser',
+                                description: `This will remove user: ${groupUser.user} from the group: ${groupUser.group}.`,
+                                disabled: performingAction,
+                                onConfirm: async () => {
+                                    setPerformingAction(true);
+
+                                    await dispatch(removeGroupUser(groupUser)).then((response) => {
+                                        notificationService.showAxiosActionNotification(
+                                            'remove member from group',
+                                            `User ${groupUser.user} removed from ${groupUser.group}.`,
                                             response
                                         );
-    
-                                    }
-                                }).finally(() => {
-                                    dispatch(refreshHandler);
-                                });
-                            }
-                        }
-                    })
-                )}
-                variant='normal'
-            >
-                Remove Group
-            </Button>
+                                    }).finally(() => {
+                                        setPerformingAction(false);
+                                        dispatch(refreshHandler);
+                                    });
+                                }
+                            })));
+                            break;
+                    }
+                }}
+            >Actions</ButtonDropdown>
+
             <Button
                 disabled={addableGroups.length < 1}
                 variant='primary'

@@ -17,7 +17,7 @@
 import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/toolkit';
 import { DEFAULT_PAGE_SIZE, IUser } from '../../shared/model/user.model';
 import { IProjectUser } from '../../shared/model/projectUser.model';
-import axios from '../../shared/util/axios-utils';
+import axios, { axiosCatch } from '../../shared/util/axios-utils';
 import { IGroupUser } from '../../shared/model/groupUser.model';
 
 const initialState = {
@@ -79,7 +79,7 @@ export const removeUserFromProject = createAsyncThunk(
     'user/remove_user_from_project',
     async (data: IProjectUser) => {
         const requestUrl = `/project/${data.project}/users/${encodeURIComponent(data.user || '')}`;
-        return axios.delete<void>(requestUrl);
+        return axios.delete(requestUrl).catch(axiosCatch);
     }
 );
 
