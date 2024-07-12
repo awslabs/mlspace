@@ -25,7 +25,7 @@ jobs:
           git config --global user.email "evmann@amazon.com"
           git config --global user.name "github_actions_mlspace"
           git pull
-          git merge --no-ff main -m "Auto-merge main back to dev post release"
+          git merge --no-ff origin/main -m "Auto-merge main back to dev post release"
           git push
         env:
           GH_TOKEN: ${{ secrets.LEAD_ACCESS_TOKEN }}
