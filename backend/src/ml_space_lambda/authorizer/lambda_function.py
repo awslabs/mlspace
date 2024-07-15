@@ -25,6 +25,7 @@ import jwt
 import urllib3
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -40,6 +41,7 @@ project_dao = ProjectDAO()
 user_dao = UserDAO()
 dataset_dao = DatasetDAO()
 resource_metadata_dao = ResourceMetadataDAO()
+group_user_dao = GroupUserDAO()
 
 oidc_keys: Dict[str, str] = {}
 # If using self signed certs on the OIDC endpoint we need to skip ssl verification
@@ -324,6 +326,13 @@ def lambda_handler(event, context):
                                 policy_statement["Effect"] = "Allow"
                     elif target_type == DatasetType.PRIVATE and username == target_scope:
                         policy_statement["Effect"] = "Allow"
+                    elif target_type == DatasetType.GROUP:
+                        if Permission.ADMIN in user.permissions:
+                            policy_statement["Effect"] = "Allow"
+                        else:
+                            group_user = group_user_dao.get(target_scope, username)
+                            if group_user:
+                                policy_statement["Effect"] = "Allow"
                 else:
                     logger.info(
                         "Missing one or more required headers 'x-mlspace-dataset-type', "
@@ -405,9 +414,17 @@ def _handle_dataset_request(request_method, path_params, user):
         if dataset.created_by == user.username:
             return True
         else:
+            # All admins can perform any action on any Group
+            if dataset.type == DatasetType.GROUP:
+                if Permission.ADMIN in user.permissions:
+                    return True
+                group_user = group_user_dao.get(dataset_scope, user.username)
+                # Non-admins can only view group datasets
+                if group_user and request_method not in ["PUT", "DELETE"]:
+                    return True
             # If it's a global or project dataset and they aren't the owner
             # they can't update or delete the dataset or any files
-            if request_method in ["PUT", "DELETE"]:
+            elif request_method in ["PUT", "DELETE"]:
                 logger.info(f"Access Denied. User: '{user.username}' does not own the specified dataset.")
             elif dataset.type == DatasetType.GLOBAL:
                 # If it's not a delete or update but it's a global dataset

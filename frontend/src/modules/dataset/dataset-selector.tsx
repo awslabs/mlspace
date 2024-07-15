@@ -66,6 +66,7 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                     case DatasetType.PROJECT:
                         scope = `${projectName}`;
                         break;
+                    //TODO: need groupName for a Group scope
                 }
     
                 let isEmpty = true;

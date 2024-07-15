@@ -23,6 +23,6 @@ export const createDatasetFromForm = (form: any, projectName: string, username: 
         description: form.description,
         type: form.type,
         format: form.format,
-        scope: determineScope(form.type, projectName, username!)
+        scope: determineScope(form.type, projectName, form.groupName, username!)
     };
 };

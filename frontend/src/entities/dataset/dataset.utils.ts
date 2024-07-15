@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { IDataset } from '../../shared/model/dataset.model';
+import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 
 export const validateName = function (datasetName: string) {
     // Validate that the instance name follows the naming guidelines
@@ -23,8 +23,8 @@ export const validateName = function (datasetName: string) {
 };
 
 export const showAccessLevel = (dataset: IDataset) => {
-    if (dataset.type === 'project') {
-        return dataset.scope;
+    if (dataset.type === DatasetType.PROJECT || dataset.type === DatasetType.GROUP) {
+        return `${dataset.type}: ${dataset.scope}`;
     } else {
         return dataset.type;
     }

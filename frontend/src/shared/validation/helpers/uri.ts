@@ -44,15 +44,15 @@ ZodString.prototype.s3Resource = function (message?: errorUtil.ErrMessage): z.Zo
 
 ZodString.prototype.datasetUri = function (message?: errorUtil.ErrMessage): z.ZodString {
     const defaultMessage = 'Must be a valid S3 URI to a Dataset prefix or object';
-    return z.string().regex(/^s3:\/\/(?<bucket>[a-z0-9][a-z0-9.-]{1,61}[a-z0-9])\/(?<type>global|(private|project)\/(?<scope>.+))\/datasets\/(?<name>.+)\/(?<location>(?<prefix>(.+?\/)+)?(?<object>.+)?)$/, message || defaultMessage);
+    return z.string().regex(/^s3:\/\/(?<bucket>[a-z0-9][a-z0-9.-]{1,61}[a-z0-9])\/(?<type>global|(private|project|group)\/(?<scope>.+))\/datasets\/(?<name>.+)\/(?<location>(?<prefix>(.+?\/)+)?(?<object>.+)?)$/, message || defaultMessage);
 };
 
 ZodString.prototype.datasetPrefix = function (message?: errorUtil.ErrMessage): z.ZodString {
     const defaultMessage = 'Must be a valid S3 URI to a Dataset prefix';
-    return z.string().regex(/^s3:\/\/(?<bucket>[a-z0-9][a-z0-9.-]{1,61}[a-z0-9])\/(?<type>global|(private|project)\/(?<scope>.+))\/datasets\/(?<name>.+)\/(?<location>(?<prefix>(.+?\/)+)?)$/, message || defaultMessage);
+    return z.string().regex(/^s3:\/\/(?<bucket>[a-z0-9][a-z0-9.-]{1,61}[a-z0-9])\/(?<type>global|(private|project|group)\/(?<scope>.+))\/datasets\/(?<name>.+)\/(?<location>(?<prefix>(.+?\/)+)?)$/, message || defaultMessage);
 };
 
 ZodString.prototype.datasetResource = function (message?: errorUtil.ErrMessage): z.ZodString {
     const defaultMessage = 'Must be a valid S3 URI to a Dataset object';
-    return z.string().regex(/^s3:\/\/(?<bucket>[a-z0-9][a-z0-9.-]{1,61}[a-z0-9])\/(?<type>global|(private|project)\/(?<scope>.+))\/datasets\/(?<name>.+)\/(?<location>(?<prefix>(.+?\/)+)?(?<object>[^/]+))$/, message || defaultMessage);
+    return z.string().regex(/^s3:\/\/(?<bucket>[a-z0-9][a-z0-9.-]{1,61}[a-z0-9])\/(?<type>global|(private|project|group)\/(?<scope>.+))\/datasets\/(?<name>.+)\/(?<location>(?<prefix>(.+?\/)+)?(?<object>[^/]+))$/, message || defaultMessage);
 };

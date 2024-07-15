@@ -49,10 +49,10 @@ export const getDatasetsList = createAsyncThunk(
     }
 );
 
-export const getDatasetByScopeAndName = createAsyncThunk(
+export const getDataset = createAsyncThunk(
     'dataset/fetch_entity_by_id',
-    async ({ scope, name }: any) => {
-        const requestUrl = `dataset/${scope}/${name}`;
+    async ({ type, scope, name }: any) => {
+        const requestUrl = `dataset/${type}/${scope}/${name}`;
         return axios.get<IDataset>(requestUrl);
     }
 );
@@ -60,23 +60,23 @@ export const getDatasetByScopeAndName = createAsyncThunk(
 export const deleteDatasetFromProject = createAsyncThunk(
     'dataset/remove_dataset_from_project',
     async (dataset: IDataset) => {
-        const requestUrl = `/dataset/${dataset.scope}/${dataset.name}`;
+        const requestUrl = `/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`;
         return axios.delete<IDataset>(requestUrl);
     }
 );
 
 export const deleteFileFromDataset = createAsyncThunk(
     'dataset/remove_file_from_dataset',
-    async ({ scope, datasetName, files }: any) => {
+    async ({ type, scope, datasetName, files }: any) => {
         for (const file of files) {
-            const requestUrl = `/dataset/${scope}/${datasetName}/${file}`;
-            await axios.delete<IDataset>(requestUrl);            
+            const requestUrl = `/dataset/${type}/${scope}/${datasetName}/${file}`;
+            await axios.delete<IDataset>(requestUrl);
         }
     }
 );
 
 export const editDataset = createAsyncThunk('dataset/edit_dataset', async (dataset: IDataset) => {
-    const requestUrl = `/dataset/${dataset.scope}/${dataset.name}`;
+    const requestUrl = `/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`;
     return axios.put<any>(requestUrl, dataset);
 });
 
@@ -108,7 +108,7 @@ export const DatasetSlice = createSlice({
                     datasetsList: data,
                 };
             })
-            .addMatcher(isFulfilled(getDatasetByScopeAndName), (state, action) => {
+            .addMatcher(isFulfilled(getDataset), (state, action) => {
                 const { data } = action.payload;
                 return {
                     ...state,
@@ -140,7 +140,7 @@ export const DatasetSlice = createSlice({
                     loadingDatasetsList: true,
                 };
             })
-            .addMatcher(isPending(getDatasetByScopeAndName), (state) => {
+            .addMatcher(isPending(getDataset), (state) => {
                 return {
                     ...state,
                     loadingDataset: true,

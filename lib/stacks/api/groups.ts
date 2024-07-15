@@ -44,7 +44,7 @@ export class GroupsApiStack extends Stack {
             {
                 name: 'list_all',
                 resource: 'group',
-                description: 'List all MLSpace groups',
+                description: 'List all MLSpace groups for a user',
                 path: 'group',
                 method: 'GET',
             },
