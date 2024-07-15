@@ -45,7 +45,7 @@ jobs:
         if: (startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')) && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: ${{ job.status }}
+          SLACK_COLOR: ${{ fromJSON('["failure", "success"]')[success()] }}
           SLACK_TITLE: 'Build Finished'
           SLACK_FOOTER: ''
           MSG_MINIMAL: true

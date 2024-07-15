@@ -39,7 +39,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: ${{ job.status }}
+          SLACK_COLOR: ${{ fromJSON('["failure", "success"]')[success()] }}
           SLACK_TITLE: 'Main merged into Develop'
           SLACK_FOOTER: ''
           MSG_MINIMAL: true
