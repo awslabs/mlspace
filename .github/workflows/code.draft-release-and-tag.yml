@@ -43,12 +43,14 @@ jobs:
       - name: Send Notification that Draft Release is Ready
         uses: rtCamp/action-slack-notify@v2
         if: (startsWith(github.event.pull_request.head.ref, 'release/' ) || startsWith(github.event.pull_request.head.ref, 'hotfix/')) && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+        with:
+          status: success()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: ${{ job.status }}
+          SLACK_COLOR: ${{ status && 'success' || 'failure' }}
           SLACK_TITLE: 'Build Finished'
           SLACK_FOOTER: ''
           MSG_MINIMAL: true
           SLACK_MESSAGE_ON_FAILURE: '<!here> FAILED to publish Draft release for ${{ steps.get-version.outputs.version }}'
           SLACK_MESSAGE_ON_SUCCESS: '<!here> Draft release published for ${{ steps.get-version.outputs.version }}'
-          SLACK_MESSAGE: '<!here> Draft release finished with status ${{ job.status }} for ${{ steps.get-version.outputs.version }}'
+          SLACK_MESSAGE: '<!here> Draft release finished with status ${{ status }} for ${{ steps.get-version.outputs.version }}'
