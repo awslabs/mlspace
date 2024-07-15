@@ -186,7 +186,7 @@ export default function Table ({
             loading={
                 serverFetch
                     ? serverSideLoading.loadingAdditional || serverSideLoading.loadingEmpty
-                    : loadingItems && serverSideLoading.loadingInBackground
+                    : loadingItems
             }
             loadingText={loadingText}
             selectionType={tableType}

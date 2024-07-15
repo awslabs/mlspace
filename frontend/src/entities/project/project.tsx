@@ -20,14 +20,14 @@ import Table from '../../modules/table';
 import { IProject } from '../../shared/model/project.model';
 import { CallbackFunction } from '../../types';
 import { projectColumns, visibleColumns, visibleContentPreference } from './project.columns';
-import { userProjects } from './project.reducer';
+import { selectUserProjects } from './project.reducer';
 
 export type ProjectTableProps = {
     selectItemsCallback?: CallbackFunction;
 };
 
 export function Project (props: ProjectTableProps) {
-    const allProjects: IProject[] = useAppSelector(userProjects);
+    const allProjects: IProject[] = useAppSelector(selectUserProjects);
     const loadingProjects = useAppSelector((state) => state.project.loading);
 
     return (

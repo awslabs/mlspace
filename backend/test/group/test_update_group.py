@@ -117,6 +117,7 @@ def test_update_group_nonexistent(mock_group_dao):
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
     mock_group_dao.update.assert_not_called()
 
+
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 def test_update_group_invalid_characters(mock_group_dao):
     expected_response = generate_html_response(400, "Bad Request: Group description contains invalid character.")

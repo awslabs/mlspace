@@ -16,7 +16,7 @@
 
 import { ApplyThemeParams } from '@cloudscape-design/components/theming';
 
-export type CallbackFunction<T = any> = (props?: T) => void;
+export type CallbackFunction<T = any, R = void> = (props?: T) => R;
 
 declare global {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions

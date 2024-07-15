@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { default as Axios, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { default as Axios, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export const setProjectHeader = (projectName: string): AxiosRequestConfig => {
     return {
@@ -68,6 +68,18 @@ const axios = {
     post: AxiosHelper.post,
     put: AxiosHelper.put,
     delete: AxiosHelper.delete,
+};
+
+export const axiosCatch = (reason: Error | AxiosError) => {
+    if (Axios.isAxiosError(reason)) {
+        return Promise.reject({
+            name: reason.name,
+            message: reason.response?.data,
+            code: reason.response?.status
+        });
+    }
+
+    throw reason;
 };
 
 export default axios;

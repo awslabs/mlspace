@@ -401,9 +401,9 @@ def test_project_management(
         (MOCK_USER, False),
     ],
     ids=[
-         "admin_user",
-         "normal_user",
-         ],
+        "admin_user",
+        "normal_user",
+    ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
@@ -443,10 +443,10 @@ def test_create_group(mock_user_dao, user: UserModel, allow: bool):
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_group_management(
-        mock_user_dao,
-        user: UserModel,
-        method: str,
-        allow: bool,
+    mock_user_dao,
+    user: UserModel,
+    method: str,
+    allow: bool,
 ):
     mock_user_dao.get.return_value = user
 

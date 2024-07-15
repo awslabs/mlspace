@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { currentGroupUsers, getGroupUsers, removeGroupUser } from '../group.reducer';
@@ -22,10 +23,10 @@ import { NavigateFunction, useNavigate, useParams } from 'react-router-dom';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
 import { ModalProps } from '../../../modules/modal';
 import { IGroupUser } from '../../../shared/model/groupUser.model';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import AddGroupUserModal from './add-group-user-modal';
 import { IUser, Permission } from '../../../shared/model/user.model';
 import { hasPermission } from '../../../shared/util/permission-utils';
+import { useNotificationService } from '../../../shared/util/hooks';
 import { selectCurrentUser } from '../../user/user.reducer';
 
 function GroupDetailUserActions (props?: any) {
@@ -96,7 +97,7 @@ const GroupDetailUserActionHandler = async (
     setModalState: (state: Partial<ModalProps>) => void,
     selectedUser: IGroupUser
 ) => {
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     switch (e.detail.id) {
         case 'removeFromGroup':
