@@ -145,5 +145,5 @@ jobs:
           SLACK_MESSAGE: 'Build Finished with status ${{ job.status }} on branch ${{ github.head_ref || github.ref_name }} for <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|commit>'
       - name: Dump Jobs context
         env:
-          JOB_CONTEXT: ${{ job.backend_build.status }}
+          JOB_CONTEXT: ${{ join(needs.*.result, ' ') }}
         run: echo "JOB_CONTEXT"
