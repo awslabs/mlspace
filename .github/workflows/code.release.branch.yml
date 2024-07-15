@@ -25,6 +25,7 @@ jobs:
           RELEASE_TAG=${{ github.event.inputs.release_tag }}
           git checkout -b release/${{ github.event.inputs.release_tag }}
           echo "$( jq --arg version ${RELEASE_TAG:1} '.version = $version' frontend/package.json )" > frontend/package.json 
+          echo "$( jq --arg version ${RELEASE_TAG:1} '.version = $version' frontend/package-lock.json )" > frontend/package.json 
           git commit -a -m "updating version for release ${{ github.event.inputs.release_tag }}"
           git push origin release/${{ github.event.inputs.release_tag }}
         env:

@@ -29,6 +29,7 @@ jobs:
           DST_TAG=${{ github.event.inputs.dest_tag }}
           git checkout -b hotfix/${{ github.event.inputs.dest_tag }}
           sed -i -e "s/\"version\": \"${SRC_TAG:1}\"/\"version\": \"${DST_TAG:1}\"/g" frontend/package.json
+          sed -i -e "s/\"version\": \"${SRC_TAG:1}\"/\"version\": \"${DST_TAG:1}\"/g" frontend/package-lock.json
           git commit -a -m "updating version for hotfix ${{ github.event.inputs.dest_tag }}"
           git push origin hotfix/${{ github.event.inputs.dest_tag }}
         env:
