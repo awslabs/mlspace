@@ -33,7 +33,6 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
     const {username, projectName, onChange} = props;
     const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
 
-    //const createOptions = enumToOptions(DatasetType, true).filter((option) => option.value !== DatasetType.GLOBAL);
 
     const formSchema = z.object({
         name: z
