@@ -73,7 +73,7 @@ def test_current_user_client_error(mock_user_dao):
         "An error occurred (MissingParameter) when calling the " "GetItem operation: Dummy error message.",
     )
 
-    mock_user_dao.get.assert_called_with(mock_user.username+'foo')
+    mock_user_dao.get.assert_called_with(mock_user.username)
 
 
 @mock.patch("ml_space_lambda.user.lambda_functions.user_dao")
