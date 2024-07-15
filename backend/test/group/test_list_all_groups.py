@@ -15,6 +15,7 @@
 #
 
 import json
+from typing import Optional, Dict
 from unittest import mock
 
 from botocore.exceptions import ClientError
@@ -64,7 +65,7 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 mock_context = mock.Mock()
 
 
-def mock_event(is_admin: bool = False):
+def mock_event(is_admin: bool = False, query_params: Optional[Dict[str, str]] = None):
     return {
         "requestContext": {
             "authorizer": {
@@ -81,7 +82,24 @@ def mock_event(is_admin: bool = False):
             }
         },
         "pathParameters": None,
+        "queryStringParameters": query_params
     }
+
+
+@mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
+@mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
+def test_list_all_groups_admin_is_in(mock_group_dao, mock_group_user_dao):
+    mock_group_dao.get_all.return_value = MOCK_GROUPS
+    mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+
+    expected_response = generate_html_response(
+        200,
+        [group.to_dict() for group in MOCK_GROUPS],
+    )
+
+    assert lambda_handler(mock_event(True), mock_context) == expected_response
+    mock_group_dao.get_all.assert_called_with(group_names=[group_user.group for group_user in MOCK_GROUP_USERS])
+    mock_group_user_dao.get_groups_for_user.assert_called_with(MOCK_USERNAME)
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
@@ -94,7 +112,7 @@ def test_list_all_groups_admin(mock_group_dao, mock_group_user_dao):
         [group.to_dict() for group in MOCK_GROUPS],
     )
 
-    assert lambda_handler(mock_event(True), mock_context) == expected_response
+    assert lambda_handler(mock_event(True, {"adminGetAll": "true"}), mock_context) == expected_response
     mock_group_dao.get_all.assert_called()
     mock_group_user_dao.get_groups_for_user.assert_not_called()
 

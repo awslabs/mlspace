@@ -25,18 +25,20 @@ import { GroupActions } from './group.actions';
 import { selectCurrentUser } from '../user/user.reducer';
 import { hasPermission } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
+import { useLocation } from 'react-router-dom';
 
 export function Group () {
     const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
     const loadingGroups = useAppSelector((state) => state.group.loading);
     const dispatch = useAppDispatch();
+    const {pathname} = useLocation();
     const actions = (e: any) => GroupActions({...e});
     const currentUser = useAppSelector(selectCurrentUser);
     DocTitle('Groups');
 
     useEffect(() => {
-        dispatch(getAllGroups());
-    }, [dispatch]);
+        dispatch(getAllGroups(pathname.includes('admin')));
+    }, [dispatch, pathname]);
 
     return (
         <Table

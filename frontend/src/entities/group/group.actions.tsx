@@ -20,7 +20,7 @@ import React from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { IGroup } from '../../shared/model/group.model';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
-import { NavigateFunction, useNavigate } from 'react-router-dom';
+import { NavigateFunction, useNavigate, useLocation } from 'react-router-dom';
 import { selectCurrentUser } from '../user/user.reducer';
 import { IUser, Permission } from '../../shared/model/user.model';
 import { hasPermission } from '../../shared/util/permission-utils';
@@ -29,10 +29,11 @@ function GroupActions (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const currentUser = useAppSelector(selectCurrentUser);
+    const {pathname} = useLocation();
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
-            <Button onClick={() => dispatch(getAllGroups())} ariaLabel={'Refresh groups list'}>
+            <Button onClick={() => dispatch(getAllGroups(pathname.includes('admin')))} ariaLabel={'Refresh groups list'}>
                 <Icon name='refresh'/>
             </Button>
             {GroupActionButton(navigate, dispatch, currentUser, props)}
@@ -49,8 +50,8 @@ function GroupActionButton (navigate: NavigateFunction, dispatch: Dispatch, curr
             id: 'deleteGroup',
         });
         items.push({
-            text: 'Edit Group',
-            id: 'editGroup',
+            text: 'Update Group',
+            id: 'updateGroup',
         });
     }
 
@@ -95,7 +96,7 @@ const GroupActionHandler = async (
                 })
             );
             break;
-        case 'editGroup':
+        case 'updateGroup':
             navigate(`/admin/groups/edit/${selectedGroup.name}`);
             break;
         default:

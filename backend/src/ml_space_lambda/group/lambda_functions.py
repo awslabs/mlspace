@@ -24,6 +24,7 @@ from ml_space_lambda.data_access_objects.group import GroupDAO, GroupModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO, GroupUserModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission
+from ml_space_lambda.utils.admin_utils import is_admin_get_all
 from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permissions, validate_input
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
@@ -135,7 +136,7 @@ def remove_user(event, context):
 @api_wrapper
 def list_all(event, context):
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
-    if Permission.ADMIN in user.permissions:
+    if is_admin_get_all(user, event):
         groups = group_dao.get_all()
     else:
         group_names = [group.group for group in group_user_dao.get_groups_for_user(user.username)]
