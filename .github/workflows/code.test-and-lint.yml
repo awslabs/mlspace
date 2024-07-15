@@ -143,7 +143,7 @@ jobs:
           SLACK_MESSAGE_ON_FAILURE: '<!here> Build FAILED on branch ${{ github.head_ref || github.ref_name }} for <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|commit>'
           SLACK_MESSAGE_ON_SUCCESS: 'Build SUCCESS on branch ${{ github.head_ref || github.ref_name }} for <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|commit>.'
           SLACK_MESSAGE: 'Build Finished with status ${{ job.status }} on branch ${{ github.head_ref || github.ref_name }} for <${{ github.event.pull_request.html_url || github.event.head_commit.url }}|commit>'
-      - name: Dump GitHub context
+      - name: Dump Jobs context
         env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
+          JOB_CONTEXT: ${{ toJSON(jobs) }}
+        run: echo "JOB_CONTEXT"
