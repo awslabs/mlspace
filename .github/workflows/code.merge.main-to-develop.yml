@@ -41,7 +41,7 @@ jobs:
           status: success()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: ${{ fromJSON('["failure", "success"]')[status] }}
+          SLACK_COLOR: ${{ status && 'success' || 'failure' }}
           SLACK_TITLE: 'Main merged into Develop'
           SLACK_FOOTER: ''
           MSG_MINIMAL: true
