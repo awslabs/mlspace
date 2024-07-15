@@ -280,7 +280,7 @@ export function DatasetCreate () {
                                     options={generateOptions()}
                                     onChange={({ detail }) => {
                                         setFields({type: detail.selectedOption.value as keyof typeof DatasetType});
-                                        setFields({groupName: detail.selectedOption.value?.startsWith('group')  ? detail.selectedOption.label : ''});
+                                        setFields({groupName: detail.selectedOption.value?.startsWith('group') ? detail.selectedOption.label : ''});
                                     }}
                                     onBlur={() => touchFields(['type'])}
                                 />
