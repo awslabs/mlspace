@@ -103,9 +103,9 @@ def get(event, context):
 def get_groups(event, context):
     username = urllib.parse.unquote(event["pathParameters"]["username"])
 
-    projects = group_user_dao.get_groups_for_user(username)
+    groups = group_user_dao.get_groups_for_user(username)
 
-    return [project.to_dict() for project in projects]
+    return [group.to_dict() for group in groups]
 
 
 @api_wrapper
