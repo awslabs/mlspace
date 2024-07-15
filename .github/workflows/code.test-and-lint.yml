@@ -132,6 +132,8 @@ jobs:
       - name: Send GitHub Action trigger data to Slack workflow
         uses: rtCamp/action-slack-notify@v2
         if: github.event_name != 'pull_request'
+        with:
+          status: success()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_COLOR: ${{ contains(join(needs.*.result, ' '), 'failure') && 'failure' || 'success' }}
