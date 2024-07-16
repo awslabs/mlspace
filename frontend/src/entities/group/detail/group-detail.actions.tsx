@@ -106,7 +106,7 @@ const GroupActionHandler = (
                 setDeleteModal({
                     resourceName: 'Group',
                     resourceType: 'group',
-                    postConfirm: () => dispatch(getAllGroups(window.location.href.includes('admin'))),
+                    postConfirm: () => dispatch(getAllGroups(window.location.href.includes('#/admin'))),
                     onConfirm: async () =>
                         dispatch(deleteGroup(groupName!)).then((result) => {
                             setModalState({
@@ -119,7 +119,7 @@ const GroupActionHandler = (
                                 result
                             );
                             if (result.type.endsWith('/fulfilled')) {
-                                nav(window.location.href.includes('admin') ? '/admin/groups' : '/personal/group');
+                                nav(window.location.href.includes('#/admin') ? '/admin/groups' : '/personal/group');
                             }
                         }),
                     description: `This will delete the following group: ${groupName}.`
