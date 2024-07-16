@@ -14,10 +14,13 @@
   limitations under the License.
 */
 
-import { IDataset } from '../../../shared/model/dataset.model';
+import { DatasetType, IDataset } from '../../../shared/model/dataset.model';
 import { determineScope } from '../dataset.service';
 
 export const createDatasetFromForm = (form: any, projectName: string, username: string): IDataset & Required<Pick<IDataset, 'name' | 'description' | 'type' | 'format' | 'scope'>> => {
+    if (form.type.startsWith(DatasetType.GROUP)) {
+        form.type = DatasetType.GROUP;
+    }
     return {
         name: form.name,
         description: form.description,
