@@ -47,7 +47,7 @@ jobs:
           status: success()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: ${{ job.status }}
+          SLACK_COLOR: ${{ contains(join(needs.*.result, ' '), 'failure') && 'failure' || 'success' }}
           SLACK_TITLE: 'Build Finished'
           SLACK_FOOTER: ''
           MSG_MINIMAL: true
