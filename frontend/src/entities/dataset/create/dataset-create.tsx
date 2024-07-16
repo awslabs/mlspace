@@ -152,7 +152,6 @@ export function DatasetCreate () {
             });
 
             if (response?.status === 200) {
-                console.log(JSON.stringify(datasetFileList[0]));
                 const resourceObjects = datasetFileList.filter((item): item is DatasetResourceObject => item.type === 'object');
                 await uploadResources(newDataset, resourceObjects, notificationService);
 

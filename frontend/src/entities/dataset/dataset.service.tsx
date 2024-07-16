@@ -92,7 +92,6 @@ export const buildS3KeysForResourceObjects = (
     datasetContext: DatasetContext,
 ): [string, DatasetResourceObject][] => {
     return resourceObjects.map((resourceObject) => {
-        console.log(`Scope: ${datasetContext.scope}, Name: ${datasetContext.name}, Key: ${resourceObject.key}`);
         switch (datasetContext.type!) {
             case DatasetType.PROJECT:
                 return [`project/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
@@ -145,7 +144,6 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
     const failedUploads: string[] = [];
     let stopUpload = false;
 
-    console.log(`Uploading ${resourceObjects.length} resources`);
     for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
         if (stopUpload) {
             break;

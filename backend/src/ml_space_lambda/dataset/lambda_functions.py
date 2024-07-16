@@ -208,7 +208,6 @@ def create_dataset(event, context):
             description=body.get("datasetDescription", ""),
             location=dataset_location,
             created_by=event["requestContext"]["authorizer"]["principalId"],
-            is_group=dataset_type == DatasetType.GROUP,
         )
         dataset_dao.create(dataset)
         return {"status": "success", "dataset": dataset.to_dict()}
