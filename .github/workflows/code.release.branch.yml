@@ -32,6 +32,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.LEAD_ACCESS_TOKEN }}
       - name: Draft Pull Request
         run: |
-          gh pr create -d --title "Release ${{github.event.inputs.release_tag}} into Main" --body "Hotfix ${{github.event.inputs.release_tag}} PR into Main" --base origin/main --head release/${{ github.event.inputs.release_tag }}
+          gh pr create -d --title "Release ${{github.event.inputs.release_tag}} into Main" --body "Hotfix ${{github.event.inputs.release_tag}} PR into Main" --base main --head release/${{ github.event.inputs.release_tag }}
         env:
           GH_TOKEN: ${{ github.token }}
