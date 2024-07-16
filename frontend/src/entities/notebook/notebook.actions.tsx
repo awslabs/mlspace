@@ -31,6 +31,7 @@ import { NotebookResourceMetadata } from '../../shared/model/resource-metadata.m
 import { isAdminOrProjectOwner } from '../../shared/util/permission-utils';
 import { deletionDescription } from '../../shared/util/form-utils';
 import { useNotificationService } from '../../shared/util/hooks';
+import { INotificationService } from '../../shared/layout/notification/notification.service';
 
 function NotebookActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -59,6 +60,7 @@ function NotebookActionButton (
     projectName?: string,
     props?: any
 ) {
+    const notificationService = useNotificationService(dispatch);
     const selectedNotebook: NotebookResourceMetadata = props?.selectedItems[0];
     const loadingAction = props?.loadingAction;
     const notebookStopped = ['Stopped', 'Failed'].includes(
@@ -112,7 +114,7 @@ function NotebookActionButton (
             disabled={selectedNotebook === undefined}
             loading={loadingAction}
             onItemClick={(e) =>
-                NotebookActionHandler(e, selectedNotebook, nav, dispatch, projectName)
+                NotebookActionHandler(e, selectedNotebook, nav, dispatch, notificationService, projectName)
             }
         >
             Actions
@@ -143,10 +145,10 @@ const NotebookActionHandler = async (
     notebook: NotebookResourceMetadata,
     nav: (endpoint: string) => void,
     dispatch: ThunkDispatch<any, any, Action>,
-    projectName?: string
+    notificationService: INotificationService,
+    projectName?: string,
 ) => {
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-    const notificationService = useNotificationService(dispatch);
 
     let response: any | undefined = undefined;
     switch (e.detail.id) {

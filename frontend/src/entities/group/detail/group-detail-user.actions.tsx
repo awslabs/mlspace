@@ -28,6 +28,7 @@ import { IUser, Permission } from '../../../shared/model/user.model';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { useNotificationService } from '../../../shared/util/hooks';
 import { selectCurrentUser } from '../../user/user.reducer';
+import { INotificationService } from '../../../shared/layout/notification/notification.service';
 
 function GroupDetailUserActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -54,6 +55,7 @@ function GroupDetailUserActions (props?: any) {
 function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dispatch, currentUser: IUser, setAddUserModalVisible: (boolean) => void, props?: any) {
     const selectedUser: IGroupUser = props?.selectedItems[0];
     const items: ButtonDropdownProps.Item[] = [];
+    const notificationService = useNotificationService(dispatch);
     if (selectedUser) {
         items.push({
             text: 'Remove from Group',
@@ -74,7 +76,7 @@ function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dis
                     items={items}
                     variant='primary'
                     disabled={!selectedUser}
-                    onItemClick={(e) => GroupDetailUserActionHandler(e, dispatch, modalState as ModalProps, setModalState, selectedUser)}
+                    onItemClick={(e) => GroupDetailUserActionHandler(e, dispatch, modalState as ModalProps, setModalState, selectedUser, notificationService)}
                 >
                     Actions
                 </ButtonDropdown>
@@ -95,10 +97,9 @@ const GroupDetailUserActionHandler = async (
     dispatch:  ThunkDispatch<any, any, Action>,
     modalState: ModalProps,
     setModalState: (state: Partial<ModalProps>) => void,
-    selectedUser: IGroupUser
+    selectedUser: IGroupUser,
+    notificationService: INotificationService
 ) => {
-    const notificationService = useNotificationService(dispatch);
-
     switch (e.detail.id) {
         case 'removeFromGroup':
             dispatch(
