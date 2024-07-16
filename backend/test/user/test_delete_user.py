@@ -163,15 +163,15 @@ def test_delete_user_without_iam(mock_project_user_dao, mock_user_dao, mock_iam_
     mock_iam_manager.remove_all_user_roles.return_value = None
     with mock.patch.dict(os.environ, {}, clear=True):
         assert (
-                delete_user(
-                    {
-                        "pathParameters": {
-                            "username": second_user.username,
-                        },
+            delete_user(
+                {
+                    "pathParameters": {
+                        "username": second_user.username,
                     },
-                    mock_context,
-                )
-                == expected_response
+                },
+                mock_context,
+            )
+            == expected_response
         )
 
     mock_project_user_dao.get_projects_for_user.assert_called_with(second_user.username)

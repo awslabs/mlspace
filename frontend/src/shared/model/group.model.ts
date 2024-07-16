@@ -25,7 +25,7 @@ export type IGroup = {
 export type IGroupWithPermissions = {
     group: IGroup;
     permissions?: Permission[];
-}
+};
 
 
 export const defaultGroup: IGroup = {

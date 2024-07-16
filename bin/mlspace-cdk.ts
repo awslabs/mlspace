@@ -37,7 +37,7 @@ import { ADCLambdaCABundleAspect } from '../lib/utils/adcCertBundleAspect';
 import { ApiDeploymentStack } from '../lib/stacks/api/apiDeployment';
 import { MLSpaceConfig, generateConfig } from '../lib/utils/configTypes';
 import { AppConfigurationApiStack } from '../lib/stacks/api/appConfiguration';
-import {GroupsApiStack} from "../lib/stacks/api/groups";
+import { GroupsApiStack } from '../lib/stacks/api/groups';
 
 
 const config: MLSpaceConfig = generateConfig();

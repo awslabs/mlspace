@@ -15,7 +15,7 @@
 #
 
 import json
-from typing import Optional, Dict
+from typing import Dict, Optional
 from unittest import mock
 
 from botocore.exceptions import ClientError
@@ -82,7 +82,7 @@ def mock_event(is_admin: bool = False, query_params: Optional[Dict[str, str]] = 
             }
         },
         "pathParameters": None,
-        "queryStringParameters": query_params
+        "queryStringParameters": query_params,
     }
 
 

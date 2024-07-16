@@ -21,7 +21,7 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project import ProjectModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.utils.common_functions import generate_html_response, serialize_permissions
+from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
