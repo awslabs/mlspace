@@ -435,11 +435,6 @@ def _handle_dataset_request(request_method, path_params, user):
                 project_user = project_user_dao.get(dataset_scope, user.username)
                 if project_user:
                     return True
-            elif dataset.type == DatasetType.GROUP:
-                # It's a group dataset so the user needs access to the group
-                group_user = group_user_dao.get(dataset_scope, user.username)
-                if group_user:
-                    return True
 
     logger.info("Access Denied. The specified dataset does not exist or the user does not have access.")
     return False
