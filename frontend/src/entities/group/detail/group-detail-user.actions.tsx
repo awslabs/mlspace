@@ -13,6 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { currentGroupUsers, getGroupUsers, removeGroupUser } from '../group.reducer';
@@ -22,9 +23,11 @@ import { NavigateFunction, useNavigate, useParams } from 'react-router-dom';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
 import { ModalProps } from '../../../modules/modal';
 import { IGroupUser } from '../../../shared/model/groupUser.model';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import AddGroupUserModal from './add-group-user-modal';
-import { IUser } from '../../../shared/model/user.model';
+import { IUser, Permission } from '../../../shared/model/user.model';
+import { hasPermission } from '../../../shared/util/permission-utils';
+import { useNotificationService } from '../../../shared/util/hooks';
+import { selectCurrentUser } from '../../user/user.reducer';
 
 function GroupDetailUserActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -35,6 +38,7 @@ function GroupDetailUserActions (props?: any) {
     const groupUsernames = groupUsers.map((user) => user.user);
     const addableUsers = allUsers.filter((user) => !groupUsernames.includes(user.username!));
     const [addUserModalVisible, setAddUserModalVisible] = useState(false);
+    const currentUser = useAppSelector(selectCurrentUser);
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
@@ -42,18 +46,12 @@ function GroupDetailUserActions (props?: any) {
             <Button onClick={() => dispatch(getGroupUsers(groupName))} ariaLabel={'Refresh groups list'}>
                 <Icon name='refresh'/>
             </Button>
-            {GroupDetailUserActionsButton(navigate, dispatch, props)}
-            <Button
-                variant='primary'
-                onClick={() => setAddUserModalVisible(true)}
-            >
-                Add User
-            </Button>
+            {GroupDetailUserActionsButton(navigate, dispatch, currentUser, setAddUserModalVisible, props)}
         </SpaceBetween>
     );
 }
 
-function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dispatch, props?: any) {
+function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dispatch, currentUser: IUser, setAddUserModalVisible: (boolean) => void, props?: any) {
     const selectedUser: IGroupUser = props?.selectedItems[0];
     const items: ButtonDropdownProps.Item[] = [];
     if (selectedUser) {
@@ -70,14 +68,25 @@ function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dis
     });
 
     return (
-        <ButtonDropdown
-            items={items}
-            variant='primary'
-            disabled={!selectedUser}
-            onItemClick={(e) => GroupDetailUserActionHandler(e, dispatch, modalState as ModalProps, setModalState, selectedUser)}
-        >
-            Actions
-        </ButtonDropdown>
+        <> { hasPermission(Permission.ADMIN, currentUser.permissions) && (
+            <>
+                <ButtonDropdown
+                    items={items}
+                    variant='primary'
+                    disabled={!selectedUser}
+                    onItemClick={(e) => GroupDetailUserActionHandler(e, dispatch, modalState as ModalProps, setModalState, selectedUser)}
+                >
+                    Actions
+                </ButtonDropdown>
+                <Button
+                    variant='primary'
+                    onClick={() => setAddUserModalVisible(true)}
+                >
+                    Add User
+                </Button>
+            </>
+        )}
+        </>
     );
 }
 
@@ -88,7 +97,7 @@ const GroupDetailUserActionHandler = async (
     setModalState: (state: Partial<ModalProps>) => void,
     selectedUser: IGroupUser
 ) => {
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     switch (e.detail.id) {
         case 'removeFromGroup':

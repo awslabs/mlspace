@@ -54,6 +54,7 @@ def _create_dataset_record(metadata, key):
     if not dataset_dao.get(scope, dataset_name):
         dataset = DatasetModel(
             scope=scope,
+            type=dataset_type,
             name=dataset_name,
             description=metadata.get("dataset-description", ""),
             location=dataset_location,

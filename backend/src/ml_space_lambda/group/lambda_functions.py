@@ -24,6 +24,7 @@ from ml_space_lambda.data_access_objects.group import GroupDAO, GroupModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO, GroupUserModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission
+from ml_space_lambda.utils.admin_utils import is_admin_get_all
 from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permissions, validate_input
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
@@ -35,7 +36,7 @@ user_dao = UserDAO()
 iam_manager = IAMManager()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
-group_desc_regex = re.compile(r"/[^ -~]/")
+group_desc_regex = re.compile(r"[^ -~]")
 
 
 def _add_group_user(group_name: str, username: str, permissions: Optional[List[Permission]] = None):
@@ -51,17 +52,6 @@ def _add_group_user(group_name: str, username: str, permissions: Optional[List[P
         iam_manager.update_user_policy(username)
     except Exception as e:
         raise e
-
-
-def _total_group_owners(group_name: str):
-    this_group_users = group_user_dao.get_users_for_group(group_name)
-    owner_count = 0
-
-    for user in this_group_users:
-        if Permission.GROUP_OWNER in user.permissions:
-            owner_count += 1
-
-    return owner_count
 
 
 @api_wrapper
@@ -84,7 +74,6 @@ def get(event, context):
 @api_wrapper
 def create(event, context):
     try:
-        group_created = False
         username = event["requestContext"]["authorizer"]["principalId"]
         event_body = json.loads(event["body"])
         group_name = event_body["name"]
@@ -102,16 +91,10 @@ def create(event, context):
         event_body.update({"createdBy": username})
         new_group = GroupModel.from_dict(event_body)
         group_dao.create(new_group)
-        group_created = True
-        _add_group_user(group_name, username, [Permission.GROUP_OWNER, Permission.COLLABORATOR])
 
         return f"Successfully created group '{group_name}'"
     except Exception as e:
         logging.error(f"Error creating group: {e}")
-        # Clean up any resources which may have been created prior to the error
-        if group_created:
-            group_dao.delete(group_name)
-
         raise e
 
 
@@ -139,25 +122,21 @@ def remove_user(event, context):
     group_name = event["pathParameters"]["groupName"]
     username = urllib.parse.unquote(event["pathParameters"]["username"])
 
-    # first check if user is an owner on the group.
     group_member = group_user_dao.get(group_name, username)
 
     if not group_member:
         raise Exception(f"{username} is not a member of {group_name}")
 
-    if Permission.GROUP_OWNER not in group_member.permissions or _total_group_owners(group_name) > 1:
-        group_user_dao.delete(group_name, username)
-        # Removes the group permissions for this user
-        iam_manager.update_user_policy(username)
-        return f"Successfully removed {username} from {group_name}"
-
-    raise Exception("You cannot delete the last owner of a group")
+    group_user_dao.delete(group_name, username)
+    # Removes the group permissions for this user
+    iam_manager.update_user_policy(username)
+    return f"Successfully removed {username} from {group_name}"
 
 
 @api_wrapper
 def list_all(event, context):
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
-    if Permission.ADMIN in user.permissions:
+    if is_admin_get_all(user, event):
         groups = group_dao.get_all()
     else:
         group_names = [group.group for group in group_user_dao.get_groups_for_user(user.username)]
@@ -174,7 +153,7 @@ def update(event, context):
     if not existing_group:
         raise ValueError("Specified group does not exist")
     if "description" in event_body:
-        validate_input(event_body["description"], 4000, "description", group_desc_regex)
+        validate_input(event_body["description"], 4000, "Group description", group_desc_regex)
         existing_group.description = event_body["description"]
 
     group_dao.update(group_name, existing_group)
@@ -194,7 +173,6 @@ def delete(event, context):
     # Delete users associations and group itself
     to_delete_group_users = group_user_dao.get_users_for_group(group_name)
 
-    # TODO: Update IAM Roles, like we do for project users
     # Remove all group related entries from the user/group table
     for group_user in to_delete_group_users:
         group_user_dao.delete(group_name, group_user.user)
@@ -205,25 +183,3 @@ def delete(event, context):
     group_dao.delete(group_name)
 
     return f"Successfully deleted {group_name}."
-
-
-@api_wrapper
-def update_group_user(event, context):
-    group_name = event["pathParameters"]["groupName"]
-    username = urllib.parse.unquote(event["pathParameters"]["username"])
-    updates = json.loads(event["body"])
-
-    group_user = group_user_dao.get(group_name, username)
-
-    if not group_user:
-        raise ResourceNotFound(f"User {username} is not a member of {group_name}")
-
-    if Permission.GROUP_OWNER in group_user.permissions and Permission.GROUP_OWNER.value not in updates["permissions"]:
-        if _total_group_owners(group_name) < 2:
-            raise Exception(f"Cannot remove last Group Owner from {group_name}.")
-
-    if sorted(updates["permissions"]) != sorted(serialize_permissions(group_user.permissions)):
-        group_user.permissions = [Permission(entry) for entry in updates["permissions"]]
-        group_user_dao.update(group_name, username, group_user)
-
-    return "Successfully updated group user record."

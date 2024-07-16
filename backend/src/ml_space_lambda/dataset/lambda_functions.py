@@ -203,6 +203,7 @@ def create_dataset(event, context):
         dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
         dataset = DatasetModel(
             scope=scope,
+            type=dataset_type,
             name=dataset_name,
             description=body.get("datasetDescription", ""),
             location=dataset_location,

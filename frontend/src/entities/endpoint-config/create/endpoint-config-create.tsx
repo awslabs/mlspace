@@ -40,7 +40,6 @@ import {
 } from '../endpoint-config.reducer';
 import { AddModelModal, EditVariantModal } from './modals';
 import { ConditionalWrapper } from '../../../modules/condition/condition';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { getEndpointConfigByName } from '../endpoint-config.service';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
@@ -49,6 +48,7 @@ import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { setTableAnnouncement } from '../../../shared/util/table-utils';
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 type EndpointConfigCreateOptions = {
     createConfigCallback?: (endpointConfig: IEndpointConfig, createdNew: boolean) => void;
@@ -61,7 +61,7 @@ export function EndpointConfigCreate ({ createConfigCallback }: EndpointConfigCr
     const { projectName } = useParams();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     if (!createConfigCallback) {
         DocTitle('Create Endpoint Config');

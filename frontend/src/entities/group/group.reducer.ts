@@ -15,7 +15,7 @@
  */
 
 import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/toolkit';
-import axios from '../../shared/util/axios-utils';
+import axios, { axiosCatch } from '../../shared/util/axios-utils';
 import { IGroup, IGroupWithPermissions } from '../../shared/model/group.model';
 import { IGroupUser } from '../../shared/model/groupUser.model';
 
@@ -31,8 +31,12 @@ export type AddGroupUserRequest = {
 };
 
 
-export const getAllGroups = createAsyncThunk('group/fetch_all_groups', async () => {
-    return axios.get<IGroup[]>('/group');
+export const getAllGroups = createAsyncThunk('group/fetch_all_groups', async (adminGetAll?: boolean) => {
+    const params = new URLSearchParams();
+    if (adminGetAll) {
+        params.append('adminGetAll', 'true');
+    }
+    return axios.get(`/group${params.size > 0 ? '?' + params.toString() : ''}`);
 });
 
 export const getGroup = createAsyncThunk('group/fetch_group', async (groupName: string) => {
@@ -59,7 +63,7 @@ export const getGroupUsers = createAsyncThunk('group/group_users', async (groupN
 });
 
 export const removeGroupUser = createAsyncThunk('group/remove_user', async (data: IGroupUser) => {
-    return axios.delete(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`);
+    return axios.delete(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`).catch(axiosCatch);
 });
 
 export const addGroupUsers = createAsyncThunk('group/add_users', async (data: AddGroupUserRequest) => {
@@ -70,6 +74,7 @@ export const addGroupUsers = createAsyncThunk('group/add_users', async (data: Ad
 export const GroupSlice = createSlice({
     name: 'group',
     initialState,
+    reducers: {},
     extraReducers (builder) {
         builder
             .addMatcher(isFulfilled(getAllGroups), (state, action) => {
@@ -98,8 +103,9 @@ export const GroupSlice = createSlice({
                     loading: true,
                 };
             });
-    },
+    }
 });
 
 export default GroupSlice.reducer;
 export const currentGroupUsers = (state: any): IGroupUser[] => state.group.currentGroupUsers;
+export const selectAllGroups = (state: any): IGroup[] => state.group.allGroups;

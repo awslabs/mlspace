@@ -32,17 +32,17 @@ import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { IDataset } from '../../../shared/model/dataset.model';
 import {
-    getDatasetByScopeAndName,
+    getDataset,
     editDataset,
     datasetBinding,
     loadingDataset,
 } from '../dataset.reducer';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { z } from 'zod';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { selectCurrentUser } from '../../user/user.reducer';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 const formSchema = z.object({
     description: z.string().regex(/^[\w\-\s']+$/, {
@@ -52,12 +52,12 @@ const formSchema = z.object({
 
 export function DatasetUpdate () {
     const dataset: IDataset = useAppSelector(datasetBinding);
-    const { projectName, scope, name } = useParams();
+    const { projectName, type, scope, name } = useParams();
     const [submitLoading, setSubmitLoading] = useState(false);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const loadingDatasetEditPage = useAppSelector(loadingDataset);
 
     scrollToPageHeader();
@@ -82,15 +82,15 @@ export function DatasetUpdate () {
             setBreadcrumbs([
                 getBase(projectName),
                 { text: 'Datasets', href: `#${basePath}/dataset` },
-                { text: `${name}`, href: `#${basePath}/dataset/${scope}/${name}/edit` },
+                { text: `${name}`, href: `#${basePath}/dataset/${type}/${scope}/${name}/edit` },
             ])
         );
-        dispatch(getDatasetByScopeAndName({ scope: scope, name: name }))
+        dispatch(getDataset({ type: type, scope: scope, name: name }))
             .unwrap()
             .catch(() => {
                 navigate('/404');
             });
-    }, [dispatch, navigate, basePath, name, projectName, scope]);
+    }, [dispatch, navigate, basePath, name, projectName, scope, type]);
 
     function handleSubmit () {
         if (state.formValid) {

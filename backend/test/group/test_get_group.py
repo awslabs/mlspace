@@ -21,9 +21,8 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.group import GroupModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
-from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.enums import Permission, ResourceType
+from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils.common_functions import generate_html_response, serialize_permissions
 
 TEST_ENV_CONFIG = {
@@ -39,7 +38,7 @@ MOCK_GROUP = GroupModel(
 MOCK_GROUP_USER = GroupUserModel(
     username=MOCK_GROUP.created_by,
     group_name=MOCK_GROUP.name,
-    permissions=[Permission.GROUP_OWNER],
+    permissions=[Permission.COLLABORATOR],
 )
 
 MOCK_USER = UserModel(MOCK_GROUP.created_by, MOCK_GROUP.created_by, "John Doe", False)

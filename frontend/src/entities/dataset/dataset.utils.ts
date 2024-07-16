@@ -23,7 +23,6 @@ export const validateName = function (datasetName: string) {
 };
 
 export const showAccessLevel = (dataset: IDataset) => {
-    //TODO: look into why it's always treating the type as project
     if (dataset.type === DatasetType.PROJECT || dataset.type === DatasetType.GROUP) {
         return `${dataset.type}: ${dataset.scope}`;
     } else {

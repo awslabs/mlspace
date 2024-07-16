@@ -120,7 +120,7 @@ def get_auto_labeling_arn(task_type: TaskTypes):
 
 def generate_labels_configuration_file(labels: list, job_name: str, data_bucket_name: str, output_dir_key: str) -> str:
     labels_config = {"document-version": "2018-11-28", "labels": labels}
-    s3_key = f"{output_dir_key}/{job_name}/annotation-tool/data.json"
+    s3_key = os.path.join(output_dir_key, job_name, "annotation-tool/data.json")
     s3.put_object(Bucket=data_bucket_name, Key=s3_key, Body=json.dumps(labels_config))
     return f"s3://{data_bucket_name}/{s3_key}"
 
@@ -161,8 +161,10 @@ def generate_ui_template(
                     file_content.append(line.replace("DESCRIPTION_STUB", description))
                 else:
                     file_content.append(line)
-        template_key = f"{output_dir_key}/{job_name}/annotation-tool/template.liquid"
+
+        template_key = os.path.join(output_dir_key, job_name, "annotation-tool/template.liquid")
         s3.put_object(Bucket=data_bucket_name, Key=template_key, Body="\n".join(file_content))
+
+        return f"s3://{data_bucket_name}/{template_key}"
     else:
         raise Exception(f"Labeling job template for {template_path} does not exist.")
-    return f"s3://{data_bucket_name}/{template_key}" if template_key is not None else None

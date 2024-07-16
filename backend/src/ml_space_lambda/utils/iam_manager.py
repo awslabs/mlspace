@@ -373,14 +373,12 @@ class IAMManager:
 
     def _generate_user_policy(self, user: str) -> str:
         groups = group_user_dao.get_groups_for_user(user)
-        logger.info(f"Groups for user: {groups}")
         resource_arns = [
             f"arn:{self.aws_partition}:s3:::{self.data_bucket}/private/{user}/*",
             f"arn:{self.aws_partition}:s3:::{self.data_bucket}/global/*",
         ]
         for group in groups:
             resource_arns.append(f"arn:{self.aws_partition}:s3:::{self.data_bucket}/group/{group.group}/*")
-        logger.info(f"Group arns: {resource_arns}")
 
         user_policy = {
             "Version": "2012-10-17",

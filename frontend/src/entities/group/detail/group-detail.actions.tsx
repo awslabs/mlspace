@@ -64,24 +64,27 @@ function GroupActionButton (
     }
 
     return (
-        <ButtonDropdown
-            items={actionItems}
-            variant='primary'
-            disabled={groupName === undefined}
-            onItemClick={(e) =>
-                GroupActionHandler(
-                    e,
-                    groupName,
-                    nav,
-                    dispatch,
-                    modalState as ModalProps,
-                    setModalState
-                )
-            }
-        >
-            <Modal {...(modalState as ModalProps)} />
-            Actions
-        </ButtonDropdown>
+        <> { hasPermission(Permission.ADMIN, currentUser.permissions) && (
+            <ButtonDropdown
+                items={actionItems}
+                variant='primary'
+                disabled={groupName === undefined}
+                onItemClick={(e) =>
+                    GroupActionHandler(
+                        e,
+                        groupName,
+                        nav,
+                        dispatch,
+                        modalState as ModalProps,
+                        setModalState
+                    )
+                }
+            >
+                <Modal {...(modalState as ModalProps)} />
+                Actions
+            </ButtonDropdown>
+        )}
+        </>
     );
 }
 

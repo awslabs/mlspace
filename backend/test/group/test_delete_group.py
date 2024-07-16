@@ -55,7 +55,7 @@ def test_delete_group(mock_group_dao, mock_group_user_dao, mock_iam_manager):
         GroupUserModel(
             username=mock_username,
             group_name=MOCK_GROUP_NAME,
-            permissions=[Permission.GROUP_OWNER],
+            permissions=[Permission.COLLABORATOR],
         )
     ]
     mock_group_user_dao.delete.return_value = None

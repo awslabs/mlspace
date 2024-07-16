@@ -21,18 +21,24 @@ import { IGroup } from '../../shared/model/group.model';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { getAllGroups } from './group.reducer';
 import { DocTitle } from '../../shared/doc';
-import { GroupActions } from '../group/group.actions';
+import { GroupActions } from './group.actions';
+import { selectCurrentUser } from '../user/user.reducer';
+import { hasPermission } from '../../shared/util/permission-utils';
+import { Permission } from '../../shared/model/user.model';
+import { useLocation } from 'react-router-dom';
 
 export function Group () {
     const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
     const loadingGroups = useAppSelector((state) => state.group.loading);
     const dispatch = useAppDispatch();
+    const {pathname} = useLocation();
     const actions = (e: any) => GroupActions({...e});
+    const currentUser = useAppSelector(selectCurrentUser);
     DocTitle('Groups');
 
     useEffect(() => {
-        dispatch(getAllGroups());
-    }, [dispatch]);
+        dispatch(getAllGroups(pathname.includes('admin')));
+    }, [dispatch, pathname]);
 
     return (
         <Table
@@ -40,7 +46,7 @@ export function Group () {
             trackBy='name'
             actions={actions}
             allItems={groups}
-            tableType='single'
+            tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
             columnDefinitions={groupColumns}
             visibleColumns={visibleColumns}
             loadingItems={loadingGroups}

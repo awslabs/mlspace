@@ -162,7 +162,7 @@ def lambda_handler(event, context):
                 if (
                     requested_resource.startswith("/user/")
                     and "username" in path_params
-                    and request_method in ["PUT", "DELETE"]
+                    and request_method in ["GET", "PUT", "DELETE"]
                 ):
                     if Permission.ADMIN in user.permissions:
                         policy_statement["Effect"] = "Allow"
@@ -330,8 +330,6 @@ def lambda_handler(event, context):
                         if Permission.ADMIN in user.permissions:
                             policy_statement["Effect"] = "Allow"
                         else:
-                            # TODO: check if this user is a member of the Group
-                            logger.info(f"Checking if user {username} is member of group {target_scope}")
                             group_user = group_user_dao.get(target_scope, username)
                             if group_user:
                                 policy_statement["Effect"] = "Allow"
@@ -416,9 +414,17 @@ def _handle_dataset_request(request_method, path_params, user):
         if dataset.created_by == user.username:
             return True
         else:
+            # All admins can perform any action on any Group
+            if dataset.type == DatasetType.GROUP:
+                if Permission.ADMIN in user.permissions:
+                    return True
+                group_user = group_user_dao.get(dataset_scope, user.username)
+                # Non-admins can only view group datasets
+                if group_user and request_method not in ["PUT", "DELETE"]:
+                    return True
             # If it's a global or project dataset and they aren't the owner
             # they can't update or delete the dataset or any files
-            if request_method in ["PUT", "DELETE"]:
+            elif request_method in ["PUT", "DELETE"]:
                 logger.info(f"Access Denied. User: '{user.username}' does not own the specified dataset.")
             elif dataset.type == DatasetType.GLOBAL:
                 # If it's not a delete or update but it's a global dataset

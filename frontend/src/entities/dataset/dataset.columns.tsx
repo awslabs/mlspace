@@ -25,7 +25,7 @@ const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
         header: 'Dataset name',
         sortingField: 'datasetName',
         cell: (item) => (
-            <div data-cy={item.name}>{linkify('dataset', item.name!, item.scope!)}</div>
+            <div data-cy={item.name}>{linkify('dataset', item.name!, `${item.type!}/${item.scope!}`)}</div>
         ),
     },
     { id: 'type', header: 'Dataset type', sortingField: 'type', cell: (item) => item.type },

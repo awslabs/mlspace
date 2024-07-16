@@ -44,7 +44,7 @@ def test_list_users_for_group_success(mock_group_user_dao):
         GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="jdoe@amazon.com",
-            permissions=[Permission.GROUP_OWNER],
+            permissions=[Permission.COLLABORATOR],
         ),
         GroupUserModel(
             group_name=MOCK_GROUP_NAME,

@@ -150,7 +150,6 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
         if (stopUpload) {
             break;
         }
-        console.log(`Fetching presigned url for S3 URI ${s3Uri}`);
         const presignedUrl = await fetchPresignedURL(s3Uri);
 
         if (presignedUrl?.data) {

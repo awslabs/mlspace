@@ -156,6 +156,7 @@ def test_delete_project(
     mock_dataset_dao.get_all_for_scope.return_value = [
         DatasetModel(
             name="TestDataset",
+            type=DatasetType.PROJECT,
             scope=MOCK_PROJECT_NAME,
             description="Dataset for unit test",
             created_by="jdoe@example.com",
@@ -258,6 +259,7 @@ def test_delete_project_external_iam(
     mock_dataset_dao.get_all_for_scope.return_value = [
         DatasetModel(
             name="TestDataset",
+            type=DatasetType.PROJECT,
             scope=MOCK_PROJECT_NAME,
             description="Dataset for unit test",
             created_by="jdoe@example.com",

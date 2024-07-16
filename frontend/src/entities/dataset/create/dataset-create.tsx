@@ -49,11 +49,11 @@ import DatasetBrowser from '../../../modules/dataset/dataset-browser';
 import { DatasetBrowserActions } from '../dataset.actions';
 import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-browser.types';
 import { DatasetResourceObject } from '../../../modules/dataset/dataset-browser.reducer';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useUsername } from '../../../shared/util/auth-utils';
 import ContentLayout from '../../../shared/layout/content-layout';
 import { getAllGroups } from '../../group/group.reducer';
 import { IGroup } from '../../../shared/model/group.model';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 const formSchema = z.object({
     name: z
@@ -85,7 +85,7 @@ export function DatasetCreate () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     const { state, setState, errors, isValid, touchFields, setFields } = useValidationReducer(formSchema, {
         validateAll: false,
@@ -118,12 +118,12 @@ export function DatasetCreate () {
     function generateOptions () {
         // Standard options always available
         const options: { label: string; value?: string; options?: any[] }[] = [
-            { label: 'Global', value: 'global' },
-            { label: 'Private', value: 'private' },
+            {label: initCap(DatasetType.GLOBAL), value: DatasetType.GLOBAL},
+            {label: initCap(DatasetType.PRIVATE), value: DatasetType.PRIVATE},
         ];
 
         if (projectName) {
-            options.push({ label: 'Project', value: 'project' });
+            options.push({ label: initCap(DatasetType.PROJECT), value: DatasetType.PROJECT });
         }
 
         if (groups) {
@@ -157,7 +157,7 @@ export function DatasetCreate () {
                 await uploadResources(newDataset, resourceObjects, notificationService);
 
                 // Need to clear state/reset the form
-                navigate(`${basePath}/dataset/${newDataset.scope}/${newDataset.name}`);
+                navigate(`${basePath}/dataset/${newDataset.type}/${newDataset.scope}/${newDataset.name}`);
             }
             
             setState({ formSubmitting: false });
@@ -281,7 +281,7 @@ export function DatasetCreate () {
                                     options={generateOptions()}
                                     onChange={({ detail }) => {
                                         setFields({type: detail.selectedOption.value as keyof typeof DatasetType});
-                                        setFields({groupName: detail.selectedOption.value?.startsWith('group')  ? detail.selectedOption.label : ''});
+                                        setFields({groupName: detail.selectedOption.value?.startsWith('group') ? detail.selectedOption.label : ''});
                                     }}
                                     onBlur={() => touchFields(['type'])}
                                 />
