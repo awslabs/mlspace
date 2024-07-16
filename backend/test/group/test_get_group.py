@@ -21,9 +21,8 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.group import GroupModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
-from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.enums import Permission, ResourceType
+from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils.common_functions import generate_html_response, serialize_permissions
 
 TEST_ENV_CONFIG = {
