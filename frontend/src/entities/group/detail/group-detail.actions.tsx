@@ -97,7 +97,6 @@ const GroupActionHandler = (
     setModalState: (state: Partial<ModalProps>) => void
 ) => {
     const notificationService = NotificationService(dispatch);
-
     switch (e.detail.id) {
         case 'update_group':
             nav(`/admin/groups/edit/${groupName}`);
@@ -107,7 +106,7 @@ const GroupActionHandler = (
                 setDeleteModal({
                     resourceName: 'Group',
                     resourceType: 'group',
-                    postConfirm: () => dispatch(getAllGroups()),
+                    postConfirm: () => dispatch(getAllGroups(window.location.href.includes('admin'))),
                     onConfirm: async () =>
                         dispatch(deleteGroup(groupName!)).then((result) => {
                             setModalState({
@@ -120,7 +119,7 @@ const GroupActionHandler = (
                                 result
                             );
                             if (result.type.endsWith('/fulfilled')) {
-                                nav('/');
+                                nav(window.location.href.includes('admin') ? '/admin/groups' : '/personal/group');
                             }
                         }),
                     description: `This will delete the following group: ${groupName}.`

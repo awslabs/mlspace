@@ -60,22 +60,33 @@ const navigationSlice = createSlice({
         setItemsForProjectName (state, action: PayloadAction<string | undefined>) {
             const projectName = action.payload;
             if (projectName) {
-                const translateItems: any = state.enabledServices.batchTranslate
+                const translateItems: any = state.enabledServices.batchTranslate || state.enabledServices.realtimeTranslate
                     ? [
                         {
                             type: 'section',
                             text: 'Translation',
                             defaultExpanded: false,
                             items: [
-                                {
-                                    type: 'link',
-                                    text: 'Batch translate',
-                                    href: `#/project/${projectName}/batch-translate`,
-                                },
                             ],
                         },
                     ]
                     : [];
+
+                if (state.enabledServices.batchTranslate) {
+                    translateItems[0].items.push({
+                        type: 'link',
+                        text: 'Batch translate',
+                        href: `#/project/${projectName}/batch-translate`,
+                    });
+                }
+
+                if (state.enabledServices.realtimeTranslate) {
+                    translateItems[0].items.push({
+                        type: 'link',
+                        text: 'Real-time translation',
+                        href: '#/personal/translate/realtime',
+                    });
+                }
 
                 const groundTruthItems: any = state.enabledServices.labelingJob
                     ? [

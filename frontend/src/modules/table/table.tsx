@@ -71,6 +71,7 @@ export default function Table ({
     serverRequestProps,
     storeClear,
     keepSelection = true,
+    tableDescription,
 }: TableProps) {
     const currentUser = useAppSelector(selectCurrentUser);
     const dispatch = useDispatch();
@@ -213,6 +214,7 @@ export default function Table ({
                     <Condition condition={tableName !== undefined}>
                         <Header
                             variant={tableHeaderVariant}
+                            description={tableDescription}
                             counter={
                                 showCounter
                                     ? selectedItems?.length
