@@ -27,7 +27,7 @@ import { useNotificationService } from '../../shared/util/hooks';
 export type DeleteModalProps = {
     resourceName: string;
     resourceType: string;
-    onConfirm: () => Promise<PayloadAction<any, string>> | Promise<AxiosResponse<any, any>>;
+    onConfirm: () => Promise<PayloadAction<any, string>> | Promise<AxiosResponse<any, any>> | Promise<void>;
     postConfirm?: CallbackFunction;
     description?: string;
     disabled?: boolean;
@@ -54,7 +54,7 @@ function DeleteModal ({
     const dispatch = useAppDispatch();
     const notificationService = useNotificationService(dispatch);
     const responseHandler = (
-        response: PayloadAction<any, string> | AxiosResponse<any, any> | undefined
+        response?: PayloadAction<any, string> | AxiosResponse<any, any>
     ) => {
         if (response) {
             let success = false;
@@ -90,7 +90,7 @@ function DeleteModal ({
                             onClick={async () => {
                                 setProcessing(true);
                                 const response = await onConfirm();
-                                responseHandler(response);
+                                responseHandler(response || undefined);
                                 dispatch(dismissModal());
                                 if (postConfirm) {
                                     postConfirm();

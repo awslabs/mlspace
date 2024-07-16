@@ -22,7 +22,7 @@ from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObject
 from ml_space_lambda.data_access_objects.project import ProjectDAO, ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, ProjectUserModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
-from ml_space_lambda.enums import Permission
+from ml_space_lambda.enums import DatasetType, Permission
 
 
 def _migrate_primary_table(
@@ -93,24 +93,28 @@ def _migrate_access_table(source_table: str, ddb_client=None, mlspace_datasets_t
     global_datasets_created = project_datasets_created = private_datasets_created = 0
     print(f"Found {len(existing_data)} entries to migrated...")
     for record in existing_data:
+        if record["a_type"] == "global":
+            global_datasets_created += 1
+            dataset_type = DatasetType.GLOBAL
+        elif record["a_type"] == record["info"]["creator"]:
+            private_datasets_created += 1
+            dataset_type = DatasetType.PRIVATE
+        else:
+            project_datasets_created += 1
+            dataset_type = DatasetType.PROJECT
         dataset = DatasetModel(
-            record["a_type"],
-            record["dataset"],
-            record["info"]["description"],
-            record["info"]["s3_key"],
-            record["info"]["creator"],
+            scope=record["a_type"],
+            type=dataset_type,
+            name=record["dataset"],
+            description=record["info"]["description"],
+            location=record["info"]["s3_key"],
+            created_by=record["info"]["creator"],
             # This is supposed to be created at but we don't have
             # creation time in legacy systems so just using last
             # updated here
-            record["info"]["last_updated"],
+            created_at=record["info"]["last_updated"],
         )
         dataset_dao.create(dataset)
-        if record["a_type"] == "global":
-            global_datasets_created += 1
-        elif record["a_type"] == record["info"]["creator"]:
-            private_datasets_created += 1
-        else:
-            project_datasets_created += 1
 
     print(
         f"Created {global_datasets_created + project_datasets_created + private_datasets_created} "

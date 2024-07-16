@@ -45,5 +45,5 @@ export type DatasetComponentsMatch = {
 };
 
 export const datasetComponents = (path?: string): DatasetComponentsMatch => {
-    return path?.match(/^s3:\/\/(?<bucket>.+?)\/(?<type>global|private|project)(\/(?<scope>.+))?\/datasets\/(?<name>.+?)\/(?<location>(?<prefix>(.+?\/)+)?(?<object>.+)?)$/)?.groups || {};
+    return path?.match(/^s3:\/\/(?<bucket>.+?)\/(?<type>global|private|project|group)(\/(?<scope>.+))?\/datasets\/(?<name>.+?)\/(?<location>(?<prefix>(.+?\/)+)?(?<object>.+)?)$/)?.groups || {};
 };

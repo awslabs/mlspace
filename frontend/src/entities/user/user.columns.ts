@@ -17,6 +17,17 @@
 import { TableProps } from '@cloudscape-design/components';
 import { IProjectUser } from '../../shared/model/projectUser.model';
 import { IUser, Permission } from '../../shared/model/user.model';
+import { IGroupUser } from '../../shared/model/groupUser.model';
+
+const groupUserColumns: TableProps.ColumnDefinition<IGroupUser>[] = [
+    { id: 'name', header: 'Name', sortingField: 'name', cell: (item) => item.user },
+    {
+        id: 'co',
+        header: 'Collaborator',
+        sortingField: 'co',
+        cell: (item) => (item.permissions?.includes(Permission.COLLABORATOR) ? 'Yes' : 'No'),
+    },
+];
 
 const projectUserColumns: TableProps.ColumnDefinition<IProjectUser>[] = [
     { id: 'name', header: 'Name', sortingField: 'name', cell: (item) => item.user },
@@ -65,6 +76,7 @@ const userColumns: TableProps.ColumnDefinition<IUser>[] = [
 ];
 
 const visibleColumns: string[] = ['name', 'suspended', 'admin', 'lastLogin'];
+const visibleGroupUserColumns: string[] = ['name', 'co'];
 const visibleProjectUserColumns: string[] = ['name', 'mo', 'co'];
 
 const visibleContentPreference = {
@@ -84,6 +96,8 @@ const visibleContentPreference = {
 const addUserVisibleColumns: string[] = ['name', 'displayName', 'email'];
 
 export {
+    groupUserColumns,
+    visibleGroupUserColumns,
     projectUserColumns,
     userColumns,
     visibleColumns,

@@ -32,7 +32,7 @@ import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { IDataset } from '../../../shared/model/dataset.model';
 import {
-    getDatasetByScopeAndName,
+    getDataset,
     editDataset,
     datasetBinding,
     loadingDataset,
@@ -52,7 +52,7 @@ const formSchema = z.object({
 
 export function DatasetUpdate () {
     const dataset: IDataset = useAppSelector(datasetBinding);
-    const { projectName, scope, name } = useParams();
+    const { projectName, type, scope, name } = useParams();
     const [submitLoading, setSubmitLoading] = useState(false);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -82,15 +82,15 @@ export function DatasetUpdate () {
             setBreadcrumbs([
                 getBase(projectName),
                 { text: 'Datasets', href: `#${basePath}/dataset` },
-                { text: `${name}`, href: `#${basePath}/dataset/${scope}/${name}/edit` },
+                { text: `${name}`, href: `#${basePath}/dataset/${type}/${scope}/${name}/edit` },
             ])
         );
-        dispatch(getDatasetByScopeAndName({ scope: scope, name: name }))
+        dispatch(getDataset({ type: type, scope: scope, name: name }))
             .unwrap()
             .catch(() => {
                 navigate('/404');
             });
-    }, [dispatch, navigate, basePath, name, projectName, scope]);
+    }, [dispatch, navigate, basePath, name, projectName, scope, type]);
 
     function handleSubmit () {
         if (state.formValid) {

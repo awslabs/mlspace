@@ -17,6 +17,7 @@ export enum DatasetType {
     GLOBAL = 'global',
     PRIVATE = 'private',
     PROJECT = 'project',
+    GROUP = 'group',
 }
 
 export type IDataset = {

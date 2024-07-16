@@ -31,6 +31,7 @@ class DatasetModel:
     def __init__(
         self,
         scope: str,
+        type: DatasetType,
         name: str,
         description: str,
         location: str,
@@ -40,18 +41,14 @@ class DatasetModel:
     ):
         now = int(time.time())
         self.scope = scope
+        self.type = type
         self.name = name
         self.description = description
         self.location = location
         self.created_by = created_by
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
-        if scope == DatasetType.GLOBAL:
-            self.type = DatasetType.GLOBAL
-        elif scope == created_by:
-            self.type = DatasetType.PRIVATE
-        else:
-            self.type = DatasetType.PROJECT
+
         env_variables = get_environment_variables()
         self.prefix = self.location.replace(f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/", "")
         if not self.prefix.endswith("/"):
@@ -73,6 +70,7 @@ class DatasetModel:
     def from_dict(dict_object: dict) -> DatasetModel:
         return DatasetModel(
             dict_object["scope"],
+            dict_object["type"],
             dict_object["name"],
             dict_object["description"],
             dict_object["location"],

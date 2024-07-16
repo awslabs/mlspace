@@ -24,6 +24,7 @@ class DatasetType(str, Enum):
     GLOBAL = "global"
     PRIVATE = "private"
     PROJECT = "project"
+    GROUP = "group"
 
 
 # Updating the ResourceType enumeration will likely require an update to the
@@ -95,6 +96,8 @@ class EnvVariable(str, Enum):
     RESOURCE_SCHEDULE_TABLE = "RESOURCE_SCHEDULE_TABLE"
     RESOURCE_METADATA_TABLE = "RESOURCE_METADATA_TABLE"
     APP_CONFIGURATION_TABLE = "APP_CONFIGURATION_TABLE"
+    GROUPS_TABLE = "GROUPS_TABLE"
+    GROUP_USERS_TABLE = "GROUP_USERS_TABLE"
     AWS_DEFAULT_REGION = "AWS_DEFAULT_REGION"
     DATA_BUCKET = "DATA_BUCKET"
     EMR_CONFIG_BUCKET = "EMR_CONFIG_BUCKET"

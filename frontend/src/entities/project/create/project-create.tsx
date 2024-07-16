@@ -85,7 +85,7 @@ export function ProjectCreate ({ isEdit }: ResourceCreateProperties) {
             .max(4000, {
                 message: 'Project description cannot be more than 4000 characters.',
             })
-            .regex(/[ -~]/, {
+            .regex(/^[ -~]+$/, {
                 message: 'Project description can only contain printable characters',
             }),
         emrRuntime: z

@@ -30,7 +30,13 @@ from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, Pro
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, EnvVariable, Permission, ResourceType
-from ml_space_lambda.utils.common_functions import api_wrapper, retry_config, serialize_permissions, total_project_owners
+from ml_space_lambda.utils.common_functions import (
+    api_wrapper,
+    retry_config,
+    serialize_permissions,
+    total_project_owners,
+    validate_input,
+)
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
@@ -50,21 +56,8 @@ s3 = boto3.client("s3", config=retry_config)
 translate = boto3.client("translate", config=retry_config)
 
 project_name_regex = re.compile(r"[^a-zA-Z0-9]")
-project_desc_regex = re.compile(r"/[^ -~]/")
+project_desc_regex = re.compile(r"[^ -~]")
 project_deny_list = ["global", "project", "private", "global-read-only", "logs", "create"]
-
-
-def _validate_input(input: str, max_length: int, field: str) -> None:
-    if len(input) > max_length:
-        logging.error(f"Project {field} with length {len(input)} is over the max length of {max_length}")
-        raise Exception(f"Project {field} exceeded the maximum allowable length of {max_length}.")
-
-    # Input validation: projectName must not have dashes
-    invalid_char_found = project_name_regex.search(input) if field == "name" else project_desc_regex.search(input)
-
-    if invalid_char_found:
-        logging.error(f"Invalid characters in project {field}: {invalid_char_found}")
-        raise Exception(f"Project {field} contains invalid character.")
 
 
 def _add_project_user(project_name: str, username: str, permissions: Optional[List[Permission]] = None):
@@ -150,8 +143,8 @@ def create(event, context):
         event_body = json.loads(event["body"])
         project_name = event_body["name"]
 
-        _validate_input(project_name, 24, "name")
-        _validate_input(event_body["description"], 4000, "description")
+        validate_input(project_name, 24, "Project name", project_name_regex)
+        validate_input(event_body["description"], 4000, "Project description", project_desc_regex)
 
         if project_name in project_deny_list:
             raise Exception(f"'{project_name}' is a reserved word. You cannot create a project with that name.")
@@ -332,7 +325,7 @@ def update(event, context):
     if not existing_project:
         raise ValueError("Specified project does not exist")
     if "description" in event_body:
-        _validate_input(event_body["description"], 4000, "description")
+        validate_input(event_body["description"], 4000, "description", project_desc_regex)
         existing_project.description = event_body["description"]
     if "suspended" in event_body:
         suspended = event_body["suspended"]

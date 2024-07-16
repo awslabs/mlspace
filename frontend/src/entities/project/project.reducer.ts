@@ -22,7 +22,7 @@ import {
     isRejected,
     PayloadAction,
 } from '@reduxjs/toolkit';
-import { Permission } from 'src/shared/model/user.model';
+import { Permission } from '../../shared/model/user.model';
 import { GetProjectRequestProperties, IProject } from '../../shared/model/project.model';
 import axios from '../../shared/util/axios-utils';
 
@@ -156,4 +156,4 @@ export const {
     toggleAddableUsers,
     resetCurrentProject,
 } = ProjectSlice.actions;
-export const userProjects = (state: any) => state.project.projects;
+export const selectUserProjects = (state: any) => state.project.projects;

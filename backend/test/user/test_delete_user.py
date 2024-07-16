@@ -150,6 +150,45 @@ def test_delete_user(mock_project_user_dao, mock_user_dao, mock_iam_manager):
     mock_user_dao.delete.assert_called_with(second_user.username)
 
 
+@mock.patch("ml_space_lambda.user.lambda_functions.iam_manager")
+@mock.patch("ml_space_lambda.user.lambda_functions.user_dao")
+@mock.patch("ml_space_lambda.user.lambda_functions.project_user_dao")
+def test_delete_user_without_iam(mock_project_user_dao, mock_user_dao, mock_iam_manager):
+    mock_project_user_dao.get_projects_for_user.return_value = mock_projects_for_second_user
+    mock_project_user_dao.get_users_for_project.side_effect = _get_project_user_mock
+    mock_user_dao.get.return_value = second_user
+    mlspace_config.env_variables = {}
+
+    expected_response = generate_html_response(200, f"User {second_user.username} deleted")
+    mock_iam_manager.remove_all_user_roles.return_value = None
+    with mock.patch.dict(os.environ, {}, clear=True):
+        assert (
+            delete_user(
+                {
+                    "pathParameters": {
+                        "username": second_user.username,
+                    },
+                },
+                mock_context,
+            )
+            == expected_response
+        )
+
+    mock_project_user_dao.get_projects_for_user.assert_called_with(second_user.username)
+    mock_project_user_dao.get_users_for_project.assert_called_with(mock_project_2_name)
+    assert mock_project_user_dao.get_projects_for_user.call_count == 2
+    mock_project_user_dao.delete.assert_has_calls(
+        [
+            mock.call(second_user.username, mock_project_1_name),
+            mock.call(second_user.username, mock_project_2_name),
+            mock.call(second_user.username, mock_project_3_name),
+        ]
+    )
+    mock_iam_manager.remove_all_user_roles.assert_not_called()
+    mock_user_dao.get.assert_called_with(second_user.username)
+    mock_user_dao.delete.assert_called_with(second_user.username)
+
+
 @mock.patch("ml_space_lambda.user.lambda_functions.user_dao")
 @mock.patch("ml_space_lambda.user.lambda_functions.project_user_dao")
 def test_delete_user_last_project_owner(mock_project_user_dao, mock_user_dao):
