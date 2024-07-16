@@ -29,3 +29,8 @@ jobs:
           git push origin release/${{ github.event.inputs.release_tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.LEAD_ACCESS_TOKEN }}
+      - name: Draft Pull Request
+        run: |
+          gh pr create -d --title "Release ${{github.event.inputs.release_tag}} into Main" --base origin/main --head release/${{ github.event.inputs.release_tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}
