@@ -27,7 +27,6 @@ function NotificationExpandableSection (props: ExpandableSectionProps) {
 
     return (
         <div onKeyDown={(event) => {
-            console.log(event.code);
             switch (event.code) {
                 case 'ArrowLeft': // left arrow
                     setExpanded(false);
