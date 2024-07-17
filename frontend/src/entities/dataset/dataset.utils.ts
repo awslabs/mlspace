@@ -23,7 +23,7 @@ export const validateName = function (datasetName: string) {
 };
 
 export const showAccessLevel = (dataset: IDataset) => {
-    if (dataset.type === DatasetType.PROJECT || dataset.type === DatasetType.GROUP) {
+    if (dataset.type === DatasetType.PROJECT) {
         return `${dataset.type}: ${dataset.scope}`;
     } else {
         return dataset.type;

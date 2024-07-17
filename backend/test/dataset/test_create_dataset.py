@@ -69,7 +69,7 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str, type:
         (DatasetType.GLOBAL, "global"),
         (DatasetType.PROJECT, "project_name"),
         (DatasetType.PRIVATE, "username"),
-        (DatasetType.GROUP, "group_name"),
+        (DatasetType.GROUP, "group"),
     ],
     ids=[
         "create_global_dataset",
@@ -84,7 +84,7 @@ def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, sc
     mock_event = generate_event(dataset_type, scope)
     mock_dataset_dao.get.return_value = None
 
-    if scope == DatasetType.GLOBAL:
+    if scope == DatasetType.GLOBAL or scope == DatasetType.GROUP:
         directory_name = f"{scope}/datasets/{test_dataset_name}/"
     else:
         directory_name = f"{dataset_type}/{scope}/datasets/{test_dataset_name}/"

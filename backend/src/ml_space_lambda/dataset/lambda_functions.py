@@ -192,6 +192,9 @@ def create_dataset(event, context):
     if dataset_type == DatasetType.GLOBAL:
         scope = "global"
         directory_name = f"global/datasets/{dataset_name}/"
+    elif dataset_type == DatasetType.GROUP:
+        scope = "group"
+        directory_name = f"group/datasets/{dataset_name}/"
     else:
         scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
         directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
