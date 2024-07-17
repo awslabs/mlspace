@@ -47,6 +47,7 @@ export function Group () {
             actions={actions}
             allItems={groups}
             tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
+            tableDescription={pathname.includes('admin') ? `All ${window.env.APPLICATION_NAME} groups` : 'The groups that you are a member of'}
             columnDefinitions={groupColumns}
             visibleColumns={visibleColumns}
             loadingItems={loadingGroups}

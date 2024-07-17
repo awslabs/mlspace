@@ -91,7 +91,7 @@ const GroupActionHandler = async (
                     resourceName: 'Group',
                     resourceType: 'group',
                     onConfirm: async () => dispatch(deleteGroup(selectedGroup.name)),
-                    postConfirm: () => dispatch(getAllGroups()),
+                    postConfirm: () => dispatch(getAllGroups(true)),
                     description: `This will delete the following group: ${selectedGroup.name}.`
                 })
             );
