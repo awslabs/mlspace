@@ -29,6 +29,7 @@ import {
     StatusIndicator,
     Alert,
     Textarea,
+    Multiselect,
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -54,6 +55,8 @@ import ContentLayout from '../../../shared/layout/content-layout';
 import { getAllGroups } from '../../group/group.reducer';
 import { IGroup } from '../../../shared/model/group.model';
 import { useNotificationService } from '../../../shared/util/hooks';
+import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
+import Condition from '../../../modules/condition';
 
 const formSchema = z.object({
     name: z
@@ -93,7 +96,7 @@ export function DatasetCreate () {
             name: '',
             description: '',
             type: DatasetType.PRIVATE,
-            groupName: '',
+            groupNames: [] as OptionDefinition[],
         },
         touched: {},
         formSubmitting: false,
@@ -127,14 +130,18 @@ export function DatasetCreate () {
         }
 
         if (groups) {
-            const groupLabels: { label: string; value: string }[] = [];
-            groups.map((group, index) => {
-                groupLabels.push({ label: group.name, value: `group${index}`});
-            });
-            options.push({ label: 'Groups', options: groupLabels});
+            options.push({ label: initCap(DatasetType.GROUP), value: DatasetType.GROUP });
         }
 
         return options;
+    }
+
+    function generateGroupOptions () {
+        const groupOptions: { label: string; value: string }[] = [];
+        groups.map((group) => {
+            groupOptions.push({ label: group.name, value: group.name});
+        });
+        return groupOptions;
     }
 
     async function handleSubmit () {
@@ -275,17 +282,39 @@ export function DatasetCreate () {
                                 <Select
                                     data-cy='dataset-type-select'
                                     selectedOption={{
-                                        label: state.form.groupName ? state.form.groupName : initCap(state.form.type || ''),
+                                        label: initCap(state.form.type || ''),
                                         value: state.form.type,
                                     }}
                                     options={generateOptions()}
                                     onChange={({ detail }) => {
                                         setFields({type: detail.selectedOption.value as keyof typeof DatasetType});
-                                        setFields({groupName: detail.selectedOption.value?.startsWith('group') ? detail.selectedOption.label : ''});
                                     }}
                                     onBlur={() => touchFields(['type'])}
                                 />
                             </FormField>
+                            <Condition condition={state.form.type === DatasetType.GROUP}>
+                                <FormField
+                                    description={
+                                        'Group datasets are accessible only to members of that group. ' +
+                                        'A dataset may be associated with multiple groups.'
+                                    }
+                                    errorText={errors.groupNames}
+                                    label='Groups'
+                                >
+                                    <Multiselect
+                                        selectedOptions={state.form.groupNames}
+                                        onChange={({ detail }) => {
+                                            setFields({groupNames: detail.selectedOptions});
+                                        }}
+                                        options={generateGroupOptions()}
+                                        placeholder='Choose one or more groups'
+                                        deselectAriaLabel={(e) => `Remove ${e.label}`}
+                                        selectedAriaLabel='Selected groups'
+                                        filteringType='auto'
+                                        data-cy='group-name-multiselect'
+                                    />
+                                </FormField>
+                            </Condition>
                         </SpaceBetween>
                     </Container>
                     <Container>
