@@ -28,6 +28,7 @@ import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import Modal, { ModalProps } from '../../../modules/modal';
 import { useNotificationService } from '../../../shared/util/hooks';
+import { INotificationService } from '../../../shared/layout/notification/notification.service';
 
 function ProjectDetailActions () {
     const dispatch = useAppDispatch();
@@ -57,6 +58,7 @@ function ProjectActionButton (
     const actionItems: Array<ButtonDropdownProps.ItemOrGroup> = [];
     const currentUser = useAppSelector(selectCurrentUser);
     const projectPermissions = useAppSelector((state) => state.project.permissions);
+    const notificationService = useNotificationService(dispatch);
 
     const [modalState, setModalState] = React.useState<Partial<ModalProps>>({
         visible: false,
@@ -104,7 +106,8 @@ function ProjectActionButton (
                     nav,
                     dispatch,
                     modalState as ModalProps,
-                    setModalState
+                    setModalState,
+                    notificationService
                 )
             }
         >
@@ -121,9 +124,9 @@ const ProjectActionHandler = (
     nav: (endpoint: string) => void,
     dispatch: ThunkDispatch<any, any, Action>,
     modalState: ModalProps,
-    setModalState: (state: Partial<ModalProps>) => void
+    setModalState: (state: Partial<ModalProps>) => void,
+    notificationService: INotificationService
 ) => {
-    const notificationService = useNotificationService(dispatch);
 
     switch (e.detail.id) {
         case 'update':

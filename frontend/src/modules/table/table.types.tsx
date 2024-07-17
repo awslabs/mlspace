@@ -59,6 +59,7 @@ type TableProps<Entry = TableEntry> = {
     serverFetch?: AsyncThunk<any, ServerRequestProps, any>;
     storeClear?: ActionCreatorWithoutPayload;
     keepSelection?: boolean;
+    tableDescription?: string;
 };
 
 type TableEntry = any;

@@ -47,10 +47,10 @@ jobs:
           status: success()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: ${{ job.status }}
+          SLACK_COLOR: ${{ contains(join(needs.*.result, ' '), 'failure') && 'failure' || 'success' }}
           SLACK_TITLE: 'Build Finished'
           SLACK_FOOTER: ''
           MSG_MINIMAL: true
           SLACK_MESSAGE_ON_FAILURE: '<!here> FAILED to publish Draft release for ${{ steps.get-version.outputs.version }}'
-          SLACK_MESSAGE_ON_SUCCESS: '<!here> Draft release published for ${{ steps.get-version.outputs.version }}'
+          SLACK_MESSAGE_ON_SUCCESS: '<!here> Draft release published for <https://github.com/awslabs/mlspace/releases|${{ steps.get-version.outputs.version }}>'
           SLACK_MESSAGE: '<!here> Draft release finished with status ${{ job.status }} for ${{ steps.get-version.outputs.version }}'

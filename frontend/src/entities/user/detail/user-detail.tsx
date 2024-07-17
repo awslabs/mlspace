@@ -90,7 +90,7 @@ export function UserDetail () {
 
                 <Tabs variant='container' tabs={[{
                     id: 'projects',
-                    label: 'Project Membership',
+                    label: 'Project membership',
                     content: (
                         <Table
                             tableName='Project'
@@ -114,7 +114,7 @@ export function UserDetail () {
                     )
                 }, {
                     id: 'groups',
-                    label: 'Group Membership',
+                    label: 'Group membership',
                     content: (
                         <Table
                             tableName='Group'

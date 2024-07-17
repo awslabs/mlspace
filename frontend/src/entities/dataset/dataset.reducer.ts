@@ -69,7 +69,7 @@ export const deleteFileFromDataset = createAsyncThunk(
     'dataset/remove_file_from_dataset',
     async ({ type, scope, datasetName, files }: any) => {
         for (const file of files) {
-            const requestUrl = `/dataset/${type}/${scope}/${datasetName}/${file}`;
+            const requestUrl = `v2/dataset/${type}/${scope}/${datasetName}/${file}`;
             await axios.delete<IDataset>(requestUrl);
         }
     }

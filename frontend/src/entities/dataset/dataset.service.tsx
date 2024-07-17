@@ -101,7 +101,7 @@ export const buildS3KeysForResourceObjects = (
             case DatasetType.GLOBAL:
                 return [`global/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
             case DatasetType.GROUP:
-                return [`group/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
+                return [`group/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
         }
     });
 };

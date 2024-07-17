@@ -14,13 +14,14 @@
   limitations under the License.
 */
 
-import { ExpandableSection, FlashbarProps } from '@cloudscape-design/components';
+import { FlashbarProps } from '@cloudscape-design/components';
 import { v4 } from 'uuid';
 import { addNotification, clearNotification } from './notification.reducer';
 import { Action, ThunkDispatch, isRejected } from '@reduxjs/toolkit';
 import { NotificationProp } from './notifications.props';
 import React from 'react';
 import { isFulfilled } from '@reduxjs/toolkit';
+import NotificationExpandableSection from './notification-expandable-section';
 
 function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
     function generateNotification (header: string, type: FlashbarProps.Type, id: string = v4(), content: React.ReactNode = null, dismissible = true) {
@@ -51,9 +52,9 @@ function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
         } else if (isRejected(result)) {
             generateNotification(`Failed to ${action}.`, 'error', undefined, (
                 result.error.message ? (
-                    <ExpandableSection headingTagOverride={'h5'} headerText={'Details'}>
+                    <NotificationExpandableSection headerText={'Details'} headingTagOverride={'h5'}>
                         {result.error.message}
-                    </ExpandableSection>
+                    </NotificationExpandableSection>
                 ) : <></>
             ));
         }

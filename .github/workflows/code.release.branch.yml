@@ -9,6 +9,7 @@ on:
 permissions:
   id-token: write
   contents: write
+  pull-requests: write
 
 jobs:
   MakeNewReleaseBranch:
@@ -25,7 +26,12 @@ jobs:
           RELEASE_TAG=${{ github.event.inputs.release_tag }}
           git checkout -b release/${{ github.event.inputs.release_tag }}
           echo "$( jq --arg version ${RELEASE_TAG:1} '.version = $version' frontend/package.json )" > frontend/package.json 
-          git commit -a -m "updating version for release ${{ github.event.inputs.release_tag }}"
+          git commit -a -m "Updating version for release ${{ github.event.inputs.release_tag }}"
           git push origin release/${{ github.event.inputs.release_tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.LEAD_ACCESS_TOKEN }}
+      - name: Draft Pull Request
+        run: |
+          gh pr create -d --title "Release ${{github.event.inputs.release_tag}} into Main" --body "Release ${{github.event.inputs.release_tag}} PR into Main" --base main --head release/${{ github.event.inputs.release_tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}

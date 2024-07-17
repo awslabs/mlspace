@@ -22,6 +22,7 @@ import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { useAppDispatch } from '../../../config/store';
 import { TransformJobResourceMetadata } from '../../../shared/model/resource-metadata.model';
 import { useNotificationService } from '../../../shared/util/hooks';
+import { INotificationService } from '../../../shared/layout/notification/notification.service';
 
 function BatchTransformJobActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -53,6 +54,7 @@ function BatchTransformJobActionButton (
     navigate: NavigateFunction,
     props?: any
 ) {
+    const notificationService = useNotificationService(dispatch);
     const selectedJob = props?.selectedItems[0];
 
     return (
@@ -68,7 +70,7 @@ function BatchTransformJobActionButton (
             variant='primary'
             disabled={selectedJob === undefined}
             onItemClick={(e) =>
-                BatchTransformJobActionHandler(e, selectedJob, projectName, dispatch, navigate)
+                BatchTransformJobActionHandler(e, selectedJob, projectName, dispatch, navigate, notificationService)
             }
         >
             Actions
@@ -81,9 +83,9 @@ const BatchTransformJobActionHandler = (
     transform: TransformJobResourceMetadata,
     projectName: string,
     dispatch: ThunkDispatch<any, any, Action>,
-    navigate: NavigateFunction
+    navigate: NavigateFunction,
+    notificationService: INotificationService
 ) => {
-    const notificationService = useNotificationService(dispatch);
     switch (e.detail.id) {
         case 'stop':
             stopTransformJob({ jobName: transform.resourceId, projectName: projectName }).then(
