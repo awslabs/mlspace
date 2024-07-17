@@ -117,7 +117,7 @@ export function Report () {
                     variant='primary'
                     disabled={!props?.selectedItems[0]}
                     onItemClick={(e) => {
-                        ReportActionHandler(e, props?.selectedItems[0].Name, dispatch);
+                        ReportActionHandler(e, props?.selectedItems[0].Name, dispatch, notificationService);
                         (async () => {
                             await listReports().then((result) => {
                                 // The list_objects_v2 API has a delay before the deleted report
