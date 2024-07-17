@@ -98,7 +98,7 @@ export class DatasetsApiStack extends Stack {
                 resource: 'dataset',
                 description: 'Removes a file from a dataset',
                 // use a greedy path here so object keys containing '/' are fully matched
-                path: 'dataset/{type}/{scope}/{datasetName}/{file+}',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}/{file+}',
                 method: 'DELETE',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,
