@@ -15,7 +15,7 @@
 */
 
 import React from 'react';
-import { TableProps } from '@cloudscape-design/components';
+import { Link, TableProps } from '@cloudscape-design/components';
 import { formatDate } from '../../shared/util/date-utils';
 import { linkify, prettyStatus, sortStringValue } from '../../shared/util/table-utils';
 import { NotebookResourceMetadata } from '../../shared/model/resource-metadata.model';
@@ -53,6 +53,12 @@ const defaultColumns: TableProps.ColumnDefinition<NotebookResourceMetadata>[] = 
         sortingField: 'user',
         cell: (item) => item.user,
     },
+    {
+        id: 'project',
+        header: 'Project',
+        sortingField: 'project',
+        cell: (item) => (<Link href={`#/project/${item.project}`}>{item.project}</Link>)
+    }
 ];
 
 const visibleColumns: string[] = [
@@ -60,6 +66,7 @@ const visibleColumns: string[] = [
     'creationTime',
     'status',
     'instanceType',
+    'project',
     'createdBy',
 ];
 
@@ -73,6 +80,7 @@ const visibleContentPreference = {
                 { id: 'creationTime', label: 'Creation time' },
                 { id: 'status', label: 'Status' },
                 { id: 'instanceType', label: 'Instance type' },
+                { id: 'project', label: 'Project'},
                 { id: 'createdBy', label: 'Created by' },
             ],
         },
