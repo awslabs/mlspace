@@ -57,6 +57,7 @@ ENV_DEFAULTS = {
     EnvVariable.USERS_TABLE: "mlspace-users",
     EnvVariable.GROUPS_TABLE: "mlspace-groups",
     EnvVariable.GROUP_USERS_TABLE: "mlspace-group-users",
+    EnvVariable.GROUP_DATASETS_TABLE: "mlspace-group-datasets",
 }
 
 

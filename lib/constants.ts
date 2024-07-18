@@ -27,6 +27,7 @@ export const RESOURCE_SCHEDULE_TABLE_NAME = 'mlspace-resource-schedule';
 export const RESOURCE_METADATA_TABLE_NAME = 'mlspace-resource-metadata';
 export const APP_CONFIGURATION_TABLE_NAME = 'mlspace-app-configuration';
 export const GROUPS_TABLE_NAME = 'mlspace-groups';
+export const GROUP_DATASETS_TABLE_NAME = 'mlspace-group-datasets';
 export const GROUP_USERS_TABLE_NAME = 'mlspace-group-users';
 export const CONFIG_BUCKET_NAME = 'mlspace-config';
 export const DATA_BUCKET_NAME = 'mlspace-data';

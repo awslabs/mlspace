@@ -22,6 +22,7 @@ import boto3
 from botocore.config import Config
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO, GroupDatasetModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
@@ -42,6 +43,7 @@ s3 = boto3.client(
 s3_resource = boto3.resource("s3", config=retry_config)
 dataset_dao = DatasetDAO()
 group_user_dao = GroupUserDAO()
+group_dataset_dao = GroupDatasetDAO()
 
 dataset_description_regex = re.compile(r"[^\w\-\s'.]")
 
@@ -64,6 +66,9 @@ def delete(event, context):
     s3_prefix = get_dataset_prefix(scope, dataset_name)
     bucket.objects.filter(Prefix=s3_prefix).delete()
     dataset_dao.delete(scope, dataset_name)
+    # TODO: create dedicated delete query for performance?
+    for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset_name):
+        group_dataset_dao.delete(group_dataset.group, group_dataset.dataset)
 
     return f"Successfully deleted {dataset_name}"
 
@@ -191,21 +196,24 @@ def create_dataset(event, context):
 
     if dataset_type == DatasetType.GLOBAL:
         scope = "global"
+        dataset_scope = scope
         directory_name = f"global/datasets/{dataset_name}/"
     elif dataset_type == DatasetType.GROUP:
-        scope = "group"
+        scope = body.get("datasetScope")
+        dataset_scope = "group"
         directory_name = f"group/datasets/{dataset_name}/"
     else:
         scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
+        dataset_scope = scope
         directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
 
     if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
         raise Exception("Dataset headers do not match expected type and scope.")
 
-    if not dataset_dao.get(scope, dataset_name):
+    if not dataset_dao.get(dataset_scope, dataset_name):
         dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
         dataset = DatasetModel(
-            scope=scope,
+            scope=dataset_scope,
             type=dataset_type,
             name=dataset_name,
             description=body.get("datasetDescription", ""),
@@ -213,6 +221,11 @@ def create_dataset(event, context):
             created_by=event["requestContext"]["authorizer"]["principalId"],
         )
         dataset_dao.create(dataset)
+
+        if dataset_type == DatasetType.GROUP:
+            group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
+            # TODO: initiate dynamic role updates for group
+
         return {"status": "success", "dataset": dataset.to_dict()}
     else:
         raise Exception(f"Dataset {dataset_name} already exists.")
@@ -227,9 +240,11 @@ def list_resources(event, context):
     # Get the users private datasets
     datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
     # Get the group datasets for groups this user is a member of
-    groups = group_user_dao.get_groups_for_user(username)
-    for group in groups:
-        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.GROUP, group.group))
+    group_datasets = set()
+    for group in group_user_dao.get_groups_for_user(username):
+        for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
+            group_datasets.add(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
+    datasets.extend(list(group_datasets))
 
     if event["pathParameters"] and "projectName" in event["pathParameters"]:
         project_name = event["pathParameters"]["projectName"].replace('"', "")
