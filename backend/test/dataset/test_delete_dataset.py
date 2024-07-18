@@ -19,6 +19,7 @@ from unittest import mock
 
 from botocore.exceptions import ClientError
 
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
 from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
@@ -34,7 +35,7 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 @mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3_resource")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
-def test_delete_dataset_success(mock_dataset_dao, mock_s3, group_dataset_dao, mock_private_dataset):
+def test_delete_dataset_success_without_groups(mock_dataset_dao, mock_s3, group_dataset_dao, mock_private_dataset):
     mock_event = {
         "pathParameters": {
             "scope": mock_private_dataset.scope,
@@ -55,6 +56,45 @@ def test_delete_dataset_success(mock_dataset_dao, mock_s3, group_dataset_dao, mo
     )
     mock_dataset_dao.get.assert_called_with(mock_private_dataset.scope, mock_private_dataset.name)
     mock_dataset_dao.delete.assert_called_with(mock_private_dataset.scope, mock_private_dataset.name)
+
+
+@mock.patch("ml_space_lambda.dataset.lambda_functions.iam_manager")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.s3_resource")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
+def test_delete_dataset_success_with_groups(mock_dataset_dao, mock_s3, group_dataset_dao, mock_iam_manager, mock_private_dataset):
+    mock_event = {
+        "pathParameters": {
+            "scope": mock_private_dataset.scope,
+            "datasetName": mock_private_dataset.name,
+        },
+    }
+
+    group_dataset_1 = GroupDatasetModel(group_name="TestGroup1", dataset_name="TestDataset1")
+    group_dataset_2 = GroupDatasetModel(group_name="TestGroup2", dataset_name="TestDataset2")
+
+    mock_bucket = mock.MagicMock()
+    mock_s3.Bucket.return_value = mock_bucket
+    mock_dataset_dao.get.return_value = mock_private_dataset
+    group_dataset_dao.get_groups_for_dataset.return_value = [group_dataset_1, group_dataset_2]
+    mock_dataset_dao.delete.return_value = None
+    expected_response = generate_html_response(200, f"Successfully deleted {mock_private_dataset.name}")
+
+    assert lambda_handler(mock_event, mock_context) == expected_response
+
+    mock_bucket.objects.filter.assert_called_with(
+        Prefix=f"private/{mock_private_dataset.scope}/datasets/{mock_private_dataset.name}/"
+    )
+    mock_dataset_dao.get.assert_called_with(mock_private_dataset.scope, mock_private_dataset.name)
+    mock_dataset_dao.delete.assert_called_with(mock_private_dataset.scope, mock_private_dataset.name)
+    group_dataset_dao.get_groups_for_dataset.assert_called_with(mock_private_dataset.name)
+    group_dataset_dao.delete.assert_has_calls(
+        [
+            mock.call(group_dataset_1.group, group_dataset_1.dataset),
+            mock.call(group_dataset_2.group, group_dataset_2.dataset),
+        ]
+    )
+    mock_iam_manager.update_groups.assert_called()
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3_resource")

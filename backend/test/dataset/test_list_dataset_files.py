@@ -53,6 +53,7 @@ def test_list_dataset_files_success(mock_s3, mock_dataset_dao, mock_global_datas
             {"Key": "global/datasets/example_dataset/file2.png", "Size": 1243},
         ],
         "CommonPrefixes": [{"Prefix": "global/datasets/example_dataset/nested"}],
+        "NextContinuationToken": "123"
     }
 
     expected_response = generate_html_response(
@@ -61,6 +62,7 @@ def test_list_dataset_files_success(mock_s3, mock_dataset_dao, mock_global_datas
             "pageSize": 1000,
             "prefix": "global/datasets/example_dataset/",
             "bucket": "mlspace-data-bucket",
+            "nextToken": "123",
             "contents": [
                 {"key": "global/datasets/example_dataset/file1.txt", "size": 643, "type": "object"},
                 {"key": "global/datasets/example_dataset/file2.png", "size": 1243, "type": "object"},
