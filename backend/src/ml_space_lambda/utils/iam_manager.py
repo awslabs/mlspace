@@ -593,3 +593,11 @@ class IAMManager:
         for version in policy_versions["Versions"]:
             if not version["IsDefaultVersion"]:
                 self.iam_client.delete_policy_version(PolicyArn=policy_arn, VersionId=version["VersionId"])
+
+    def update_groups(self, groups: list[str]) -> None:
+        users_to_update = set()
+        for group in groups:
+            users_to_update.update(group_user_dao.get_users_for_group(group))
+
+        for username in users_to_update:
+            self.update_user_policy(username)

@@ -28,6 +28,7 @@ from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, rename_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
+from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 s3 = boto3.client(
@@ -44,6 +45,8 @@ s3_resource = boto3.resource("s3", config=retry_config)
 dataset_dao = DatasetDAO()
 group_user_dao = GroupUserDAO()
 group_dataset_dao = GroupDatasetDAO()
+iam = boto3.resource("iam", config=retry_config)
+iam_manager = IAMManager(iam)
 
 dataset_description_regex = re.compile(r"[^\w\-\s'.]")
 
@@ -66,11 +69,14 @@ def delete(event, context):
     s3_prefix = get_dataset_prefix(scope, dataset_name)
     bucket.objects.filter(Prefix=s3_prefix).delete()
     dataset_dao.delete(scope, dataset_name)
+
     # TODO: create dedicated delete query for performance?
+    groups_to_update = set()
     for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset_name):
         group_dataset_dao.delete(group_dataset.group, group_dataset.dataset)
+        groups_to_update.add(group_dataset.group)
 
-    # TODO: initiate dynamic role updates for group
+    iam_manager.update_groups(groups_to_update)
 
     return f"Successfully deleted {dataset_name}"
 
@@ -226,7 +232,7 @@ def create_dataset(event, context):
 
         if dataset_type == DatasetType.GROUP:
             group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
-            # TODO: initiate dynamic role updates for group
+            iam_manager.update_groups(scope)
 
         return {"status": "success", "dataset": dataset.to_dict()}
     else:

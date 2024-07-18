@@ -66,10 +66,10 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str, type:
 @pytest.mark.parametrize(
     "dataset_type,scope",
     [
-        (DatasetType.GLOBAL, "global"),
+        (DatasetType.GLOBAL, DatasetType.GLOBAL),
         (DatasetType.PROJECT, "project_name"),
         (DatasetType.PRIVATE, "username"),
-        (DatasetType.GROUP, "group"),
+        (DatasetType.GROUP, DatasetType.GROUP),
     ],
     ids=[
         "create_global_dataset",
@@ -79,9 +79,12 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str, type:
     ],
 )
 @mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_create_dataset_success(mock_s3, mock_dataset_dao, mock_group_dataset_dao, dataset_type: str, scope: str):
+def test_create_dataset_success(
+    mock_s3, mock_dataset_dao, mock_iam_manager, mock_group_dataset_dao, dataset_type: str, scope: str
+):
     mock_event = generate_event(dataset_type, scope)
     mock_dataset_dao.get.return_value = None
 

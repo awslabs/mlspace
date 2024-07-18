@@ -642,3 +642,10 @@ class TestIAMSupport(TestCase):
             ),
             VersionId="v2",
         )
+
+    @mock.patch("ml_space_lambda.utils.IAMManager.update_user_policy")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def update_groups(self, mock_group_user_dao, mock_update_user_policy):
+        mock_group_user_dao.get_users_for_group.side_effect = [["user1"], ["user2"]]
+        self.iam_manager.update_groups(["group1", "group2"])
+        mock_update_user_policy.assert_calls(mock.call("user1"), mock.call("user2"))
