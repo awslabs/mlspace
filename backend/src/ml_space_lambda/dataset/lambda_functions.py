@@ -70,6 +70,8 @@ def delete(event, context):
     for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset_name):
         group_dataset_dao.delete(group_dataset.group, group_dataset.dataset)
 
+    # TODO: initiate dynamic role updates for group
+
     return f"Successfully deleted {dataset_name}"
 
 

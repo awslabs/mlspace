@@ -78,9 +78,10 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str, type:
         "create_group_dataset",
     ],
 )
+@mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, scope: str):
+def test_create_dataset_success(mock_s3, mock_dataset_dao, mock_group_dataset_dao, dataset_type: str, scope: str):
     mock_event = generate_event(dataset_type, scope)
     mock_dataset_dao.get.return_value = None
 
