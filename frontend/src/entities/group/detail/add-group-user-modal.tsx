@@ -41,7 +41,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
         <Modal
             visible={props.visible}
             onDismiss={() => props.setVisible(false)}
-            header={<Header>Add member to Group</Header>}
+            header={<Header>Add user to Group</Header>}
             footer={
                 <Box float='right'>
                     <SpaceBetween direction='horizontal' size='xs'>
@@ -55,7 +55,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                                     props.setVisible(false);
                                 });
                             }}>
-                            Add members
+                            Add user{selectedUsers.length > 1 ? 's' : ''}
                         </Button>
                     </SpaceBetween>
                 </Box>

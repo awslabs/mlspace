@@ -48,7 +48,7 @@ export function AddProjectUserModal (props: AddProjectUserModalProps) {
         <Modal
             visible={props.visible}
             onDismiss={() => props.setVisible(false)}
-            header={<Header>Add member to Project</Header>}
+            header={<Header>Add user to Project</Header>}
             footer={
                 <Box float='right'>
                     <SpaceBetween direction='horizontal' size='xs'>
@@ -66,7 +66,7 @@ export function AddProjectUserModal (props: AddProjectUserModalProps) {
                                     usernames: [props.username]
                                 })).then((response) => {
                                     notificationService.showAxiosActionNotification(
-                                        'add member to project',
+                                        'add user to project',
                                         `Added ${props.username} to project: ${project.name}.`,
                                         response
                                     );

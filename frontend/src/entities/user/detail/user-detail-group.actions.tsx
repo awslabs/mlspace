@@ -80,7 +80,7 @@ function UserDetailGroupActions (props?: TableActionProps<IGroupUser>) {
 
                                     await dispatch(removeGroupUser(groupUser)).then((response) => {
                                         notificationService.showAxiosActionNotification(
-                                            'remove member from group',
+                                            'remove user from group',
                                             `User ${groupUser.user} removed from ${groupUser.group}.`,
                                             response
                                         );

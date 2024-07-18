@@ -36,7 +36,7 @@ export function GroupDetail () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const {groupName} = useParams();
-    const [group, setGroup] = useState<IGroup>(null);
+    const [group, setGroup] = useState<IGroup>();
     const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
     const loadingGroupUsers = useAppSelector((state) => state.group.loading);
     const currentUser = useAppSelector(selectCurrentUser);
@@ -50,10 +50,10 @@ export function GroupDetail () {
 
     useEffect(() => {
         if (initialLoaded === false) {
-            dispatch(getGroup(groupName)).then((response) => {
+            dispatch(getGroup(groupName!)).then((response) => {
                 if (response.payload) {
                     setGroup(response.payload.data.group);
-                    dispatch(getGroupUsers(groupName));
+                    dispatch(getGroupUsers(groupName!));
                     setInitialLoaded(true);
                 } else {
                     navigate('/404');
@@ -73,7 +73,7 @@ export function GroupDetail () {
                     loading={!initialLoaded}
                 />
                 <Table
-                    tableName='Group member'
+                    tableName='Group user'
                     tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
                     actions={actions}
                     itemNameProperty='user'
@@ -82,7 +82,7 @@ export function GroupDetail () {
                     columnDefinitions={groupUserColumns}
                     visibleColumns={visibleGroupUserColumns}
                     loadingItems={loadingGroupUsers || !initialLoaded}
-                    loadingText='Loading Group members'
+                    loadingText='Loading Group users'
                 />
             </SpaceBetween>
         </ContentLayout>
