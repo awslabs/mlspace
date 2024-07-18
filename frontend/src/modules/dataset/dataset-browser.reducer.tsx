@@ -157,8 +157,6 @@ export const getDatasetContents = createAsyncThunk(
             case DatasetType.PRIVATE:
                 scope = username;
                 break;
-            case DatasetType.GROUP:
-                scope = datasetContext.scope;
         }
 
         const searchParams = new URLSearchParams();

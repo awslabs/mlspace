@@ -31,9 +31,10 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.dataset.lambda_functions import delete as lambda_handler
 
 
+@mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3_resource")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
-def test_delete_dataset_success(mock_dataset_dao, mock_s3, mock_private_dataset):
+def test_delete_dataset_success(mock_dataset_dao, mock_s3, group_dataset_dao, mock_private_dataset):
     mock_event = {
         "pathParameters": {
             "scope": mock_private_dataset.scope,
