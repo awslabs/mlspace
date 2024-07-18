@@ -21,8 +21,10 @@ from typing import List, Optional
 
 import boto3
 
+from ml_space_lambda.data_access_objects.dataset import DatasetDAO
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
-from ml_space_lambda.enums import EnvVariable, IAMResourceType
+from ml_space_lambda.enums import DatasetType, EnvVariable, IAMResourceType
 from ml_space_lambda.utils.common_functions import generate_tags, has_tags, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
@@ -36,6 +38,8 @@ PROJECT_POLICY_VERSION = 1
 DYNAMIC_USER_ROLE_TAG = {"Key": "dynamic-user-role", "Value": "true"}
 
 group_user_dao = GroupUserDAO()
+group_dataset_dao = GroupDatasetDAO()
+dataset_dao = DatasetDAO()
 
 
 class IAMManager:
@@ -372,13 +376,19 @@ class IAMManager:
         )
 
     def _generate_user_policy(self, user: str) -> str:
-        groups = group_user_dao.get_groups_for_user(user)
         resource_arns = [
             f"arn:{self.aws_partition}:s3:::{self.data_bucket}/private/{user}/*",
             f"arn:{self.aws_partition}:s3:::{self.data_bucket}/global/*",
         ]
-        for group in groups:
-            resource_arns.append(f"arn:{self.aws_partition}:s3:::{self.data_bucket}/group/{group.group}/*")
+
+        dataset_arn_prefixes = set()
+        for group in group_user_dao.get_groups_for_user(user):
+            for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
+                dataset = dataset_dao.get(DatasetType.GROUP, group_dataset.dataset)
+                if dataset is not None:
+                    dataset_arn_prefixes.add(f"arn:{self.aws_partition}:s3:::{self.data_bucket}/group/{dataset.name}/*")
+
+        resource_arns.extend(list(dataset_arn_prefixes))
 
         user_policy = {
             "Version": "2012-10-17",
