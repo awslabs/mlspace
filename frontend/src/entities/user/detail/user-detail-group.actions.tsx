@@ -38,7 +38,7 @@ function UserDetailGroupActions (props?: TableActionProps<IGroupUser>) {
     const [performingAction, setPerformingAction] = useState(false);
 
     useEffect(() => {
-        dispatch(getAllGroups());
+        dispatch(getAllGroups(true));
     }, [dispatch]);
 
     const refreshHandler = () => {
