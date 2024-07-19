@@ -24,7 +24,7 @@ jobs:
           git checkout develop
           git pull
           git merge --no-ff origin/main -m "Auto-merge main back to dev post release"
-          git push
+          git push --force
         env:
           GH_TOKEN: ${{ secrets.LEAD_ACCESS_TOKEN }}
   send_final_slack_notification:
