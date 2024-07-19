@@ -54,6 +54,7 @@ import ContentLayout from '../../../shared/layout/content-layout';
 import { getAllGroups } from '../../group/group.reducer';
 import { IGroup } from '../../../shared/model/group.model';
 import { useNotificationService } from '../../../shared/util/hooks';
+import Axios from 'axios';
 
 const formSchema = z.object({
     name: z
@@ -143,20 +144,27 @@ export function DatasetCreate () {
 
             // create new dataset from state.form
             const newDataset = createDatasetFromForm(state.form, projectName, username);
-            const response = await createDataset(newDataset).catch(() => {
-                // if dataset exists display message to user
-                notificationService.generateNotification(
-                    `Failed to create dataset, dataset already exists with the name: ${newDataset.name}`,
-                    'error'
-                );
+            const response = await createDataset(newDataset).catch((error) => {
+                if (Axios.isAxiosError(error)) {
+                    // if dataset exists display message to user
+                    notificationService.generateNotification(
+                        `Failed to create dataset. ${error.message}`,
+                        'error'
+                    );
+                }
             });
 
             if (response?.status === 200) {
                 const resourceObjects = datasetFileList.filter((item): item is DatasetResourceObject => item.type === 'object');
                 await uploadResources(newDataset, resourceObjects, notificationService);
 
+                let scope = newDataset.scope;
+                if (newDataset.type === DatasetType.GROUP) {
+                    scope = DatasetType.GROUP;
+                }
+
                 // Need to clear state/reset the form
-                navigate(`${basePath}/dataset/${newDataset.type}/${newDataset.scope}/${newDataset.name}`);
+                navigate(`${basePath}/dataset/${newDataset.type}/${scope}/${newDataset.name}`);
             }
             
             setState({ formSubmitting: false });

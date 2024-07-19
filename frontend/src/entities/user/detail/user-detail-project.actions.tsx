@@ -82,7 +82,7 @@ function UserDetailProjectActions (props?: TableActionProps<IProjectUser>) {
 
                                     await dispatch(removeUserFromProject(projectUser)).then((response) => {
                                         notificationService.showAxiosActionNotification(
-                                            'remove member from project',
+                                            'remove user from project',
                                             `User ${projectUser.user} removed from ${projectUser.project}.`,
                                             response
                                         );

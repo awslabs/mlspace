@@ -142,7 +142,7 @@ function tablePropertiesForDatasets (state: DatasetBrowserState, updateDatasetCo
                 return (
                     <Link data-cy={item.name} onFollow={() => {
                         updateDatasetContext({ ...state.datasetContext, name: item.name, scope: item.scope }, '', false);
-                    } }>{item.type === DatasetType.GROUP ? `${item.scope}: ${item.name}` : item.name}</Link>
+                    } }>{item.name}</Link>
                 );
             },
         }]

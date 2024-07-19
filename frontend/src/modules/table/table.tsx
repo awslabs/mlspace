@@ -83,7 +83,7 @@ export default function Table ({
     };
     const [preferences, setPreferences] = useState(initialState);
     const emptyState = empty || EmptyState(`No ${tableName ? tableName : 'Entrie'}s exist`);
-    const { items, filteredItemsCount, collectionProps, filterProps, paginationProps } =
+    const { items, filteredItemsCount, collectionProps, filterProps, paginationProps, actions: {setSelectedItems} } =
         useCollection(allItems, {
             filtering: {
                 empty: emptyState,
@@ -251,6 +251,7 @@ export default function Table ({
                                             loadingAction,
                                             focusProps,
                                             focusFileUploadProps,
+                                            setSelectedItems
                                         })}
                                     </SpaceBetween>
                                 )
