@@ -73,21 +73,21 @@ export class DatasetsApiStack extends Stack {
                 name: 'edit',
                 resource: 'dataset',
                 description: 'Edits dataset',
-                path: 'dataset/{type}/{scope}/{datasetName}',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}',
                 method: 'PUT',
             },
             {
                 name: 'get',
                 resource: 'dataset',
                 description: 'Gets dataset details',
-                path: 'dataset/{type}/{scope}/{datasetName}',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}',
                 method: 'GET',
             },
             {
                 name: 'delete',
                 resource: 'dataset',
                 description: 'Removes a dataset from an MLSpace project',
-                path: 'dataset/{type}/{scope}/{datasetName}',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}',
                 method: 'DELETE',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,
@@ -108,7 +108,7 @@ export class DatasetsApiStack extends Stack {
                 name: 'list_files',
                 resource: 'dataset',
                 description: 'List all file in a dataset',
-                path: 'dataset/{type}/{scope}/{datasetName}/files',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}/files',
                 method: 'GET',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,
