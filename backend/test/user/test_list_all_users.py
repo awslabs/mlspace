@@ -78,7 +78,9 @@ def test_list_all_include_suspended(mock_user_dao):
     ]
     mock_user_dao.get_all.return_value = all_users
 
-    assert lambda_handler({"queryStringParameters": {"includeSuspended": "true"}}, mock_context) == generate_html_response(200, [user.to_dict() for user in all_users])
+    assert lambda_handler({"queryStringParameters": {"includeSuspended": "true"}}, mock_context) == generate_html_response(
+        200, [user.to_dict() for user in all_users]
+    )
 
     mock_user_dao.get_all.assert_called_with(include_suspended=True)
 
