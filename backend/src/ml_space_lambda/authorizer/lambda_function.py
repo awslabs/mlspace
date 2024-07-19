@@ -415,7 +415,9 @@ def _handle_dataset_request(request_method, path_params, user):
             return True
         else:
             # All admins can perform any action on any Group
-            if (dataset.type == DatasetType.GROUP or dataset.type == DatasetType.GLOBAL) and Permission.ADMIN in user.permissions:
+            if (
+                dataset.type == DatasetType.GROUP or dataset.type == DatasetType.GLOBAL
+            ) and Permission.ADMIN in user.permissions:
                 return True
             elif dataset.type == DatasetType.GROUP:
                 group_user = group_user_dao.get(dataset_scope, user.username)
