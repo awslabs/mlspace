@@ -415,9 +415,9 @@ def _handle_dataset_request(request_method, path_params, user):
             return True
         else:
             # All admins can perform any action on any Group
-            if dataset.type == DatasetType.GROUP:
-                if Permission.ADMIN in user.permissions:
-                    return True
+            if (dataset.type == DatasetType.GROUP or dataset.type == DatasetType.GLOBAL) and Permission.ADMIN in user.permissions:
+                return True
+            elif dataset.type == DatasetType.GROUP:
                 group_user = group_user_dao.get(dataset_scope, user.username)
                 # Non-admins can only view group datasets
                 if group_user and request_method not in ["PUT", "DELETE"]:
