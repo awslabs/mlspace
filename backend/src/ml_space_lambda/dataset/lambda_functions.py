@@ -135,14 +135,22 @@ def presigned_url(event, context):
     response = ""
     body = json.loads(event["body"])
     key = body["key"]
-    scope_from_key = key.split("/")[1]
     type_from_key = key.split("/")[0]
+    scope_from_key = key.split("/")[1]
+    name_from_key = key.split("/")[2]
+    if type_from_key == DatasetType.GROUP:
+        # for group datasets, the scope is 'group'
+        scope_from_key = DatasetType.GROUP
+
     # Ensure the headers match the values derived from the request key
-    if (
-        type_from_key != event["headers"]["x-mlspace-dataset-type"]
-        or scope_from_key != event["headers"]["x-mlspace-dataset-scope"]
-    ):
-        raise Exception("Dataset headers do not match expected type and scope.")
+    if type_from_key != event["headers"]["x-mlspace-dataset-type"]:
+        if type_from_key != DatasetType.GROUP:
+            if scope_from_key != event["headers"]["x-mlspace-dataset-scope"]:
+                raise Exception("Dataset headers do not match expected type and scope.")
+        else:
+            # Group datasets expect the scope header to be the name of the dataset
+            if name_from_key != event["headers"]["x-mlspace-dataset-scope"]:
+                raise Exception("Dataset headers do not match expected type and scope.")
 
     is_upload = body.get("isUpload", False)
     env_variables = get_environment_variables()
@@ -154,7 +162,6 @@ def presigned_url(event, context):
 
         # Set derived values for conditions and fields
         username = event["requestContext"]["authorizer"]["principalId"]
-        name_from_key = key.split("/")[2]
 
         # Conditions is an array of dictionaries
         conditions.append({"x-amz-meta-user": username})

@@ -30,13 +30,7 @@ export const getPresignedUrls = async (data: any) => {
         isUpload: true,
         key: data.key,
     };
-    const [datasetType, datasetScope] = data.key.split('/');
-    const headerConfig = {
-        headers: {
-            'x-mlspace-dataset-type': datasetType,
-            'x-mlspace-dataset-scope': datasetScope,
-        },
-    };
+    const headerConfig = generateDatasetHeaders(data.key);
     return axios.post(requestUrl, payload, headerConfig);
 };
 
@@ -45,19 +39,30 @@ export const getDownloadUrl = async (objectKey: string) => {
     const payload = {
         key: objectKey,
     };
-    const [datasetType, datasetScope] = objectKey.split('/');
-    const headerConfig = {
-        headers: {
-            'x-mlspace-dataset-type': datasetType,
-            'x-mlspace-dataset-scope': datasetScope,
-        },
-    };
+    const headerConfig = generateDatasetHeaders(objectKey);
     const response = await axios.post(requestUrl, payload, headerConfig);
     if (response && response.data) {
         return response.data;
     }
     return undefined;
 };
+
+function generateDatasetHeaders (key: string) {
+    const datasetType = key.split('/')[0];
+    let datasetScope = key.split('/')[1];
+    if (datasetType === DatasetType.GROUP) {
+        // for groups, set the scope to the dataset name
+        datasetScope = key.split('/')[2];
+    }
+    console.log(`Type is ${datasetType} and scope is ${datasetScope}`);
+    const headerConfig = {
+        headers: {
+            'x-mlspace-dataset-type': datasetType,
+            'x-mlspace-dataset-scope': datasetScope,
+        },
+    };
+    return headerConfig;
+}
 
 export const uploadToS3 = async (presignedUrl: any, file: any) => {
     //This method uploads a file to S3 using a pre-signed post
