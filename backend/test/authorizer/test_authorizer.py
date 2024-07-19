@@ -27,6 +27,7 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
 from ml_space_lambda.data_access_objects.group import GroupModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.data_access_objects.project import ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
@@ -1529,45 +1530,45 @@ def test_notebook_privileged(
         (MOCK_ADMIN_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
         (MOCK_ADMIN_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
         (MOCK_ADMIN_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
-        (MOCK_ADMIN_USER, "GET", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, True),
+        (MOCK_ADMIN_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_ADMIN_USER, "PUT", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, False),
         (MOCK_ADMIN_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
         (MOCK_ADMIN_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
-        (MOCK_ADMIN_USER, "PUT", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, True),
+        (MOCK_ADMIN_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_ADMIN_USER, "DELETE", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, False),
         (MOCK_ADMIN_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
         (MOCK_ADMIN_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
-        (MOCK_ADMIN_USER, "DELETE", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, True),
+        (MOCK_ADMIN_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
         (MOCK_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
         (MOCK_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
-        (MOCK_USER, "GET", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, False),
+        (MOCK_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, None, False),
         (MOCK_USER, "PUT", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, False),
         (MOCK_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
         (MOCK_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
-        (MOCK_USER, "PUT", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, False),
+        (MOCK_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, None, False),
         (MOCK_USER, "DELETE", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, False),
         (MOCK_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
         (MOCK_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
-        (MOCK_USER, "DELETE", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, False),
+        (MOCK_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, None, False),
         (MOCK_OWNER_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
         (MOCK_OWNER_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
         (MOCK_OWNER_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
-        (MOCK_OWNER_USER, "GET", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, True),
+        (MOCK_OWNER_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_OWNER_USER, "PUT", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
         (MOCK_OWNER_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
         (MOCK_OWNER_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
-        (MOCK_OWNER_USER, "PUT", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, True),
+        (MOCK_OWNER_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_OWNER_USER, "DELETE", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
         (MOCK_OWNER_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
         (MOCK_OWNER_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
-        (MOCK_OWNER_USER, "DELETE", MOCK_GROUP_NAME, DatasetType.GROUP, None, None, True),
+        (MOCK_OWNER_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, MOCK_REGULAR_PROJECT_USER, None, True),
         (MOCK_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, MOCK_REGULAR_PROJECT_USER, None, False),
         (MOCK_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, MOCK_REGULAR_PROJECT_USER, None, False),
-        (MOCK_USER, "GET", MOCK_GROUP_NAME, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, True),
-        (MOCK_USER, "PUT", MOCK_GROUP_NAME, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, False),
-        (MOCK_USER, "DELETE", MOCK_GROUP_NAME, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, False),
+        (MOCK_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, True),
+        (MOCK_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, False),
+        (MOCK_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, False),
     ],
     ids=[
         "admin_get_global",
@@ -1615,6 +1616,7 @@ def test_notebook_privileged(
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_dataset_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
@@ -1624,6 +1626,7 @@ def test_dataset_routes(
     mock_user_dao,
     mock_project_user_dao,
     mock_group_user_dao,
+    mock_group_dataset_dao,
     user: UserModel,
     method: str,
     scope: str,
@@ -1632,18 +1635,25 @@ def test_dataset_routes(
     group_user: GroupUserModel,
     allow: bool,
 ):
+    dataset_name = "UnitTestDataset"
     mock_dataset = DatasetModel(
         scope=scope,
         type=type,
-        name="UnitTestDataset",
+        name=dataset_name,
         description="For unit tests",
         location="s3://fake-location/",
         created_by=MOCK_OWNER_USER.username,
     )
+    mock_group_dataset = GroupDatasetModel(dataset_name=dataset_name, group_name=MOCK_GROUP_NAME)
     mock_dataset_dao.get.return_value = mock_dataset
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
     mock_group_user_dao.get.return_value = group_user
+    if group_user:
+        mock_group_user_dao.get_groups_for_user.return_value = [MOCK_REGULAR_GROUP_USER]
+    else:
+        mock_group_user_dao.get_groups_for_user.return_value = []
+    mock_group_dataset_dao.get.return_value = mock_group_dataset
 
     assert lambda_handler(
         mock_event(

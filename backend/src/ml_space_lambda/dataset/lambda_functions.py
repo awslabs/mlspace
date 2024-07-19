@@ -130,6 +130,17 @@ def get(event, context):
     raise ResourceNotFound(f"Dataset '{dataset_name}' does not exist.")
 
 
+def _is_scope_header_correct(type_from_key: str, scope_from_key: str, name_from_key: str, scope_header: str):
+    if type_from_key != DatasetType.GROUP:
+        if scope_from_key != scope_header:
+            return False
+    else:
+        # Group datasets expect the scope header to be the name of the dataset
+        if name_from_key != scope_header:
+            return False
+    return True
+
+
 @api_wrapper
 def presigned_url(event, context):
     response = ""
@@ -143,14 +154,10 @@ def presigned_url(event, context):
         scope_from_key = DatasetType.GROUP
 
     # Ensure the headers match the values derived from the request key
-    if type_from_key != event["headers"]["x-mlspace-dataset-type"]:
-        if type_from_key != DatasetType.GROUP:
-            if scope_from_key != event["headers"]["x-mlspace-dataset-scope"]:
-                raise Exception("Dataset headers do not match expected type and scope.")
-        else:
-            # Group datasets expect the scope header to be the name of the dataset
-            if name_from_key != event["headers"]["x-mlspace-dataset-scope"]:
-                raise Exception("Dataset headers do not match expected type and scope.")
+    if type_from_key != event["headers"]["x-mlspace-dataset-type"] or not _is_scope_header_correct(
+        type_from_key, scope_from_key, name_from_key, event["headers"]["x-mlspace-dataset-scope"]
+    ):
+        raise Exception("Dataset headers do not match expected type and scope.")
 
     is_upload = body.get("isUpload", False)
     env_variables = get_environment_variables()

@@ -427,16 +427,28 @@ def _handle_dataset_request(request_method, path_params, user):
     if dataset:
         # Owners can do whatever - this check also handles private datasets
         if dataset.created_by == user.username:
+            print("User is creator")
             return True
         else:
             # All admins can perform any action on any Group
             if dataset.type == DatasetType.GROUP:
                 if Permission.ADMIN in user.permissions:
+                    print("User is admin")
                     return True
-                group_user = group_user_dao.get(dataset_scope, user.username)
-                # Non-admins can only view group datasets
-                if group_user and request_method not in ["PUT", "DELETE"]:
-                    return True
+                # If user isn't the creator of the dataset or an admin they can never PUT or DELETE
+                if request_method in ["PUT", "DELETE"]:
+                    print("User isn't admin or owner and its PUT/DELETE")
+                    return False
+                print("Getting groups for user")
+                groups = group_user_dao.get_groups_for_user(user.username)
+                print(f"Found {len(groups)} groups")
+                # Check if any groups this user is a member of contain this group dataset
+                for group in groups:
+                    print("Checking if group {group} has dataset {dataset_name}")
+                    group_dataset = group_dataset_dao.get(group.group, dataset_name)
+                    if group_dataset:
+                        return True
+
             # If it's a global or project dataset and they aren't the owner
             # they can't update or delete the dataset or any files
             elif request_method in ["PUT", "DELETE"]:
