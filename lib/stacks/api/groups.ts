@@ -54,6 +54,9 @@ export class GroupsApiStack extends Stack {
                 description: 'Create a new MLSpace group',
                 path: 'group',
                 method: 'POST',
+                environment: {
+                    DATA_BUCKET: props.dataBucketName,
+                },
             },
             {
                 name: 'group_users',
@@ -68,6 +71,9 @@ export class GroupsApiStack extends Stack {
                 description: 'Adds users to a group',
                 path: 'group/{groupName}/users',
                 method: 'POST',
+                environment: {
+                    DATA_BUCKET: props.dataBucketName,
+                },
             },
             {
                 name: 'delete',
@@ -75,6 +81,9 @@ export class GroupsApiStack extends Stack {
                 description: 'Delete an MLSpace group',
                 path: 'group/{groupName}',
                 method: 'DELETE',
+                environment: {
+                    DATA_BUCKET: props.dataBucketName,
+                },
             },
             {
                 name: 'get',
@@ -89,6 +98,9 @@ export class GroupsApiStack extends Stack {
                 description: 'Removes a user from a group',
                 path: 'group/{groupName}/users/{username}',
                 method: 'DELETE',
+                environment: {
+                    DATA_BUCKET: props.dataBucketName,
+                },
             },
             {
                 name: 'update',
