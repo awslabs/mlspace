@@ -480,7 +480,7 @@ export class CoreStack extends Stack {
             encryption: TableEncryption.AWS_MANAGED,
         });
 
-        // Group Users Table
+        // Group Datasets Table
         const groupAttribute = { name: 'group', type: AttributeType.STRING };
         const groupDatasetAttribute = { name: 'dataset', type: AttributeType.STRING };
         const groupDatasetTable = new Table(this, 'mlspace-ddb-group-datasets', {
