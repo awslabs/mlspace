@@ -45,7 +45,7 @@ s3_resource = boto3.resource("s3", config=retry_config)
 dataset_dao = DatasetDAO()
 group_user_dao = GroupUserDAO()
 group_dataset_dao = GroupDatasetDAO()
-iam = boto3.resource("iam", config=retry_config)
+iam = boto3.client("iam", config=retry_config)
 iam_manager = IAMManager(iam)
 
 dataset_description_regex = re.compile(r"[^\w\-\s'.]")
@@ -232,7 +232,7 @@ def create_dataset(event, context):
 
         if dataset_type == DatasetType.GROUP:
             group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
-            iam_manager.update_groups(scope)
+            iam_manager.update_groups([scope])
 
         return {"status": "success", "dataset": dataset.to_dict()}
     else:
