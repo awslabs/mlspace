@@ -20,6 +20,7 @@ import json
 import logging
 import time
 from contextvars import ContextVar
+from re import Pattern
 from typing import Any, Dict, List, Optional
 
 from botocore.config import Config
@@ -74,6 +75,18 @@ def setup_root_logging():
 
 
 setup_root_logging()
+
+
+def validate_input(input_string: str, max_length: int, field: str, regex: Optional[Pattern]) -> None:
+    if len(input_string) > max_length:
+        logging.error(f"{field} with length {len(input_string)} is over the max length of {max_length}")
+        raise Exception(f"{field} exceeded the maximum allowable length of {max_length}.")
+
+    if regex:
+        invalid_char_found = regex.search(input_string)
+        if invalid_char_found:
+            logging.error(f"Invalid characters in {field}: {invalid_char_found}")
+            raise Exception(f"{field} contains invalid character.")
 
 
 def _sanitize_event(event: Dict[str, Dict[str, Any]]):
@@ -288,7 +301,7 @@ def has_tags(tags: list, user_name: str = None, project_name: str = None, system
 
 def serialize_permissions(permissions: Optional[List[Permission]]) -> List[str]:
     if permissions:
-        return [entry.value for entry in permissions]
+        return [entry for entry in permissions]
     else:
         return []
 

@@ -35,9 +35,10 @@ import {
 import { IUser, Permission } from '../../../shared/model/user.model';
 import { IProjectUser } from '../../../shared/model/projectUser.model';
 import { isAdminOrProjectOwner, togglePermission } from '../../../shared/util/permission-utils';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { useParams } from 'react-router-dom';
 import { setUpdateModal } from '../../../modules/modal/modal.reducer';
+import { useNotificationService } from '../../../shared/util/hooks';
+import NotificationService from '../../../shared/layout/notification/notification.service';
 
 function ProjectUserActions (props?: any) {
     const projectName = props?.projectName;
@@ -76,6 +77,7 @@ function IsAdminOrProjectOwner () {
 function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
     const selectedUsers: IProjectUser[] = props?.selectedItems;
     const projectName = props?.projectName;
+    const notificationService = useNotificationService(dispatch);
 
     const items = [
         {
@@ -103,7 +105,7 @@ function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
             items={items}
             variant='primary'
             disabled={disabled}
-            onItemClick={(e) => ProjectUserActionHandler(e, selectedUsers, projectName, dispatch)}
+            onItemClick={(e) => ProjectUserActionHandler(e, selectedUsers, projectName, dispatch, notificationService, props?.setSelectedItems)}
         >
             Actions
         </ButtonDropdown>
@@ -113,9 +115,9 @@ function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
 async function addProjectUsers (
     projectName: string,
     users: IUser[],
+    notificationService: ReturnType<typeof NotificationService>,
     dispatch: ThunkDispatch<any, any, Action>
 ) {
-    const notificationService = NotificationService(dispatch);
     const response = await dispatch(
         addUsersToProject({
             usernames: users.map((user) => user.username!),
@@ -134,6 +136,7 @@ async function addProjectUsers (
 function AddProjectUserActionButton (dispatch: Dispatch, props?: any) {
     const { projectName } = useParams();
     const selectedUsers: IUser[] = props?.selectedItems;
+    const notificationService = useNotificationService(dispatch);
 
     const items = [{ text: 'Add to Project', id: 'add_member' }];
 
@@ -142,7 +145,7 @@ function AddProjectUserActionButton (dispatch: Dispatch, props?: any) {
             items={items}
             variant='primary'
             disabled={!selectedUsers}
-            onItemClick={() => addProjectUsers(projectName!, selectedUsers, dispatch)}
+            onItemClick={() => addProjectUsers(projectName!, selectedUsers, notificationService, dispatch)}
         >
             Actions
         </ButtonDropdown>
@@ -166,7 +169,9 @@ const ProjectUserActionHandler = async (
     e: any,
     selectedUsers: IProjectUser[],
     projectName: string,
-    dispatch: ThunkDispatch<any, any, Action>
+    dispatch: ThunkDispatch<any, any, Action>,
+    notificationService: ReturnType<typeof NotificationService>,
+    setSelectedItems: (selectedItems: any[]) => void,
 ) => {
     switch (e.detail.id) {
         case 'collaborator':
@@ -174,7 +179,13 @@ const ProjectUserActionHandler = async (
                 // Use lodash once it's added
                 const updatedUser: IProjectUser = JSON.parse(JSON.stringify(user));
                 togglePermission(Permission.COLLABORATOR, updatedUser.permissions!);
-                await dispatch(updateUsersInProject(updatedUser));
+                await dispatch(updateUsersInProject(updatedUser)).then((response) => {
+                    if (!response.type.endsWith('fulfilled')){
+                        notificationService.showAxiosActionNotification('update user permissions', '', response);
+                    } else {
+                        setSelectedItems([]);
+                    }
+                });
             }
             break;
         case 'owner':
@@ -182,7 +193,13 @@ const ProjectUserActionHandler = async (
                 // Use lodash once it's added
                 const updatedUser: IProjectUser = JSON.parse(JSON.stringify(user));
                 togglePermission(Permission.PROJECT_OWNER, updatedUser.permissions!);
-                await dispatch(updateUsersInProject(updatedUser));
+                await dispatch(updateUsersInProject(updatedUser)).then((response) => {
+                    if (!response.type.endsWith('fulfilled')){
+                        notificationService.showAxiosActionNotification('update user permissions', '', response);
+                    } else {
+                        setSelectedItems([]);
+                    }
+                });
             }
             break;
         case 'remove':
@@ -190,7 +207,15 @@ const ProjectUserActionHandler = async (
                 dispatch(
                     setUpdateModal({
                         selectedUser: user,
-                        onConfirm: async () => await dispatch(removeUserFromProject(user)),
+                        onConfirm: async () => {
+                            await dispatch(removeUserFromProject(user)).then((response) => {
+                                if (!response.type.endsWith('fulfilled')){
+                                    notificationService.showAxiosActionNotification('remove user from project', '', response);
+                                } else {
+                                    setSelectedItems([]);
+                                }
+                            });
+                        },
                         postConfirm: () => dispatch(getUsersInProject(projectName)),
                         description: `This will remove ${user.user} from the project ${projectName}.`,
                     })

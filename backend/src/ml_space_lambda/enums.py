@@ -17,15 +17,22 @@
 from enum import Enum
 
 
-class DatasetType(Enum):
+class DatasetType(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     GLOBAL = "global"
     PRIVATE = "private"
     PROJECT = "project"
+    GROUP = "group"
 
 
 # Updating the ResourceType enumeration will likely require an update to the
 # corresponding enum in the FrontEnd code (src/shared/model/resource-metadata-model.ts)
 class ResourceType(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     BATCH_TRANSLATE_JOB = "batch-translate-job"
     EMR_CLUSTER = "cluster"
     ENDPOINT = "endpoint"
@@ -41,6 +48,9 @@ class ResourceType(str, Enum):
 # This is specifically used for app configuration.
 # These are service names without dashes so they can be used as properties of a model in the frontend
 class ServiceType(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     REALTIME_TRANSLATE = "realtimeTranslate"
     BATCH_TRANSLATE = "batchTranslate"
     EMR_CLUSTER = "emrCluster"
@@ -55,6 +65,9 @@ class ServiceType(str, Enum):
 
 
 class IAMStatementProperty(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     ACTION = "Action"
     EFFECT = "Effect"
     RESOURCE = "Resource"
@@ -62,11 +75,17 @@ class IAMStatementProperty(str, Enum):
 
 
 class IAMEffect(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     DENY = "Deny"
     ALLOW = "Allow"
 
 
 class EnvVariable(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     BUCKET = "BUCKET"
     S3_KEY = "S3_KEY"
     SYSTEM_TAG = "SYSTEM_TAG"
@@ -77,6 +96,9 @@ class EnvVariable(str, Enum):
     RESOURCE_SCHEDULE_TABLE = "RESOURCE_SCHEDULE_TABLE"
     RESOURCE_METADATA_TABLE = "RESOURCE_METADATA_TABLE"
     APP_CONFIGURATION_TABLE = "APP_CONFIGURATION_TABLE"
+    GROUPS_TABLE = "GROUPS_TABLE"
+    GROUP_DATASETS_TABLE = "GROUP_DATASETS_TABLE"
+    GROUP_USERS_TABLE = "GROUP_USERS_TABLE"
     AWS_DEFAULT_REGION = "AWS_DEFAULT_REGION"
     DATA_BUCKET = "DATA_BUCKET"
     EMR_CONFIG_BUCKET = "EMR_CONFIG_BUCKET"
@@ -97,19 +119,28 @@ class EnvVariable(str, Enum):
     KMS_INSTANCE_CONDITIONS_POLICY_ARN = "KMS_INSTANCE_CONDITIONS_POLICY_ARN"
 
 
-class Permission(Enum):
+class Permission(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     COLLABORATOR = "CO"
     PROJECT_OWNER = "MO"
     ADMIN = "PMO"
     ACTING_PMO = "actingPMO"
 
 
-class IAMResourceType(Enum):
+class IAMResourceType(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     ROLE = "role"
     POLICY = "policy"
 
 
-class TimezonePreference(Enum):
+class TimezonePreference(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
     LOCAL = "Local"
     UTC = "UTC"
 

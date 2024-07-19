@@ -99,6 +99,8 @@ export const buildS3KeysForResourceObjects = (
                 return [`private/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
             case DatasetType.GLOBAL:
                 return [`global/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
+            case DatasetType.GROUP:
+                return [`group/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
         }
     });
 };
@@ -121,6 +123,7 @@ export const fetchPresignedURL = async (s3Key: string) => {
 export const determineScope = (
     type: DatasetType | undefined,
     projectName: string | undefined,
+    groupName: string | undefined,
     username: string
 ): string => {
     switch (type) {
@@ -128,6 +131,8 @@ export const determineScope = (
             return DatasetType.GLOBAL;
         case DatasetType.PROJECT:
             return projectName!;
+        case DatasetType.GROUP:
+            return groupName!;
         default:
             // Default to private
             return username;
@@ -140,11 +145,9 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
     let stopUpload = false;
 
     for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
-        
         if (stopUpload) {
             break;
         }
-
         const presignedUrl = await fetchPresignedURL(s3Uri);
 
         if (presignedUrl?.data) {

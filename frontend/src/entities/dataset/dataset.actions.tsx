@@ -28,8 +28,7 @@ import { Button, ButtonDropdown, SpaceBetween } from '@cloudscape-design/compone
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { copyButtonAriaLabel, deleteButtonAriaLabel, downloadButtonAriaLabel } from './dataset.utils';
 import Condition from '../../modules/condition';
-import { determineScope, getDownloadUrl, uploadResources } from './dataset.service';
-import NotificationService from '../../shared/layout/notification/notification.service';
+import { getDownloadUrl, uploadResources } from './dataset.service';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
 import { deletionDescription } from '../../shared/util/form-utils';
 import { selectCurrentUser } from '../user/user.reducer';
@@ -37,13 +36,13 @@ import { hasPermission } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
 import { DatasetActionType, DatasetBrowserAction, DatasetBrowserState, DatasetResourceObject } from '../../modules/dataset/dataset-browser.reducer';
 import { DatasetBrowserManageMode, UpdateDatasetContextFunction } from '../../modules/dataset/dataset-browser.types';
-import { useUsername } from '../../shared/util/auth-utils';
 import { prefixForPath, stripDatasetPrefix } from '../../modules/dataset/dataset-browser.utils';
 import { Dispatch as ReduxDispatch } from '@reduxjs/toolkit';
 import { Dispatch as ReactDispatch } from 'react';
 import { DatasetContext } from '../../shared/util/dataset-utils';
 import './dataset.scss';
 import { FullScreenDragAndDrop } from './dataset-drag-and-drop';
+import { useNotificationService } from '../../shared/util/hooks';
 
 function DatasetActions (props?: any) {
     const dispatch = useAppDispatch();
@@ -115,7 +114,7 @@ type UploadButtonProperties = {
 
 const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, disableUpload, setDisableUpload, children}: UploadButtonProperties): React.ReactNode => {
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const {manageMode} = state;
     const uploadFile: RefObject<HTMLInputElement> = useRef(null);
 
@@ -151,8 +150,6 @@ const UploadButton = ({state, setState, updateDatasetContext, isFileUpload, disa
 
 export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selectedItems' | 'items' | 'datasetContext' | 'manageMode' | 'filteringText'>, setState: ReduxDispatch<DatasetBrowserAction> | ReactDispatch<DatasetBrowserAction>, updateDatasetContext: UpdateDatasetContextFunction): React.ReactNode => {
     const dispatch = useAppDispatch();
-    const username = useUsername();
-    const { projectName } = useParams();
     const {selectedItems, manageMode} = state;
     const showDeleteButton = manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false;
     const showUploadButton = manageMode ? [DatasetBrowserManageMode.Create, DatasetBrowserManageMode.Edit].includes(manageMode) : false;
@@ -219,16 +216,15 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                         resourceName: state.selectedItems.length === 1 ? (state.selectedItems[0].name || '1 file') : `${state.selectedItems.length} file(s)`,
                                         resourceType: 'dataset file(s)',
                                         onConfirm: async () => {
-                                            const scope = determineScope(state.datasetContext?.type, projectName!, username);
                                             const selectedItems = state.selectedItems?.filter((item): item is DatasetResourceObject => item.type === 'object')
                                                 .map((item) => {
                                                     return stripDatasetPrefix(item.key);
                                                 })
                                                 .filter((item) => item);
-
                                             return await dispatch(
                                                 deleteFileFromDataset({
-                                                    scope,
+                                                    type: state.datasetContext?.type,
+                                                    scope: state.datasetContext?.scope,
                                                     datasetName: state.datasetContext?.name,
                                                     files: selectedItems,
                                                 })
@@ -287,7 +283,7 @@ function DatasetActionButton (nav: (endpoint: string) => void, dispatch: ReduxDi
             variant='primary'
             disabled={selectedDataset === undefined}
             onItemClick={(e) =>
-                DatasetActionHandler(e, selectedDataset, nav, dispatch, projectName)
+                DatasetActionHandler(e, selectedDataset, nav, dispatch, props.setSelectedItems, projectName)
             }
         >
             Actions
@@ -314,32 +310,36 @@ const DatasetActionHandler = (
     dataset: IDataset,
     nav: (endpoint: string) => void,
     dispatch: ThunkDispatch<any, any, Action>,
-    projectName?: string
+    setSelectedItems: (selectedItems: any[]) => void,
+    projectName?: string,
 ) => {
     const basePath = projectName ? `/project/${projectName}` : '/personal';
 
     switch (e.detail.id) {
         case 'open':
-            nav(`${basePath}/dataset/${dataset.scope}/${dataset.name}`);
+            nav(`${basePath}/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`);
             break;
         case 'delete':
             dispatch(
                 setDeleteModal({
                     resourceName: dataset.name!,
                     resourceType: 'dataset',
-                    onConfirm: async () => await dispatch(deleteDatasetFromProject(dataset)),
-                    postConfirm: () => dispatch(getDatasetsList(projectName)),
+                    onConfirm: async () => {
+                        await dispatch(deleteDatasetFromProject(dataset));
+                        setSelectedItems([]);
+                    },
+                    postConfirm: () => dispatch(getDatasetsList({projectName})),
                     description: deletionDescription('Dataset'),
                 })
             );
             break;
         case 'edit':
             dispatch(updateEntity(dataset));
-            nav(`${basePath}/dataset/${dataset.scope}/${dataset.name}/edit`);
+            nav(`${basePath}/dataset/${dataset.type}/${dataset.scope}/${dataset.name}/edit`);
             break;
         case 'details':
             dispatch(updateEntity(dataset));
-            nav(`${basePath}/dataset/${dataset.scope}/${dataset.name}`);
+            nav(`${basePath}/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`);
             break;
     }
 };

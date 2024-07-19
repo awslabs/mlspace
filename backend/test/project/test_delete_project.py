@@ -23,7 +23,7 @@ from ml_space_lambda.data_access_objects.dataset import DatasetModel
 from ml_space_lambda.data_access_objects.project import ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
-from ml_space_lambda.enums import DatasetType, Permission, ResourceType
+from ml_space_lambda.enums import DatasetType, EnvVariable, Permission, ResourceType
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
@@ -156,6 +156,7 @@ def test_delete_project(
     mock_dataset_dao.get_all_for_scope.return_value = [
         DatasetModel(
             name="TestDataset",
+            type=DatasetType.PROJECT,
             scope=MOCK_PROJECT_NAME,
             description="Dataset for unit test",
             created_by="jdoe@example.com",
@@ -191,9 +192,9 @@ def test_delete_project(
     mock_project_user_dao.get_users_for_project.assert_called_with(MOCK_PROJECT_NAME)
     mock_project_user_dao.delete.assert_called_with(MOCK_PROJECT_NAME, "jdoe@example.com")
     mock_s3.list_objects_v2.assert_called_with(
-        Bucket=env_vars["DATA_BUCKET"], Prefix=f"project/{MOCK_PROJECT_NAME}/datasets/TestDataset/"
+        Bucket=env_vars[EnvVariable.DATA_BUCKET], Prefix=f"project/{MOCK_PROJECT_NAME}/datasets/TestDataset/"
     )
-    mock_s3.delete_object.assert_called_with(Bucket=env_vars["DATA_BUCKET"], Key="TestObjectKey")
+    mock_s3.delete_object.assert_called_with(Bucket=env_vars[EnvVariable.DATA_BUCKET], Key="TestObjectKey")
     mock_dataset_dao.delete.assert_called_with(MOCK_PROJECT_NAME, "TestDataset")
     mock_sagemaker.delete_model.assert_called_with(ModelName="TestModel")
     mock_sagemaker.delete_endpoint.assert_called_with(EndpointName="TestEndpoint")
@@ -258,6 +259,7 @@ def test_delete_project_external_iam(
     mock_dataset_dao.get_all_for_scope.return_value = [
         DatasetModel(
             name="TestDataset",
+            type=DatasetType.PROJECT,
             scope=MOCK_PROJECT_NAME,
             description="Dataset for unit test",
             created_by="jdoe@example.com",
@@ -298,7 +300,7 @@ def test_delete_project_external_iam(
 
     # Mocking an s3 bucket that's now empty
     mock_s3.list_objects_v2.assert_called_with(
-        Bucket=env_vars["DATA_BUCKET"], Prefix=f"project/{MOCK_PROJECT_NAME}/datasets/TestDataset/"
+        Bucket=env_vars[EnvVariable.DATA_BUCKET], Prefix=f"project/{MOCK_PROJECT_NAME}/datasets/TestDataset/"
     )
     mock_s3.delete_object.assert_not_called()
     mock_dataset_dao.delete.assert_called_with(MOCK_PROJECT_NAME, "TestDataset")

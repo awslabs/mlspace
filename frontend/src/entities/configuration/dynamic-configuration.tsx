@@ -25,7 +25,6 @@ import {
 import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '../../config/store';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { IAppConfiguration } from '../../shared/model/app.configuration.model';
 import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
 import { listEMRApplications } from '../emr/emr.reducer';
@@ -37,11 +36,12 @@ import ConfirmConfigurationChangesModal from './confirm-configuration-changes-mo
 import EmrConfiguration from './emr-configuration';
 import ProjectCreationConfiguration from './project-creation-configuration';
 import SystemBannerConfiguration from './system-banner-configuration';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const [importConfigVisible, setImportConfigVisible] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File[]>([]);
     const [modalVisible, setModalVisible] = useState(false);

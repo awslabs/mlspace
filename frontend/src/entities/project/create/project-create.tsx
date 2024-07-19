@@ -33,7 +33,6 @@ import {
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
 import { selectProject } from '../card/project-card.reducer';
 import { createProject, getProject, listProjectsForUser, updateProject } from '../project.reducer';
@@ -48,6 +47,7 @@ import {
 import { selectCurrentUser } from '../../user/user.reducer';
 import { Timezone } from '../../../shared/model/user.model';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export type ResourceCreateProperties = {
     isEdit?: boolean;
@@ -56,7 +56,7 @@ export type ResourceCreateProperties = {
 export function ProjectCreate ({ isEdit }: ResourceCreateProperties) {
     const [submitLoading, setSubmitLoading] = React.useState(false);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const { projectName } = useParams();
     const navigate = useNavigate();
     const currentUser = useAppSelector(selectCurrentUser);
@@ -85,7 +85,7 @@ export function ProjectCreate ({ isEdit }: ResourceCreateProperties) {
             .max(4000, {
                 message: 'Project description cannot be more than 4000 characters.',
             })
-            .regex(/[ -~]/, {
+            .regex(/^[ -~]+$/, {
                 message: 'Project description can only contain printable characters',
             }),
         emrRuntime: z

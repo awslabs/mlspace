@@ -20,7 +20,7 @@ import logging
 import boto3
 
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
@@ -70,7 +70,7 @@ def create(event, context):
         args["ExperimentConfig"] = event_body["ExperimentConfig"]
     if "Environment" in event_body:
         args["Environment"] = event_body["Environment"]
-    args["Tags"] = generate_tags(user_name, project_name, env_variables["SYSTEM_TAG"])
+    args["Tags"] = generate_tags(user_name, project_name, env_variables[EnvVariable.SYSTEM_TAG])
 
     response = sagemaker.create_transform_job(**args)
     # Creates the initial metadata record

@@ -27,6 +27,7 @@ import { CallbackFunction } from '../../types';
 import { UserActions } from './user.actions';
 import { userColumns, visibleColumns } from './user.columns';
 import { getAllUsers } from './user.reducer';
+import { linkify } from '../../shared/util/table-utils';
 
 export type UserTableProps = {
     header?: ReactNode;
@@ -41,7 +42,7 @@ export function User (props: UserTableProps) {
     const dispatch = useAppDispatch();
     const { projectName } = useParams();
     const actions = (e: any) => UserActions({ ...e });
-    const isEmbedded = props.variant !== 'embedded';
+    const isEmbedded = props.variant === 'embedded';
 
     if (!isEmbedded) {
         DocTitle('Users');
@@ -55,6 +56,18 @@ export function User (props: UserTableProps) {
         dispatch(getAllUsers());
 
     }, [dispatch, projectName, isEmbedded]);
+
+    userColumns.map((columnDef) => {
+        if (columnDef.id === 'name') {
+            columnDef.cell = (item) => {
+                return (
+                    linkify('user', item.username, undefined)
+                );
+            };
+        }
+
+        return columnDef;
+    });
 
     return (
         <Table

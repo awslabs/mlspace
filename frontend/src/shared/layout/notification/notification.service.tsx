@@ -17,9 +17,11 @@
 import { FlashbarProps } from '@cloudscape-design/components';
 import { v4 } from 'uuid';
 import { addNotification, clearNotification } from './notification.reducer';
-import { Action, ThunkDispatch } from '@reduxjs/toolkit';
+import { Action, ThunkDispatch, isRejected } from '@reduxjs/toolkit';
 import { NotificationProp } from './notifications.props';
 import React from 'react';
+import { isFulfilled } from '@reduxjs/toolkit';
+import NotificationExpandableSection from './notification-expandable-section';
 
 function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
     function generateNotification (header: string, type: FlashbarProps.Type, id: string = v4(), content: React.ReactNode = null, dismissible = true) {
@@ -44,11 +46,28 @@ function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
         }
     }
 
+    function showAxiosActionNotification (action: string, successMessage: string, result: any) {
+        if (isFulfilled(result)) {
+            generateNotification(successMessage || `Successfully ${action}.`, 'success');
+        } else if (isRejected(result)) {
+            generateNotification(`Failed to ${action}.`, 'error', undefined, (
+                result.error.message ? (
+                    <NotificationExpandableSection headerText={'Details'} headingTagOverride={'h5'}>
+                        {result.error.message}
+                    </NotificationExpandableSection>
+                ) : <></>
+            ));
+        }
+    }
+
     return {
         generateNotification: generateNotification,
         createNotification: createNotification,
         showActionNotification: showActionNotification,
+        showAxiosActionNotification: showAxiosActionNotification,
     };
 }
+
+export type INotificationService = ReturnType<typeof NotificationService>;
 
 export default NotificationService;

@@ -22,10 +22,13 @@ import boto3
 from botocore.config import Config
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
-from ml_space_lambda.enums import DatasetType
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO, GroupDatasetModel
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
+from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, rename_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
+from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 s3 = boto3.client(
@@ -40,6 +43,10 @@ s3 = boto3.client(
 )
 s3_resource = boto3.resource("s3", config=retry_config)
 dataset_dao = DatasetDAO()
+group_user_dao = GroupUserDAO()
+group_dataset_dao = GroupDatasetDAO()
+iam = boto3.client("iam", config=retry_config)
+iam_manager = IAMManager(iam)
 
 dataset_description_regex = re.compile(r"[^\w\-\s'.]")
 
@@ -57,11 +64,19 @@ def delete(event, context):
     dataset_name = event["pathParameters"]["datasetName"].replace('"', "")
 
     env_variables = get_environment_variables()
-    bucket = s3_resource.Bucket(env_variables["DATA_BUCKET"])
+    bucket = s3_resource.Bucket(env_variables[EnvVariable.DATA_BUCKET])
     # Grab the dataset info from dynamo and do the delete using the metadata
     s3_prefix = get_dataset_prefix(scope, dataset_name)
     bucket.objects.filter(Prefix=s3_prefix).delete()
     dataset_dao.delete(scope, dataset_name)
+
+    # TODO: create dedicated delete query for performance?
+    groups_to_update = set()
+    for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset_name):
+        group_dataset_dao.delete(group_dataset.group, group_dataset.dataset)
+        groups_to_update.add(group_dataset.group)
+
+    iam_manager.update_groups(groups_to_update)
 
     return f"Successfully deleted {dataset_name}"
 
@@ -74,7 +89,7 @@ def delete_file(event, context):
     env_variables = get_environment_variables()
     key = f"{get_dataset_prefix(scope, dataset_name)}{file}"
 
-    return s3.delete_object(Bucket=env_variables["DATA_BUCKET"], Key=key)
+    return s3.delete_object(Bucket=env_variables[EnvVariable.DATA_BUCKET], Key=key)
 
 
 @api_wrapper
@@ -164,7 +179,7 @@ def presigned_url(event, context):
         conditions.append({"tagging": tagging_value})
 
         response = s3.generate_presigned_post(
-            Bucket=env_variables["DATA_BUCKET"],
+            Bucket=env_variables[EnvVariable.DATA_BUCKET],
             Key=key,
             Fields=fields,
             Conditions=conditions,
@@ -174,7 +189,7 @@ def presigned_url(event, context):
     else:
         response = s3.generate_presigned_url(
             ClientMethod="get_object",
-            Params={"Bucket": env_variables["DATA_BUCKET"], "Key": key},
+            Params={"Bucket": env_variables[EnvVariable.DATA_BUCKET], "Key": key},
             ExpiresIn=3600,
         )
     return response
@@ -182,34 +197,55 @@ def presigned_url(event, context):
 
 @api_wrapper
 def create_dataset(event, context):
-    body = json.loads(event["body"])
-    dataset_type = body.get("datasetType")
-    dataset_name = body.get("datasetName")
-    env_variables = get_environment_variables()
+    try:
+        dataset_created = False
+        body = json.loads(event["body"])
+        dataset_type = body.get("datasetType")
+        dataset_name = body.get("datasetName")
+        env_variables = get_environment_variables()
 
-    if dataset_type == DatasetType.GLOBAL.value:
-        scope = "global"
-        directory_name = f"global/datasets/{dataset_name}/"
-    else:
-        scope = body.get("datasetScope")  # username or project name for private/project scope respectively
-        directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
+        if dataset_type == DatasetType.GLOBAL:
+            scope = "global"
+            dataset_scope = scope
+            directory_name = f"global/datasets/{dataset_name}/"
+        elif dataset_type == DatasetType.GROUP:
+            scope = body.get("datasetScope")
+            dataset_scope = "group"
+            directory_name = f"group/datasets/{dataset_name}/"
+        else:
+            scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
+            dataset_scope = scope
+            directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
 
-    if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
-        raise Exception("Dataset headers do not match expected type and scope.")
+        if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
+            raise Exception("Dataset headers do not match expected type and scope.")
 
-    if not dataset_dao.get(scope, dataset_name):
-        dataset_location = f's3://{env_variables["DATA_BUCKET"]}/{directory_name}'
-        dataset = DatasetModel(
-            scope=scope,
-            name=dataset_name,
-            description=body.get("datasetDescription", ""),
-            location=dataset_location,
-            created_by=event["requestContext"]["authorizer"]["principalId"],
-        )
-        dataset_dao.create(dataset)
-        return {"status": "success", "dataset": dataset.to_dict()}
-    else:
-        raise Exception(f"Dataset {dataset_name} already exists.")
+        if not dataset_dao.get(dataset_scope, dataset_name):
+            dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
+            dataset = DatasetModel(
+                scope=dataset_scope,
+                type=dataset_type,
+                name=dataset_name,
+                description=body.get("datasetDescription", ""),
+                location=dataset_location,
+                created_by=event["requestContext"]["authorizer"]["principalId"],
+            )
+            dataset_dao.create(dataset)
+            dataset_created = True
+
+            if dataset_type == DatasetType.GROUP:
+                group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
+                iam_manager.update_groups([scope])
+
+            return {"status": "success", "dataset": dataset.to_dict()}
+        else:
+            raise Exception(f"Dataset {dataset_name} already exists.")
+    except Exception as e:
+        # Clean up any resources which may have been created prior to the error
+        if dataset_created:
+            dataset_dao.delete(dataset_scope, dataset_name)
+
+        raise e
 
 
 @api_wrapper
@@ -217,9 +253,15 @@ def list_resources(event, context):
     username = event["requestContext"]["authorizer"]["principalId"]
     datasets = []
     # Get global datasets
-    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL.value)
+    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
     # Get the users private datasets
     datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
+    # Get the group datasets for groups this user is a member of
+    group_datasets = set()
+    for group in group_user_dao.get_groups_for_user(username):
+        for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
+            group_datasets.add(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
+    datasets.extend(list(group_datasets))
 
     if event["pathParameters"] and "projectName" in event["pathParameters"]:
         project_name = event["pathParameters"]["projectName"].replace('"', "")
@@ -246,7 +288,7 @@ def list_files(event, context):
     computed_prefix = "".join([dataset_prefix, query_string_parameters.get("Prefix", "")])
 
     query_parameters = {
-        "Bucket": env_variables["DATA_BUCKET"],
+        "Bucket": env_variables[EnvVariable.DATA_BUCKET],
         "Prefix": computed_prefix,
         "Delimiter": "/",
     }
@@ -267,7 +309,7 @@ def list_files(event, context):
     # copy over values with updated keys to response
     response["pageSize"] = s3_response["MaxKeys"]
     response["prefix"] = s3_response["Prefix"]
-    response["bucket"] = env_variables["DATA_BUCKET"]
+    response["bucket"] = env_variables[EnvVariable.DATA_BUCKET]
 
     if "NextContinuationToken" in s3_response:
         response["nextToken"] = s3_response["NextContinuationToken"]

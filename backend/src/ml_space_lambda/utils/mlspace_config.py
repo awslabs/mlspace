@@ -55,6 +55,9 @@ ENV_DEFAULTS = {
     EnvVariable.SYSTEM_TAG: "MLSpace",
     EnvVariable.TRANSLATE_DATE_ROLE_ARN: "",
     EnvVariable.USERS_TABLE: "mlspace-users",
+    EnvVariable.GROUPS_TABLE: "mlspace-groups",
+    EnvVariable.GROUP_USERS_TABLE: "mlspace-group-users",
+    EnvVariable.GROUP_DATASETS_TABLE: "mlspace-group-datasets",
 }
 
 

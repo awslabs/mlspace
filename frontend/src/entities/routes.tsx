@@ -27,6 +27,7 @@ import Model from './model';
 import ModelCreate from './model/create';
 import ModelDetail from './model/detail';
 import User from './user';
+import Group from './group';
 import ProjectDetail from './project/detail';
 import ProjectCreate from './project/create';
 import ProjectUser from './project/users/project-user';
@@ -56,6 +57,9 @@ import BatchTranslateDetail from './batch-translate/detail';
 import TranslateRealtime from './translate-realtime/translate-realtime';
 import { appConfig } from './configuration/configuration-reducer';
 import { IAppConfiguration } from '../shared/model/app.configuration.model';
+import GroupCreate from './group/create';
+import GroupDetail from './group/detail';
+import UserDetail from './user/detail';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -67,13 +71,20 @@ const EntityRoutes = () => {
             <ErrorBoundaryRoutes>
                 <Route element={<RequireAdmin />}>
                     <Route path='admin/users' element={<User />} />
+                    <Route path='admin/users/:username' element={<UserDetail />} />
+                    <Route path='admin/groups' element={<Group />} />
+                    <Route path='admin/groups/create' element={<GroupCreate />} />
+                    <Route path='admin/groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />
+                    <Route path='admin/groups/:groupName' element={<GroupDetail />} />
                     <Route path='admin/configuration' element={<Configuration />} />
                     <Route path='admin/reports' element={<Report />} />
                 </Route>
+                <Route path='personal/group' element={<Group />} />
+                <Route path='personal/group/:groupName' element={<GroupDetail />} />
                 <Route path='personal/dataset' element={<Dataset />} />
                 <Route path='personal/dataset/create' element={<DatasetCreate />} />
-                <Route path='personal/dataset/:scope/:name/edit' element={<DatasetUpdate />} />
-                <Route path='personal/dataset/:scope/:name' element={<DatasetDetail />} />
+                <Route path='personal/dataset/:type/:scope/:name/edit' element={<DatasetUpdate />} />
+                <Route path='personal/dataset/:type/:scope/:name' element={<DatasetDetail />} />
                 <Route path='personal/notebook' element={<Notebook />} />
                 <Route path='personal/notebook/create' element={<NotebookCreate />} />
                 <Route path='personal/notebook/:name' element={<NotebookDetail />} />
@@ -112,11 +123,11 @@ const EntityRoutes = () => {
                 <Route path='project/:projectName/dataset' element={<Dataset />} />
                 <Route path='project/:projectName/dataset/create' element={<DatasetCreate />} />
                 <Route
-                    path='project/:projectName/dataset/:scope/:name'
+                    path='project/:projectName/dataset/:type/:scope/:name'
                     element={<DatasetDetail />}
                 />
                 <Route
-                    path='project/:projectName/dataset/:scope/:name/edit'
+                    path='project/:projectName/dataset/:type/:scope/:name/edit'
                     element={<DatasetUpdate />}
                 />
                 <Route path='project/:projectName/model' element={<Model />} />

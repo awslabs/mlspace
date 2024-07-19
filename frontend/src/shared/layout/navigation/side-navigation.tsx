@@ -25,12 +25,10 @@ import {
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import {setActiveHref, setItemsForProjectName} from './navigation.reducer';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
-import { IProject } from '../../model/project.model';
+import { IProject } from '../../model';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { colorTextBodyDefault } from '@cloudscape-design/design-tokens';
 import Logo from '../logo/logo';
-import { appConfig } from '../../../entities/configuration/configuration-reducer';
-import { IAppConfiguration } from '../../model/app.configuration.model';
 import HorizontalLine from '../horizontal-line';
 
 export default function SideNavigation () {
@@ -42,7 +40,6 @@ export default function SideNavigation () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const project: IProject = useAppSelector((state) => state.project.project);
-    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const defaultState: OptionDefinition = {
         label: 'Select a project',
         value: '',
@@ -72,16 +69,10 @@ export default function SideNavigation () {
 
     const personalNavItems: SideNavigationProps.Item[] = [
         { type: 'link', text: 'Projects', href: '#/' },
+        { type: 'link', text: 'Groups', href: '#/personal/group' },
         { type: 'link', text: 'Notebook instances', href: '#/personal/notebook' },
         { type: 'link', text: 'Datasets', href: '#/personal/dataset' },
     ];
-    if (applicationConfig.configuration.EnabledServices.realtimeTranslate) {
-        personalNavItems.push({
-            type: 'link',
-            text: 'Real-time Translation',
-            href: '#/personal/translate/realtime',
-        });
-    }
     const personalResources: SideNavigationProps.Item = {
         type: 'section',
         text: 'My Resources',

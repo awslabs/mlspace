@@ -65,7 +65,7 @@ export class DatasetsApiStack extends Stack {
                 id: 'dataset-personal',
                 name: 'list_resources',
                 resource: 'dataset',
-                description: 'List all datasets global and private datasets for user',
+                description: 'List all global, group, and private datasets for user',
                 path: 'dataset',
                 method: 'GET',
             },
@@ -73,21 +73,21 @@ export class DatasetsApiStack extends Stack {
                 name: 'edit',
                 resource: 'dataset',
                 description: 'Edits dataset',
-                path: 'dataset/{scope}/{datasetName}',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}',
                 method: 'PUT',
             },
             {
                 name: 'get',
                 resource: 'dataset',
                 description: 'Gets dataset details',
-                path: 'dataset/{scope}/{datasetName}',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}',
                 method: 'GET',
             },
             {
                 name: 'delete',
                 resource: 'dataset',
                 description: 'Removes a dataset from an MLSpace project',
-                path: 'dataset/{scope}/{datasetName}',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}',
                 method: 'DELETE',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,
@@ -98,7 +98,7 @@ export class DatasetsApiStack extends Stack {
                 resource: 'dataset',
                 description: 'Removes a file from a dataset',
                 // use a greedy path here so object keys containing '/' are fully matched
-                path: 'dataset/{scope}/{datasetName}/{file+}',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}/{file+}',
                 method: 'DELETE',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,
@@ -108,7 +108,7 @@ export class DatasetsApiStack extends Stack {
                 name: 'list_files',
                 resource: 'dataset',
                 description: 'List all file in a dataset',
-                path: 'dataset/{scope}/{datasetName}/files',
+                path: 'v2/dataset/{type}/{scope}/{datasetName}/files',
                 method: 'GET',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,

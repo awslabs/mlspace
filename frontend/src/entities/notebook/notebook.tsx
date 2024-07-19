@@ -15,7 +15,6 @@
 */
 
 import React, { RefObject, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
 import { DocTitle, scrollToPageHeader } from '../../../src/shared/doc';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import Table from '../../modules/table';
@@ -31,22 +30,24 @@ import {
     clearNotebookList,
 } from './notebook.reducer';
 import { NotebookResourceMetadata } from '../../shared/model/resource-metadata.model';
+import { useParams } from 'react-router-dom';
 
 export const Notebook = () => {
     const notebooks: NotebookResourceMetadata[] = useAppSelector(notebookList);
     const loadingAction = useAppSelector(loadingNotebookAction);
     const createNotebookRef: RefObject<HTMLInputElement> = useRef(null);
     const { projectName } = useParams();
+    const isProjectPage = !!projectName;
 
     const dispatch = useAppDispatch();
     // const
-    !projectName
-        ? DocTitle('Notebook Instances')
-        : DocTitle(projectName!.concat(' Notebook Instances'));
+    isProjectPage
+        ? DocTitle(`${projectName} Notebook Instances`)
+        : DocTitle('Notebook Instances');
 
     useEffect(() => {
         let breadcrumbHref;
-        if (projectName) {
+        if (isProjectPage) {
             breadcrumbHref = `#/project/${projectName}/notebooks`;
         } else {
             breadcrumbHref = '#/personal/notebook';
@@ -64,10 +65,24 @@ export const Notebook = () => {
         } else {
             scrollToPageHeader('h1', 'Notebook instances');
         }
-    }, [dispatch, projectName]);
+    }, [dispatch, projectName, isProjectPage]);
+
+    // remove unnecessary columns
+    const tableVisibleColumns = visibleColumns.filter((columnId) => {
+        if (isProjectPage && columnId === 'project') {
+            // if displaying on a project page there is no use in showing the project column
+            return false;
+        } else if (!isProjectPage && columnId === 'createdBy') {
+            // if displaying on a personal page there is no use in showing the createdBy column
+            return false;
+        }
+
+        return true;
+    });
 
     return (
         <Table
+            key={isProjectPage ? `${projectName}-notebooks` : 'my-notebooks'}
             tableName='Notebook instance'
             tableType='single'
             itemNameProperty='resourceId'
@@ -76,7 +91,7 @@ export const Notebook = () => {
             focusProps={{ createNotebookRef: createNotebookRef }}
             allItems={notebooks}
             columnDefinitions={defaultColumns}
-            visibleColumns={visibleColumns}
+            visibleColumns={tableVisibleColumns}
             visibleContentPreference={visibleContentPreference}
             loadingAction={loadingAction}
             serverFetch={listNotebookInstances}

@@ -19,7 +19,7 @@ from unittest import mock
 from ml_space_lambda.enums import EnvVariable, ServiceType
 from ml_space_lambda.utils import mlspace_config
 
-TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", EnvVariable.MANAGE_IAM_ROLES.value: "True"}
+TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", EnvVariable.MANAGE_IAM_ROLES: "True"}
 
 mock_context = mock.Mock()
 mock_event = mock.Mock()
@@ -36,23 +36,23 @@ def generate_config(notebook_list=[], endpoint_list=[], training_list=[], transf
         "createdAt": 1,
         "configuration": {
             "EnabledInstanceTypes": {
-                ServiceType.NOTEBOOK.value: notebook_list,
-                ServiceType.ENDPOINT.value: endpoint_list,
-                ServiceType.TRAINING_JOB.value: training_list,
-                ServiceType.TRANSFORM_JOB.value: transform_list,
+                ServiceType.NOTEBOOK: notebook_list,
+                ServiceType.ENDPOINT: endpoint_list,
+                ServiceType.TRAINING_JOB: training_list,
+                ServiceType.TRANSFORM_JOB: transform_list,
             },
             "EnabledServices": {
-                ServiceType.REALTIME_TRANSLATE.value: False,
-                ServiceType.BATCH_TRANSLATE.value: False,
-                ServiceType.LABELING_JOB.value: False,
-                ServiceType.EMR_CLUSTER.value: False,
-                ServiceType.TRAINING_JOB.value: False,
-                ServiceType.TRANSFORM_JOB.value: False,
-                ServiceType.HPO_JOB.value: False,
-                ServiceType.ENDPOINT.value: False,
-                ServiceType.ENDPOINT_CONFIG.value: False,
-                ServiceType.NOTEBOOK.value: False,
-                ServiceType.MODEL.value: False,
+                ServiceType.REALTIME_TRANSLATE: False,
+                ServiceType.BATCH_TRANSLATE: False,
+                ServiceType.LABELING_JOB: False,
+                ServiceType.EMR_CLUSTER: False,
+                ServiceType.TRAINING_JOB: False,
+                ServiceType.TRANSFORM_JOB: False,
+                ServiceType.HPO_JOB: False,
+                ServiceType.ENDPOINT: False,
+                ServiceType.ENDPOINT_CONFIG: False,
+                ServiceType.NOTEBOOK: False,
+                ServiceType.MODEL: False,
             },
             "EMRConfig": {
                 "clusterTypes": [],
@@ -108,3 +108,35 @@ def test_initial_config_success(
     mock_app_config_dao.update.assert_called_with(generated_config)
 
     mock_update_instance_constraint_policies.assert_called_with(mock.ANY, mock_context)
+
+
+@mock.patch.dict("os.environ", {EnvVariable.MANAGE_IAM_ROLES: ""}, clear=True)
+@mock.patch("ml_space_lambda.initial_app_config.lambda_function.update_dynamic_roles_with_notebook_policies")
+@mock.patch("ml_space_lambda.initial_app_config.lambda_function.get_compute_types")
+@mock.patch("ml_space_lambda.initial_app_config.lambda_function.update_instance_constraint_policies")
+@mock.patch("ml_space_lambda.initial_app_config.lambda_function.app_configuration_dao")
+def test_initial_config_success(
+    mock_app_config_dao,
+    mock_update_instance_constraint_policies,
+    mock_compute_types,
+    update_dynamic_roles_with_notebook_policies,
+):
+    mlspace_config.env_variables = {}
+
+    mock_app_config_dao.get.return_value = [generate_config()]
+    mock_app_config_dao.update.return_value = None
+    mock_compute_types.return_value = MOCK_COMPUTE_TYPES
+
+    lambda_handler(mock_event, mock_context)
+
+    generated_config = generate_config(
+        notebook_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["InstanceType"],
+        endpoint_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["ProductionVariantInstanceType"],
+        training_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["TrainingInstanceType"],
+        transform_list=MOCK_COMPUTE_TYPES["InstanceTypes"]["TransformInstanceType"],
+    )
+
+    # The outgoing config should now contain the instance types for each service
+    mock_app_config_dao.update.assert_called_with(generated_config)
+
+    mock_update_instance_constraint_policies.assert_not_called()

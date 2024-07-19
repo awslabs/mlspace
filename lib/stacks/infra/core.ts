@@ -472,6 +472,49 @@ export class CoreStack extends Stack {
             projectionType: ProjectionType.KEYS_ONLY,
         });
 
+        // Groups Table
+        new Table(this, 'mlspace-ddb-groups', {
+            tableName: props.mlspaceConfig.GROUPS_TABLE_NAME,
+            partitionKey: { name: 'name', type: AttributeType.STRING },
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        // Group Datasets Table
+        const groupAttribute = { name: 'group', type: AttributeType.STRING };
+        const groupDatasetAttribute = { name: 'dataset', type: AttributeType.STRING };
+        const groupDatasetTable = new Table(this, 'mlspace-ddb-group-datasets', {
+            tableName: props.mlspaceConfig.GROUP_DATASETS_TABLE_NAME,
+            partitionKey: groupAttribute,
+            sortKey: groupDatasetAttribute,
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        groupDatasetTable.addGlobalSecondaryIndex({
+            indexName: 'ReverseLookup',
+            partitionKey: groupDatasetAttribute,
+            sortKey: groupAttribute,
+            projectionType: ProjectionType.KEYS_ONLY
+        });
+
+        // Group Users Table
+        const groupUserAttribute = { name: 'user', type: AttributeType.STRING };
+        const groupUsersTable = new Table(this, 'mlspace-ddb-group-users', {
+            tableName: props.mlspaceConfig.GROUP_USERS_TABLE_NAME,
+            partitionKey: groupAttribute,
+            sortKey: groupUserAttribute,
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        groupUsersTable.addGlobalSecondaryIndex({
+            indexName: 'ReverseLookup',
+            partitionKey: groupUserAttribute,
+            sortKey: groupAttribute,
+            projectionType: ProjectionType.KEYS_ONLY,
+        });
+
         // Users Table
         new Table(this, 'mlspace-ddb-users', {
             tableName: props.mlspaceConfig.USERS_TABLE_NAME,

@@ -28,7 +28,7 @@ export type UserAddProps = {
 export function AddProjectUser ({ users, selectUsers }: UserAddProps) {
     return (
         <Table
-            tableName='Users'
+            tableName='User'
             header={<></>}
             tableType='multi'
             selectItemsCallback={selectUsers}

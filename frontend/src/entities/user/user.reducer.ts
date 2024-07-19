@@ -17,7 +17,8 @@
 import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/toolkit';
 import { DEFAULT_PAGE_SIZE, IUser } from '../../shared/model/user.model';
 import { IProjectUser } from '../../shared/model/projectUser.model';
-import axios from '../../shared/util/axios-utils';
+import axios, { axiosCatch } from '../../shared/util/axios-utils';
+import { IGroupUser } from '../../shared/model/groupUser.model';
 
 const initialState = {
     allUsers: [] as IUser[],
@@ -36,6 +37,18 @@ export const getPageSizeForUser = (user : IUser, tableName? : string) => {
         return DEFAULT_PAGE_SIZE;
     }
 };
+
+export const getUser = createAsyncThunk('user/fetch_user', async (username: string) => {
+    return axios.get<IUser>(`/user/${username}`);
+});
+
+export const getUserGroups = createAsyncThunk('user/fetch_user_groups', async (username: string) => {
+    return axios.get<IGroupUser[]>(`/user/${username}/groups`);
+});
+
+export const getUserProjects = createAsyncThunk('user/fetch_user_projects', async (username: string) => {
+    return axios.get<IProjectUser[]>(`/user/${username}/projects`);
+});
 
 export const getCurrentUser = () => {
     return axios.get<IUser>('/current-user');
@@ -66,7 +79,7 @@ export const removeUserFromProject = createAsyncThunk(
     'user/remove_user_from_project',
     async (data: IProjectUser) => {
         const requestUrl = `/project/${data.project}/users/${encodeURIComponent(data.user || '')}`;
-        return axios.delete(requestUrl);
+        return axios.delete(requestUrl).catch(axiosCatch);
     }
 );
 

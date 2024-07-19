@@ -33,7 +33,7 @@ import { IProjectUser } from '../../../shared/model/projectUser.model';
 import { useParams } from 'react-router-dom';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle } from '../../../../src/shared/doc';
-import NotificationService from '../../../shared/layout/notification/notification.service';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export function ProjectUser () {
     const { projectName } = useParams();
@@ -47,7 +47,7 @@ export function ProjectUser () {
     const addableUsers = allUsers.filter((user) => !projectUsernames.includes(user.username!));
 
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     DocTitle(projectName!.concat(' Project Members'));
 
@@ -67,7 +67,7 @@ export function ProjectUser () {
     return (
         <div>
             <Table
-                tableName='Project member'
+                tableName='Project user'
                 tableType={tableType}
                 actions={actions}
                 trackBy='user'
@@ -75,13 +75,13 @@ export function ProjectUser () {
                 columnDefinitions={projectUserColumns}
                 visibleColumns={visibleProjectUserColumns}
                 loadingItems={loadingProjectUsers}
-                loadingText='Loading Project members'
+                loadingText='Loading Project users'
             />
             <Modal
-                title='Add members to Project'
+                title='Add user to Project'
                 visible={addUserModal}
                 dismissText='Cancel'
-                confirmText='Add members'
+                confirmText='Add users'
                 onDismiss={async () => {
                     await dispatch(getUsersInProject(projectName!));
                     await dispatch(toggleAddUserModal(false));

@@ -15,11 +15,12 @@
 */
 import { FormField, Input, Select, SpaceBetween } from '@cloudscape-design/components';
 import React, { useEffect } from 'react';
-import { enumToOptions } from '../../shared/util/enum-utils';
+import { initCap } from '../../shared/util/enum-utils';
 import { DatasetType } from '../../shared/model';
 import { z } from 'zod';
 import { useValidationReducer } from '../../shared/validation';
 import { NonCancelableEventHandler } from '@cloudscape-design/components/internal/events';
+import { IGroup } from '../../shared/model/group.model';
 
 export type DatasetInlineCreateProps = {
     username: string,
@@ -29,8 +30,10 @@ export type DatasetInlineCreateProps = {
 
 export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
     const {username, projectName, onChange} = props;
+    // TODO: disable this until we're ready to enable creating inline group datasets
+    // const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
+    const groups: IGroup[] | undefined = undefined;
 
-    const createOptions = enumToOptions(DatasetType, true).filter((option) => option.value !== DatasetType.GLOBAL);
 
     const formSchema = z.object({
         name: z
@@ -49,40 +52,69 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
         validateAll: false,
         form: {
             type: DatasetType.PRIVATE,
-            name: ''
+            name: '',
+            groupName: ''
         }
     });
 
     useEffect(() => {
         if (isValid) {
             const datasetContext = state.form;
-            
-            let scope = String(datasetContext.type);
-            switch (datasetContext.type) {
+
+            let type = String(datasetContext.type);
+            // Because there can be multiple groups, a group's "type" will look like 'group0', 'group1', etc 
+            if (type.startsWith('group')) {
+                type = DatasetType.GROUP;
+            }
+            let scopeAndType = type;
+            switch (type) {
                 case DatasetType.PRIVATE:
-                    scope += `/${username}`;
+                    scopeAndType += `/${username}`;
                     break;
                 case DatasetType.PROJECT:
-                    scope += `/${projectName}`;
+                    scopeAndType += `/${projectName}`;
                     break;
             }
 
-            onChange(new CustomEvent('onChange', { cancelable: false, detail: { value: `s3://${window.env.DATASET_BUCKET}/${scope}/datasets/${datasetContext.name}/` } }));
+            onChange(new CustomEvent('onChange', { cancelable: false, detail: { value: `s3://${window.env.DATASET_BUCKET}/${scopeAndType}/datasets/${datasetContext.name}/` } }));
         } else {
             onChange(new CustomEvent('onChange', { cancelable: false, detail: { value: undefined } }));
         }
     }, [isValid, projectName, state.form, username, onChange]);
+
+    function generateOptions () {
+        // Standard options always available
+        const options: { label: string; value?: string; options?: any[] }[] = [
+            {label: initCap(DatasetType.PROJECT), value: DatasetType.PROJECT},
+            {label: initCap(DatasetType.PRIVATE), value: DatasetType.PRIVATE},
+        ];
+
+        if (groups) {
+            const groupLabels: { label: string; value: string }[] = [];
+            groups.map((group, index) => {
+                groupLabels.push({ label: group.name, value: `${DatasetType.GROUP}${index}`});
+            });
+
+            options.push({ label: 'Groups', options: groupLabels});
+        }
+
+        return options;
+    }
     
     return (
         <SpaceBetween size='m' direction='vertical'>
-            <FormField label='Dataset type' description='Project datasets are accessible only to the project they were created in and private datasets are accessible to the user that created them.'>
+            <FormField label='Dataset type' description='Project datasets are accessible only to the project they were created in, group datasets are accessible only to the group they were created in, and private datasets are accessible to the user that created them.'>
                 <Select
-                    selectedOption={createOptions.find((o) => o.value === state.form.type)!}
-                    options={createOptions}
+                    selectedOption={{
+                        label: state.form.groupName ? `Group: ${state.form.groupName}` : initCap(state.form.type || ''),
+                        value: state.form.type,
+                    }}
+                    options={generateOptions()}
                     onChange={({detail}) => {
                         setFields({
-                            type: DatasetType[detail.selectedOption?.value?.toUpperCase() as keyof typeof DatasetType]
+                            type: detail.selectedOption?.value as keyof typeof DatasetType
                         });
+                        setFields({groupName: detail.selectedOption.value?.startsWith('group') ? detail.selectedOption.label : ''});
                     }}  />
             </FormField>
 

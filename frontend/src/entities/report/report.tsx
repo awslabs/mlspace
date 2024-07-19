@@ -35,7 +35,6 @@ import { useAppDispatch } from '../../config/store';
 import Condition from '../../modules/condition';
 import Table from '../../modules/table';
 import { setBreadcrumbs } from '../../shared/layout/navigation/navigation.reducer';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { IProject } from '../../shared/model/project.model';
 import { IReport } from '../../shared/model/report.model';
 import { IUser } from '../../shared/model/user.model';
@@ -46,6 +45,7 @@ import { ReportActionHandler } from './report.actions';
 import { reportColumns, resourceTypeOptions, scopeOptions, visibleReportColumns } from './report.columns';
 import { ReportScope, createReport, downloadReport, listReports } from './report.service';
 import ContentLayout from '../../shared/layout/content-layout';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export function Report () {
     const dispatch = useAppDispatch();
@@ -55,7 +55,7 @@ export function Report () {
     const [loadingReports, setLoadingReports] = useState(false);
     const [reports, setReports] = useState([] as IReport[]);
     const [downloadReportUrl, setDownloadReportUrl] = useState('');
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const { projectName } = useParams();
     const [selectedTargets, setSelectedTargets] = useState([] as string[]);
 
@@ -117,7 +117,7 @@ export function Report () {
                     variant='primary'
                     disabled={!props?.selectedItems[0]}
                     onItemClick={(e) => {
-                        ReportActionHandler(e, props?.selectedItems[0].Name, dispatch);
+                        ReportActionHandler(e, props?.selectedItems[0].Name, dispatch, notificationService);
                         (async () => {
                             await listReports().then((result) => {
                                 // The list_objects_v2 API has a delay before the deleted report

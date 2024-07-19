@@ -35,9 +35,9 @@ import {
 import { createLabelingJobThunk, listLabelingWorkTeams } from '../labeling-job.reducer';
 import _ from 'lodash';
 import { TASK_TYPE_CONFIG } from './labeling-job-task-config';
-import NotificationService from '../../../../shared/layout/notification/notification.service';
 import { LabelingJobTypes } from '../labeling-job.common';
 import '../../../../shared/validation/helpers/uri';
+import { useNotificationService } from '../../../../shared/util/hooks';
 
 export type ILabelingJobLabel = {
     label: string;
@@ -80,7 +80,7 @@ export function LabelingJobCreate () {
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     scrollToPageHeader();
     DocTitle('Labeling Job Create');

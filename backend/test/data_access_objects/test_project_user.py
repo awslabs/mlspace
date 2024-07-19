@@ -22,7 +22,7 @@ import moto
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
-from ml_space_lambda.enums import Permission
+from ml_space_lambda.enums import EnvVariable, Permission
 from ml_space_lambda.utils.common_functions import serialize_permissions
 
 TEST_ENV_CONFIG = {
@@ -66,7 +66,7 @@ class TestProjectUserDAO(TestCase):
         from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
         env_vars = get_environment_variables()
-        self.TEST_TABLE = env_vars["PROJECT_USERS_TABLE"]
+        self.TEST_TABLE = env_vars[EnvVariable.PROJECT_USERS_TABLE]
         self.ddb = boto3.client(
             "dynamodb",
             config=retry_config,

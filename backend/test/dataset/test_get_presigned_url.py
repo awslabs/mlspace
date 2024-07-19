@@ -68,7 +68,7 @@ def test_get_presigned_url_post_success(mock_s3):
         "x-amz-meta-dataset-description": "example description",
         "x-amz-meta-user": "jdoe@amazon.com",
         "x-amz-meta-dataset-name": "example_dataset",
-        "x-amz-meta-dataset-scope": DatasetType.GLOBAL.value,
+        "x-amz-meta-dataset-scope": DatasetType.GLOBAL,
         "tagging": expected_s3_tags,
     }
     mock_conditions = [
@@ -89,7 +89,7 @@ def test_get_presigned_url_post_success(mock_s3):
             "x-amz-meta-dataset-name": "example_dataset",
         },
         {
-            "x-amz-meta-dataset-scope": DatasetType.GLOBAL.value,
+            "x-amz-meta-dataset-scope": DatasetType.GLOBAL,
         },
         {
             "tagging": expected_s3_tags,
