@@ -314,7 +314,6 @@ const DatasetActionHandler = (
     projectName?: string,
 ) => {
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-    //TODO: try to delete a group/global dataset
     switch (e.detail.id) {
         case 'open':
             nav(`${basePath}/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`);
