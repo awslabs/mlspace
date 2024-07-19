@@ -232,7 +232,7 @@ def create_dataset(event, context):
 
         if dataset_type == DatasetType.GROUP:
             group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
-            iam_manager.update_groups(scope)
+            iam_manager.update_groups([scope])
 
         return {"status": "success", "dataset": dataset.to_dict()}
     else:
