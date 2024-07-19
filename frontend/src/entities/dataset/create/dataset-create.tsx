@@ -163,8 +163,6 @@ export function DatasetCreate () {
                     scope = DatasetType.GROUP;
                 }
 
-                console.log(`Scope: ${scope}`);
-
                 // Need to clear state/reset the form
                 navigate(`${basePath}/dataset/${newDataset.type}/${scope}/${newDataset.name}`);
             }

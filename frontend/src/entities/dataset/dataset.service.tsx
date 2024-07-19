@@ -54,7 +54,6 @@ function generateDatasetHeaders (key: string) {
         // for groups, set the scope to the dataset name
         datasetScope = key.split('/')[2];
     }
-    console.log(`Type is ${datasetType} and scope is ${datasetScope}`);
     const headerConfig = {
         headers: {
             'x-mlspace-dataset-type': datasetType,

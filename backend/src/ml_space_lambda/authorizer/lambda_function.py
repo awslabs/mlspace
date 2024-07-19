@@ -427,7 +427,6 @@ def _handle_dataset_request(request_method, path_params, user):
     if dataset:
         # Owners can do whatever - this check also handles private datasets
         if dataset.created_by == user.username:
-            print("User is creator")
             return True
         else:
             # All admins can perform any action on any Group
