@@ -418,7 +418,7 @@ export class IAMStack extends Stack {
                         ],
                         resources: [
                             `arn:${partition}:sagemaker:${region}:${this.account}:training-job/*`,
-                            `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-training-job/*`
+                            `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-tuning-job/*`
                         ],
                         conditions: {
                             Null: {
@@ -467,7 +467,7 @@ export class IAMStack extends Stack {
                         ],
                         resources: [
                             `arn:${partition}:sagemaker:${region}:${this.account}:training-job/*`,
-                            `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-training-job/*`
+                            `arn:${partition}:sagemaker:${region}:${this.account}:hyper-parameter-tuning-job/*`
                         ],
                         conditions: {
                             Null: {
