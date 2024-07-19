@@ -131,6 +131,7 @@ def test_create_dataset_fail_with_rollback(
     )
 
     assert lambda_handler(mock_event, mock_context) == expected_response
+    assert mock_dataset_dao.delete.call_count == 1
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
