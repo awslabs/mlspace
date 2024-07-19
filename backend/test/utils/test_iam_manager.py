@@ -27,7 +27,7 @@ from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import generate_tags
-from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG, PROJECT_POLICY_VERSION, USER_POLICY_VERSION
+from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG, PROJECT_POLICY_VERSION, USER_POLICY_VERSION, IAMManager
 
 DYNAMIC_USER_ROLE_NAME = "MLSpace-myproject1-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"
 UNTAGGED_DYNAMIC_USER_ROLE_NAME = "MLSpace-myproject2-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"
@@ -643,9 +643,12 @@ class TestIAMSupport(TestCase):
             VersionId="v2",
         )
 
-    @mock.patch("ml_space_lambda.utils.IAMManager.update_user_policy")
+    @mock.patch.object(IAMManager, "update_user_policy")
     @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
-    def update_groups(self, mock_group_user_dao, mock_update_user_policy):
-        mock_group_user_dao.get_users_for_group.side_effect = [["user1"], ["user2"]]
+    def test_update_groups(self, mock_group_user_dao, mock_update_user_policy):
+        mock_group_user_dao.get_users_for_group.side_effect = [
+            [GroupUserModel("user1", "group1")],
+            [GroupUserModel("user2", "group2")],
+        ]
         self.iam_manager.update_groups(["group1", "group2"])
-        mock_update_user_policy.assert_calls(mock.call("user1"), mock.call("user2"))
+        mock_update_user_policy.assert_has_calls([mock.call("user1"), mock.call("user2")], any_order=True)

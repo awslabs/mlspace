@@ -1,7 +1,7 @@
 name: Deploy Development Environment
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "release/**" ]
 
 permissions:
   id-token: write

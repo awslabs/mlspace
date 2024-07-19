@@ -127,7 +127,7 @@ export function DatasetCreate () {
             options.push({ label: initCap(DatasetType.PROJECT), value: DatasetType.PROJECT });
         }
 
-        if (groups) {
+        if (groups && groups.length > 0) {
             const groupLabels: { label: string; value: string }[] = [];
             groups.map((group, index) => {
                 groupLabels.push({ label: group.name, value: `group${index}`});
