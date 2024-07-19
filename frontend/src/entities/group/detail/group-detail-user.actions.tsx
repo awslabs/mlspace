@@ -42,7 +42,7 @@ function GroupDetailUserActions (props?: any) {
     const currentUser = useAppSelector(selectCurrentUser);
 
     useEffect(() => {
-        dispatch(getAllUsers());
+        dispatch(getAllUsers(false));
     }, [dispatch]);
 
     return (
