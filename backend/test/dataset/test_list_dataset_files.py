@@ -53,7 +53,7 @@ def test_list_dataset_files_success(mock_s3, mock_dataset_dao, mock_global_datas
             {"Key": "global/datasets/example_dataset/file2.png", "Size": 1243},
         ],
         "CommonPrefixes": [{"Prefix": "global/datasets/example_dataset/nested"}],
-        "NextContinuationToken": "123"
+        "NextContinuationToken": "123",
     }
 
     expected_response = generate_html_response(
