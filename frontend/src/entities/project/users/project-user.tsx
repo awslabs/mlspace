@@ -61,7 +61,7 @@ export function ProjectUser () {
             ])
         );
         dispatch(getUsersInProject(projectName!));
-        dispatch(getAllUsers());
+        dispatch(getAllUsers(false));
     }, [dispatch, projectName]);
 
     return (

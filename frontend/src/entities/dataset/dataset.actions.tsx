@@ -224,7 +224,7 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                             return await dispatch(
                                                 deleteFileFromDataset({
                                                     type: state.datasetContext?.type,
-                                                    scope: state.datasetContext?.scope,
+                                                    scope: state.datasetContext?.scope || state.datasetContext?.type,
                                                     datasetName: state.datasetContext?.name,
                                                     files: selectedItems,
                                                 })
@@ -314,7 +314,6 @@ const DatasetActionHandler = (
     projectName?: string,
 ) => {
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-
     switch (e.detail.id) {
         case 'open':
             nav(`${basePath}/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`);

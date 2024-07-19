@@ -25,6 +25,7 @@ import jwt
 import urllib3
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
@@ -42,6 +43,7 @@ user_dao = UserDAO()
 dataset_dao = DatasetDAO()
 resource_metadata_dao = ResourceMetadataDAO()
 group_user_dao = GroupUserDAO()
+group_dataset_dao = GroupDatasetDAO()
 
 oidc_keys: Dict[str, str] = {}
 # If using self signed certs on the OIDC endpoint we need to skip ssl verification
@@ -330,9 +332,22 @@ def lambda_handler(event, context):
                         if Permission.ADMIN in user.permissions:
                             policy_statement["Effect"] = "Allow"
                         else:
-                            group_user = group_user_dao.get(target_scope, username)
-                            if group_user:
-                                policy_statement["Effect"] = "Allow"
+                            # target_scope is the dataset name for a group, so look up if this user
+                            # is a member of a group that can upload files to this dataset
+                            group_dataset = dataset_dao.get(DatasetType.GROUP, target_scope)
+                            if group_dataset:
+                                groups = group_user_dao.get_groups_for_user(username)
+                                for group in groups:
+                                    dataset = group_dataset_dao.get(group.group, target_scope)
+                                    if dataset:
+                                        policy_statement["Effect"] = "Allow"
+                                        break
+                            else:
+                                # dataset doesn't exist yet so this is a create. Check if the user is
+                                # in the group they're creating a dataset for
+                                group_user = group_user_dao.get(target_scope, username)
+                                if group_user:
+                                    policy_statement["Effect"] = "Allow"
                 else:
                     logger.info(
                         "Missing one or more required headers 'x-mlspace-dataset-type', "
@@ -415,13 +430,20 @@ def _handle_dataset_request(request_method, path_params, user):
             return True
         else:
             # All admins can perform any action on any Group
-            if dataset.type == DatasetType.GROUP:
-                if Permission.ADMIN in user.permissions:
-                    return True
-                group_user = group_user_dao.get(dataset_scope, user.username)
-                # Non-admins can only view group datasets
-                if group_user and request_method not in ["PUT", "DELETE"]:
-                    return True
+            if (
+                dataset.type == DatasetType.GROUP or dataset.type == DatasetType.GLOBAL
+            ) and Permission.ADMIN in user.permissions:
+                return True
+            elif dataset.type == DatasetType.GROUP:
+                # If user isn't the creator of the dataset or an admin they can never PUT or DELETE
+                if request_method in ["PUT", "DELETE"]:
+                    return False
+                groups = group_user_dao.get_groups_for_user(user.username)
+                # Check if any groups this user is a member of contain this group dataset
+                for group in groups:
+                    group_dataset = group_dataset_dao.get(group.group, dataset_name)
+                    if group_dataset:
+                        return True
             # If it's a global or project dataset and they aren't the owner
             # they can't update or delete the dataset or any files
             elif request_method in ["PUT", "DELETE"]:

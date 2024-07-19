@@ -35,6 +35,29 @@ mock_context = mock.Mock()
 def test_list_all(mock_user_dao):
     all_users = [
         UserModel(
+            username="TestUser2",
+            email="test2@amazon.com",
+            display_name="Test User2",
+            suspended=False,
+        ),
+        UserModel(
+            username="TestUser3",
+            email="test3@amazon.com",
+            display_name="Test User3",
+            suspended=False,
+        ),
+    ]
+    mock_user_dao.get_all.return_value = all_users
+
+    assert lambda_handler({}, mock_context) == generate_html_response(200, [user.to_dict() for user in all_users])
+
+    mock_user_dao.get_all.assert_called_with(include_suspended=False)
+
+
+@mock.patch("ml_space_lambda.user.lambda_functions.user_dao")
+def test_list_all_include_suspended(mock_user_dao):
+    all_users = [
+        UserModel(
             username="TestUser1",
             email="test1@amazon.com",
             display_name="Test User1",
@@ -55,7 +78,9 @@ def test_list_all(mock_user_dao):
     ]
     mock_user_dao.get_all.return_value = all_users
 
-    assert lambda_handler({}, mock_context) == generate_html_response(200, [user.to_dict() for user in all_users])
+    assert lambda_handler({"queryStringParameters": {"includeSuspended": "true"}}, mock_context) == generate_html_response(
+        200, [user.to_dict() for user in all_users]
+    )
 
     mock_user_dao.get_all.assert_called_with(include_suspended=True)
 
@@ -73,4 +98,4 @@ def test_list_all_client_error(mock_user_dao):
     mock_user_dao.get_all.side_effect = ClientError(error_msg, "GetItem")
 
     assert lambda_handler({}, mock_context) == expected_response
-    mock_user_dao.get_all.assert_called_with(include_suspended=True)
+    mock_user_dao.get_all.assert_called_with(include_suspended=False)

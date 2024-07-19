@@ -233,7 +233,7 @@ export function DatasetCreate () {
                     <Container>
                         <SpaceBetween direction='vertical' size='s'>
                             <FormField
-                                description='Maximum of 255 characters. Must be unique to the type that you choose. The dataset name must be unique to the scope (Global/Private/Project).'
+                                description='Maximum of 255 characters. Must be unique to the type that you choose. The dataset name must be unique to the scope (Global/Private/Project/Group).'
                                 errorText={errors.name}
                                 label='Dataset name'
                             >
