@@ -45,7 +45,7 @@ s3_resource = boto3.resource("s3", config=retry_config)
 dataset_dao = DatasetDAO()
 group_user_dao = GroupUserDAO()
 group_dataset_dao = GroupDatasetDAO()
-iam = boto3.resource("iam", config=retry_config)
+iam = boto3.client("iam", config=retry_config)
 iam_manager = IAMManager(iam)
 
 dataset_description_regex = re.compile(r"[^\w\-\s'.]")
@@ -130,17 +130,32 @@ def get(event, context):
     raise ResourceNotFound(f"Dataset '{dataset_name}' does not exist.")
 
 
+def _is_scope_header_correct(type_from_key: str, scope_from_key: str, name_from_key: str, scope_header: str):
+    if type_from_key != DatasetType.GROUP:
+        if scope_from_key != scope_header:
+            return False
+    else:
+        # Group datasets expect the scope header to be the name of the dataset
+        if name_from_key != scope_header:
+            return False
+    return True
+
+
 @api_wrapper
 def presigned_url(event, context):
     response = ""
     body = json.loads(event["body"])
     key = body["key"]
-    scope_from_key = key.split("/")[1]
     type_from_key = key.split("/")[0]
+    scope_from_key = key.split("/")[1]
+    name_from_key = key.split("/")[2]
+    if type_from_key == DatasetType.GROUP:
+        # for group datasets, the scope is 'group'
+        scope_from_key = DatasetType.GROUP
+
     # Ensure the headers match the values derived from the request key
-    if (
-        type_from_key != event["headers"]["x-mlspace-dataset-type"]
-        or scope_from_key != event["headers"]["x-mlspace-dataset-scope"]
+    if type_from_key != event["headers"]["x-mlspace-dataset-type"] or not _is_scope_header_correct(
+        type_from_key, scope_from_key, name_from_key, event["headers"]["x-mlspace-dataset-scope"]
     ):
         raise Exception("Dataset headers do not match expected type and scope.")
 
@@ -154,7 +169,6 @@ def presigned_url(event, context):
 
         # Set derived values for conditions and fields
         username = event["requestContext"]["authorizer"]["principalId"]
-        name_from_key = key.split("/")[2]
 
         # Conditions is an array of dictionaries
         conditions.append({"x-amz-meta-user": username})
@@ -197,46 +211,55 @@ def presigned_url(event, context):
 
 @api_wrapper
 def create_dataset(event, context):
-    body = json.loads(event["body"])
-    dataset_type = body.get("datasetType")
-    dataset_name = body.get("datasetName")
-    env_variables = get_environment_variables()
+    try:
+        dataset_created = False
+        body = json.loads(event["body"])
+        dataset_type = body.get("datasetType")
+        dataset_name = body.get("datasetName")
+        env_variables = get_environment_variables()
 
-    if dataset_type == DatasetType.GLOBAL:
-        scope = "global"
-        dataset_scope = scope
-        directory_name = f"global/datasets/{dataset_name}/"
-    elif dataset_type == DatasetType.GROUP:
-        scope = body.get("datasetScope")
-        dataset_scope = "group"
-        directory_name = f"group/datasets/{dataset_name}/"
-    else:
-        scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
-        dataset_scope = scope
-        directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
+        if dataset_type == DatasetType.GLOBAL:
+            scope = "global"
+            dataset_scope = scope
+            directory_name = f"global/datasets/{dataset_name}/"
+        elif dataset_type == DatasetType.GROUP:
+            scope = body.get("datasetScope")
+            dataset_scope = "group"
+            directory_name = f"group/datasets/{dataset_name}/"
+        else:
+            scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
+            dataset_scope = scope
+            directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
 
-    if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
-        raise Exception("Dataset headers do not match expected type and scope.")
+        if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
+            raise Exception("Dataset headers do not match expected type and scope.")
 
-    if not dataset_dao.get(dataset_scope, dataset_name):
-        dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
-        dataset = DatasetModel(
-            scope=dataset_scope,
-            type=dataset_type,
-            name=dataset_name,
-            description=body.get("datasetDescription", ""),
-            location=dataset_location,
-            created_by=event["requestContext"]["authorizer"]["principalId"],
-        )
-        dataset_dao.create(dataset)
+        if not dataset_dao.get(dataset_scope, dataset_name):
+            dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
+            dataset = DatasetModel(
+                scope=dataset_scope,
+                type=dataset_type,
+                name=dataset_name,
+                description=body.get("datasetDescription", ""),
+                location=dataset_location,
+                created_by=event["requestContext"]["authorizer"]["principalId"],
+            )
+            dataset_dao.create(dataset)
+            dataset_created = True
 
-        if dataset_type == DatasetType.GROUP:
-            group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
-            iam_manager.update_groups(scope)
+            if dataset_type == DatasetType.GROUP:
+                group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
+                iam_manager.update_groups([scope])
 
-        return {"status": "success", "dataset": dataset.to_dict()}
-    else:
-        raise Exception(f"Dataset {dataset_name} already exists.")
+            return {"status": "success", "dataset": dataset.to_dict()}
+        else:
+            raise Exception(f"Dataset {dataset_name} already exists.")
+    except Exception as e:
+        # Clean up any resources which may have been created prior to the error
+        if dataset_created:
+            dataset_dao.delete(dataset_scope, dataset_name)
+
+        raise e
 
 
 @api_wrapper

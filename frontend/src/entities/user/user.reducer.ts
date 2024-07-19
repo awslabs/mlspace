@@ -54,9 +54,12 @@ export const getCurrentUser = () => {
     return axios.get<IUser>('/current-user');
 };
 
-export const getAllUsers = createAsyncThunk('user/fetch_all_users', async () => {
-    const requestUrl = '/user';
-    return axios.get<IUser[]>(requestUrl);
+export const getAllUsers = createAsyncThunk('user/fetch_all_users', async (includeSuspended?: boolean) => {
+    const params = new URLSearchParams();
+    if (includeSuspended) {
+        params.append('includeSuspended', 'true');
+    }
+    return axios.get<IUser[]>(`/user${params.size > 0 ? '?' + params.toString() : ''}`);
 });
 
 export const getUsersInProject = createAsyncThunk(
