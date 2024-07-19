@@ -283,7 +283,7 @@ function DatasetActionButton (nav: (endpoint: string) => void, dispatch: ReduxDi
             variant='primary'
             disabled={selectedDataset === undefined}
             onItemClick={(e) =>
-                DatasetActionHandler(e, selectedDataset, nav, dispatch, projectName)
+                DatasetActionHandler(e, selectedDataset, nav, dispatch, props.setSelectedItems, projectName)
             }
         >
             Actions
@@ -310,7 +310,8 @@ const DatasetActionHandler = (
     dataset: IDataset,
     nav: (endpoint: string) => void,
     dispatch: ThunkDispatch<any, any, Action>,
-    projectName?: string
+    setSelectedItems: (selectedItems: any[]) => void,
+    projectName?: string,
 ) => {
     const basePath = projectName ? `/project/${projectName}` : '/personal';
     //TODO: try to delete a group/global dataset
@@ -323,8 +324,11 @@ const DatasetActionHandler = (
                 setDeleteModal({
                     resourceName: dataset.name!,
                     resourceType: 'dataset',
-                    onConfirm: async () => await dispatch(deleteDatasetFromProject(dataset)),
-                    postConfirm: () => dispatch(getDatasetsList(projectName)),
+                    onConfirm: async () => {
+                        await dispatch(deleteDatasetFromProject(dataset));
+                        setSelectedItems([]);
+                    },
+                    postConfirm: () => dispatch(getDatasetsList({projectName})),
                     description: deletionDescription('Dataset'),
                 })
             );

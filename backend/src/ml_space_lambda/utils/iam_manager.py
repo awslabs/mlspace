@@ -597,7 +597,8 @@ class IAMManager:
     def update_groups(self, groups: list[str]) -> None:
         users_to_update = set()
         for group in groups:
-            users_to_update.update(group_user_dao.get_users_for_group(group))
+            for user in group_user_dao.get_users_for_group(group):
+                users_to_update.add(user.user)
 
         for username in users_to_update:
             self.update_user_policy(username)

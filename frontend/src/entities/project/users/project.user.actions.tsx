@@ -171,7 +171,7 @@ const ProjectUserActionHandler = async (
     projectName: string,
     dispatch: ThunkDispatch<any, any, Action>,
     notificationService: ReturnType<typeof NotificationService>,
-    setSelectedItems: any,
+    setSelectedItems: (selectedItems: any[]) => void,
 ) => {
     switch (e.detail.id) {
         case 'collaborator':

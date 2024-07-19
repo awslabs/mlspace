@@ -241,7 +241,7 @@ In order to create the default {{ $params.APPLICATION_NAME }} notebook policy an
             ],
             "Resource": [
                 "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:training-job/*",
-                "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:hyper-parameter-training-job/*"
+                "arn:{AWS_PARTITION}:sagemaker:{AWS_REGION}:{AWS_ACCOUNT}:hyper-parameter-tuning-job/*"
             ],
             "Effect": "Deny"
         },
