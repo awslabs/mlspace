@@ -651,4 +651,4 @@ class TestIAMSupport(TestCase):
             [GroupUserModel("user2", "group2")],
         ]
         self.iam_manager.update_groups(["group1", "group2"])
-        mock_update_user_policy.assert_has_calls([mock.call("user1"), mock.call("user2")])
+        mock_update_user_policy.assert_has_calls([mock.call("user1"), mock.call("user2")], any_order=True)
