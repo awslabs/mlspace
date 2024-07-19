@@ -107,9 +107,7 @@ def test_create_dataset_success(
 @mock.patch("ml_space_lambda.dataset.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_create_dataset_fail_with_rollback(
-        mock_s3, mock_dataset_dao, mock_iam_manager, mock_group_dataset_dao
-):
+def test_create_dataset_fail_with_rollback(mock_s3, mock_dataset_dao, mock_iam_manager, mock_group_dataset_dao):
     mock_event = generate_event(DatasetType.GROUP, DatasetType.GROUP)
     mock_dataset_dao.get.return_value = None
     directory_name = f"{DatasetType.GROUP}/datasets/{test_dataset_name}/"
@@ -122,8 +120,9 @@ def test_create_dataset_fail_with_rollback(
 
     dataset_location = f's3://{TEST_ENV_CONFIG["DATA_BUCKET"]}/{directory_name}'
 
-    test_dataset = generate_dataset_model(event=mock_event, scope=DatasetType.GROUP, dataset_location=dataset_location,
-                                          type=DatasetType.GROUP)
+    test_dataset = generate_dataset_model(
+        event=mock_event, scope=DatasetType.GROUP, dataset_location=dataset_location, type=DatasetType.GROUP
+    )
     success_response = {"status": "success", "dataset": test_dataset.to_dict()}
     expected_response = generate_html_response(
         400,
