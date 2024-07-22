@@ -48,7 +48,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
         <Modal
             visible={props.visible}
             onDismiss={() => props.setVisible(false)}
-            header={<Header>Add member to Group</Header>}
+            header={<Header>Add user to Group</Header>}
             footer={
                 <Box float='right'>
                     <SpaceBetween direction='horizontal' size='xs'>
@@ -66,7 +66,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                                     usernames: [props.username]
                                 })).then((response) => {
                                     notificationService.showAxiosActionNotification(
-                                        'add member to group',
+                                        'add user to group',
                                         `Added ${props.username} to group: ${group.name}.`,
                                         response
                                     );

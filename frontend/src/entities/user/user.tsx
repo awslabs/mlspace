@@ -53,7 +53,7 @@ export function User (props: UserTableProps) {
             dispatch(setBreadcrumbs([getBase(projectName), { text: 'Users', href: '#/admin/users' }]));
             scrollToPageHeader('h1', 'Users');
         }
-        dispatch(getAllUsers());
+        dispatch(getAllUsers(true));
 
     }, [dispatch, projectName, isEmbedded]);
 

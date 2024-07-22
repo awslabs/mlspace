@@ -17,7 +17,7 @@
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { currentGroupUsers, getGroupUsers, removeGroupUser } from '../group.reducer';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { NavigateFunction, useNavigate, useParams } from 'react-router-dom';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
@@ -27,13 +27,13 @@ import AddGroupUserModal from './add-group-user-modal';
 import { IUser, Permission } from '../../../shared/model/user.model';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { useNotificationService } from '../../../shared/util/hooks';
-import { selectCurrentUser } from '../../user/user.reducer';
+import { getAllUsers, selectCurrentUser } from '../../user/user.reducer';
 import { INotificationService } from '../../../shared/layout/notification/notification.service';
 
 function GroupDetailUserActions (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const {groupName} = useParams();
+    const { groupName } = useParams();
     const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
     const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
     const groupUsernames = groupUsers.map((user) => user.user);
@@ -41,18 +41,25 @@ function GroupDetailUserActions (props?: any) {
     const [addUserModalVisible, setAddUserModalVisible] = useState(false);
     const currentUser = useAppSelector(selectCurrentUser);
 
+    useEffect(() => {
+        dispatch(getAllUsers(false));
+    }, [dispatch]);
+
     return (
         <SpaceBetween direction='horizontal' size='xs'>
-            <AddGroupUserModal dispatch={dispatch} setVisible={setAddUserModalVisible} visible={addUserModalVisible} addableUsers={addableUsers} groupName={groupName}/>
-            <Button onClick={() => dispatch(getGroupUsers(groupName))} ariaLabel={'Refresh groups list'}>
+            <AddGroupUserModal dispatch={dispatch} setVisible={setAddUserModalVisible} visible={addUserModalVisible} addableUsers={addableUsers} groupName={groupName!}/>
+            <Button 
+                onClick={() => dispatch(getGroupUsers(groupName!))} 
+                ariaLabel={'Refresh groups list'}
+            >
                 <Icon name='refresh'/>
             </Button>
-            {GroupDetailUserActionsButton(navigate, dispatch, currentUser, setAddUserModalVisible, props)}
+            {GroupDetailUserActionsButton(navigate, dispatch, currentUser, allUsers, setAddUserModalVisible, props)}
         </SpaceBetween>
     );
 }
 
-function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dispatch, currentUser: IUser, setAddUserModalVisible: (boolean) => void, props?: any) {
+function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dispatch, currentUser: IUser, allUsers: IUser[], setAddUserModalVisible: (boolean) => void, props?: any) {
     const selectedUser: IGroupUser = props?.selectedItems[0];
     const items: ButtonDropdownProps.Item[] = [];
     const notificationService = useNotificationService(dispatch);
@@ -62,7 +69,7 @@ function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dis
             id: 'removeFromGroup',
         });
     }
-
+    
     const [modalState, setModalState] = React.useState<Partial<ModalProps>>({
         visible: false,
         confirmText: 'Confirm',
@@ -83,8 +90,9 @@ function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dis
                 <Button
                     variant='primary'
                     onClick={() => setAddUserModalVisible(true)}
+                    disabled={allUsers.length === 0}
                 >
-                    Add User
+                    Add User{allUsers.length > 1 ? 's' : ''}
                 </Button>
             </>
         )}
@@ -106,9 +114,8 @@ const GroupDetailUserActionHandler = async (
                 setDeleteModal({
                     resourceName: 'Group User',
                     resourceType: 'groupUser',
-                    postConfirm: () => dispatch(getGroupUsers(selectedUser.group)),
                     onConfirm: async () => {
-                        dispatch(removeGroupUser(selectedUser)).then((result) => {
+                        await dispatch(removeGroupUser(selectedUser)).then((result) => {
                             setModalState({
                                 ...modalState,
                                 visible: false,
@@ -118,6 +125,8 @@ const GroupDetailUserActionHandler = async (
                                 `User ${selectedUser.user} removed from ${selectedUser.group}.`,
                                 result
                             );
+                        }).finally(() => {
+                            dispatch(getGroupUsers(selectedUser.group));
                         });
                     },
                     description: `This will remove user: ${selectedUser.user} from the following group: ${selectedUser.group}.`

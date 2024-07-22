@@ -39,11 +39,11 @@ def _create_dataset_record(metadata, key):
 
     env_variables = get_environment_variables()
 
-    if dataset_type == DatasetType.GLOBAL:
-        scope = DatasetType.GLOBAL
+    if dataset_type in [DatasetType.GLOBAL, DatasetType.GROUP]:
+        scope = dataset_type
         dataset_name = split_key[2]
-        dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/global/datasets/{dataset_name}/"
-    elif dataset_type in [DatasetType.PRIVATE, DatasetType.PROJECT, DatasetType.GROUP]:
+        dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{dataset_type}/datasets/{dataset_name}/"
+    elif dataset_type in [DatasetType.PRIVATE, DatasetType.PROJECT]:
         scope = split_key[1]
         dataset_name = split_key[3]
         dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{dataset_type}/{scope}/datasets/{dataset_name}/"

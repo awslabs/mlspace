@@ -176,8 +176,13 @@ def login(event, context):
 
 @api_wrapper
 def list_all(event, context):
-    # If user is an Admin list every user else don't include suspended users
-    users = user_dao.get_all(include_suspended=True)
+    # By default, we return non-suspended users
+    include_suspended = False
+    query_params = event.get("queryStringParameters", {})
+
+    if query_params is not None and query_params.get("includeSuspended", "false") == "true":
+        include_suspended = True
+    users = user_dao.get_all(include_suspended=include_suspended)
     return [user.to_dict() for user in users]
 
 

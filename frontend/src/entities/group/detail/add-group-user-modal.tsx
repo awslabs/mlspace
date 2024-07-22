@@ -37,25 +37,31 @@ export type AddGroupUserModalProps = {
 
 export function AddGroupUserModal (props: AddGroupUserModalProps) {
     const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
+    const [performingAction, setPerformingAction] = useState(false);
+
     return (
         <Modal
             visible={props.visible}
             onDismiss={() => props.setVisible(false)}
-            header={<Header>Add member to Group</Header>}
+            header={<Header>Add user to Group</Header>}
             footer={
                 <Box float='right'>
                     <SpaceBetween direction='horizontal' size='xs'>
                         <Button onClick={() => props.setVisible(false)}>Cancel</Button>
                         <Button
+                            loading={performingAction}
                             variant='primary'
                             disabled={selectedUsers.length === 0}
                             onClick={ async () => {
+                                setPerformingAction(true);
                                 await addUsersToGroup(props.dispatch, props.groupName, selectedUsers).finally(() => {
                                     setSelectedUsers([]);
                                     props.setVisible(false);
+                                }).finally(() => {
+                                    setPerformingAction(false);
                                 });
                             }}>
-                            Add members
+                            Add user{selectedUsers.length > 1 ? 's' : ''}
                         </Button>
                     </SpaceBetween>
                 </Box>

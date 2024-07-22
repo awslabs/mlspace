@@ -54,7 +54,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
 
     useEffect(() => {
         if (!isEdit){
-            dispatch(getAllUsers());
+            dispatch(getAllUsers(false));
         }
     }, [dispatch, isEdit]);
 

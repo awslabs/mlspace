@@ -52,7 +52,7 @@ export const getDatasetsList = createAsyncThunk(
 export const getDataset = createAsyncThunk(
     'dataset/fetch_entity_by_id',
     async ({ type, scope, name }: any) => {
-        const requestUrl = `dataset/${type}/${scope}/${name}`;
+        const requestUrl = `v2/dataset/${type}/${scope}/${name}`;
         return axios.get<IDataset>(requestUrl);
     }
 );
@@ -60,7 +60,7 @@ export const getDataset = createAsyncThunk(
 export const deleteDatasetFromProject = createAsyncThunk(
     'dataset/remove_dataset_from_project',
     async (dataset: IDataset) => {
-        const requestUrl = `/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`;
+        const requestUrl = `/v2/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`;
         return axios.delete<IDataset>(requestUrl);
     }
 );
@@ -76,7 +76,7 @@ export const deleteFileFromDataset = createAsyncThunk(
 );
 
 export const editDataset = createAsyncThunk('dataset/edit_dataset', async (dataset: IDataset) => {
-    const requestUrl = `/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`;
+    const requestUrl = `/v2/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`;
     return axios.put<any>(requestUrl, dataset);
 });
 

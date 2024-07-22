@@ -61,6 +61,16 @@ def test_suspend_all_of_type_success(mock_translate, mock_resource_md_dao):
 
 
 @mock.patch("ml_space_lambda.utils.resource_utils.resource_metadata_dao")
+@mock.patch("ml_space_lambda.utils.resource_utils.translate")
+def test_suspend_all_of_type_success2(mock_translate, mock_resource_md_dao):
+    records = [ResourceMetadataModel(TEST_ID, ResourceType.BATCH_TRANSLATE_JOB, "bob", "tempProject", {})]
+
+    mock_resource_md_dao.get_all_of_type_with_filters.return_value = PagedMetadataResults(records)
+    suspend_all_of_type(ResourceType.BATCH_TRANSLATE_JOB, "bob")
+    mock_translate.stop_text_translation_job.assert_called_with(JobId=TEST_ID)
+
+
+@mock.patch("ml_space_lambda.utils.resource_utils.resource_metadata_dao")
 @mock.patch("ml_space_lambda.utils.resource_utils.log")
 def test_suspend_all_of_type_empty(mock_log, mock_resource_md_dao):
     mock_resource_md_dao.get_all_of_type_with_filters.return_value = PagedMetadataResults([])

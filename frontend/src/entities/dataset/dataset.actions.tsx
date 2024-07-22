@@ -224,7 +224,7 @@ export const DatasetBrowserActions = (state: Pick<DatasetBrowserState, 'selected
                                             return await dispatch(
                                                 deleteFileFromDataset({
                                                     type: state.datasetContext?.type,
-                                                    scope: state.datasetContext?.scope,
+                                                    scope: state.datasetContext?.scope || state.datasetContext?.type,
                                                     datasetName: state.datasetContext?.name,
                                                     files: selectedItems,
                                                 })
@@ -283,7 +283,7 @@ function DatasetActionButton (nav: (endpoint: string) => void, dispatch: ReduxDi
             variant='primary'
             disabled={selectedDataset === undefined}
             onItemClick={(e) =>
-                DatasetActionHandler(e, selectedDataset, nav, dispatch, projectName)
+                DatasetActionHandler(e, selectedDataset, nav, dispatch, props.setSelectedItems, projectName)
             }
         >
             Actions
@@ -310,10 +310,10 @@ const DatasetActionHandler = (
     dataset: IDataset,
     nav: (endpoint: string) => void,
     dispatch: ThunkDispatch<any, any, Action>,
-    projectName?: string
+    setSelectedItems: (selectedItems: any[]) => void,
+    projectName?: string,
 ) => {
     const basePath = projectName ? `/project/${projectName}` : '/personal';
-
     switch (e.detail.id) {
         case 'open':
             nav(`${basePath}/dataset/${dataset.type}/${dataset.scope}/${dataset.name}`);
@@ -323,8 +323,11 @@ const DatasetActionHandler = (
                 setDeleteModal({
                     resourceName: dataset.name!,
                     resourceType: 'dataset',
-                    onConfirm: async () => await dispatch(deleteDatasetFromProject(dataset)),
-                    postConfirm: () => dispatch(getDatasetsList(projectName)),
+                    onConfirm: async () => {
+                        await dispatch(deleteDatasetFromProject(dataset));
+                        setSelectedItems([]);
+                    },
+                    postConfirm: () => dispatch(getDatasetsList({projectName})),
                     description: deletionDescription('Dataset'),
                 })
             );

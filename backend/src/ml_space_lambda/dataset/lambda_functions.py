@@ -22,11 +22,13 @@ import boto3
 from botocore.config import Config
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO, GroupDatasetModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, rename_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
+from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 s3 = boto3.client(
@@ -42,6 +44,9 @@ s3 = boto3.client(
 s3_resource = boto3.resource("s3", config=retry_config)
 dataset_dao = DatasetDAO()
 group_user_dao = GroupUserDAO()
+group_dataset_dao = GroupDatasetDAO()
+iam = boto3.client("iam", config=retry_config)
+iam_manager = IAMManager(iam)
 
 dataset_description_regex = re.compile(r"[^\w\-\s'.]")
 
@@ -64,6 +69,14 @@ def delete(event, context):
     s3_prefix = get_dataset_prefix(scope, dataset_name)
     bucket.objects.filter(Prefix=s3_prefix).delete()
     dataset_dao.delete(scope, dataset_name)
+
+    # TODO: create dedicated delete query for performance?
+    groups_to_update = set()
+    for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset_name):
+        group_dataset_dao.delete(group_dataset.group, group_dataset.dataset)
+        groups_to_update.add(group_dataset.group)
+
+    iam_manager.update_groups(groups_to_update)
 
     return f"Successfully deleted {dataset_name}"
 
@@ -117,17 +130,32 @@ def get(event, context):
     raise ResourceNotFound(f"Dataset '{dataset_name}' does not exist.")
 
 
+def _is_scope_header_correct(type_from_key: str, scope_from_key: str, name_from_key: str, scope_header: str):
+    if type_from_key != DatasetType.GROUP:
+        if scope_from_key != scope_header:
+            return False
+    else:
+        # Group datasets expect the scope header to be the name of the dataset
+        if name_from_key != scope_header:
+            return False
+    return True
+
+
 @api_wrapper
 def presigned_url(event, context):
     response = ""
     body = json.loads(event["body"])
     key = body["key"]
-    scope_from_key = key.split("/")[1]
     type_from_key = key.split("/")[0]
+    scope_from_key = key.split("/")[1]
+    name_from_key = key.split("/")[2]
+    if type_from_key == DatasetType.GROUP:
+        # for group datasets, the scope is 'group'
+        scope_from_key = DatasetType.GROUP
+
     # Ensure the headers match the values derived from the request key
-    if (
-        type_from_key != event["headers"]["x-mlspace-dataset-type"]
-        or scope_from_key != event["headers"]["x-mlspace-dataset-scope"]
+    if type_from_key != event["headers"]["x-mlspace-dataset-type"] or not _is_scope_header_correct(
+        type_from_key, scope_from_key, name_from_key, event["headers"]["x-mlspace-dataset-scope"]
     ):
         raise Exception("Dataset headers do not match expected type and scope.")
 
@@ -141,7 +169,6 @@ def presigned_url(event, context):
 
         # Set derived values for conditions and fields
         username = event["requestContext"]["authorizer"]["principalId"]
-        name_from_key = key.split("/")[2]
 
         # Conditions is an array of dictionaries
         conditions.append({"x-amz-meta-user": username})
@@ -184,39 +211,55 @@ def presigned_url(event, context):
 
 @api_wrapper
 def create_dataset(event, context):
-    body = json.loads(event["body"])
-    dataset_type = body.get("datasetType")
-    dataset_name = body.get("datasetName")
-    env_variables = get_environment_variables()
+    try:
+        dataset_created = False
+        body = json.loads(event["body"])
+        dataset_type = body.get("datasetType")
+        dataset_name = body.get("datasetName")
+        env_variables = get_environment_variables()
 
-    if dataset_type == DatasetType.GLOBAL:
-        scope = "global"
-        directory_name = f"global/datasets/{dataset_name}/"
-    elif dataset_type == DatasetType.GROUP:
-        scope = "group"
-        directory_name = f"group/datasets/{dataset_name}/"
-    else:
-        scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
-        directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
+        if dataset_type == DatasetType.GLOBAL:
+            scope = "global"
+            dataset_scope = scope
+            directory_name = f"global/datasets/{dataset_name}/"
+        elif dataset_type == DatasetType.GROUP:
+            scope = body.get("datasetScope")
+            dataset_scope = "group"
+            directory_name = f"group/datasets/{dataset_name}/"
+        else:
+            scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
+            dataset_scope = scope
+            directory_name = f"{dataset_type}/{scope}/datasets/{dataset_name}/"
 
-    if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
-        raise Exception("Dataset headers do not match expected type and scope.")
+        if dataset_type != event["headers"]["x-mlspace-dataset-type"] or scope != event["headers"]["x-mlspace-dataset-scope"]:
+            raise Exception("Dataset headers do not match expected type and scope.")
 
-    if not dataset_dao.get(scope, dataset_name):
-        dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
-        dataset = DatasetModel(
-            scope=scope,
-            type=dataset_type,
-            name=dataset_name,
-            description=body.get("datasetDescription", ""),
-            location=dataset_location,
-            created_by=event["requestContext"]["authorizer"]["principalId"],
-            is_group=dataset_type == DatasetType.GROUP,
-        )
-        dataset_dao.create(dataset)
-        return {"status": "success", "dataset": dataset.to_dict()}
-    else:
-        raise Exception(f"Dataset {dataset_name} already exists.")
+        if not dataset_dao.get(dataset_scope, dataset_name):
+            dataset_location = f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/{directory_name}"
+            dataset = DatasetModel(
+                scope=dataset_scope,
+                type=dataset_type,
+                name=dataset_name,
+                description=body.get("datasetDescription", ""),
+                location=dataset_location,
+                created_by=event["requestContext"]["authorizer"]["principalId"],
+            )
+            dataset_dao.create(dataset)
+            dataset_created = True
+
+            if dataset_type == DatasetType.GROUP:
+                group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
+                iam_manager.update_groups([scope])
+
+            return {"status": "success", "dataset": dataset.to_dict()}
+        else:
+            raise Exception(f"Dataset {dataset_name} already exists.")
+    except Exception as e:
+        # Clean up any resources which may have been created prior to the error
+        if dataset_created:
+            dataset_dao.delete(dataset_scope, dataset_name)
+
+        raise e
 
 
 @api_wrapper
@@ -228,9 +271,11 @@ def list_resources(event, context):
     # Get the users private datasets
     datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
     # Get the group datasets for groups this user is a member of
-    groups = group_user_dao.get_groups_for_user(username)
-    for group in groups:
-        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.GROUP, group.group))
+    group_datasets = set()
+    for group in group_user_dao.get_groups_for_user(username):
+        for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
+            group_datasets.add(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
+    datasets.extend(list(group_datasets))
 
     if event["pathParameters"] and "projectName" in event["pathParameters"]:
         project_name = event["pathParameters"]["projectName"].replace('"', "")

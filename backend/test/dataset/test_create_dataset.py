@@ -18,6 +18,7 @@ import json
 from unittest import mock
 
 import pytest
+from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
 from ml_space_lambda.enums import DatasetType
@@ -66,10 +67,10 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str, type:
 @pytest.mark.parametrize(
     "dataset_type,scope",
     [
-        (DatasetType.GLOBAL, "global"),
+        (DatasetType.GLOBAL, DatasetType.GLOBAL),
         (DatasetType.PROJECT, "project_name"),
         (DatasetType.PRIVATE, "username"),
-        (DatasetType.GROUP, "group"),
+        (DatasetType.GROUP, DatasetType.GROUP),
     ],
     ids=[
         "create_global_dataset",
@@ -78,9 +79,13 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str, type:
         "create_group_dataset",
     ],
 )
+@mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, scope: str):
+def test_create_dataset_success(
+    mock_s3, mock_dataset_dao, mock_iam_manager, mock_group_dataset_dao, dataset_type: str, scope: str
+):
     mock_event = generate_event(dataset_type, scope)
     mock_dataset_dao.get.return_value = None
 
@@ -96,6 +101,36 @@ def test_create_dataset_success(mock_s3, mock_dataset_dao, dataset_type: str, sc
     expected_response = generate_html_response(200, success_response)
 
     assert lambda_handler(mock_event, mock_context) == expected_response
+
+
+@mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.iam_manager")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
+def test_create_dataset_fail_with_rollback(mock_s3, mock_dataset_dao, mock_iam_manager, mock_group_dataset_dao):
+    mock_event = generate_event(DatasetType.GROUP, DatasetType.GROUP)
+    mock_dataset_dao.get.return_value = None
+    directory_name = f"{DatasetType.GROUP}/datasets/{test_dataset_name}/"
+
+    error_msg = {
+        "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
+        "ResponseMetadata": {"HTTPStatusCode": 400},
+    }
+    mock_iam_manager.update_groups.side_effect = ClientError(error_msg, "GetItem")
+
+    dataset_location = f's3://{TEST_ENV_CONFIG["DATA_BUCKET"]}/{directory_name}'
+
+    test_dataset = generate_dataset_model(
+        event=mock_event, scope=DatasetType.GROUP, dataset_location=dataset_location, type=DatasetType.GROUP
+    )
+    success_response = {"status": "success", "dataset": test_dataset.to_dict()}
+    expected_response = generate_html_response(
+        400,
+        "An error occurred (ThrottlingException) when calling" " the GetItem operation: Dummy error message.",
+    )
+
+    assert lambda_handler(mock_event, mock_context) == expected_response
+    assert mock_dataset_dao.delete.call_count == 1
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")

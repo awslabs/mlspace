@@ -131,3 +131,16 @@ def test_edit_dataset_long_description(mock_dataset_dao, mock_global_dataset):
 
     assert lambda_handler(update_event, mock_context) == expected_response
     mock_dataset_dao.update.assert_not_called()
+
+
+@mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
+def test_edit_dataset_no_description(mock_dataset_dao, mock_global_dataset):
+    expected_response = generate_html_response(200, "Successfully updated example_dataset.")
+    update_event = {
+        "body": json.dumps({}),
+        "pathParameters": {"scope": mock_ds_scope, "datasetName": mock_ds_name},
+    }
+    mock_dataset_dao.get.return_value = mock_global_dataset
+
+    assert lambda_handler(update_event, mock_context) == expected_response
+    mock_dataset_dao.update.assert_called_once()

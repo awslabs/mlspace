@@ -157,8 +157,6 @@ export const getDatasetContents = createAsyncThunk(
             case DatasetType.PRIVATE:
                 scope = username;
                 break;
-            case DatasetType.GROUP:
-                scope = datasetContext.scope;
         }
 
         const searchParams = new URLSearchParams();
@@ -174,7 +172,7 @@ export const getDatasetContents = createAsyncThunk(
             searchParams.set('prefix', datasetContext.location);
         }
 
-        return axios.get<ListFilesResponse>(`/dataset/${datasetContext.type}/${scope}/${datasetContext.name}/files?${searchParams.toString()}`).then((response) => {
+        return axios.get<ListFilesResponse>(`/v2/dataset/${datasetContext.type}/${scope}/${datasetContext.name}/files?${searchParams.toString()}`).then((response) => {
             response.data.contents.forEach((resource) => {
                 // copy bucket from top level of response to individual resources for easier management
                 resource.bucket = response.data.bucket;

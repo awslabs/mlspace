@@ -50,7 +50,7 @@ export const SystemBanner = ({ position }: BannerOptions) => {
     return (
         <TextContent>
             <div style={bannerStyle} id={position === 'TOP' ? 'topBanner' : 'bottomBanner'}>
-                <span>{applicationConfig.configuration.SystemBanner.text}</span>
+                <span><strong>{applicationConfig.configuration.SystemBanner.text}</strong></span>
             </div>
         </TextContent>
     );

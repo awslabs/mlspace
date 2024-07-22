@@ -18,9 +18,19 @@ from unittest import mock
 
 import pytest
 
-from ml_space_lambda.utils.image_uri_utils import delete_metric_definition_for_builtin_algorithms
+from ml_space_lambda.utils.image_uri_utils import (
+    IMAGE_TO_FRAMEWORK_NAME_CONVERSIONS,
+    _repository_name_to_framework,
+    delete_metric_definition_for_builtin_algorithms,
+)
 
 TEST_ENV_CONFIG = {"LAMBDA_TASK_ROOT": "./src/"}
+
+
+def test_repository_name_to_framework():
+    assert _repository_name_to_framework("noop") == "noop"
+    for key in IMAGE_TO_FRAMEWORK_NAME_CONVERSIONS.keys():
+        _repository_name_to_framework(key) == IMAGE_TO_FRAMEWORK_NAME_CONVERSIONS[key]
 
 
 def _get_test_algorithm_specification(image_uri: str, include_metrics_def: bool = True):

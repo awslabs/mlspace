@@ -20,7 +20,6 @@ import { DatasetType } from '../../shared/model';
 import { z } from 'zod';
 import { useValidationReducer } from '../../shared/validation';
 import { NonCancelableEventHandler } from '@cloudscape-design/components/internal/events';
-import { useAppSelector } from '../../config/store';
 import { IGroup } from '../../shared/model/group.model';
 
 export type DatasetInlineCreateProps = {
@@ -31,7 +30,9 @@ export type DatasetInlineCreateProps = {
 
 export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
     const {username, projectName, onChange} = props;
-    const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
+    // TODO: disable this until we're ready to enable creating inline group datasets
+    // const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
+    const groups: IGroup[] | undefined = undefined;
 
 
     const formSchema = z.object({
@@ -95,6 +96,7 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
             groups.map((group, index) => {
                 groupLabels.push({ label: group.name, value: `${DatasetType.GROUP}${index}`});
             });
+
             options.push({ label: 'Groups', options: groupLabels});
         }
 

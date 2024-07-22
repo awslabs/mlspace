@@ -28,7 +28,7 @@ export async function addUsersToGroup (
         groupName: groupName,
         usernames: users.map((user) => user.username)
     };
-    dispatch(addGroupUsers(request)).then((result) => {
+    await dispatch(addGroupUsers(request)).then((result) => {
         notificationService.showActionNotification(
             'add group users',
             `Users added to group: ${groupName}.`,

@@ -28,7 +28,7 @@ function UserActions (props?: any) {
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
-            <Button onClick={() => dispatch(getAllUsers())} ariaLabel={'Refresh users list'}>
+            <Button onClick={() => dispatch(getAllUsers(true))} ariaLabel={'Refresh users list'}>
                 <Icon name='refresh' />
             </Button>
             {UserActionButton(dispatch, props)}
@@ -78,7 +78,7 @@ const UserActionHandler = async (
                 setUpdateModal({
                     selectedUser: selectedUser,
                     onConfirm: async () => dispatch(updateUser(updatedUser)),
-                    postConfirm: () => dispatch(getAllUsers()),
+                    postConfirm: () => dispatch(getAllUsers(true)),
                     description: `This will ${updatedUser.suspended ? 'disable' : 'reinstate'} ${
                         selectedUser.username
                     }.`,
@@ -91,7 +91,7 @@ const UserActionHandler = async (
                 setUpdateModal({
                     selectedUser: selectedUser,
                     onConfirm: async () => dispatch(updateUser(updatedUser)),
-                    postConfirm: () => dispatch(getAllUsers()),
+                    postConfirm: () => dispatch(getAllUsers(true)),
                     description: `This will ${
                         updatedUser.permissions!.includes(Permission.ADMIN) ? 'grant' : 'revoke'
                     } ${selectedUser.username} admin permissions.`,

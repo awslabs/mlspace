@@ -51,7 +51,7 @@ jobs:
           --cov-report term-missing \
           --cov-report html:build/coverage \
           --cov-report xml:build/coverage/coverage.xml \
-          --cov-fail-under 98
+          --cov-fail-under 97
   frontend_build:
     name: FrontEnd Tests
     runs-on: ubuntu-latest

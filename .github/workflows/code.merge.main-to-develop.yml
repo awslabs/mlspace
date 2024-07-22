@@ -16,17 +16,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-      - name: Checkout develop
-        uses: actions/checkout@v4
-        with:
-          ref: develop
       - name: merge main into develop
         run: |
           git config --global user.email "evmann@amazon.com"
           git config --global user.name "github_actions_mlspace"
+          git fetch --unshallow
+          git checkout develop
           git pull
           git merge --no-ff origin/main -m "Auto-merge main back to dev post release"
-          git push
+          git push --force origin develop
         env:
           GH_TOKEN: ${{ secrets.LEAD_ACCESS_TOKEN }}
   send_final_slack_notification:

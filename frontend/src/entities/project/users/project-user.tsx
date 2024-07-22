@@ -61,13 +61,13 @@ export function ProjectUser () {
             ])
         );
         dispatch(getUsersInProject(projectName!));
-        dispatch(getAllUsers());
+        dispatch(getAllUsers(false));
     }, [dispatch, projectName]);
 
     return (
         <div>
             <Table
-                tableName='Project member'
+                tableName='Project user'
                 tableType={tableType}
                 actions={actions}
                 trackBy='user'
@@ -75,13 +75,13 @@ export function ProjectUser () {
                 columnDefinitions={projectUserColumns}
                 visibleColumns={visibleProjectUserColumns}
                 loadingItems={loadingProjectUsers}
-                loadingText='Loading Project members'
+                loadingText='Loading Project users'
             />
             <Modal
-                title='Add members to Project'
+                title='Add user to Project'
                 visible={addUserModal}
                 dismissText='Cancel'
-                confirmText='Add members'
+                confirmText='Add users'
                 onDismiss={async () => {
                     await dispatch(getUsersInProject(projectName!));
                     await dispatch(toggleAddUserModal(false));
