@@ -38,6 +38,7 @@ class DatasetModel:
         created_by: str,
         created_at: Optional[float] = None,
         last_updated_at: Optional[float] = None,
+        groups: Optional[List] = [],
     ):
         now = int(time.time())
         self.scope = scope
@@ -48,6 +49,7 @@ class DatasetModel:
         self.created_by = created_by
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
+        self.groups = groups if groups else []
 
         env_variables = get_environment_variables()
         self.prefix = self.location.replace(f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/", "")
@@ -64,6 +66,7 @@ class DatasetModel:
             "createdBy": self.created_by,
             "createdAt": self.created_at,
             "lastUpdatedAt": self.last_updated_at,
+            "groups": self.groups,
         }
 
     @staticmethod
@@ -77,6 +80,7 @@ class DatasetModel:
             dict_object["createdBy"],
             dict_object.get("createdAt", None),
             dict_object.get("lastUpdatedAt", None),
+            dict_object.get("groups", []),
         )
 
 

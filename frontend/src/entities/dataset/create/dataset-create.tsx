@@ -151,6 +151,7 @@ export function DatasetCreate () {
 
             // create new dataset from state.form
             const newDataset = createDatasetFromForm(state.form, projectName, username);
+            console.log(`New dataset form: ${JSON.stringify(newDataset)}`);
             const response = await createDataset(newDataset).catch((error) => {
                 if (Axios.isAxiosError(error)) {
                     // if dataset exists display message to user
@@ -314,6 +315,7 @@ export function DatasetCreate () {
                                         onChange={({ detail }) => {
                                             setFields({groupNames: detail.selectedOptions});
                                         }}
+                                        
                                         options={generateGroupOptions()}
                                         placeholder='Choose one or more groups'
                                         deselectAriaLabel={(e) => `Remove ${e.label}`}

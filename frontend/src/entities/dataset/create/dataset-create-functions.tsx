@@ -14,18 +14,21 @@
   limitations under the License.
 */
 
-import { DatasetType, IDataset } from '../../../shared/model/dataset.model';
+import { IDataset } from '../../../shared/model/dataset.model';
 import { determineScope } from '../dataset.service';
 
 export const createDatasetFromForm = (form: any, projectName: string, username: string): IDataset & Required<Pick<IDataset, 'name' | 'description' | 'type' | 'format' | 'scope'>> => {
-    if (form.type.startsWith(DatasetType.GROUP)) {
-        form.type = DatasetType.GROUP;
-    }
+    console.log(`Type: ${form.type} and groups: ${JSON.stringify(form.groupNames)}`);
+    const groups = form.groupNames.map((group) => {
+        return group.label;
+    });
+    console.log(`Groups: ${groups}`);
     return {
         name: form.name,
         description: form.description,
         type: form.type,
         format: form.format,
-        scope: determineScope(form.type, projectName, form.groupName, username!)
+        scope: determineScope(form.type, projectName, username!),
+        groups: groups,
     };
 };

@@ -110,7 +110,6 @@ export const DatasetSlice = createSlice({
             })
             .addMatcher(isFulfilled(getDataset), (state, action) => {
                 const { data } = action.payload;
-                console.log(`Retrieved dataset: ${JSON.stringify(data)}`);
                 return {
                     ...state,
                     loadingDataset: false,

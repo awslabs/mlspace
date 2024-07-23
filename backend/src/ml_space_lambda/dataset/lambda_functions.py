@@ -124,6 +124,10 @@ def get(event, context):
     dataset_name = event["pathParameters"]["datasetName"]
 
     dataset = dataset_dao.get(scope, dataset_name)
+    if scope == DatasetType.GROUP:
+        groups = group_dataset_dao.get_groups_for_dataset(dataset_name)
+        for group in groups:
+            dataset.groups.append(group.group)
     if dataset:
         return dataset.to_dict()
 
@@ -213,18 +217,20 @@ def presigned_url(event, context):
 def create_dataset(event, context):
     try:
         dataset_created = False
+        group_dataset_created = False
         body = json.loads(event["body"])
         dataset_type = body.get("datasetType")
         dataset_name = body.get("datasetName")
+        groups = body.get("datasetGroups", [])
         env_variables = get_environment_variables()
 
         if dataset_type == DatasetType.GLOBAL:
-            scope = "global"
+            scope = DatasetType.GLOBAL
             dataset_scope = scope
             directory_name = f"global/datasets/{dataset_name}/"
         elif dataset_type == DatasetType.GROUP:
-            scope = body.get("datasetScope")
-            dataset_scope = "group"
+            scope = DatasetType.GROUP
+            dataset_scope = scope
             directory_name = f"group/datasets/{dataset_name}/"
         else:
             scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
@@ -244,12 +250,16 @@ def create_dataset(event, context):
                 location=dataset_location,
                 created_by=event["requestContext"]["authorizer"]["principalId"],
             )
+            # For groups, create one entry per group that shares this dataset
+            if dataset_type == DatasetType.GROUP:
+                for group in groups:
+                    group_dataset_dao.create(GroupDatasetModel(dataset_name, group))
+                    group_dataset_created = True
+
             dataset_dao.create(dataset)
             dataset_created = True
 
-            if dataset_type == DatasetType.GROUP:
-                group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
-                iam_manager.update_groups([scope])
+            iam_manager.update_groups(groups)
 
             return {"status": "success", "dataset": dataset.to_dict()}
         else:
@@ -258,6 +268,12 @@ def create_dataset(event, context):
         # Clean up any resources which may have been created prior to the error
         if dataset_created:
             dataset_dao.delete(dataset_scope, dataset_name)
+
+        if group_dataset_created:
+            for group in groups:
+                group_dataset_dao.delete(dataset_name, group)
+                group_dataset_created = True
+            iam_manager.update_groups(groups)
 
         raise e
 
@@ -274,8 +290,9 @@ def list_resources(event, context):
     group_datasets = set()
     for group in group_user_dao.get_groups_for_user(username):
         for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
-            group_datasets.add(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
-    datasets.extend(list(group_datasets))
+            if group_dataset.dataset not in group_datasets:
+                group_datasets.add(group_dataset.dataset)
+                datasets.append(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
 
     if event["pathParameters"] and "projectName" in event["pathParameters"]:
         project_name = event["pathParameters"]["projectName"].replace('"', "")

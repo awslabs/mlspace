@@ -21,6 +21,7 @@ import urllib
 from typing import List, Optional
 
 from ml_space_lambda.data_access_objects.group import GroupDAO, GroupModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO, GroupUserModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission
@@ -34,6 +35,7 @@ group_dao = GroupDAO()
 group_user_dao = GroupUserDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()
+group_dataset_dao = GroupDatasetDAO()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
 group_desc_regex = re.compile(r"[^ -~]")
@@ -169,6 +171,11 @@ def delete(event, context):
     existing_group = group_dao.get(group_name)
     if not existing_group:
         raise ValueError("Specified group does not exist")
+
+    # Delete group dataset associations
+    to_delete_group_datasets = group_dataset_dao.get_datasets_for_group(group_name)
+    for group_dataset in to_delete_group_datasets:
+        group_dataset_dao.delete(group_name=group_name, dataset_name=group_dataset.dataset)
 
     # Delete users associations and group itself
     to_delete_group_users = group_user_dao.get_users_for_group(group_name)
