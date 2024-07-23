@@ -96,7 +96,6 @@ export const buildS3KeysForResourceObjects = (
     datasetContext: DatasetContext,
 ): [string, DatasetResourceObject][] => {
     return resourceObjects.map((resourceObject) => {
-        console.log(`Scope: ${datasetContext.scope}, Name: ${datasetContext.name}, Key: ${resourceObject.key}`);
         switch (datasetContext.type!) {
             case DatasetType.PROJECT:
                 return [`project/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
@@ -148,7 +147,6 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
     const failedUploads: string[] = [];
     let stopUpload = false;
 
-    console.log(`Uploading ${resourceObjects.length} resources`);
     for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
         if (stopUpload) {
             break;
@@ -212,7 +210,6 @@ export async function createDataset (dataset: IDataset) {
     // Scope and Type should always be set for this Dataset object as part of form validation
     if (dataset.type && dataset.scope){
         const requestUrl = '/dataset/create';
-        console.log(`CreateDataset Groups: ${dataset.groups}`);
         const payload = {
             datasetName: dataset.name,
             datasetType: dataset.type,
