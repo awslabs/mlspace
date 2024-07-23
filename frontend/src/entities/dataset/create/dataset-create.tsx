@@ -151,7 +151,6 @@ export function DatasetCreate () {
 
             // create new dataset from state.form
             const newDataset = createDatasetFromForm(state.form, projectName, username);
-            console.log(`New dataset form: ${JSON.stringify(newDataset)}`);
             const response = await createDataset(newDataset).catch((error) => {
                 if (Axios.isAxiosError(error)) {
                     // if dataset exists display message to user
@@ -163,7 +162,6 @@ export function DatasetCreate () {
             });
 
             if (response?.status === 200) {
-                console.log(JSON.stringify(datasetFileList[0]));
                 const resourceObjects = datasetFileList.filter((item): item is DatasetResourceObject => item.type === 'object');
                 await uploadResources(newDataset, resourceObjects, notificationService);
 
