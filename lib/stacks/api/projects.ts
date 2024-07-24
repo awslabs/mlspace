@@ -217,6 +217,13 @@ export class ProjectsApiStack extends Stack {
                 path: 'project/{projectName}/batch-translate-jobs',
                 method: 'GET',
             },
+            {
+                name: 'project_groups',
+                resource: 'project',
+                description: 'Lists groups that belong to a project',
+                path: 'project/{projectName}/groups',
+                method: 'GET',
+            },
         ];
 
         apis.forEach((f) => {

@@ -25,7 +25,7 @@ const groupColumns: TableProps.ColumnDefinition<IGroup>[] = [
         header: 'Name',
         sortingField: 'name',
         cell: (item) => (
-            linkify('group', item.name, undefined)
+            linkify('group', item.name)
         ),
     },
     {

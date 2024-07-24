@@ -60,6 +60,7 @@ import { IAppConfiguration } from '../shared/model/app.configuration.model';
 import GroupCreate from './group/create';
 import GroupDetail from './group/detail';
 import UserDetail from './user/detail';
+import ProjectGroups from './project/detail/groups';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -101,6 +102,7 @@ const EntityRoutes = () => {
                 <Route path='project/:projectName' element={<ProjectDetail />} />
                 <Route path='project/:projectName/edit' element={<ProjectCreate isEdit={true} />} />
                 <Route path='project/:projectName/user' element={<ProjectUser />} />
+                <Route path='project/:projectName/groups' element={<ProjectGroups />} />
                 <Route path='project/:projectName/endpoint' element={<Endpoint />} />
                 <Route path='project/:projectName/endpoint/create' element={<EndpointCreate />} />
                 <Route path='project/:projectName/endpoint/:name' element={<EndpointDetails />} />

@@ -139,6 +139,27 @@ def get(event, context):
 
 
 @api_wrapper
+def project_groups(event, context):
+    project_name = event["pathParameters"]["projectName"]
+    project = project_dao.get(project_name)
+    if not project:
+        raise ResourceNotFound(f"Specified project {project_name} does not exist.")
+
+    user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
+    project_user = project_user_dao.get(project_name, user.username)
+    if Permission.ADMIN not in user.permissions and not project_user:
+        raise ValueError(f"User is not a member of project {project_name}.")
+
+    groups = []
+    for group_name in project.groups:
+        group = group_dao.get(group_name)
+        if group is not None:
+            groups.append(group.to_dict())
+
+    return groups
+
+
+@api_wrapper
 def create(event, context):
     try:
         project_created = False
@@ -353,7 +374,7 @@ def update(event, context):
             sync_group(removed_groups, project_name, SyncGroupAction.ADD)
             sync_group(added_groups, project_name, SyncGroupAction.REMOVE)
         finally:
-            iam_manager.update_groups(removed_groups + added_groups)
+            iam_manager.update_groups(removed_groups | added_groups)
 
         existing_project.groups = event_body["groups"]
 
@@ -383,7 +404,6 @@ def sync_group(groups: list[str], project_name: str, action: SyncGroupAction):
 
             if modifiedGroup:
                 group_dao.update(group)
-                iam_manager.update_groups
 
 
 @api_wrapper

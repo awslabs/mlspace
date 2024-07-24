@@ -23,8 +23,9 @@ import {
     PayloadAction,
 } from '@reduxjs/toolkit';
 import { Permission } from '../../shared/model/user.model';
-import { GetProjectRequestProperties, IProject } from '../../shared/model/project.model';
-import axios from '../../shared/util/axios-utils';
+import { GetProjectRequestProperties, IProject, ProjectMetadata } from '../../shared/model/project.model';
+import axios, { axiosCatch } from '../../shared/util/axios-utils';
+import { IGroup } from '../../shared/model/group.model';
 
 const initialState = {
     loading: false,
@@ -51,6 +52,7 @@ export const updateProject = createAsyncThunk(
                 description: project.description,
                 suspended: project.suspended,
                 metadata: project.metadata,
+                groups: project.groups || []
             };
             const response = await axios.put(`/project/${project.name}`, payload);
             return response.data;
@@ -82,7 +84,14 @@ export const listProjectsForUser = createAsyncThunk('project/list_projects_for_u
 });
 
 export const getProject = createAsyncThunk('project/get_project', async ({ projectName, includeResourceCounts = false }: GetProjectRequestProperties) => {
-    return axios.get<IProject[]>(`/project/${projectName}?includeResourceCounts=${includeResourceCounts}`);
+    const searchParams = new URLSearchParams();
+    searchParams.append('includeResourceCounts', String(includeResourceCounts));
+
+    return axios.get<{'project': IProject, 'metadata': ProjectMetadata}>(`/project/${projectName}?${searchParams}`).catch(axiosCatch);
+});
+
+export const getProjectGroups = createAsyncThunk('project/get_project_groups', async (projectName: string) => {
+    return axios.get<IGroup[]>(`/project/${projectName}/groups`).catch(axiosCatch);
 });
 
 export const createProject = async (project: IProject) => {
@@ -157,3 +166,5 @@ export const {
     resetCurrentProject,
 } = ProjectSlice.actions;
 export const selectUserProjects = (state: any) => state.project.projects;
+export const selectProject = (state: any): IProject => state.project.project;
+export const selectProjectLoading = (state: any): boolean => state.project.loading;

@@ -79,7 +79,7 @@ class GroupDAO(DynamoDBObjectStore):
     def update(self, name: str, group: GroupModel) -> GroupModel:
         json_key = {"name": name}
         # Only a subset of fields can be modified
-        update_exp = "SET description = :description, lastUpdatedAt = :lastUpdatedAt"
+        update_exp = "SET description = :description, lastUpdatedAt = :lastUpdatedAt, projects = :projects"
         exp_names = {"#name": "name"}
         exp_values = json.loads(
             dynamodb_json.dumps(

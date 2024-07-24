@@ -78,6 +78,26 @@ def get(event, context):
 
 
 @api_wrapper
+def group_projects(event, context):
+    group_name = event["pathParameters"]["groupName"]
+    group = group_dao.get(group_name)
+    if not group:
+        raise ResourceNotFound(f"Specified group {group_name} does not exist.")
+    user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
+    group_user = group_user_dao.get(group_name, user.username)
+    if Permission.ADMIN not in user.permissions and not group_user:
+        raise ValueError(f"User is not a member of group {group_name}.")
+
+    projects = []
+    for project_name in group.projects:
+        project = project_dao.get(project_name)
+        if project is not None:
+            projects.append(project.to_dict())
+
+    return projects
+
+
+@api_wrapper
 def create(event, context):
     try:
         username = event["requestContext"]["authorizer"]["principalId"]

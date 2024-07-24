@@ -80,6 +80,7 @@ function ProjectActionButton (
         actionItems.push(
             ...[
                 { text: 'Manage members', id: 'manage_members' },
+                { text: 'Manage groups', id: 'manage_groups' },
                 { text: 'Update', id: 'update' },
             ]
         );
@@ -135,6 +136,9 @@ const ProjectActionHandler = (
         case 'list_members':
         case 'manage_members':
             nav(`/project/${project.name}/user`);
+            break;
+        case 'manage_groups':
+            nav(`/project/${project.name}/groups`);
             break;
         case 'leave_project':
             dispatch(removeUserFromProject({ user: username, project: project.name! })).then(() => {
