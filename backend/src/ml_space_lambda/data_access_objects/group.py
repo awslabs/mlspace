@@ -35,6 +35,7 @@ class GroupModel:
         created_by: str,
         created_at: Optional[float] = None,
         last_updated_at: Optional[float] = None,
+        projects: List[str] = [],
     ):
         now = int(time.time())
         self.name = name
@@ -42,6 +43,7 @@ class GroupModel:
         self.created_by = created_by
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
+        self.projects = projects
 
     def to_dict(self) -> dict:
         return {
@@ -50,6 +52,7 @@ class GroupModel:
             "createdBy": self.created_by,
             "createdAt": self.created_at,
             "lastUpdatedAt": self.last_updated_at,
+            "projects": self.projects,
         }
 
     @staticmethod
@@ -60,6 +63,7 @@ class GroupModel:
             dict_object["createdBy"],
             dict_object.get("createdAt", None),
             dict_object.get("lastUpdatedAt", None),
+            dict_object.get("projects", []),
         )
 
 
@@ -79,11 +83,7 @@ class GroupDAO(DynamoDBObjectStore):
         exp_names = {"#name": "name"}
         exp_values = json.loads(
             dynamodb_json.dumps(
-                {
-                    ":description": group.description,
-                    ":lastUpdatedAt": time.time(),
-                    ":name": name,
-                }
+                {":description": group.description, ":lastUpdatedAt": time.time(), ":name": name, ":projects": group.projects}
             )
         )
         self._update(

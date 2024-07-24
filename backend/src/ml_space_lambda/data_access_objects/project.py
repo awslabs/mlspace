@@ -37,6 +37,7 @@ class ProjectModel:
         created_at: Optional[float] = None,
         last_updated_at: Optional[float] = None,
         metadata: Optional[dict] = {},
+        groups: List[str] = [],
     ):
         now = int(time.time())
         self.name = name
@@ -46,6 +47,7 @@ class ProjectModel:
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
         self.metadata = metadata
+        self.groups = groups
 
     def to_dict(self) -> dict:
         return {
@@ -56,6 +58,7 @@ class ProjectModel:
             "createdAt": self.created_at,
             "lastUpdatedAt": self.last_updated_at,
             "metadata": self.metadata,
+            "groups": self.groups,
         }
 
     @staticmethod
@@ -68,6 +71,7 @@ class ProjectModel:
             dict_object.get("createdAt", None),
             dict_object.get("lastUpdatedAt", None),
             dict_object.get("metadata", {}),
+            dict_object.get("groups", []),
         )
 
     def has_default_stop_time(self, resource_type: ResourceType):
@@ -111,6 +115,7 @@ class ProjectDAO(DynamoDBObjectStore):
                     ":lastUpdatedAt": time.time(),
                     ":name": name,
                     ":metadata": project.metadata,
+                    ":groups": project.groups,
                 }
             )
         )

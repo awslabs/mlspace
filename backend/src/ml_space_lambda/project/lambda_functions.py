@@ -19,12 +19,14 @@ import logging
 import re
 import urllib
 from collections import Counter
+from enum import Enum
 from typing import List, Optional
 
 import boto3
 from cachetools.func import ttl_cache
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
+from ml_space_lambda.data_access_objects.group import GroupDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO, ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -47,6 +49,7 @@ project_dao = ProjectDAO()
 dataset_dao = DatasetDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()
+group_dao = GroupDAO()
 
 logger = logging.getLogger(__name__)
 
@@ -331,15 +334,56 @@ def update(event, context):
         suspended = event_body["suspended"]
         if suspended and not existing_project.suspended:
             _suspend_sagemaker_resources(project_name)
+            sync_group(existing_project.groups, project_name, SyncGroupAction.REMOVE)
+            iam_manager.update_groups(existing_project.groups)
             existing_project.suspended = True
         if not suspended and existing_project.suspended:
+            sync_group(existing_project.groups, project_name, SyncGroupAction.ADD)
+            iam_manager.update_groups(existing_project.groups)
             existing_project.suspended = False
     if "metadata" in event_body:
         existing_project.metadata = event_body["metadata"]
+    if "groups" in event_body:
+        removed_groups = set(existing_project.groups) - set(event_body["groups"])
+        added_groups = set(event_body["groups"]) - set(existing_project.groups)
+        try:
+            sync_group(removed_groups, project_name, SyncGroupAction.REMOVE)
+            sync_group(added_groups, project_name, SyncGroupAction.ADD)
+        except:
+            sync_group(removed_groups, project_name, SyncGroupAction.ADD)
+            sync_group(added_groups, project_name, SyncGroupAction.REMOVE)
+        finally:
+            iam_manager.update_groups(removed_groups + added_groups)
+
+        existing_project.groups = event_body["groups"]
 
     project_dao.update(project_name, existing_project)
 
     return f"Successfully updated {project_name}"
+
+
+class SyncGroupAction(Enum):
+    ADD = "ADD"
+    REMOVE = "REMOVE"
+
+
+def sync_group(groups: list[str], project_name: str, action: SyncGroupAction):
+    for group_name in groups:
+        group = group_dao.get(group_name)
+
+        if group is not None:
+            modifiedGroup = False
+
+            if action == SyncGroupAction.ADD and project_name not in group.projects:
+                modifiedGroup = True
+                group.projects.append(project_name)
+            elif action == SyncGroupAction.REMOVE and project_name in group.projects:
+                modifiedGroup = True
+                group.projects.remove(project_name)
+
+            if modifiedGroup:
+                group_dao.update(group)
+                iam_manager.update_groups
 
 
 @api_wrapper
