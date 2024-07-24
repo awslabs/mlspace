@@ -107,6 +107,31 @@ def edit(event, context):
             raise Exception("Dataset description is over the max length of 254 characters.")
         if dataset_description_regex.search(body["description"]):
             raise Exception("Dataset description contains invalid character.")
+    if dataset.type == DatasetType.GROUP:
+        # get the new list of groups that have this dataset shared with them.
+        # this list may be adding or removing existing groups from this dataset
+        new_groups_list = body.get("groups", [])
+        # get the current list of groups with access to this dataset so we can determine which groups were added/removed
+        groups = group_dataset_dao.get_groups_for_dataset(dataset_name)
+        old_group_names = []
+        group_difference = []
+
+        # Check for existing groups that are no longer in the group list
+        for group in groups:
+            old_group_names.append(group.group)
+            if group.group not in new_groups_list:
+                # this group was removed from the dataset
+                group_dataset_dao.delete(group.group, dataset_name)
+                group_difference.append(group.group)
+
+        # Check for new groups that are not in the list of existing groups
+        for new_group in new_groups_list:
+            if new_group not in old_group_names:
+                # this group was added to the dataset
+                group_dataset_dao.create(GroupDatasetModel(dataset_name, new_group))
+                group_difference.append(new_group)
+
+        iam_manager.update_groups(group_difference)
 
     # will get updated anyway
     original = dataset.to_dict()

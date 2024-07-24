@@ -357,6 +357,13 @@ export const useValidationState = (formSchema: any, initializerArg: object) => {
                     form: { ..._.merge({}, state.form, action.payload) },
                     needsValidation: true,
                 };
+            case 'updateList':
+                // Only use this for a top level merge of two lists where the new list should overwrite the old one
+                return {
+                    ...state,
+                    form: {...state.form, ...action.payload},
+                    needsValidation: true,
+                };
             case 'updateEnvironment':
                 return {
                     ...state,
@@ -378,6 +385,7 @@ export const useValidationState = (formSchema: any, initializerArg: object) => {
 
     // actions
     const updateForm = (payload: any) => setState({ type: 'updateForm', payload });
+    const updateList = (payload: any) => setState({ type: 'updateList', payload });
     const touchField = (payload: string) => setState({ type: 'touchField', payload });
     const updateEnvironment = (payload: any) => setState({ type: 'updateEnvironment', payload });
 
@@ -404,6 +412,7 @@ export const useValidationState = (formSchema: any, initializerArg: object) => {
 
     return {
         updateForm,
+        updateList,
         touchFieldHandler,
         updateEnvironment,
         state,
