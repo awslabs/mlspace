@@ -20,7 +20,9 @@ import re
 import urllib
 from typing import List, Optional
 
+from ml_space_lambda.data_access_objects.dataset import DatasetDAO
 from ml_space_lambda.data_access_objects.group import GroupDAO, GroupModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO, GroupUserModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission
@@ -34,6 +36,8 @@ group_dao = GroupDAO()
 group_user_dao = GroupUserDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()
+group_dataset_dao = GroupDatasetDAO()
+dataset_dao = DatasetDAO()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
 group_desc_regex = re.compile(r"[^ -~]")
@@ -104,6 +108,15 @@ def group_users(event, context):
     members = group_user_dao.get_users_for_group(group_name)
 
     return [member.to_dict() for member in members]
+
+
+@api_wrapper
+def group_datasets(event, context):
+    group_name = event["pathParameters"]["groupName"]
+    datasets = group_dataset_dao.get_datasets_for_group(group_name)
+    ret = []
+    [ret.append(dataset_dao.get("group", dataset.dataset)) for dataset in datasets]
+    return [dataset.to_dict() for dataset in ret]
 
 
 @api_wrapper

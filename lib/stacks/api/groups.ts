@@ -59,6 +59,13 @@ export class GroupsApiStack extends Stack {
                 },
             },
             {
+                name: 'group_datasets',
+                resource: 'group',
+                description: 'Lists datasets that belong to a group',
+                path: 'group/{groupName}/datasets',
+                method: 'GET',
+            },
+            {
                 name: 'group_users',
                 resource: 'group',
                 description: 'Lists users that belong to a group',

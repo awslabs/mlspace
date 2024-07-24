@@ -43,6 +43,24 @@ const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
     },
 ];
 
+const defaultColumnsWithUrlOverride: TableProps.ColumnDefinition<IDataset>[] = [
+    {
+        id: 'datasetName',
+        header: 'Dataset name',
+        sortingField: 'datasetName',
+        cell: (item) => (
+            <div data-cy={item.name}>{linkify('personal/dataset', item.name!, `${item.type!}/${item.scope!}`,undefined, true)}</div>
+        ),
+    },
+    { id: 'type', header: 'Dataset type', sortingField: 'type', cell: (item) => item.type },
+    {
+        id: 'description',
+        header: 'Description',
+        sortingField: 'description',
+        cell: (item) => item.description,
+    },
+];
+
 const visibleColumns: string[] = ['datasetName', 'description', 'accessLevel'];
 
 const visibleContentPreference = {
@@ -63,4 +81,5 @@ export {
     defaultColumns,
     visibleColumns,
     visibleContentPreference,
+    defaultColumnsWithUrlOverride,
 };
