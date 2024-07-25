@@ -34,6 +34,7 @@ from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
 from ml_space_lambda.utils.app_config_utils import get_app_config
 from ml_space_lambda.utils.common_functions import authorization_wrapper
+from ml_space_lambda.utils.project_utils import is_member_of_project
 
 logger = logging.getLogger(__name__)
 
@@ -177,8 +178,9 @@ def lambda_handler(event, context):
                 elif "projectName" in path_params:
                     project_name = path_params["projectName"]
                     project_user = project_user_dao.get(project_name, username)
+                    is_member = is_member_of_project(user.username, project_name)
                     # User must belong to the project for any project specific resources
-                    if project_user or Permission.ADMIN in user.permissions:
+                    if project_user or is_member or Permission.ADMIN in user.permissions:
                         # User must be an owner or admin to add/remove users or update the project config
                         if (
                             (

@@ -27,7 +27,6 @@ export type IProject = {
 export type GetProjectRequestProperties = {
     projectName: string;
     includeResourceCounts?: boolean;
-    includeGroups?: boolean;
 };
 
 export type ProjectMetadata = {

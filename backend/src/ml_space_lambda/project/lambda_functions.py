@@ -27,6 +27,7 @@ from cachetools.func import ttl_cache
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
 from ml_space_lambda.data_access_objects.group import GroupDAO
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO, ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -42,14 +43,16 @@ from ml_space_lambda.utils.common_functions import (
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
+from ml_space_lambda.utils.project_utils import is_member_of_project
 
-project_user_dao = ProjectUserDAO()
 resource_metadata_dao = ResourceMetadataDAO()
 project_dao = ProjectDAO()
+project_user_dao = ProjectUserDAO()
 dataset_dao = DatasetDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()
 group_dao = GroupDAO()
+group_user_dao = GroupUserDAO()
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +129,8 @@ def get(event, context):
         raise ResourceNotFound(f"Specified project {project_name} does not exist.")
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
     project_user = project_user_dao.get(project_name, user.username)
-    if Permission.ADMIN not in user.permissions and not project_user:
+    is_member = is_member_of_project(user.username, project_name)
+    if Permission.ADMIN not in user.permissions and not project_user and not is_member:
         raise ValueError(f"User is not a member of project {project_name}.")
 
     return {
@@ -275,8 +279,14 @@ def list_all(event, context):
     if Permission.ADMIN in user.permissions:
         projects = project_dao.get_all(include_suspended=True)
     else:
-        project_names = [project.project for project in project_user_dao.get_projects_for_user(user.username)]
-        projects = project_dao.get_all(project_names=project_names)
+        project_names = set([project.project for project in project_user_dao.get_projects_for_user(user.username)])
+        # add projects from groups
+        for group_user in group_user_dao.get_groups_for_user(user.username):
+            group = group_dao.get(group_user.group)
+            if group is not None:
+                project_names.update(group.projects)
+
+        projects = project_dao.get_all(project_names=list(project_names))
     return [project.to_dict() for project in projects]
 
 
@@ -370,7 +380,8 @@ def update(event, context):
         try:
             sync_group(removed_groups, project_name, SyncGroupAction.REMOVE)
             sync_group(added_groups, project_name, SyncGroupAction.ADD)
-        except:
+        except Exception as e:
+            logging.critical(e, exc_info=True)
             sync_group(removed_groups, project_name, SyncGroupAction.ADD)
             sync_group(added_groups, project_name, SyncGroupAction.REMOVE)
         finally:
@@ -390,20 +401,28 @@ class SyncGroupAction(Enum):
 
 def sync_group(groups: list[str], project_name: str, action: SyncGroupAction):
     for group_name in groups:
+        print(f"inside sync_groups({group_name}, {project_name}, {action})")
         group = group_dao.get(group_name)
 
         if group is not None:
             modifiedGroup = False
 
             if action == SyncGroupAction.ADD and project_name not in group.projects:
+                print("added group")
                 modifiedGroup = True
                 group.projects.append(project_name)
+                # for user in group_user_dao.get_users_for_group(group_name):
+                #     project_user_dao.create(ProjectUserModel(user.user, project_name, provider=group_name))
+
             elif action == SyncGroupAction.REMOVE and project_name in group.projects:
+                print("removed group")
                 modifiedGroup = True
                 group.projects.remove(project_name)
+                # for user in group_user_dao.get_users_for_group(group_name):
+                #     project_user_dao.delete(project_name, user.user, provider=group_name)
 
             if modifiedGroup:
-                group_dao.update(group)
+                group_dao.update(group_name, group)
 
 
 @api_wrapper
