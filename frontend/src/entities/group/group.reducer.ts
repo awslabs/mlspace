@@ -18,11 +18,14 @@ import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/
 import axios, { axiosCatch } from '../../shared/util/axios-utils';
 import { IGroup, IGroupWithPermissions } from '../../shared/model/group.model';
 import { IGroupUser } from '../../shared/model/groupUser.model';
+import { IDataset } from '../../shared/model';
 
 const initialState = {
     allGroups: [] as IGroup[],
     currentGroupUsers: [] as IGroupUser[],
+    currentGroupDatasets: [] as IDataset[],
     loading: false,
+    datasetsLoading: false,
 };
 
 export type AddGroupUserRequest = {
@@ -62,6 +65,11 @@ export const getGroupUsers = createAsyncThunk('group/group_users', async (groupN
     return axios.get<IGroupUser[]>(requestUrl);
 });
 
+export const getGroupDatasets = createAsyncThunk('group/group_datasets', async (groupName: string) => {
+    const requestUrl = `/group/${groupName}/datasets`;
+    return axios.get<IDataset[]>(requestUrl);
+});
+
 export const removeGroupUser = createAsyncThunk('group/remove_user', async (data: IGroupUser) => {
     return axios.delete(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`).catch(axiosCatch);
 });
@@ -91,6 +99,19 @@ export const GroupSlice = createSlice({
                     loading: false,
                 };
             })
+            .addMatcher(isFulfilled(getGroupDatasets), (state, action) => {
+                return {
+                    ...state,
+                    currentGroupDatasets: action.payload.data,
+                    datasetsLoading: false,
+                };
+            })
+            .addMatcher(isPending(getGroupDatasets), (state) => {
+                return {
+                    ...state,
+                    datasetsLoading: true,
+                };
+            })
             .addMatcher(isFulfilled(deleteGroup, createGroup, updateGroup, removeGroupUser, addGroupUsers), (state) => {
                 return {
                     ...state,
@@ -108,4 +129,5 @@ export const GroupSlice = createSlice({
 
 export default GroupSlice.reducer;
 export const currentGroupUsers = (state: any): IGroupUser[] => state.group.currentGroupUsers;
+export const currentGroupDatasets = (state: any): IDataset[] => state.group.currentGroupDatasets;
 export const selectAllGroups = (state: any): IGroup[] => state.group.allGroups;

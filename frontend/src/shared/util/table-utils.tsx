@@ -40,12 +40,16 @@ export const linkify = (
     id: string,
     prefix?: string,
     displayText?: string,
+    override?: boolean,
     cypressTag = `${resource}-${id}`
 ) => {
     const location = window.location.href;
     const splits = location.split('#');
     let href = '#' + splits[1] + '/';
 
+    if (override) {
+        href = '#';
+    }
     if (!href.includes(resource!)) {
         const spliceHref = href.split('/');
         let newHref = '';

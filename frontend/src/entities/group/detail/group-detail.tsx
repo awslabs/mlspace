@@ -17,8 +17,8 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { currentGroupUsers, getGroup, getGroupUsers } from '../group.reducer';
-import { Header, SpaceBetween } from '@cloudscape-design/components';
+import { currentGroupDatasets, currentGroupUsers, getGroup, getGroupDatasets, getGroupUsers } from '../group.reducer';
+import { Header, SpaceBetween, Tabs } from '@cloudscape-design/components';
 import DetailsContainer from '../../../modules/details-container';
 import { IGroup } from '../../../shared/model/group.model';
 import ContentLayout from '../../../shared/layout/content-layout';
@@ -31,6 +31,9 @@ import { DocTitle } from '../../../shared/doc';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
+import { IDataset } from '../../../shared/model';
+import { defaultColumnsWithUrlOverride, visibleColumns } from '../../dataset/dataset.columns';
+import { GroupDetailDatasetActions } from './group-detail-dataset.actions';
 
 export function GroupDetail () {
     const dispatch = useAppDispatch();
@@ -38,10 +41,13 @@ export function GroupDetail () {
     const {groupName} = useParams();
     const [group, setGroup] = useState<IGroup>();
     const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
-    const loadingGroupUsers = useAppSelector((state) => state.group.loading);
+    const groupDatasets: IDataset[] = useAppSelector(currentGroupDatasets);
+    const loadingGroupData = useAppSelector((state) => state.group.loading);
+    const loadingDatasetData = useAppSelector((state) => state.group.datasetsLoading);
     const currentUser = useAppSelector(selectCurrentUser);
     const [initialLoaded, setInitialLoaded] = useState(false);
-    const actions = (e: any) => GroupDetailUserActions({...e});
+    const groupUserActions = (e: any) => GroupDetailUserActions({...e});
+    const groupDatasetUserActions = () => GroupDetailDatasetActions();
     DocTitle(`Group Details: ${groupName}`);
 
     const groupDetails = new Map<string, ReactNode>();
@@ -54,6 +60,7 @@ export function GroupDetail () {
                 if (response.payload) {
                     setGroup(response.payload.data.group);
                     dispatch(getGroupUsers(groupName!));
+                    dispatch(getGroupDatasets(groupName!));
                     setInitialLoaded(true);
                 } else {
                     navigate('/404');
@@ -72,18 +79,44 @@ export function GroupDetail () {
                     info={groupDetails}
                     loading={!initialLoaded}
                 />
-                <Table
-                    tableName='Group user'
-                    tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
-                    actions={actions}
-                    itemNameProperty='user'
-                    trackBy='user'
-                    allItems={groupUsers}
-                    columnDefinitions={groupUserColumns}
-                    visibleColumns={visibleGroupUserColumns}
-                    loadingItems={loadingGroupUsers || !initialLoaded}
-                    loadingText='Loading Group users'
-                />
+
+                <Tabs variant='container' tabs={[{
+                    id: 'members',
+                    label: 'Group members',
+                    content: (
+                        <Table
+                            tableName='User'
+                            tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
+                            actions={groupUserActions}
+                            itemNameProperty='user'
+                            trackBy='user'
+                            allItems={groupUsers}
+                            columnDefinitions={groupUserColumns}
+                            visibleColumns={visibleGroupUserColumns}
+                            loadingItems={loadingGroupData || !initialLoaded}
+                            loadingText='Loading Group users'
+                            variant='borderless'
+                        />
+                    )
+                }, {
+                    id: 'datasets',
+                    label: 'Group datasets',
+                    content: (
+                        <Table
+                            tableName='Dataset'
+                            actions={groupDatasetUserActions}
+                            itemNameProperty='name'
+                            trackBy='location'
+                            allItems={groupDatasets}
+                            columnDefinitions={defaultColumnsWithUrlOverride}
+                            visibleColumns={visibleColumns}
+                            loadingItems={loadingDatasetData || !initialLoaded}
+                            loadingText='Loading Group datasets'
+                            variant='borderless'
+                        />
+                    )
+                }]} />
+
             </SpaceBetween>
         </ContentLayout>
     );
