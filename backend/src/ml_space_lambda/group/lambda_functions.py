@@ -25,6 +25,7 @@ from ml_space_lambda.data_access_objects.group import GroupDAO, GroupModel
 from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO, GroupUserModel
 from ml_space_lambda.data_access_objects.project import ProjectDAO
+from ml_space_lambda.data_access_objects.project_user_group import ProjectUserGroupDAO, ProjectUserGroupModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils.admin_utils import is_admin_get_all
@@ -40,6 +41,7 @@ iam_manager = IAMManager()
 group_dataset_dao = GroupDatasetDAO()
 dataset_dao = DatasetDAO()
 project_dao = ProjectDAO()
+project_user_group_dao = ProjectUserGroupDAO()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
 group_desc_regex = re.compile(r"[^ -~]")
@@ -55,7 +57,6 @@ def _add_group_user(group_name: str, username: str, permissions: Optional[List[P
             permissions=permissions,
         )
         group_user_dao.create(group_user)
-        iam_manager.update_user_policy(username)
     except Exception as e:
         raise e
 
@@ -146,8 +147,17 @@ def add_users(event, context):
     group_name = event["pathParameters"]["groupName"]
     request = json.loads(event["body"])
     usernames = request["usernames"]
-    for username in usernames:
-        _add_group_user(group_name, username, [Permission.COLLABORATOR])
+    group = group_dao.get(group_name)
+    if group:
+        for username in usernames:
+            _add_group_user(group_name, username, [Permission.COLLABORATOR])
+            for project_name in group.projects:
+                iam_role_arn = iam_manager.get_iam_role_arn(project_name, username)
+                if iam_role_arn is None:
+                    iam_role_arn = iam_manager.add_iam_role(project_name, username)
+                project_user_group_dao.create(
+                    ProjectUserGroupModel(project_name, username, group_name, iam_role_arn, [Permission.COLLABORATOR])
+                )
 
     return f"Successfully added {len(usernames)} user(s) to {group_name}"
 

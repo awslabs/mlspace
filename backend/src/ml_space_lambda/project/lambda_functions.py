@@ -30,6 +30,7 @@ from ml_space_lambda.data_access_objects.group import GroupDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO, ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, ProjectUserModel
+from ml_space_lambda.data_access_objects.project_user_group import ProjectUserGroupDAO, ProjectUserGroupModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, EnvVariable, Permission, ResourceType
@@ -49,6 +50,7 @@ resource_metadata_dao = ResourceMetadataDAO()
 project_dao = ProjectDAO()
 project_user_dao = ProjectUserDAO()
 dataset_dao = DatasetDAO()
+project_user_group_dao = ProjectUserGroupDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()
 group_dao = GroupDAO()
@@ -157,7 +159,7 @@ def project_groups(event, context):
     groups = []
     for group_name in project.groups:
         group = group_dao.get(group_name)
-        if group is not None:
+        if group:
             groups.append(group.to_dict())
 
     return groups
@@ -283,7 +285,7 @@ def list_all(event, context):
         # add projects from groups
         for group_user in group_user_dao.get_groups_for_user(user.username):
             group = group_dao.get(group_user.group)
-            if group is not None:
+            if group:
                 project_names.update(group.projects)
 
         projects = project_dao.get_all(project_names=list(project_names))
@@ -384,8 +386,6 @@ def update(event, context):
             logging.critical(e, exc_info=True)
             sync_group(removed_groups, project_name, SyncGroupAction.ADD)
             sync_group(added_groups, project_name, SyncGroupAction.REMOVE)
-        finally:
-            iam_manager.update_groups(removed_groups | added_groups)
 
         existing_project.groups = event_body["groups"]
 
@@ -403,15 +403,38 @@ def sync_group(groups: list[str], project_name: str, action: SyncGroupAction):
     for group_name in groups:
         group = group_dao.get(group_name)
 
-        if group is not None:
+        if group:
             modifiedGroup = False
 
             if action == SyncGroupAction.ADD and project_name not in group.projects:
                 modifiedGroup = True
                 group.projects.append(project_name)
+
+                # ensure user-project dynamic roles and add project_user_group items
+                for group_user in group_user_dao.get_users_for_group(group_name):
+                    iam_role_arn = iam_manager.get_iam_role_arn(project_name, group_user.user)
+                    # don't create project-user role if it already exists
+                    if iam_role_arn is None:
+                        iam_role_arn = iam_manager.add_iam_role(project_name, group_user.user)
+
+                    project_user_group_dao.create(
+                        ProjectUserGroupModel(
+                            project_name, group_user.user, group_name, iam_role_arn, [Permission.COLLABORATOR]
+                        )
+                    )
             elif action == SyncGroupAction.REMOVE and project_name in group.projects:
                 modifiedGroup = True
                 group.projects.remove(project_name)
+
+                # cleanup user-project dynamic roles and remove project_user_group items
+                for group_user in group_user_dao.get_users_for_group(group_name):
+                    project_user_group_dao.delete(project_name, group_user.user, group_name)
+
+                    # remove role if user doesn't have project membership directly or indirectly through other groups
+                    if not is_member_of_project(group_user.user, project_name):
+                        iam_role_arn = iam_manager.get_iam_role_arn(project_name, group_user.user)
+                        if iam_role_arn:
+                            iam_manager.remove_project_user_roles([iam_role_arn])
 
             if modifiedGroup:
                 group_dao.update(group_name, group)

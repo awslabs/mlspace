@@ -523,6 +523,23 @@ export class CoreStack extends Stack {
             encryption: TableEncryption.AWS_MANAGED,
         });
 
+        // Project Users Groups Provider Table
+        const projectUserAttribute = { name: 'projectUser', type: AttributeType.STRING };
+        const projectUserGroupTable = new Table(this, 'mlspace-ddb-project-user-group', {
+            tableName: props.mlspaceConfig.PROJECT_USER_GROUP_TABLE_NAME,
+            partitionKey: projectUserAttribute,
+            sortKey: groupAttribute,
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        projectUserGroupTable.addGlobalSecondaryIndex({
+            indexName: 'ReverseLookup',
+            partitionKey: groupAttribute,
+            sortKey: projectUserAttribute,
+            projectionType: ProjectionType.KEYS_ONLY,
+        });
+
         // Resource Termination Schedule Table
         const resourceIdAttribute = { name: 'resourceId', type: AttributeType.STRING };
         const resourceTypeAttribute = { name: 'resourceType', type: AttributeType.STRING };

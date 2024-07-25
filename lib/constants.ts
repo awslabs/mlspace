@@ -22,6 +22,7 @@ import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 export const DATASETS_TABLE_NAME = 'mlspace-datasets';
 export const PROJECTS_TABLE_NAME = 'mlspace-projects';
 export const PROJECT_USERS_TABLE_NAME = 'mlspace-project-users';
+export const PROJECT_USER_GROUP_TABLE_NAME = 'mlspace-project-user-group';
 export const USERS_TABLE_NAME = 'mlspace-users';
 export const RESOURCE_SCHEDULE_TABLE_NAME = 'mlspace-resource-schedule';
 export const RESOURCE_METADATA_TABLE_NAME = 'mlspace-resource-metadata';

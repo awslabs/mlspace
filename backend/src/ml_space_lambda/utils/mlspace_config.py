@@ -51,6 +51,7 @@ ENV_DEFAULTS = {
     EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
     EnvVariable.PROJECTS_TABLE: "mlspace-projects",
     EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",
+    EnvVariable.PROJECT_USER_GROUP_TABLE: "mlspace-project-user-group",
     EnvVariable.S3_KEY: "notebook-params.json",
     EnvVariable.SYSTEM_TAG: "MLSpace",
     EnvVariable.TRANSLATE_DATE_ROLE_ARN: "",

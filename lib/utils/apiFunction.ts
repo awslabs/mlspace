@@ -67,6 +67,7 @@ export function registerAPIEndpoint (
             DATASETS_TABLE: mlspaceConfig.DATASETS_TABLE_NAME,
             PROJECTS_TABLE: mlspaceConfig.PROJECTS_TABLE_NAME,
             PROJECT_USERS_TABLE: mlspaceConfig.PROJECT_USERS_TABLE_NAME,
+            PROJECT_USER_GROUP_TABLE: mlspaceConfig.PROJECT_USER_GROUP_TABLE_NAME,
             USERS_TABLE: mlspaceConfig.USERS_TABLE_NAME,
             RESOURCE_SCHEDULE_TABLE: mlspaceConfig.RESOURCE_SCHEDULE_TABLE_NAME,
             RESOURCE_METADATA_TABLE: mlspaceConfig.RESOURCE_METADATA_TABLE_NAME,
