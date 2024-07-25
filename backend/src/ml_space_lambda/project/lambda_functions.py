@@ -401,25 +401,17 @@ class SyncGroupAction(Enum):
 
 def sync_group(groups: list[str], project_name: str, action: SyncGroupAction):
     for group_name in groups:
-        print(f"inside sync_groups({group_name}, {project_name}, {action})")
         group = group_dao.get(group_name)
 
         if group is not None:
             modifiedGroup = False
 
             if action == SyncGroupAction.ADD and project_name not in group.projects:
-                print("added group")
                 modifiedGroup = True
                 group.projects.append(project_name)
-                # for user in group_user_dao.get_users_for_group(group_name):
-                #     project_user_dao.create(ProjectUserModel(user.user, project_name, provider=group_name))
-
             elif action == SyncGroupAction.REMOVE and project_name in group.projects:
-                print("removed group")
                 modifiedGroup = True
                 group.projects.remove(project_name)
-                # for user in group_user_dao.get_users_for_group(group_name):
-                #     project_user_dao.delete(project_name, user.user, provider=group_name)
 
             if modifiedGroup:
                 group_dao.update(group_name, group)
