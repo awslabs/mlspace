@@ -30,6 +30,7 @@ import {
     Alert,
     Textarea,
     Multiselect,
+    SelectProps,
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -138,7 +139,7 @@ export function DatasetCreate () {
     }
 
     function generateGroupOptions () {
-        const groupOptions: { label: string; value: string }[] = [];
+        const groupOptions: SelectProps.Option[] = [];
         groups.map((group) => {
             groupOptions.push({ label: group.name, value: group.name});
         });
@@ -289,7 +290,7 @@ export function DatasetCreate () {
                                 <Select
                                     data-cy='dataset-type-select'
                                     selectedOption={{
-                                        label: initCap(state.form.type || ''),
+                                        label: initCap(state.form.type),
                                         value: state.form.type,
                                     }}
                                     options={generateOptions()}

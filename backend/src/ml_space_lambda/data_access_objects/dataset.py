@@ -38,7 +38,7 @@ class DatasetModel:
         created_by: str,
         created_at: Optional[float] = None,
         last_updated_at: Optional[float] = None,
-        groups: Optional[List] = [],
+        groups: list = [],
     ):
         now = int(time.time())
         self.scope = scope
@@ -49,7 +49,7 @@ class DatasetModel:
         self.created_by = created_by
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
-        self.groups = groups if groups else []
+        self.groups = groups
 
         env_variables = get_environment_variables()
         self.prefix = self.location.replace(f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/", "")

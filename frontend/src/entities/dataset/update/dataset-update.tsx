@@ -28,6 +28,7 @@ import {
     Input,
     ContentLayout,
     Multiselect,
+    SelectProps,
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -117,7 +118,7 @@ export function DatasetUpdate () {
     }
 
     function generateGroupOptions () {
-        const groupOptions: { label: string; value: string }[] = [];
+        const groupOptions: SelectProps.Option[] = [];
         groups.map((group) => {
             groupOptions.push({ label: group.name, value: group.name});
         });

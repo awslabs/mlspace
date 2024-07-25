@@ -297,7 +297,6 @@ def create_dataset(event, context):
         if group_dataset_created:
             for group in groups:
                 group_dataset_dao.delete(dataset_name, group)
-                group_dataset_created = True
             iam_manager.update_groups(groups)
 
         raise e
