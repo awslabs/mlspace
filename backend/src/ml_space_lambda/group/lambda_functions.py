@@ -148,6 +148,7 @@ def group_datasets(event, context):
 
 @api_wrapper
 def add_users(event, context):
+    env_variables = get_environment_variables()
     group_name = event["pathParameters"]["groupName"]
     request = json.loads(event["body"])
     usernames = request["usernames"]
@@ -156,10 +157,12 @@ def add_users(event, context):
         project_groups = project_group_dao.get_projects_for_group(group_name)
         for username in usernames:
             _add_group_user(group_name, username, [Permission.COLLABORATOR])
-            for project_group in project_groups:
-                iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
-                if iam_role_arn is None:
-                    iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
+
+            if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+                for project_group in project_groups:
+                    iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
+                    if iam_role_arn is None:
+                        iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
 
     return f"Successfully added {len(usernames)} user(s) to {group_name}"
 
@@ -175,8 +178,12 @@ def remove_user(event, context):
         raise Exception(f"{username} is not a member of {group_name}")
 
     group_user_dao.delete(group_name, username)
+
     # Removes the group permissions for this user
-    iam_manager.update_user_policy(username)
+    env_variables = get_environment_variables()
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+        iam_manager.update_user_policy(username)
+
     return f"Successfully removed {username} from {group_name}"
 
 
@@ -210,6 +217,7 @@ def update(event, context):
 
 @api_wrapper
 def delete(event, context):
+    env_variables = get_environment_variables()
     group_name = event["pathParameters"]["groupName"]
 
     # Verify group exists
@@ -230,8 +238,10 @@ def delete(event, context):
     # Remove all group related entries from the user/group table
     for group_user in to_delete_group_users:
         group_user_dao.delete(group_name, group_user.user)
+
         # Removes the group permissions for this user
-        iam_manager.update_user_policy(group_user.user)
+        if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+            iam_manager.update_user_policy(group_user.user)
 
     # Delete the group record last
     group_dao.delete(group_name)

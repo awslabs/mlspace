@@ -43,7 +43,7 @@ from ml_space_lambda.utils.common_functions import (
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
-from ml_space_lambda.utils.project_utils import is_member_of_project
+from ml_space_lambda.utils.project_utils import is_member_of_project, is_owner_of_project
 
 resource_metadata_dao = ResourceMetadataDAO()
 project_dao = ProjectDAO()
@@ -134,9 +134,15 @@ def get(event, context):
     if Permission.ADMIN not in user.permissions and not project_user and not is_member:
         raise ValueError(f"User is not a member of project {project_name}.")
 
+    permissions = set(serialize_permissions(project_user.permissions) if project_user else [])
+    if is_member:
+        permissions.add(Permission.COLLABORATOR)
+    if is_owner_of_project(user.username, project_name):
+        permissions.add(Permission.PROJECT_OWNER)
+
     return {
         "project": project.to_dict(),
-        "permissions": serialize_permissions(project_user.permissions) if project_user else [],
+        "permissions": list(permissions),
         "resourceCounts": (
             _get_resource_counts(project_name) if event["queryStringParameters"]["includeResourceCounts"] == "true" else {}
         ),
