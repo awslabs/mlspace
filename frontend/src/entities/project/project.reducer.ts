@@ -25,7 +25,6 @@ import {
 import { Permission } from '../../shared/model/user.model';
 import { GetProjectRequestProperties, IProject, ProjectMetadata } from '../../shared/model/project.model';
 import axios, { axiosCatch } from '../../shared/util/axios-utils';
-import { IGroup } from '../../shared/model/group.model';
 import { IProjectGroup } from '../../shared/model/projectGroup.model';
 
 const initialState = {
@@ -91,7 +90,7 @@ export const getProject = createAsyncThunk('project/get_project', async ({ proje
 });
 
 export const getProjectGroups = createAsyncThunk('project/get_project_groups', async (projectName: string) => {
-    return axios.get<IGroup[]>(`/project/${projectName}/groups`).catch(axiosCatch);
+    return axios.get<IProjectGroup[]>(`/project/${projectName}/groups`).catch(axiosCatch);
 });
 
 export const addGroupsToProject = createAsyncThunk(

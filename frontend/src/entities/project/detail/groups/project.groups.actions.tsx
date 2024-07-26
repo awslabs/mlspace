@@ -35,11 +35,12 @@ import { removeGroupFromProject, selectProject, updateProjectGroup } from '../..
 import { setDeleteModal } from '../../../../modules/modal/modal.reducer';
 import { CallbackFunction } from '../../../../types';
 import { Permission } from '../../../../shared/model/user.model';
-import { isRejected } from '@reduxjs/toolkit';
 import { IProjectGroup } from '../../../../shared/model/projectGroup.model';
+import { isRejected } from '@reduxjs/toolkit';
 
 export type ProjectGroupActionProps = TableActionProps<IProjectGroup> & {
-    refreshHandler: CallbackFunction
+    refreshHandler: CallbackFunction,
+    projectGroups?: IProjectGroup[]
 };
 
 function ProjectGroupActions (props?: ProjectGroupActionProps) {
@@ -50,8 +51,10 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
     const [performingAction, setPerformingAction] = useState<boolean>(false);
     const project = useAppSelector(selectProject);
     const allGroups = useAppSelector(selectAllGroups);
-    const addableGroups = allGroups.filter((group) => !(project?.groups || []).includes(group.name));
-    console.log('allGroups', allGroups, 'addableGroups', addableGroups, 'project.groups', project?.groups);
+    const addableGroups = allGroups.filter((group) => {
+        return !props?.projectGroups?.map((project_group) => project_group.group)?.includes(group.name);
+    });
+
     const actionItems = [
         {
             text: `${props?.selectedItems?.[0]?.permissions?.includes(Permission.PROJECT_OWNER)

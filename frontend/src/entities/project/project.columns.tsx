@@ -16,6 +16,11 @@
 
 import { TableProps } from '@cloudscape-design/components';
 import { IProject } from '../../shared/model/project.model';
+import { IProjectGroup } from '../../shared/model/projectGroup.model';
+import { linkify } from '../../shared/util/table-utils';
+import { formatDisplayBoolean } from '../../shared/util/form-utils';
+import { hasPermission } from '../../shared/util/permission-utils';
+import { Permission } from '../../shared/model/user.model';
 
 const projectColumns: TableProps.ColumnDefinition<IProject>[] = [
     { id: 'name', header: 'Name', sortingField: 'name', cell: (item) => item.name },
@@ -43,6 +48,20 @@ const visibleContentPreference = {
         },
     ],
 };
+
+export const projectGroupColumns: TableProps.ColumnDefinition<IProjectGroup>[] = [{
+    id: 'project',
+    header: 'Group name',
+    cell: (item) => {
+        return linkify('personal/group', item.group, undefined, undefined, true);
+    },
+}, {
+    id: 'owner',
+    header: 'Owner',
+    cell: (item) => {
+        return formatDisplayBoolean(hasPermission(Permission.PROJECT_OWNER, item.permissions), ['Yes', 'No']);
+    },
+}];
 
 export {
     projectColumns,

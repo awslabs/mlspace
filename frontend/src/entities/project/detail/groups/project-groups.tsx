@@ -25,15 +25,14 @@ import { DocTitle } from '../../../../shared/doc';
 import { getProject, getProjectGroups } from '../../project.reducer';
 import { isFulfilled } from '@reduxjs/toolkit';
 import { useNotificationService } from '../../../../shared/util/hooks';
-import { IGroup } from '../../../../shared/model/group.model';
-import { projectGroupColumns } from '../../../group/group.columns';
+import { projectGroupColumns } from '../../../project/project.columns';
+import { IProjectGroup } from '../../../../shared/model/projectGroup.model';
 
 export function ProjectGroups () {
     const { projectName } = useParams();
-    const [projectGroups, setProjectGroups] = useState<IGroup[]>();
+    const [projectGroups, setProjectGroups] = useState<IProjectGroup[]>();
     const dispatch = useAppDispatch();
     const notificationService = useNotificationService(dispatch);
-    const [needsLoading, setNeedsLoading] = useState<boolean>(true);
 
     DocTitle(`${projectName} Project Groups`);
 
@@ -56,21 +55,16 @@ export function ProjectGroups () {
                 { text: 'Groups', href: `#/project/${projectName}/groups` },
             ])
         );
-    }, [dispatch, projectName, refreshHandler]);
 
-    if (needsLoading) {
-        if (projectName) {
-            setNeedsLoading(false);
-            refreshHandler();
-        }
-    }
+        refreshHandler();
+    }, [dispatch, projectName, refreshHandler]);
 
     return (
         <div>
             <Table
                 tableName='Project group'
                 tableType={'multi'}
-                actions={(e: any) => ProjectGroupActions({ ...e, projectName, refreshHandler })}
+                actions={(e: any) => ProjectGroupActions({ ...e, projectName, refreshHandler, projectGroups })}
                 trackBy='group'
                 keepSelection={false}
                 allItems={projectGroups || []}
