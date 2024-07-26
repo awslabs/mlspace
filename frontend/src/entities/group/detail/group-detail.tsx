@@ -17,7 +17,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { currentGroupDatasets, currentGroupUsers, getGroup, getGroupDatasets, getGroupUsers } from '../group.reducer';
+import { currentGroupDatasets, selectCurrentGroupProjects, currentGroupUsers, getGroup, getGroupDatasets, getGroupProjects, getGroupUsers, selectLoadingGroupProjects } from '../group.reducer';
 import { Header, SpaceBetween, Tabs } from '@cloudscape-design/components';
 import DetailsContainer from '../../../modules/details-container';
 import { IGroup } from '../../../shared/model/group.model';
@@ -34,6 +34,9 @@ import { Permission } from '../../../shared/model/user.model';
 import { IDataset } from '../../../shared/model';
 import { defaultColumnsWithUrlOverride, visibleColumns } from '../../dataset/dataset.columns';
 import { GroupDetailDatasetActions } from './group-detail-dataset.actions';
+import { isFulfilled } from '@reduxjs/toolkit';
+import GroupDetailProjectActions from './group-detail-project.actions';
+import { projectGroupColumns } from '../group.columns';
 
 export function GroupDetail () {
     const dispatch = useAppDispatch();
@@ -42,12 +45,12 @@ export function GroupDetail () {
     const [group, setGroup] = useState<IGroup>();
     const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
     const groupDatasets: IDataset[] = useAppSelector(currentGroupDatasets);
+    const groupProjects = useAppSelector(selectCurrentGroupProjects);
+    const loadingGroupProjects = useAppSelector(selectLoadingGroupProjects);
     const loadingGroupData = useAppSelector((state) => state.group.loading);
     const loadingDatasetData = useAppSelector((state) => state.group.datasetsLoading);
     const currentUser = useAppSelector(selectCurrentUser);
     const [initialLoaded, setInitialLoaded] = useState(false);
-    const groupUserActions = (e: any) => GroupDetailUserActions({...e});
-    const groupDatasetUserActions = () => GroupDetailDatasetActions();
     DocTitle(`Group Details: ${groupName}`);
 
     const groupDetails = new Map<string, ReactNode>();
@@ -55,12 +58,13 @@ export function GroupDetail () {
     groupDetails.set('Description', group?.description);
 
     useEffect(() => {
-        if (initialLoaded === false) {
-            dispatch(getGroup(groupName!)).then((response) => {
-                if (response.payload) {
+        if (initialLoaded === false && groupName) {
+            dispatch(getGroup(groupName)).then((response) => {
+                if (isFulfilled(response)) {
                     setGroup(response.payload.data.group);
-                    dispatch(getGroupUsers(groupName!));
-                    dispatch(getGroupDatasets(groupName!));
+                    dispatch(getGroupUsers(groupName));
+                    dispatch(getGroupDatasets(groupName));
+                    dispatch(getGroupProjects(groupName));
                     setInitialLoaded(true);
                 } else {
                     navigate('/404');
@@ -87,7 +91,7 @@ export function GroupDetail () {
                         <Table
                             tableName='User'
                             tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
-                            actions={groupUserActions}
+                            actions={GroupDetailUserActions}
                             itemNameProperty='user'
                             trackBy='user'
                             allItems={groupUsers}
@@ -104,14 +108,31 @@ export function GroupDetail () {
                     content: (
                         <Table
                             tableName='Dataset'
-                            actions={groupDatasetUserActions}
+                            actions={GroupDetailDatasetActions}
                             itemNameProperty='name'
                             trackBy='location'
-                            allItems={groupDatasets}
+                            allItems={groupDatasets || []}
                             columnDefinitions={defaultColumnsWithUrlOverride}
                             visibleColumns={visibleColumns}
                             loadingItems={loadingDatasetData || !initialLoaded}
                             loadingText='Loading Group datasets'
+                            variant='borderless'
+                        />
+                    )
+                }, {
+                    id: 'projects',
+                    label: 'Group projects',
+                    content: (
+                        <Table
+                            tableName='Project'
+                            actions={GroupDetailProjectActions}
+                            itemNameProperty='project'
+                            trackBy='project'
+                            allItems={groupProjects}
+                            columnDefinitions={projectGroupColumns}
+                            visibleColumns={projectGroupColumns.map((item) => item.id).filter((item): item is string => Boolean(item))}
+                            loadingItems={loadingGroupProjects || !initialLoaded}
+                            loadingText='Loading Group projects'
                             variant='borderless'
                         />
                     )

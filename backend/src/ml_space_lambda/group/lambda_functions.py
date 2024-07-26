@@ -25,13 +25,16 @@ from ml_space_lambda.data_access_objects.group import GroupDAO, GroupModel
 from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO, GroupUserModel
 from ml_space_lambda.data_access_objects.project import ProjectDAO
-from ml_space_lambda.data_access_objects.project_user_group import ProjectUserGroupDAO, ProjectUserGroupModel
+from ml_space_lambda.data_access_objects.project_group import ProjectGroupDAO
+
+# from ml_space_lambda.data_access_objects.project_user_group import ProjectUserGroupDAO, ProjectUserGroupModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
-from ml_space_lambda.enums import Permission
+from ml_space_lambda.enums import EnvVariable, Permission
 from ml_space_lambda.utils.admin_utils import is_admin_get_all
 from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permissions, validate_input
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
+from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 logger = logging.getLogger(__name__)
 group_dao = GroupDAO()
@@ -41,7 +44,7 @@ iam_manager = IAMManager()
 group_dataset_dao = GroupDatasetDAO()
 dataset_dao = DatasetDAO()
 project_dao = ProjectDAO()
-project_user_group_dao = ProjectUserGroupDAO()
+project_group_dao = ProjectGroupDAO()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
 group_desc_regex = re.compile(r"[^ -~]")
@@ -51,12 +54,21 @@ def _add_group_user(group_name: str, username: str, permissions: Optional[List[P
     if not user_dao.get(username):
         raise ValueError("Username specified is not associated with an active user.")
     try:
-        group_user = GroupUserModel(
-            group_name=group_name,
-            username=username,
-            permissions=permissions,
+        group_user_dao.create(
+            GroupUserModel(
+                group_name=group_name,
+                username=username,
+                permissions=permissions,
+            )
         )
-        group_user_dao.create(group_user)
+
+        env_variables = get_environment_variables()
+        if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+            for project_group in project_group_dao.get_projects_for_group(group_name):
+                iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
+                # don't create project-user role if it already exists
+                if iam_role_arn is None:
+                    iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
     except Exception as e:
         raise e
 
@@ -89,13 +101,7 @@ def group_projects(event, context):
     if Permission.ADMIN not in user.permissions and not group_user:
         raise ValueError(f"User is not a member of group {group_name}.")
 
-    projects = []
-    for project_name in group.projects:
-        project = project_dao.get(project_name)
-        if project is not None:
-            projects.append(project.to_dict())
-
-    return projects
+    return [project_group.to_dict() for project_group in project_group_dao.get_projects_for_group(group_name)]
 
 
 @api_wrapper
@@ -155,9 +161,6 @@ def add_users(event, context):
                 iam_role_arn = iam_manager.get_iam_role_arn(project_name, username)
                 if iam_role_arn is None:
                     iam_role_arn = iam_manager.add_iam_role(project_name, username)
-                project_user_group_dao.create(
-                    ProjectUserGroupModel(project_name, username, group_name, iam_role_arn, [Permission.COLLABORATOR])
-                )
 
     return f"Successfully added {len(usernames)} user(s) to {group_name}"
 

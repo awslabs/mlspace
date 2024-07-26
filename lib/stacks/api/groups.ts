@@ -101,7 +101,7 @@ export class GroupsApiStack extends Stack {
             },
             {
                 name: 'group_projects',
-                resource: 'project',
+                resource: 'group',
                 description: 'Lists projects that belong to a group',
                 path: 'group/{groupName}/projects',
                 method: 'GET',

@@ -18,6 +18,10 @@ import { TableProps } from '@cloudscape-design/components';
 import { IGroup } from '../../shared/model/group.model';
 import { linkify } from '../../shared/util/table-utils';
 import React from 'react';
+import { IProjectGroup } from '../../shared/model/projectGroup.model';
+import { formatDisplayBoolean } from '../../shared/util/form-utils';
+import { hasPermission } from '../../shared/util/permission-utils';
+import { Permission } from '../../shared/model/user.model';
 
 export const generateGroupColumns = (nameCellGenerator: (item: IGroup) => React.JSX.Element) => [
     {
@@ -52,6 +56,20 @@ const visibleContentPreference = {
         },
     ],
 };
+
+export const projectGroupColumns: TableProps.ColumnDefinition<IProjectGroup>[] = [{
+    id: 'project',
+    header: 'Project name',
+    cell: (item) => {
+        return linkify('project', item.project, undefined, undefined, true);
+    },
+}, {
+    id: 'owner',
+    header: 'Owner',
+    cell: (item) => {
+        return formatDisplayBoolean(hasPermission(Permission.PROJECT_OWNER, item.permissions), ['Yes', 'No']);
+    },
+}];
 
 export {
     visibleColumns,

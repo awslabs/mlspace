@@ -25,11 +25,10 @@ import React, { useState } from 'react';
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { IGroup } from '../../../../shared/model/group.model';
 import { groupColumns } from '../../../group/group.columns';
-import { getProject, updateProject } from '../../project.reducer';
+import { addGroupsToProject } from '../../project.reducer';
 import { IProject } from '../../../../shared/model';
 import { useNotificationService } from '../../../../shared/util/hooks';
 import { useAppDispatch } from '../../../../config/store';
-import _ from 'lodash';
 
 export type AddProjectUserModalProps = {
     dispatch:  ThunkDispatch<any, any, Action>,
@@ -61,34 +60,26 @@ export function AddProjectGroupModal (props: AddProjectUserModalProps) {
                             loadingText={'Adding group'}
                             disabled={selectedGroups.length === 0 || performingAction}
                             onClick={() => {
-                                setPerformingAction(true);
-
+                                
                                 if (!props.project) {
                                     return;
                                 }
-
-                                const project_clone = _.cloneDeep(props.project);
-                                for (const group of selectedGroups) {
-                                    if (!project_clone?.groups?.includes(group.name)) {
-                                        project_clone?.groups?.push(group.name);
-                                    }
+                                
+                                if (props.project.name) {
+                                    setPerformingAction(true);
+                                    dispatch(addGroupsToProject({projectName: props.project.name, groupNames: selectedGroups.map((group) => group.name)})).then((response) => {
+                                        notificationService.showAxiosActionNotification(
+                                            'add groups to project',
+                                            'Added groups to project.',
+                                            response
+                                        );
+                                    }).finally(() => {
+                                        setSelectedGroups([]);
+                                        setPerformingAction(false);
+                                        props?.refresh?.();
+                                        props.setVisible(false);
+                                    });
                                 }
-
-                                props.dispatch(updateProject(project_clone)).then((response) => {
-                                    notificationService.showAxiosActionNotification(
-                                        'add group to project',
-                                        'Added groups to project.',
-                                        response
-                                    );                                    
-                                }).finally(() => {
-                                    if (props?.project.name) {
-                                        dispatch(getProject({projectName: props?.project.name}));
-                                    }
-                                    setPerformingAction(false);
-                                    setSelectedGroups([]);
-                                    props?.refresh?.();
-                                    props.setVisible(false);
-                                });
                             }}>
                             Add group
                         </Button>

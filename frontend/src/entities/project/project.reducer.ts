@@ -26,6 +26,7 @@ import { Permission } from '../../shared/model/user.model';
 import { GetProjectRequestProperties, IProject, ProjectMetadata } from '../../shared/model/project.model';
 import axios, { axiosCatch } from '../../shared/util/axios-utils';
 import { IGroup } from '../../shared/model/group.model';
+import { IProjectGroup } from '../../shared/model/projectGroup.model';
 
 const initialState = {
     loading: false,
@@ -52,7 +53,6 @@ export const updateProject = createAsyncThunk(
                 description: project.description,
                 suspended: project.suspended,
                 metadata: project.metadata,
-                groups: project.groups || []
             };
             const response = await axios.put(`/project/${project.name}`, payload);
             return response.data;
@@ -94,12 +94,42 @@ export const getProjectGroups = createAsyncThunk('project/get_project_groups', a
     return axios.get<IGroup[]>(`/project/${projectName}/groups`).catch(axiosCatch);
 });
 
+export const addGroupsToProject = createAsyncThunk(
+    'user/add_groups_to_project',
+    async (data: GroupProjectData) => {
+        const requestUrl = `project/${data.projectName}/groups`;
+        return axios.post<string>(requestUrl, { group_names: data.groupNames }).catch(axiosCatch);
+    }
+);
+
+export const removeGroupFromProject = createAsyncThunk(
+    'user/remove_user_from_project',
+    async (data: IProjectGroup) => {
+        const requestUrl = `/project/${data.project}/groups/${encodeURIComponent(data.group || '')}`;
+        return axios.delete(requestUrl).catch(axiosCatch);
+    }
+);
+
+export const updateProjectGroup = createAsyncThunk(
+    'user/remove_user_from_project',
+    async (data: IProjectGroup) => {
+        const requestUrl = `/project/${data.project}/groups/${encodeURIComponent(data.group || '')}`;
+        return axios.put(requestUrl, data).catch(axiosCatch);
+    }
+);
+
 export const createProject = async (project: IProject) => {
     const payload = {
         ...project,
         suspended: false,
     };
     return axios.post('/project', JSON.stringify(payload));
+};
+
+// Interfaces
+export type GroupProjectData = {
+    groupNames?: string[];
+    projectName: string;
 };
 
 // slice

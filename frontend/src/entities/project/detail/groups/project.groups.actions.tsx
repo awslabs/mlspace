@@ -25,19 +25,20 @@ import { useAppDispatch, useAppSelector } from '../../../../config/store';
 import {
     selectCurrentUser,
 } from '../../../user/user.reducer';
-import { isAdminOrProjectOwner } from '../../../../shared/util/permission-utils';
+import { isAdminOrProjectOwner, togglePermission } from '../../../../shared/util/permission-utils';
 import { useParams } from 'react-router-dom';
 import { useNotificationService } from '../../../../shared/util/hooks';
 import AddProjectGroupModal from './add-project-group-modal';
 import { TableActionProps } from '../../../../modules/table/table.types';
-import { IGroup } from '../../../../shared/model/group.model';
 import { getAllGroups, selectAllGroups } from '../../../group/group.reducer';
-import { selectProject, updateProject } from '../../project.reducer';
-import _ from 'lodash';
+import { removeGroupFromProject, selectProject, updateProjectGroup } from '../../project.reducer';
 import { setDeleteModal } from '../../../../modules/modal/modal.reducer';
 import { CallbackFunction } from '../../../../types';
+import { Permission } from '../../../../shared/model/user.model';
+import { isRejected } from '@reduxjs/toolkit';
+import { IProjectGroup } from '../../../../shared/model/projectGroup.model';
 
-export type ProjectGroupActionProps = TableActionProps<IGroup> & {
+export type ProjectGroupActionProps = TableActionProps<IProjectGroup> & {
     refreshHandler: CallbackFunction
 };
 
@@ -52,6 +53,14 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
     const addableGroups = allGroups.filter((group) => !(project?.groups || []).includes(group.name));
     console.log('allGroups', allGroups, 'addableGroups', addableGroups, 'project.groups', project?.groups);
     const actionItems = [
+        {
+            text: `${props?.selectedItems?.[0]?.permissions?.includes(Permission.PROJECT_OWNER)
+                ? 'Remove'
+                : 'Make'
+            } Project Owner`,
+            id: 'owner',
+            disabled: props?.selectedItems?.length !== 1,
+        },
         { text: 'Remove from Project', id: 'remove' },
     ];
 
@@ -76,6 +85,18 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
                 disabled={performingAction || (0 === props?.selectedItems?.length)}
                 onItemClick={(e) => {
                     switch (e.detail.id) {
+                        case 'owner':
+                            Promise.allSettled((props?.selectedItems || []).map((project_group) => {
+                                togglePermission(Permission.PROJECT_OWNER, project_group.permissions!);
+                                return dispatch(updateProjectGroup(project_group)).then((response) => {
+                                    if (isRejected(response)) {
+                                        notificationService.showAxiosRejectedActionNotification('update group permissions', response);
+                                    }
+                                });
+                            })).finally(() => {
+                                props?.refreshHandler?.();
+                            });
+                            break;
                         case 'remove':
                             dispatch(setDeleteModal({
                                 resourceName: 'Project group',
@@ -84,21 +105,16 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
                                 disabled: performingAction,
                                 onConfirm: async () => {
                                     setPerformingAction(true);
-                                    const project_clone = _.cloneDeep(project);
-                                    project_clone.groups = (project_clone?.groups || []).filter((group_name) =>
-                                        props?.selectedItems?.findIndex((group) => group_name === group.name) || -1 !== -1
-                                    );
-                        
-                                    await dispatch(updateProject(project_clone)).then((response) => {
+                                    
+                                    await Promise.allSettled((props?.selectedItems || []).map((project_group) => dispatch(removeGroupFromProject(project_group)).then((response) => {
                                         notificationService.showAxiosActionNotification(
-                                            'remove groups from project',
-                                            'Removed groups from project.',
+                                            'add group to project',
+                                            `Added ${project_group.group}} to project: ${projectName}.`,
                                             response
-                                        );                                    
-                                        
-                                        return props?.refreshHandler?.();
-                                    }).finally(() => {
+                                        );
+                                    }))).finally(() => {
                                         setPerformingAction(false);
+                                        props?.refreshHandler?.();
                                     });
                                 }
                             }));

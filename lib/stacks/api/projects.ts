@@ -83,6 +83,20 @@ export class ProjectsApiStack extends Stack {
                 method: 'PUT',
             },
             {
+                name: 'add_groups',
+                resource: 'project',
+                description: 'Adds groups to a project',
+                path: 'project/{projectName}/groups',
+                method: 'POST',
+            },
+            {
+                name: 'update_project_group',
+                resource: 'project',
+                description: 'Change the role of an MLSpace group within a project',
+                path: 'project/{projectName}/groups/{groupName}',
+                method: 'PUT',
+            },
+            {
                 name: 'delete',
                 resource: 'project',
                 description: 'Delete an MLSpace project',
@@ -108,6 +122,13 @@ export class ProjectsApiStack extends Stack {
                 environment: {
                     DATA_BUCKET: props.dataBucketName,
                 },
+            },
+            {
+                name: 'remove_group',
+                resource: 'project',
+                description: 'Removes a group from a project',
+                path: 'project/{projectName}/groups/{groupName}',
+                method: 'DELETE',
             },
             {
                 name: 'update',

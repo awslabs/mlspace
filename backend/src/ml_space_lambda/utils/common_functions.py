@@ -306,12 +306,17 @@ def serialize_permissions(permissions: Optional[List[Permission]]) -> List[str]:
         return []
 
 
-def total_project_owners(project_user_dao, project_name):
+def total_project_owners(project_user_dao, project_group_dao, project_name, include_groups: bool = False):
     project_users = project_user_dao.get_users_for_project(project_name)
+    project_groups = project_group_dao.get_groups_for_project(project_name)
     owner_count = 0
 
     for user in project_users:
         if Permission.PROJECT_OWNER in user.permissions:
+            owner_count += 1
+
+    for group in project_groups:
+        if Permission.PROJECT_OWNER in group.permissions:
             owner_count += 1
 
     return owner_count

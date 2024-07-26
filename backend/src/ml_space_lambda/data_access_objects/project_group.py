@@ -14,7 +14,7 @@
 #   limitations under the License.
 #
 
-# Project User Table Data Access Object
+# Project Group Table Data Access Object
 from __future__ import annotations
 
 import json
@@ -28,104 +28,92 @@ from ml_space_lambda.utils.common_functions import serialize_permissions
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
-class ProjectUserGroupModel:
+class ProjectGroupModel:
     def __init__(
         self,
+        group_name: str,
         project_name: str,
-        username: str,
-        group: str,
-        role: Optional[str] = None,
         permissions: Optional[List[Permission]] = None,
     ):
-        self.project = project_name
-        self.user = username
-        self.group = group
-        self.role = role if role else ""
         permissions = permissions if permissions else []
+        self.group_name = group_name
+        self.project = project_name
         self.permissions = permissions
 
     def to_dict(self) -> dict:
         return {
-            "projectUser": "-".join([self.user, self.project]),
+            "group": self.group_name,
             "project": self.project,
-            "user": self.user,
-            "group": self.group,
             "permissions": serialize_permissions(self.permissions),
-            "role": self.role,
         }
 
     @staticmethod
-    def from_dict(dict_object: dict) -> ProjectUserGroupModel:
+    def from_dict(dict_object: dict) -> ProjectGroupModel:
         permissions = [Permission(entry) for entry in dict_object.get("permissions", [])]
-        return ProjectUserGroupModel(
+        return ProjectGroupModel(
+            group_name=dict_object["group"],
             project_name=dict_object["project"],
-            username=dict_object["user"],
-            group=dict_object["group"],
-            role=dict_object.get("role", ""),
             permissions=permissions,
         )
 
 
-class ProjectUserGroupDAO(DynamoDBObjectStore):
+class ProjectGroupDAO(DynamoDBObjectStore):
     def __init__(self, table_name: Optional[str] = None, client=None):
         self.env_vars = get_environment_variables()
-        table_name = table_name if table_name else self.env_vars[EnvVariable.PROJECT_USER_GROUP_TABLE]
+        table_name = table_name if table_name else self.env_vars[EnvVariable.PROJECT_GROUPS_TABLE]
         DynamoDBObjectStore.__init__(self, table_name=table_name, client=client)
 
-    def create(self, project_user: ProjectUserGroupModel) -> None:
-        self._create(project_user.to_dict())
+    def create(self, project_group: ProjectGroupModel) -> None:
+        self._create(project_group.to_dict())
 
-    def get(self, project_name: str, user_name: str, group: str) -> Optional[ProjectUserGroupModel]:
+    def get(self, project_name: str, group_name: str) -> Optional[ProjectGroupModel]:
         json_key = {
-            "projectUser": "-".join([user_name, project_name]),
-            "group": group,
+            "group": group_name,
+            "project": project_name,
         }
         try:
             json_response = self._retrieve(json_key)
-            return ProjectUserGroupModel.from_dict(dict_object=json_response)
+            return ProjectGroupModel.from_dict(dict_object=json_response)
         except KeyError:
             # If we get a KeyError then the item doesn't exist in dynamo
             return None
 
-    def get_for_project_user(self, project_name: str, user_name: str, limit=Optional[int]) -> List[ProjectUserGroupModel]:
+    def get_groups_for_project(self, project_name: str) -> List[ProjectGroupModel]:
         json_response = self._query(
-            key_condition_expression="projectUser = :projectUser",
-            expression_values=json.loads(dynamodb_json.dumps({":projectUser": "-".join([user_name, project_name])})),
-            limit=limit,
+            key_condition_expression="#p = :project",
+            expression_names={"#p": "project"},
+            expression_values=json.loads(dynamodb_json.dumps({":project": project_name})),
         ).records
-        return [ProjectUserGroupModel.from_dict(entry) for entry in json_response]
+        return [ProjectGroupModel.from_dict(entry) for entry in json_response]
 
-    def get_for_group(self, group: str) -> List[ProjectUserGroupModel]:
+    # NOTE: This is a keys only projection. If you need the permissions that a group
+    #       has on a project you will need to query that record individually.
+    def get_projects_for_group(self, group_name: str):
         json_response = self._query(
             index_name="ReverseLookup",
             key_condition_expression="#g = :group",
             expression_names={"#g": "group"},
-            expression_values=json.loads(dynamodb_json.dumps({":group": group})),
+            expression_values=json.loads(dynamodb_json.dumps({":group": group_name})),
         ).records
-        return [ProjectUserGroupModel.from_dict(entry) for entry in json_response]
+        return [ProjectGroupModel.from_dict(entry) for entry in json_response]
 
-    def delete(self, project_name: str, user_name: str, group: str) -> None:
+    def delete(self, project_name: str, group_name: str) -> None:
         json_key = {
-            "projectUser": "-".join([user_name, project_name]),
-            "group": group,
+            "group": group_name,
+            "project": project_name,
         }
         self._delete(json_key)
 
-    def update(self, project_name: str, user_name: str, group: str, project_user: ProjectUserGroupModel) -> None:
-        key = {
-            "projectUser": "-".join([user_name, project_name]),
-            "group": group,
-        }
-        update_exp = "SET #r = :role, #p = :permissions"
+    def update(self, project: str, group_name: str, project_group: ProjectGroupModel) -> None:
+        key = {"group": group_name, "project": project}
+        update_exp = "SET #p = :permissions"
         exp_names = {
-            "#r": "role",
             "#p": "permissions",
         }
         exp_values = json.loads(
             dynamodb_json.dumps(
                 {
-                    ":role": project_user.role,
-                    ":permissions": serialize_permissions(project_user.permissions),
+                    ":permissions": serialize_permissions(project_group.permissions),
                 }
             )
         )

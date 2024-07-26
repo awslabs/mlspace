@@ -16,14 +16,14 @@
 
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO
+from ml_space_lambda.data_access_objects.project_group import ProjectGroupDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
-from ml_space_lambda.data_access_objects.project_user_group import ProjectUserGroupDAO
 from ml_space_lambda.enums import Permission
 
 project_dao = ProjectDAO()
 project_user_dao = ProjectUserDAO()
 group_user_dao = GroupUserDAO()
-project_user_group_dao = ProjectUserGroupDAO()
+project_group_dao = ProjectGroupDAO()
 
 
 def is_owner_of_project(username: str, project_name: str) -> bool:
@@ -43,9 +43,14 @@ def is_owner_of_project(username: str, project_name: str) -> bool:
         return True
 
     # check if user has indirect membership through a group
-    for project_user_group in project_user_group_dao.get_for_project_user(project_name, username):
-        if Permission.PROJECT_OWNER in project_user_group.permissions:
-            return True
+    user_groups = [group_user.group for group_user in group_user_dao.get_groups_for_user(username)]
+    project_groups = [
+        project_group.group_name
+        for project_group in project_group_dao.get_groups_for_project(project_name)
+        if Permission.PROJECT_OWNER in project_group.permissions
+    ]
+    if len(set(user_groups) & set(project_groups)) > 0:
+        return True
 
     return False
 
@@ -66,7 +71,9 @@ def is_member_of_project(username: str, project_name: str) -> bool:
         return True
 
     # check if user has indirect membership through a group
-    if len(project_user_group_dao.get_for_project_user(project_name, username, 1)) > 0:
+    user_groups = [group_user.group for group_user in group_user_dao.get_groups_for_user(username)]
+    project_groups = [project_group.group_name for project_group in project_group_dao.get_groups_for_project(project_name)]
+    if len(set(user_groups) & set(project_groups)) > 0:
         return True
 
     return False

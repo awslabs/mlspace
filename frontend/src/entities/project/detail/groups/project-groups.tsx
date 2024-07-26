@@ -22,12 +22,11 @@ import { ProjectGroupActions } from './project.groups.actions';
 import { useParams } from 'react-router-dom';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle } from '../../../../shared/doc';
-import { generateGroupColumns, visibleColumns } from '../../../group/group.columns';
 import { getProject, getProjectGroups } from '../../project.reducer';
 import { isFulfilled } from '@reduxjs/toolkit';
 import { useNotificationService } from '../../../../shared/util/hooks';
 import { IGroup } from '../../../../shared/model/group.model';
-import { linkify } from '../../../../shared/util/table-utils';
+import { projectGroupColumns } from '../../../group/group.columns';
 
 export function ProjectGroups () {
     const { projectName } = useParams();
@@ -66,21 +65,16 @@ export function ProjectGroups () {
         }
     }
 
-    const groupColumns = generateGroupColumns((item) => {
-        return linkify('personal/group', item.name, undefined, undefined, true);
-    });
-
     return (
         <div>
             <Table
                 tableName='Project group'
                 tableType={'multi'}
                 actions={(e: any) => ProjectGroupActions({ ...e, projectName, refreshHandler })}
-                trackBy='name'
+                trackBy='group'
                 keepSelection={false}
                 allItems={projectGroups || []}
-                columnDefinitions={groupColumns}
-                visibleColumns={visibleColumns}
+                columnDefinitions={projectGroupColumns}
                 loadingItems={projectGroups === undefined}
                 loadingText='Loading Project groups'
             />
