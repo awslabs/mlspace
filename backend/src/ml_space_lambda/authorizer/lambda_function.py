@@ -177,17 +177,24 @@ def lambda_handler(event, context):
                 # Path params need to be checked individually
                 elif "projectName" in path_params:
                     project_name = path_params["projectName"]
-                    project_user = project_user_dao.get(project_name, username)
-                    is_member = is_member_of_project(user.username, project_name)
                     # User must belong to the project for any project specific resources
-                    if project_user or is_member or Permission.ADMIN in user.permissions:
+                    if is_member_of_project(user.username, project_name) or Permission.ADMIN in user.permissions:
+                        project_user = project_user_dao.get(project_name, username)
                         # User must be an owner or admin to add/remove users or update the project config
                         if (
                             (
                                 request_method == "POST"
-                                and (requested_resource.endswith("/users") or requested_resource.endswith("/app-config"))
+                                and (
+                                    requested_resource.endswith("/users")
+                                    or requested_resource.endswith("/groups")
+                                    or requested_resource.endswith("/app-config")
+                                )
                             )
-                            or (request_method in ["PUT", "DELETE"] and len(path_params) == 2 and "username" in path_params)
+                            or (
+                                request_method in ["PUT", "DELETE"]
+                                and len(path_params) == 2
+                                and ("username" in path_params or "groupName" in path_params)
+                            )
                         ) and (
                             (project_user and Permission.PROJECT_OWNER not in project_user.permissions)
                             and Permission.ADMIN not in user.permissions

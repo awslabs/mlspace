@@ -21,7 +21,6 @@ export type IProject = {
     isOwner?: boolean;
     isCollaborator?: boolean;
     metadata?: ProjectMetadata;
-    groups?: string[];
 };
 
 export type GetProjectRequestProperties = {
@@ -45,7 +44,6 @@ export type ProjectTerminationConfiguration = {
 export const defaultProject: IProject = {
     name: '',
     description: '',
-    groups: []
 };
 
 export const defaultValue: Readonly<IProject> = defaultProject;

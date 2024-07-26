@@ -193,9 +193,6 @@ def _sole_project_owner(user_name: str) -> List[str]:
     projects = []
     for project in project_list:
         project_name = project.to_dict()["project"]
-        if (
-            Permission.PROJECT_OWNER in project.permissions
-            and total_project_owners(project_user_dao, project_group_dao, project_name) <= 1
-        ):
+        if Permission.PROJECT_OWNER in project.permissions and total_project_owners(project_user_dao, project_name) <= 1:
             projects.append(project_name)
     return projects

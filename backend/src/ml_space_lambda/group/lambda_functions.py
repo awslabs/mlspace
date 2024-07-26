@@ -26,8 +26,6 @@ from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO, GroupUserModel
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_group import ProjectGroupDAO
-
-# from ml_space_lambda.data_access_objects.project_user_group import ProjectUserGroupDAO, ProjectUserGroupModel
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import EnvVariable, Permission
 from ml_space_lambda.utils.admin_utils import is_admin_get_all
@@ -155,12 +153,13 @@ def add_users(event, context):
     usernames = request["usernames"]
     group = group_dao.get(group_name)
     if group:
+        project_groups = project_group_dao.get_projects_for_group(group_name)
         for username in usernames:
             _add_group_user(group_name, username, [Permission.COLLABORATOR])
-            for project_name in group.projects:
-                iam_role_arn = iam_manager.get_iam_role_arn(project_name, username)
+            for project_group in project_groups:
+                iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
                 if iam_role_arn is None:
-                    iam_role_arn = iam_manager.add_iam_role(project_name, username)
+                    iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
 
     return f"Successfully added {len(usernames)} user(s) to {group_name}"
 

@@ -17,30 +17,24 @@
 import { TableProps } from '@cloudscape-design/components';
 import { IGroup } from '../../shared/model/group.model';
 import { linkify } from '../../shared/util/table-utils';
-import React from 'react';
 import { IProjectGroup } from '../../shared/model/projectGroup.model';
 import { formatDisplayBoolean } from '../../shared/util/form-utils';
 import { hasPermission } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
 
-export const generateGroupColumns = (nameCellGenerator: (item: IGroup) => React.JSX.Element) => [
-    {
-        id: 'name',
-        header: 'Name',
-        sortingField: 'name',
-        cell: nameCellGenerator,
+export const groupColumns: TableProps.ColumnDefinition<IGroup>[] = [{
+    id: 'name',
+    header: 'Name',
+    sortingField: 'name',
+    cell: (item) => {
+        return linkify('group', item.name);
     },
-    {
-        id: 'description',
-        header: 'Description',
-        sortingField: 'description',
-        cell: (item) => item.description,
-    },
-];
-
-export const groupColumns: TableProps.ColumnDefinition<IGroup>[] = generateGroupColumns((item) => {
-    return linkify('group', item.name);
-});
+},{
+    id: 'description',
+    header: 'Description',
+    sortingField: 'description',
+    cell: (item) => item.description,
+}];
 
 const visibleColumns: string[] = ['name', 'description'];
 

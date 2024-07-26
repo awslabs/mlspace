@@ -201,24 +201,18 @@ def remove_group(event, context):
     if not project_group:
         raise Exception(f"{group_name} is not a member of {project_name}")
 
-    if (
-        Permission.PROJECT_OWNER not in project_group.permissions
-        or total_project_owners(project_user_dao, project_group_dao, project_name) > 1
-    ):
-        cleanup_user_resources(project_name, group_usernames)
+    cleanup_user_resources(project_name, group_usernames)
 
-        if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
-            for group_user in group_users:
-                # remove role if user doesn't have project membership directly or indirectly through other groups
-                if not is_member_of_project(group_user.user, project_name):
-                    iam_role_arn = iam_manager.get_iam_role_arn(project_name, group_user.user)
-                    if iam_role_arn:
-                        iam_manager.remove_project_user_roles([iam_role_arn])
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+        for group_user in group_users:
+            # remove role if user doesn't have project membership directly or indirectly through other groups
+            if not is_member_of_project(group_user.user, project_name):
+                iam_role_arn = iam_manager.get_iam_role_arn(project_name, group_user.user)
+                if iam_role_arn:
+                    iam_manager.remove_project_user_roles([iam_role_arn])
 
-        project_group_dao.delete(project_name, group_name)
-        return f"Successfully removed {group_name} from {project_name}"
-
-    raise Exception("You cannot delete the last owner of a project")
+    project_group_dao.delete(project_name, group_name)
+    return f"Successfully removed {group_name} from {project_name}"
 
 
 @api_wrapper
@@ -292,10 +286,7 @@ def remove_user(event, context):
     if not project_member:
         raise Exception(f"{username} is not a member of {project_name}")
 
-    if (
-        Permission.PROJECT_OWNER not in project_member.permissions
-        or total_project_owners(project_user_dao, project_group_dao, project_name) > 1
-    ):
+    if Permission.PROJECT_OWNER not in project_member.permissions or total_project_owners(project_user_dao, project_name) > 1:
         # Terminate any running EMR Clusters the user owns that are associated with the project
         clusters = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.EMR_CLUSTER, fetch_all=True)
         cluster_ids = [cluster.id for cluster in clusters.records if cluster.user == username]
@@ -384,7 +375,7 @@ def list_all(event, context):
         project_names = list(set(indirect_project_groups.keys()) - direct_project_names)
         for indirect_project in project_dao.get_all(project_names=project_names):
             project_dict = indirect_project.to_dict()
-            project_dict["indirect"] = list(indirect_project_groups[indirect_project.name]) or []
+            project_dict["indirect"] = list(indirect_project_groups.get(indirect_project.name, []))
             projects.append(project_dict)
 
     return list(projects)
@@ -572,7 +563,7 @@ def update_project_user(event, context):
         raise ResourceNotFound(f"User {username} is not a member of {project_name}")
 
     if Permission.PROJECT_OWNER in project_user.permissions and Permission.PROJECT_OWNER not in updates["permissions"]:
-        if total_project_owners(project_user_dao, project_group_dao, project_name) < 2:
+        if total_project_owners(project_user_dao, project_name) < 2:
             raise Exception(f"Cannot remove last Project Owner from {project_name}.")
 
     if sorted(updates["permissions"]) != sorted(serialize_permissions(project_user.permissions)):
