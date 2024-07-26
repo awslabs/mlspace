@@ -15,42 +15,39 @@
 */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../../../config/store';
+import { useAppDispatch } from '../../../../config/store';
 import Table from '../../../../modules/table';
 import { setBreadcrumbs } from '../../../../shared/layout/navigation/navigation.reducer';
 import { ProjectGroupActions } from './project.groups.actions';
 import { useParams } from 'react-router-dom';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle } from '../../../../shared/doc';
-import { groupColumns, visibleColumns } from '../../../group/group.columns';
-import { getProject, getProjectGroups, selectProject } from '../../project.reducer';
+import { generateGroupColumns, visibleColumns } from '../../../group/group.columns';
+import { getProject, getProjectGroups } from '../../project.reducer';
 import { isFulfilled } from '@reduxjs/toolkit';
 import { useNotificationService } from '../../../../shared/util/hooks';
 import { IGroup } from '../../../../shared/model/group.model';
+import { linkify } from '../../../../shared/util/table-utils';
 
 export function ProjectGroups () {
     const { projectName } = useParams();
-    const [groups, setGroups] = useState<IGroup[]>();
-    const project = useAppSelector(selectProject);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [projectGroups, setProjectGroups] = useState<IGroup[]>();
     const dispatch = useAppDispatch();
     const notificationService = useNotificationService(dispatch);
+    const [needsLoading, setNeedsLoading] = useState<boolean>(true);
 
     DocTitle(`${projectName} Project Groups`);
 
     const refreshHandler = useCallback(() => {
-        setIsLoading(true);
-        if (projectName) {
-            dispatch(getProject({projectName}));
-            dispatch(getProjectGroups(projectName)).then((response) => {
-                setIsLoading(false);
-                if (isFulfilled(response)) {
-                    setGroups(response.payload.data);
-                } else {
-                    notificationService.showAxiosRejectedActionNotification('get project groups', response);
-                }
-            });
-        }
+        dispatch(getProject({projectName: String(projectName)}));
+        setProjectGroups(undefined);
+        dispatch(getProjectGroups(String(projectName))).then((response) => {
+            if (isFulfilled(response)) {
+                setProjectGroups(response.payload.data);
+            } else {
+                notificationService.showAxiosRejectedActionNotification('get project groups', response);
+            }
+        });
     }, [dispatch, notificationService, projectName]);
 
     useEffect(() => {
@@ -60,16 +57,18 @@ export function ProjectGroups () {
                 { text: 'Groups', href: `#/project/${projectName}/groups` },
             ])
         );
+    }, [dispatch, projectName, refreshHandler]);
 
-        if (projectName && !project) {
-            dispatch(getProject({projectName}));
-        }
-
-        if (projectName && !groups) {
+    if (needsLoading) {
+        if (projectName) {
+            setNeedsLoading(false);
             refreshHandler();
         }
-    }, [dispatch, projectName, project, groups, refreshHandler]);
+    }
 
+    const groupColumns = generateGroupColumns((item) => {
+        return linkify('personal/group', item.name, undefined, undefined, true);
+    });
 
     return (
         <div>
@@ -78,10 +77,11 @@ export function ProjectGroups () {
                 tableType={'multi'}
                 actions={(e: any) => ProjectGroupActions({ ...e, projectName, refreshHandler })}
                 trackBy='name'
-                allItems={groups || []}
+                keepSelection={false}
+                allItems={projectGroups || []}
                 columnDefinitions={groupColumns}
                 visibleColumns={visibleColumns}
-                loadingItems={isLoading}
+                loadingItems={projectGroups === undefined}
                 loadingText='Loading Project groups'
             />
         </div>

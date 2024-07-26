@@ -279,17 +279,28 @@ def remove_user(event, context):
 def list_all(event, context):
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
     if Permission.ADMIN in user.permissions:
-        projects = project_dao.get_all(include_suspended=True)
+        projects = [project.to_dict() for project in project_dao.get_all(include_suspended=True)]
     else:
-        project_names = set([project.project for project in project_user_dao.get_projects_for_user(user.username)])
+        direct_project_names = set([project.project for project in project_user_dao.get_projects_for_user(user.username)])
+        projects = [project.to_dict() for project in project_dao.get_all(project_names=list(direct_project_names))]
+
         # add projects from groups
+        indirect_project_groups = {}
         for group_user in group_user_dao.get_groups_for_user(user.username):
             group = group_dao.get(group_user.group)
             if group:
-                project_names.update(group.projects)
+                # invert group -> project relationship
+                for project in group.projects:
+                    groups = indirect_project_groups.get(project, set())
+                    groups.add(group.name)
+                    indirect_project_groups[project] = groups
+        project_names = list(set(indirect_project_groups.keys()) - direct_project_names)
+        for indirect_project in project_dao.get_all(project_names=project_names):
+            project_dict = indirect_project.to_dict()
+            project_dict["indirect"] = list(indirect_project_groups[indirect_project.name]) or []
+            projects.append(project_dict)
 
-        projects = project_dao.get_all(project_names=list(project_names))
-    return [project.to_dict() for project in projects]
+    return list(projects)
 
 
 # When suspending resources we don't page responses because we need to ensure we suspend everything.

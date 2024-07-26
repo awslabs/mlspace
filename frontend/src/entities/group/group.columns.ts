@@ -17,16 +17,14 @@
 import { TableProps } from '@cloudscape-design/components';
 import { IGroup } from '../../shared/model/group.model';
 import { linkify } from '../../shared/util/table-utils';
+import React from 'react';
 
-
-const groupColumns: TableProps.ColumnDefinition<IGroup>[] = [
+export const generateGroupColumns = (nameCellGenerator: (item: IGroup) => React.JSX.Element) => [
     {
         id: 'name',
         header: 'Name',
         sortingField: 'name',
-        cell: (item) => (
-            linkify('group', item.name)
-        ),
+        cell: nameCellGenerator,
     },
     {
         id: 'description',
@@ -35,6 +33,10 @@ const groupColumns: TableProps.ColumnDefinition<IGroup>[] = [
         cell: (item) => item.description,
     },
 ];
+
+export const groupColumns: TableProps.ColumnDefinition<IGroup>[] = generateGroupColumns((item) => {
+    return linkify('group', item.name);
+});
 
 const visibleColumns: string[] = ['name', 'description'];
 
@@ -52,7 +54,6 @@ const visibleContentPreference = {
 };
 
 export {
-    groupColumns,
     visibleColumns,
     visibleContentPreference
 };

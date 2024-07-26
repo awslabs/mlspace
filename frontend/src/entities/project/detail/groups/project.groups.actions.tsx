@@ -57,7 +57,7 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
 
     useEffect(() => {
         dispatch(getAllGroups());
-    }, [dispatch, project, projectName]);
+    }, [dispatch]);
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
