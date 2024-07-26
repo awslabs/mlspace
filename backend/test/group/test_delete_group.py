@@ -19,6 +19,7 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.group import GroupModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils import mlspace_config
@@ -32,7 +33,11 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.group.lambda_functions import delete as lambda_handler
 
 MOCK_GROUP_NAME = "UnitTestGroup"
+MOCK_DATASET_NAME = "dataset001"
 MOCK_GROUP = GroupModel(MOCK_GROUP_NAME, "Group for unit tests", "John Doe")
+MOCK_GROUP_DATASETS = [
+    GroupDatasetModel(dataset_name=MOCK_DATASET_NAME, group_name=MOCK_GROUP_NAME),
+]
 
 mock_event = {
     "requestContext": {"authorizer": {"principalId": "jdoe@example.com"}},
@@ -42,13 +47,15 @@ mock_event = {
 mock_context = mock.Mock()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_dataset_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_delete_group(mock_group_dao, mock_group_user_dao, mock_iam_manager):
+def test_delete_group(mock_group_dao, mock_group_user_dao, mock_iam_manager, mock_group_dataset_dao):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully deleted {MOCK_GROUP_NAME}.")
     mock_group_dao.get.return_value = MOCK_GROUP
+    mock_group_dataset_dao.get_datasets_for_group.return_value = MOCK_GROUP_DATASETS
 
     mock_username = "jdoe@example.com"
     mock_group_user_dao.get_users_for_group.return_value = [
@@ -67,6 +74,7 @@ def test_delete_group(mock_group_dao, mock_group_user_dao, mock_iam_manager):
     mock_group_user_dao.get_users_for_group.assert_called_with(MOCK_GROUP_NAME)
     mock_group_user_dao.delete.assert_called_with(MOCK_GROUP_NAME, mock_username)
     mock_iam_manager.update_user_policy.assert_called_with(mock_username)
+    mock_group_dataset_dao.delete.assert_called_with(group_name=MOCK_GROUP_NAME, dataset_name=MOCK_DATASET_NAME)
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")

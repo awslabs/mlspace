@@ -29,6 +29,7 @@ export type IDataset = {
     description?: string;
     location?: string;
     format?: string;
+    groups?: string[];
 };
 
 export const defaultDataset: IDataset = {

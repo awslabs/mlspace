@@ -74,6 +74,8 @@ export function DatasetInlineCreate (props: DatasetInlineCreateProps) {
                 case DatasetType.PROJECT:
                     scopeAndType += `/${projectName}`;
                     break;
+                case DatasetType.GROUP:
+                    scopeAndType += `/${state.form.groupName}`;
             }
 
             onChange(new CustomEvent('onChange', { cancelable: false, detail: { value: `s3://${window.env.DATASET_BUCKET}/${scopeAndType}/datasets/${datasetContext.name}/` } }));

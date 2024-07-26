@@ -183,6 +183,11 @@ def delete(event, context):
     if not existing_group:
         raise ValueError("Specified group does not exist")
 
+    # Delete group dataset associations
+    to_delete_group_datasets = group_dataset_dao.get_datasets_for_group(group_name)
+    for group_dataset in to_delete_group_datasets:
+        group_dataset_dao.delete(group_name=group_name, dataset_name=group_dataset.dataset)
+
     # Delete users associations and group itself
     to_delete_group_users = group_user_dao.get_users_for_group(group_name)
 

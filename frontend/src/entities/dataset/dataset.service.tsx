@@ -127,7 +127,6 @@ export const fetchPresignedURL = async (s3Key: string) => {
 export const determineScope = (
     type: DatasetType | undefined,
     projectName: string | undefined,
-    groupName: string | undefined,
     username: string
 ): string => {
     switch (type) {
@@ -136,7 +135,7 @@ export const determineScope = (
         case DatasetType.PROJECT:
             return projectName!;
         case DatasetType.GROUP:
-            return groupName!;
+            return DatasetType.GROUP;
         default:
             // Default to private
             return username;
@@ -217,6 +216,7 @@ export async function createDataset (dataset: IDataset) {
             datasetScope: dataset.scope,
             datasetDescription: dataset.description,
             datasetFormat: dataset.format,
+            datasetGroups: dataset.groups,
         };
         const headerConfig = {
             headers: {
