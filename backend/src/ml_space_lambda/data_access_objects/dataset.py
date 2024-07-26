@@ -38,7 +38,7 @@ class DatasetModel:
         created_by: str,
         created_at: Optional[float] = None,
         last_updated_at: Optional[float] = None,
-        groups: list = [],
+        groups: List[str] = [],
     ):
         now = int(time.time())
         self.scope = scope
