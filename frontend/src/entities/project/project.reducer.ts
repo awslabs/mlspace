@@ -97,7 +97,7 @@ export const addGroupsToProject = createAsyncThunk(
     'user/add_groups_to_project',
     async (data: GroupProjectData) => {
         const requestUrl = `project/${data.projectName}/groups`;
-        return axios.post<string>(requestUrl, { group_names: data.groupNames }).catch(axiosCatch);
+        return axios.post<string>(requestUrl, { groupNames: data.groupNames }).catch(axiosCatch);
     }
 );
 

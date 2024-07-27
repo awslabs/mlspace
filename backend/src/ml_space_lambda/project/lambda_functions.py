@@ -201,23 +201,22 @@ def remove_group(event, context):
 
     # first check if user is an owner on the project.
     project_group = project_group_dao.get(project_name, group_name)
-    group_users = group_user_dao.get_users_for_group(group_name)
-    group_usernames = [group_user.user for group_user in group_users]
-
     if not project_group:
         raise Exception(f"{group_name} is not a member of {project_name}")
 
+    group_users = group_user_dao.get_users_for_group(group_name)
+    group_usernames = [group_user.user for group_user in group_users]
     cleanup_user_resources(project_name, group_usernames)
+    project_group_dao.delete(project_name, group_name)
 
     if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
-        for group_user in group_users:
+        for username in group_usernames:
             # remove role if user doesn't have project membership directly or indirectly through other groups
-            if not is_member_of_project(group_user.user, project_name):
-                iam_role_arn = iam_manager.get_iam_role_arn(project_name, group_user.user)
+            if not is_member_of_project(username, project_name):
+                iam_role_arn = iam_manager.get_iam_role_arn(project_name, username)
                 if iam_role_arn:
                     iam_manager.remove_project_user_roles([iam_role_arn])
 
-    project_group_dao.delete(project_name, group_name)
     return f"Successfully removed {group_name} from {project_name}"
 
 
@@ -321,11 +320,16 @@ def remove_user(event, context):
             if translation_job.user == username:
                 translate.stop_text_translation_job(JobId=translation_job.id)
 
+        project_user_dao.delete(project_name, username)
+
         # Remove IAM role for project user
         if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
-            iam_manager.remove_project_user_roles([project_member.role])
+            # Remove any (user,project) roles that are no longer in use
+            if not is_member_of_project(username, project_name):
+                iam_role_arn = iam_manager.get_iam_role_arn(project_name, username)
+                if iam_role_arn:
+                    iam_manager.remove_project_user_roles([iam_role_arn])
 
-        project_user_dao.delete(project_name, username)
         return f"Successfully removed {username} from {project_name}"
 
     raise Exception("You cannot delete the last owner of a project")
@@ -375,11 +379,12 @@ def list_all(event, context):
         for group_user in group_user_dao.get_groups_for_user(user.username):
             # invert group -> project relationship
             for project in project_group_dao.get_projects_for_group(group_user.group):
-                groups = indirect_project_groups.get(project, set())
+                groups = indirect_project_groups.get(project.project, set())
                 groups.add(group_user.group)
-                indirect_project_groups[project] = groups
-        project_names = list(set(indirect_project_groups.keys()) - direct_project_names)
-        for indirect_project in project_dao.get_all(project_names=project_names):
+                indirect_project_groups[project.project] = groups
+
+        indirect_project_names = list(set(indirect_project_groups.keys()) - direct_project_names)
+        for indirect_project in project_dao.get_all(project_names=indirect_project_names):
             project_dict = indirect_project.to_dict()
             project_dict["indirect"] = list(indirect_project_groups.get(indirect_project.name, []))
             projects.append(project_dict)
@@ -582,7 +587,6 @@ def update_project_user(event, context):
 @api_wrapper
 def update_project_group(event, context):
     project_name = event["pathParameters"]["projectName"]
-    print(event["pathParameters"])
     group_name = urllib.parse.unquote(event["pathParameters"]["groupName"])
     updates = json.loads(event["body"])
 
@@ -595,4 +599,4 @@ def update_project_group(event, context):
         project_group.permissions = [Permission(entry) for entry in updates["permissions"]]
         project_group_dao.update(project_name, group_name, project_group)
 
-    return "Successfuly updated project user record."
+    return "Successfuly updated project group record."

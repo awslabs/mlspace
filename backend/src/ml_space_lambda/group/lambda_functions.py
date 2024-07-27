@@ -18,7 +18,6 @@ import json
 import logging
 import re
 import urllib
-from typing import List, Optional
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
 from ml_space_lambda.data_access_objects.group import GroupDAO, GroupModel
@@ -33,6 +32,7 @@ from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permis
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
+from ml_space_lambda.utils.project_utils import is_member_of_project
 
 logger = logging.getLogger(__name__)
 group_dao = GroupDAO()
@@ -46,29 +46,6 @@ project_group_dao = ProjectGroupDAO()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
 group_desc_regex = re.compile(r"[^ -~]")
-
-
-def _add_group_user(group_name: str, username: str, permissions: Optional[List[Permission]] = None):
-    if not user_dao.get(username):
-        raise ValueError("Username specified is not associated with an active user.")
-    try:
-        group_user_dao.create(
-            GroupUserModel(
-                group_name=group_name,
-                username=username,
-                permissions=permissions,
-            )
-        )
-
-        env_variables = get_environment_variables()
-        if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
-            for project_group in project_group_dao.get_projects_for_group(group_name):
-                iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
-                # don't create project-user role if it already exists
-                if iam_role_arn is None:
-                    iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
-    except Exception as e:
-        raise e
 
 
 @api_wrapper
@@ -152,17 +129,25 @@ def add_users(event, context):
     group_name = event["pathParameters"]["groupName"]
     request = json.loads(event["body"])
     usernames = request["usernames"]
-    group = group_dao.get(group_name)
-    if group:
+    if group_dao.get(group_name):
         project_groups = project_group_dao.get_projects_for_group(group_name)
         for username in usernames:
-            _add_group_user(group_name, username, [Permission.COLLABORATOR])
+            if user_dao.get(username):
+                group_user_dao.create(
+                    GroupUserModel(
+                        group_name=group_name,
+                        username=username,
+                        permissions=[Permission.COLLABORATOR],
+                    )
+                )
 
-            if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
-                for project_group in project_groups:
-                    iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
-                    if iam_role_arn is None:
-                        iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
+                if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+                    for project_group in project_groups:
+                        iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
+                        if iam_role_arn is None:
+                            iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
+
+        iam_manager.update_user_policy(username)
 
     return f"Successfully added {len(usernames)} user(s) to {group_name}"
 
@@ -179,9 +164,16 @@ def remove_user(event, context):
 
     group_user_dao.delete(group_name, username)
 
-    # Removes the group permissions for this user
     env_variables = get_environment_variables()
     if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+        # Remove any (user,project) roles that are no longer in use
+        for project in project_group_dao.get_projects_for_group(group_name):
+            if not is_member_of_project(username, project.project):
+                iam_role_arn = iam_manager.get_iam_role_arn(project.project, username)
+                if iam_role_arn:
+                    iam_manager.remove_project_user_roles([iam_role_arn])
+
+        # Removes the group permissions for this user
         iam_manager.update_user_policy(username)
 
     return f"Successfully removed {username} from {group_name}"
