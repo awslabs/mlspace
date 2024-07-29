@@ -2356,12 +2356,10 @@ def test_verified_token_missing_oidc_endpoint(mock_http, mock_user_dao):
 
 
 def is_owner_of_project(username: str, project_name: str) -> bool:
-    print(f"aaa {MOCK_OWNER_PROJECT_USER.user} == {username}, {MOCK_OWNER_PROJECT_USER.project} == {project_name}")
     return MOCK_OWNER_PROJECT_USER.user == username and MOCK_OWNER_PROJECT_USER.project == project_name
 
 
 def is_member_of_project(username: str, project_name: str) -> bool:
-    print(f"bbb {MOCK_REGULAR_PROJECT_USER.user} == {username}, {MOCK_REGULAR_PROJECT_USER.project} == {project_name}")
     return (MOCK_REGULAR_PROJECT_USER.user == username and MOCK_REGULAR_PROJECT_USER.project == project_name) or (
         MOCK_OWNER_PROJECT_USER.user == username and MOCK_OWNER_PROJECT_USER.project == project_name
     )
