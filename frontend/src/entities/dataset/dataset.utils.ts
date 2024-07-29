@@ -30,8 +30,6 @@ export const showAccessLevel = (dataset: IDataset) => {
     }
 };
 
-//TODO: for private datasets, show the name of the user and their status (suspended/active)
-//TODO: for datasets associated with a suspended user/project or 0 groups, put the WARNING icon next to it
 export const showDatasetOwnership = (dataset: IDataset) => {
     if (dataset.type === DatasetType.GROUP) {
         return `${dataset.groups?.length || 0} group${dataset.groups && dataset.groups.length === 1 ? '' : 's'} associated`;

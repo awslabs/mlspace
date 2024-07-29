@@ -147,8 +147,6 @@ def lambda_handler(event, context):
             else:
                 logger.info(f"Access Denied. User: '{username}' is currently suspended.")
         else:
-            # TODO: if the user is an admin, can we just allow? What shouldn't an admin be able to do?
-
             # Check route access restrictions
             response_context = {"user": json.dumps(user.to_dict())}
 
