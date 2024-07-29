@@ -19,6 +19,7 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
+from ml_space_lambda.data_access_objects.project_group import ProjectGroupModel
 from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
@@ -45,13 +46,21 @@ mock_event = {"pathParameters": {"groupName": MOCK_GROUP_NAME, "username": MOCK_
 mock_context = mock.Mock()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.is_member_of_project")
+@mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_success(mock_group_user_dao, mock_iam_manager):
+def test_remove_user_from_group_success(
+    mock_group_user_dao, mock_iam_manager, mock_project_group_dao, mock_is_member_of_project
+):
+    fake_role_arn = "arn:aws::012345678901:iam:role/some-fake-rolw"
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully removed {MOCK_CO_USER.user} from {MOCK_GROUP_NAME}")
 
     mock_group_user_dao.get.return_value = MOCK_CO_USER
+    mock_project_group_dao.get_projects_for_group.return_value = [ProjectGroupModel("MyMockProject", "MyMockGroup")]
+    mock_is_member_of_project.return_value = False
+    mock_iam_manager.get_iam_role_arn.return_value = fake_role_arn
 
     with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True"}):
         assert (
@@ -71,6 +80,8 @@ def test_remove_user_from_group_success(mock_group_user_dao, mock_iam_manager):
     mock_group_user_dao.get_users_for_group.assert_not_called()
     mock_group_user_dao.delete.assert_called_with(MOCK_GROUP_NAME, MOCK_CO_USER.user)
     mock_iam_manager.update_user_policy.assert_called_with(MOCK_CO_USER.user)
+    mock_iam_manager.get_iam_role_arn.assert_called_once()
+    mock_iam_manager.remove_project_user_roles.assert_called_with([fake_role_arn])
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")

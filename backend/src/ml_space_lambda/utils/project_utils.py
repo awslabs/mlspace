@@ -15,12 +15,10 @@
 #
 
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
-from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_group import ProjectGroupDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.enums import Permission
 
-project_dao = ProjectDAO()
 project_user_dao = ProjectUserDAO()
 group_user_dao = GroupUserDAO()
 project_group_dao = ProjectGroupDAO()
@@ -49,8 +47,7 @@ def is_owner_of_project(username: str, project_name: str) -> bool:
         for project_group in project_group_dao.get_groups_for_project(project_name)
         if Permission.PROJECT_OWNER in project_group.permissions
     ]
-    print(user_groups)
-    print(project_groups)
+
     if len(set(user_groups) & set(project_groups)) > 0:
         return True
 

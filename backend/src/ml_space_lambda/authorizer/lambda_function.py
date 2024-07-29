@@ -132,7 +132,7 @@ def lambda_handler(event, context):
     if token_info["exp"] > time.time():
         # Look up user record
         user = user_dao.get(username)
-        IS_ADMIN = Permission.ADMIN in user.permissions
+        IS_ADMIN = Permission.ADMIN in user.permissions if user else False
 
         if requested_resource == "/user" and request_method == "POST":
             logger.info("Attempting to create new user account...")

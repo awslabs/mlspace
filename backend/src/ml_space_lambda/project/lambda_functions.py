@@ -142,7 +142,7 @@ def get(event, context):
 
     return {
         "project": project.to_dict(),
-        "permissions": list(permissions),
+        "permissions": sorted(list(permissions)),
         "resourceCounts": (
             _get_resource_counts(project_name) if event["queryStringParameters"]["includeResourceCounts"] == "true" else {}
         ),
@@ -292,33 +292,7 @@ def remove_user(event, context):
         raise Exception(f"{username} is not a member of {project_name}")
 
     if Permission.PROJECT_OWNER not in project_member.permissions or total_project_owners(project_user_dao, project_name) > 1:
-        # Terminate any running EMR Clusters the user owns that are associated with the project
-        clusters = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.EMR_CLUSTER, fetch_all=True)
-        cluster_ids = [cluster.id for cluster in clusters.records if cluster.user == username]
-
-        if cluster_ids:
-            emr.set_termination_protection(JobFlowIds=cluster_ids, TerminationProtected=False)
-            emr.terminate_job_flows(JobFlowIds=cluster_ids)
-
-        # Stop any running notebooks the user owns that are associated with the project, we're
-        # going to remove their custom role which is the execution role assigned to any
-        # notebook instances the user created within the project. Once the roles are removed the
-        # notebooks are essentially in a bricked state but the names are deterministic. If the
-        # user is added back to the project the notebooks will work again. If a user has a pending
-        # instance we're not going to block removing them but the instance will still end up
-        # in an unusable state due to the role being deleted.
-        notebooks = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.NOTEBOOK, fetch_all=True)
-        for notebook in notebooks.records:
-            if notebook.user == username and notebook.metadata["NotebookInstanceStatus"] == "InService":
-                sagemaker.stop_notebook_instance(NotebookInstanceName=notebook.id)
-
-        # Stop any ongoing batch translate jobs in this project that were started by this user
-        translate_jobs = resource_metadata_dao.get_all_for_project_by_type(
-            project_name, ResourceType.BATCH_TRANSLATE_JOB, fetch_all=True
-        )
-        for translation_job in translate_jobs.records:
-            if translation_job.user == username:
-                translate.stop_text_translation_job(JobId=translation_job.id)
+        cleanup_user_resources(project_name, [username])
 
         project_user_dao.delete(project_name, username)
 
@@ -371,8 +345,8 @@ def list_all(event, context):
     if Permission.ADMIN in user.permissions:
         projects = [project.to_dict() for project in project_dao.get_all(include_suspended=True)]
     else:
-        direct_project_names = set([project.project for project in project_user_dao.get_projects_for_user(user.username)])
-        projects = [project.to_dict() for project in project_dao.get_all(project_names=list(direct_project_names))]
+        direct_project_names = [project.project for project in project_user_dao.get_projects_for_user(user.username)]
+        projects = [project.to_dict() for project in project_dao.get_all(project_names=direct_project_names)]
 
         # add projects from groups
         indirect_project_groups = {}
@@ -383,7 +357,7 @@ def list_all(event, context):
                 groups.add(group_user.group)
                 indirect_project_groups[project.project] = groups
 
-        indirect_project_names = list(set(indirect_project_groups.keys()) - direct_project_names)
+        indirect_project_names = list(set(indirect_project_groups.keys()) - set(direct_project_names))
         for indirect_project in project_dao.get_all(project_names=indirect_project_names):
             project_dict = indirect_project.to_dict()
             project_dict["indirect"] = list(indirect_project_groups.get(indirect_project.name, []))

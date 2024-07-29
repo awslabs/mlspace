@@ -147,7 +147,9 @@ def add_users(event, context):
                         if iam_role_arn is None:
                             iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
 
-        iam_manager.update_user_policy(username)
+                iam_manager.update_user_policy(username)
+            else:
+                raise Exception("Username specified is not associated with an active user.")
 
     return f"Successfully added {len(usernames)} user(s) to {group_name}"
 
@@ -217,15 +219,19 @@ def delete(event, context):
     if not existing_group:
         raise ValueError("Specified group does not exist")
 
-    # Remove group from all projects
-    for project_name in existing_group.projects:
-        project = project_dao.get(project_name)
-        if project is not None:
-            project.groups.remove(group_name)
-            project_dao.update(project)
-
     # Delete users associations and group itself
     to_delete_group_users = group_user_dao.get_users_for_group(group_name)
+
+    # Remove group from all projects
+    for project_group in project_group_dao.get_projects_for_group(group_name):
+        project_group_dao.delete(project_group.project, group_name)
+
+        if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+            for group_user in to_delete_group_users:
+                if not is_member_of_project(group_user.user, project_group.project):
+                    iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, group_user.user)
+                    if iam_role_arn:
+                        iam_manager.remove_project_user_roles([iam_role_arn])
 
     # Remove all group related entries from the user/group table
     for group_user in to_delete_group_users:
