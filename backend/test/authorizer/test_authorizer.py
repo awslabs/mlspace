@@ -1528,16 +1528,16 @@ def test_notebook_privileged(
     "user,method,scope,type,project_user,group_user,allow",
     [
         (MOCK_ADMIN_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
-        (MOCK_ADMIN_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
-        (MOCK_ADMIN_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_ADMIN_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
         (MOCK_ADMIN_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_ADMIN_USER, "PUT", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
-        (MOCK_ADMIN_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
-        (MOCK_ADMIN_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_ADMIN_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
         (MOCK_ADMIN_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_ADMIN_USER, "DELETE", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
-        (MOCK_ADMIN_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
-        (MOCK_ADMIN_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_ADMIN_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
         (MOCK_ADMIN_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
         (MOCK_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
@@ -1668,7 +1668,12 @@ def test_dataset_routes(
     mock_user_dao.get.assert_called_with(user.username)
     mock_dataset_dao.get.assert_called_with(scope, mock_dataset.name)
     # We'll only grab the project user if it's a GET, Project Dataset, and the user wasn't the owner
-    if mock_dataset.type == DatasetType.PROJECT and method == "GET" and user.username != MOCK_OWNER_USER.username:
+    if (
+        mock_dataset.type == DatasetType.PROJECT
+        and method == "GET"
+        and user.username != MOCK_OWNER_USER.username
+        and Permission.ADMIN not in user.permissions
+    ):
         mock_project_user_dao.get.assert_called_with(scope, user.username)
     else:
         mock_project_user_dao.get.assert_not_called()

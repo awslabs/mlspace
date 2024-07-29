@@ -49,6 +49,10 @@ export const getDatasetsList = createAsyncThunk(
     }
 );
 
+export const getAllDatasets = createAsyncThunk('dataset/fetch_all_datasets', async () => {
+    return axios.get<IDataset[]>('/admin/datasets');
+});
+
 export const getDataset = createAsyncThunk(
     'dataset/fetch_entity_by_id',
     async ({ type, scope, name }: any) => {
@@ -101,6 +105,14 @@ export const DatasetSlice = createSlice({
     extraReducers (builder) {
         builder
             .addMatcher(isFulfilled(getDatasetsList), (state, action: any) => {
+                const { data } = action.payload;
+                return {
+                    ...state,
+                    loadingDatasetsList: false,
+                    datasetsList: data,
+                };
+            })
+            .addMatcher(isFulfilled(getAllDatasets), (state, action: any) => {
                 const { data } = action.payload;
                 return {
                     ...state,

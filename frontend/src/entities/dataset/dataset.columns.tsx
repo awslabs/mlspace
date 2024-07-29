@@ -14,10 +14,10 @@
   limitations under the License.
 */
 import React from 'react';
-import { TableProps } from '@cloudscape-design/components';
-import { IDataset } from '../../shared/model/dataset.model';
+import { StatusIndicator, TableProps } from '@cloudscape-design/components';
+import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 import { linkify } from '../../shared/util/table-utils';
-import { showAccessLevel } from './dataset.utils';
+import { showDatasetOwnership } from './dataset.utils';
 
 const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
     {
@@ -39,9 +39,18 @@ const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
         id: 'accessLevel',
         header: 'Access Level',
         sortingField: 'scope',
-        cell: (item) => showAccessLevel(item),
+        cell: (item) => item.type,
     },
 ];
+
+const adminDatasetColumns: TableProps.ColumnDefinition<IDataset>[] = defaultColumns.concat([
+    {
+        id: 'numGroups',
+        header: 'Owners',
+        sortingField: 'numGroups',
+        cell: (item) => item.type === DatasetType.GROUP && item.groups && item.groups.length === 0 ? <StatusIndicator type='warning'>{showDatasetOwnership(item)}</StatusIndicator> : showDatasetOwnership(item),
+    },
+]);
 
 const defaultColumnsWithUrlOverride: TableProps.ColumnDefinition<IDataset>[] = [
     {
@@ -62,6 +71,7 @@ const defaultColumnsWithUrlOverride: TableProps.ColumnDefinition<IDataset>[] = [
 ];
 
 const visibleColumns: string[] = ['datasetName', 'description', 'accessLevel'];
+const visibleAdminColumns: string[] = visibleColumns.concat(['numGroups']);
 
 const visibleContentPreference = {
     title: 'Select visible Dataset content',
@@ -79,7 +89,9 @@ const visibleContentPreference = {
 
 export {
     defaultColumns,
+    adminDatasetColumns,
     visibleColumns,
+    visibleAdminColumns,
     visibleContentPreference,
     defaultColumnsWithUrlOverride,
 };

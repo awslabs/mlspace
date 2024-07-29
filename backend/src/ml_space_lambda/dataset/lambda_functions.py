@@ -305,23 +305,32 @@ def create_dataset(event, context):
 @api_wrapper
 def list_resources(event, context):
     username = event["requestContext"]["authorizer"]["principalId"]
+    is_admin = event["requestContext"].get("resourcePath") == "/admin/datasets"
     datasets = []
     # Get global datasets
     datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
-    # Get the users private datasets
-    datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
-    # Get the group datasets for groups this user is a member of
-    group_datasets = set()
-    for group in group_user_dao.get_groups_for_user(username):
-        for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
-            if group_dataset.dataset not in group_datasets:
-                group_datasets.add(group_dataset.dataset)
-                datasets.append(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
 
-    if event["pathParameters"] and "projectName" in event["pathParameters"]:
-        project_name = event["pathParameters"]["projectName"].replace('"', "")
-        # Get project datasets
-        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PROJECT, project_name))
+    # if this is an admin request, retrieve ALL the datasets
+    if is_admin:
+        datasets = dataset_dao.get_all()
+        for dataset in datasets:
+            for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset.name):
+                dataset.groups.append(group_dataset)
+    else:
+        # Get the user's private datasets
+        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
+        # Get the group datasets for groups this user is a member of
+        group_datasets = set()
+        for group in group_user_dao.get_groups_for_user(username):
+            for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
+                if group_dataset.dataset not in group_datasets:
+                    group_datasets.add(group_dataset.dataset)
+                    datasets.append(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
+
+        if event["pathParameters"] and "projectName" in event["pathParameters"]:
+            project_name = event["pathParameters"]["projectName"].replace('"', "")
+            # Get project datasets
+            datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PROJECT, project_name))
 
     return [dataset.to_dict() for dataset in datasets]
 

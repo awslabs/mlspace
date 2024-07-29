@@ -15,8 +15,8 @@
 */
 
 import React, { RefObject, useEffect, useRef } from 'react';
-import { defaultColumns, visibleColumns, visibleContentPreference } from './dataset.columns';
-import { getDatasetsList, loadingDatasetsList, loadingDatasetAction, clearDatasetList } from './dataset.reducer';
+import { adminDatasetColumns, defaultColumns, visibleAdminColumns, visibleColumns, visibleContentPreference } from './dataset.columns';
+import { getDatasetsList, loadingDatasetsList, loadingDatasetAction, clearDatasetList, getAllDatasets } from './dataset.reducer';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import Table from '../../modules/table';
 import { IDataset } from '../../shared/model/dataset.model';
@@ -27,7 +27,11 @@ import { getBase } from '../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../src/shared/doc';
 import { focusOnCreateButton } from '../../shared/util/url-utils';
 
-export const Dataset = () => {
+export type DatasetProperties = {
+    isAdmin?: boolean;
+};
+
+export const Dataset = ({isAdmin}: DatasetProperties) => {
     const datasetList: IDataset[] = useAppSelector((state) => state.dataset.datasetsList);
     const loadingDatasets = useAppSelector(loadingDatasetsList);
     const loadingAction = useAppSelector(loadingDatasetAction);
@@ -36,15 +40,25 @@ export const Dataset = () => {
 
     const dispatch = useAppDispatch();
 
-    !projectName ? DocTitle('Datasets') : DocTitle(projectName!.concat(' Datasets'));
+    if (isAdmin) {
+        DocTitle('All Datasets');
+    } else {
+        !projectName ? DocTitle('Datasets') : DocTitle(projectName!.concat(' Datasets'));
+    }
 
     useEffect(() => {
+        let href = '#/personal/dataset';
+        if (isAdmin) {
+            href = '#/admin/datasets';
+        } else if (projectName) {
+            href = `#/project/${projectName}/dataset`;
+        }
         dispatch(
             setBreadcrumbs([
                 getBase(projectName),
                 {
                     text: 'Datasets',
-                    href: projectName ? `#/project/${projectName}/dataset` : '#/personal/dataset',
+                    href: href,
                 },
             ])
         );
@@ -54,7 +68,15 @@ export const Dataset = () => {
         } else {
             scrollToPageHeader('h1', 'Dataset');
         }
-    }, [dispatch, projectName]);
+    }, [dispatch, projectName, isAdmin]);
+
+    useEffect(() => {
+        if (isAdmin) {
+            dispatch(getAllDatasets());
+        } else {
+            dispatch(getDatasetsList({projectName}));
+        }
+    }, [dispatch, isAdmin, projectName]);
 
     return (
         datasetList && (
@@ -65,14 +87,14 @@ export const Dataset = () => {
                     actions={DatasetActions}
                     focusProps={{ createDatasetRef: createDatasetRef }}
                     allItems={datasetList}
-                    columnDefinitions={defaultColumns}
-                    visibleColumns={visibleColumns}
+                    columnDefinitions={isAdmin ? adminDatasetColumns : defaultColumns }
+                    visibleColumns={isAdmin ? visibleAdminColumns : visibleColumns}
                     visibleContentPreference={visibleContentPreference}
                     trackBy='location'
                     itemNameProperty='name'
                     loadingItems={loadingDatasets}
                     loadingAction={loadingAction}
-                    serverFetch={getDatasetsList}
+                    //serverFetch={isAdmin ? getAllDatasets : getDatasetsList}
                     storeClear={clearDatasetList}
                 />
             </div>
