@@ -44,6 +44,7 @@ from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 from ml_space_lambda.utils.project_utils import is_member_of_project, is_owner_of_project
+from ml_space_lambda.utils.user_utils import ensure_users_exist
 
 resource_metadata_dao = ResourceMetadataDAO()
 project_dao = ProjectDAO()
@@ -73,8 +74,6 @@ def _add_project_user(project_name: str, username: str, permissions: Optional[Li
     if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         iam_role_arn = iam_manager.add_iam_role(project_name, username)
 
-    if not user_dao.get(username):
-        raise ValueError("Username specified is not associated with an active user.")
     try:
         project_user = ProjectUserModel(
             project_name=project_name,
@@ -247,6 +246,8 @@ def create(event, context):
         new_project = ProjectModel.from_dict(event_body)
         project_dao.create(new_project)
         project_created = True
+
+        ensure_users_exist([username], user_dao)
         _add_project_user(project_name, username, [Permission.PROJECT_OWNER, Permission.COLLABORATOR])
 
         return f"Successfully created project '{project_name}'"
@@ -272,6 +273,8 @@ def add_users(event, context):
     project_name = event["pathParameters"]["projectName"]
     request = json.loads(event["body"])
     usernames = request["usernames"]
+
+    ensure_users_exist(usernames, user_dao)
     for username in usernames:
         _add_project_user(project_name, username, [Permission.COLLABORATOR])
 

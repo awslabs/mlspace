@@ -33,6 +33,7 @@ from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 from ml_space_lambda.utils.project_utils import is_member_of_project
+from ml_space_lambda.utils.user_utils import ensure_users_exist
 
 logger = logging.getLogger(__name__)
 group_dao = GroupDAO()
@@ -131,25 +132,25 @@ def add_users(event, context):
     usernames = request["usernames"]
     if group_dao.get(group_name):
         project_groups = project_group_dao.get_projects_for_group(group_name)
+
+        ensure_users_exist(usernames, user_dao)
+
         for username in usernames:
-            if user_dao.get(username):
-                group_user_dao.create(
-                    GroupUserModel(
-                        group_name=group_name,
-                        username=username,
-                        permissions=[Permission.COLLABORATOR],
-                    )
+            group_user_dao.create(
+                GroupUserModel(
+                    group_name=group_name,
+                    username=username,
+                    permissions=[Permission.COLLABORATOR],
                 )
+            )
 
-                if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
-                    for project_group in project_groups:
-                        iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
-                        if iam_role_arn is None:
-                            iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
+            if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+                for project_group in project_groups:
+                    iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
+                    if iam_role_arn is None:
+                        iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
 
-                iam_manager.update_user_policy(username)
-            else:
-                raise Exception("Username specified is not associated with an active user.")
+            iam_manager.update_user_policy(username)
 
     return f"Successfully added {len(usernames)} user(s) to {group_name}"
 
