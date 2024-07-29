@@ -74,7 +74,9 @@ def test_project_groups(
 
     expected_response = generate_html_response(200, f"Successfully added {len(groups)} user(s) to {PROJECT_NAME}")
 
-    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True" if dynamic_roles else ""}):
+    with mock.patch.dict(
+        "os.environ", {"AWS_DEFAULT_REGION": "us-east-1", "MANAGE_IAM_ROLES": "True" if dynamic_roles else ""}
+    ):
         mlspace_config.env_variables = {}
         assert lambda_handler(event, context) == expected_response
 
