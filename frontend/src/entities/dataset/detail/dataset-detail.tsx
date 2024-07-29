@@ -27,7 +27,7 @@ import {
     getDataset,
     loadingDataset,
 } from '../../../entities/dataset/dataset.reducer';
-import { IDataset } from '../../../shared/model/dataset.model';
+import { DatasetType, IDataset } from '../../../shared/model/dataset.model';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -54,6 +54,10 @@ function DatasetDetail () {
     datasetDetails.set('Description', dataset.description);
     datasetDetails.set('Access level', showAccessLevel(dataset));
     datasetDetails.set('Location', dataset.location);
+    if (dataset.type === DatasetType.GROUP) {
+        datasetDetails.set(`Group${dataset.groups && dataset.groups.length > 1 ? 's' : ''}`, dataset.groups);
+    }
+   
 
     // Make sure the existing Dataset matches the Dataset we're trying to view. If a Dataset was previously
     // loaded then datasetLoading will be false even though we haven't fetched the new Dataset. That would
