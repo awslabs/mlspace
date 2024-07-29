@@ -104,7 +104,9 @@ def test_delete_group(
     ]
     mock_group_user_dao.delete.return_value = None
 
-    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True" if dynamic_roles else ""}):
+    with mock.patch.dict(
+        "os.environ", {"AWS_DEFAULT_REGION": "us-east-1", "MANAGE_IAM_ROLES": "True" if dynamic_roles else ""}
+    ):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_group_dao.get.assert_called_with(MOCK_GROUP_NAME)
