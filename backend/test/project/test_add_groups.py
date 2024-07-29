@@ -21,9 +21,13 @@ import pytest
 
 from ml_space_lambda.data_access_objects.group import GroupModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
-from ml_space_lambda.project.lambda_functions import add_groups as lambda_handler
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
+
+TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "MANAGE_IAM_ROLES": "True"}
+
+with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
+    from ml_space_lambda.project.lambda_functions import add_groups as lambda_handler
 
 PROJECT_NAME = "MyFakeProject"
 GROUP_1 = GroupModel("group_1", "", "")
