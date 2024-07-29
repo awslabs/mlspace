@@ -45,9 +45,9 @@ const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
 
 const adminDatasetColumns: TableProps.ColumnDefinition<IDataset>[] = defaultColumns.concat([
     {
-        id: 'numGroups',
+        id: 'owners',
         header: 'Owners',
-        sortingField: 'numGroups',
+        sortingField: 'owners',
         cell: (item) => item.type === DatasetType.GROUP && item.groups && item.groups.length === 0 ? <StatusIndicator type='warning'>{showDatasetOwnership(item)}</StatusIndicator> : showDatasetOwnership(item),
     },
 ]);
@@ -71,7 +71,7 @@ const defaultColumnsWithUrlOverride: TableProps.ColumnDefinition<IDataset>[] = [
 ];
 
 const visibleColumns: string[] = ['datasetName', 'description', 'accessLevel'];
-const visibleAdminColumns: string[] = visibleColumns.concat(['numGroups']);
+const visibleAdminColumns: string[] = visibleColumns.concat(['owners']);
 
 const visibleContentPreference = {
     title: 'Select visible Dataset content',
