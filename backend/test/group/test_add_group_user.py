@@ -218,8 +218,7 @@ def test_add_nonexistent_user_to_group_error(
     mlspace_config.env_variables = {}
     mock_group_dao.get.return_value = {"name": "MyMockGroup"}
     expected_response = generate_html_response(
-        400,
-        "Bad Request: Username specified is not associated with an active user.",
+        400, f"Bad Request: The following usernames are not associated with an active user: {MOCK_USERNAME}"
     )
     mock_user_dao.get.return_value = None
     mock_project_group_dao.get_projects_for_group.return_value = [

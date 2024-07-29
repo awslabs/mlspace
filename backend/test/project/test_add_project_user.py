@@ -194,8 +194,7 @@ def test_add_users_to_project_client_error(mock_user_dao, mock_project_user_dao,
 def test_add_nonexistent_user_to_project_error(mock_user_dao, mock_project_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(
-        400,
-        "Bad Request: Username specified is not associated with an active user.",
+        400, f"Bad Request: The following usernames are not associated with an active user: {MOCK_USERNAME}"
     )
     mock_user_dao.get.return_value = None
 
@@ -245,7 +244,8 @@ def test_add_users_to_project_client_error_with_iam(mock_user_dao, mock_project_
 
 @mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
-def test_add_users_to_project_iam_error(mock_project_user_dao, mock_iam_manager):
+@mock.patch("ml_space_lambda.project.lambda_functions.user_dao")
+def test_add_users_to_project_iam_error(mock_user_dao, mock_project_user_dao, mock_iam_manager):
     mlspace_config.env_variables = {}
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
@@ -255,11 +255,12 @@ def test_add_users_to_project_iam_error(mock_project_user_dao, mock_iam_manager)
         400,
         "An error occurred (ThrottlingException) when calling the Invoke operation: Dummy error message.",
     )
-    mock_iam_manager.add_iam_role.side_effect = ClientError(error_msg, "Invoke")
+    mock_user_dao.get.side_effect = ClientError(error_msg, "Invoke")
     with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True"}):
         assert lambda_handler(mock_event, mock_context) == expected_response
 
-    mock_iam_manager.add_iam_role.assert_called_with(MOCK_PROJECT_NAME, MOCK_USERNAME)
+    mock_user_dao.get.assert_called_with(MOCK_USERNAME)
+    mock_iam_manager.add_iam_role.assert_not_called()
     mock_iam_manager.remove_project_user_roles.assert_not_called()
     mock_project_user_dao.create.assert_not_called()
 
