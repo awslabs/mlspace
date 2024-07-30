@@ -34,7 +34,7 @@ import {
 } from '../../user/user.reducer';
 import { IUser, Permission } from '../../../shared/model/user.model';
 import { IProjectUser } from '../../../shared/model/projectUser.model';
-import { isAdminOrProjectOwner, togglePermission } from '../../../shared/util/permission-utils';
+import { isAdminOrOwner, togglePermission } from '../../../shared/util/permission-utils';
 import { useParams } from 'react-router-dom';
 import { setUpdateModal } from '../../../modules/modal/modal.reducer';
 import { useNotificationService } from '../../../shared/util/hooks';
@@ -43,6 +43,7 @@ import NotificationService from '../../../shared/layout/notification/notificatio
 function ProjectUserActions (props?: any) {
     const projectName = props?.projectName;
     const dispatch = useAppDispatch();
+    const canManage = IsAdminOrProjectOwner();
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
@@ -52,8 +53,10 @@ function ProjectUserActions (props?: any) {
             >
                 <Icon name='refresh' />
             </Button>
-            {ProjectUserActionButton(dispatch, props)}
-            {ProjectUserAddButton()}
+            { canManage && <>
+                {ProjectUserActionButton(dispatch, props)}
+                {ProjectUserAddButton()}            
+            </>}
         </SpaceBetween>
     );
 }
@@ -71,7 +74,7 @@ function AddProjectUserActions (props?: any) {
 function IsAdminOrProjectOwner () {
     const currentUser = useAppSelector(selectCurrentUser);
     const projectPermissions = useAppSelector((state) => state.project.permissions);
-    return isAdminOrProjectOwner(currentUser, projectPermissions);
+    return isAdminOrOwner(currentUser, projectPermissions);
 }
 
 function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
@@ -98,8 +101,8 @@ function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
         },
         { text: 'Remove from Project', id: 'remove' },
     ];
-    const disabled =
-        !IsAdminOrProjectOwner() || (Array.isArray(selectedUsers) && selectedUsers.length === 0);
+    
+    const disabled = selectedUsers?.length === 0;
     return (
         <ButtonDropdown
             items={items}
@@ -157,7 +160,6 @@ function ProjectUserAddButton () {
     return (
         <Button
             variant='primary'
-            disabled={!IsAdminOrProjectOwner()}
             onClick={() => dispatch(toggleAddUserModal(true))}
         >
             Add User

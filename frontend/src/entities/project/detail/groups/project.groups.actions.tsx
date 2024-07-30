@@ -25,7 +25,7 @@ import { useAppDispatch, useAppSelector } from '../../../../config/store';
 import {
     selectCurrentUser,
 } from '../../../user/user.reducer';
-import { isAdminOrProjectOwner, togglePermission } from '../../../../shared/util/permission-utils';
+import { isAdminOrOwner, togglePermission } from '../../../../shared/util/permission-utils';
 import { useParams } from 'react-router-dom';
 import { useNotificationService } from '../../../../shared/util/hooks';
 import AddProjectGroupModal from './add-project-group-modal';
@@ -54,6 +54,7 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
     const addableGroups = allGroups.filter((group) => {
         return !props?.projectGroups?.map((project_group) => project_group.group)?.includes(group.name);
     });
+    const canManage = IsAdminOrProjectOwner();
 
     const actionItems = [
         {
@@ -82,61 +83,63 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
                 <Icon name='refresh' />
             </Button>
             
-            <ButtonDropdown
-                items={actionItems}
-                variant='primary'
-                disabled={performingAction || (0 === props?.selectedItems?.length)}
-                onItemClick={(e) => {
-                    switch (e.detail.id) {
-                        case 'owner':
-                            Promise.allSettled((props?.selectedItems || []).map((project_group) => {
-                                togglePermission(Permission.PROJECT_OWNER, project_group.permissions!);
-                                return dispatch(updateProjectGroup(project_group)).then((response) => {
-                                    if (isRejected(response)) {
-                                        notificationService.showAxiosRejectedActionNotification('update group permissions', response);
-                                    }
-                                });
-                            })).finally(() => {
-                                props?.refreshHandler?.();
-                            });
-                            break;
-                        case 'remove':
-                            dispatch(setDeleteModal({
-                                resourceName: 'Project group',
-                                resourceType: 'projectGroup',
-                                description: `This will remove groups from the project: ${projectName}.`,
-                                disabled: performingAction,
-                                onConfirm: async () => {
-                                    setPerformingAction(true);
-                                    
-                                    await Promise.allSettled((props?.selectedItems || []).map((project_group) => dispatch(removeGroupFromProject(project_group)).then((response) => {
-                                        notificationService.showAxiosActionNotification(
-                                            'add group to project',
-                                            `Added ${project_group.group}} to project: ${projectName}.`,
-                                            response
-                                        );
-                                    }))).finally(() => {
-                                        setPerformingAction(false);
-                                        props?.refreshHandler?.();
+            { canManage && <>
+                <ButtonDropdown
+                    items={actionItems}
+                    variant='primary'
+                    disabled={performingAction || (0 === props?.selectedItems?.length)}
+                    onItemClick={(e) => {
+                        switch (e.detail.id) {
+                            case 'owner':
+                                Promise.allSettled((props?.selectedItems || []).map((project_group) => {
+                                    togglePermission(Permission.PROJECT_OWNER, project_group.permissions!);
+                                    return dispatch(updateProjectGroup(project_group)).then((response) => {
+                                        if (isRejected(response)) {
+                                            notificationService.showAxiosRejectedActionNotification('update group permissions', response);
+                                        }
                                     });
-                                }
-                            }));
-                            break;
-                        default:
-                            return;
-                    }
-                }}
-            >
-                Actions
-            </ButtonDropdown>
+                                })).finally(() => {
+                                    props?.refreshHandler?.();
+                                });
+                                break;
+                            case 'remove':
+                                dispatch(setDeleteModal({
+                                    resourceName: 'Project group',
+                                    resourceType: 'projectGroup',
+                                    description: `This will remove groups from the project: ${projectName}.`,
+                                    disabled: performingAction,
+                                    onConfirm: async () => {
+                                        setPerformingAction(true);
+                                        
+                                        await Promise.allSettled((props?.selectedItems || []).map((project_group) => dispatch(removeGroupFromProject(project_group)).then((response) => {
+                                            notificationService.showAxiosActionNotification(
+                                                'add group to project',
+                                                `Added ${project_group.group}} to project: ${projectName}.`,
+                                                response
+                                            );
+                                        }))).finally(() => {
+                                            setPerformingAction(false);
+                                            props?.refreshHandler?.();
+                                        });
+                                    }
+                                }));
+                                break;
+                            default:
+                                return;
+                        }
+                    }}
+                >
+                    Actions
+                </ButtonDropdown>
 
-            <Button
-                variant='primary'
-                disabled={!IsAdminOrProjectOwner() || addableGroups.length === 0}
-                onClick={() => setShowModal(true)}
-            >
-                Add Group
-            </Button>
+                <Button
+                    variant='primary'
+                    disabled={addableGroups.length === 0}
+                    onClick={() => setShowModal(true)}
+                >
+                    Add Group
+                </Button>            
+            </>}
         </SpaceBetween>
     );
 }
@@ -144,7 +147,7 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
 function IsAdminOrProjectOwner () {
     const currentUser = useAppSelector(selectCurrentUser);
     const projectPermissions = useAppSelector((state) => state.project.permissions);
-    return isAdminOrProjectOwner(currentUser, projectPermissions);
+    return isAdminOrOwner(currentUser, projectPermissions);
 }
 
 export { ProjectGroupActions };
