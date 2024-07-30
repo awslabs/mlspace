@@ -467,89 +467,48 @@ def test_group_management(
 
 
 @pytest.mark.parametrize(
-    "user,project_user,key,resource,allow",
+    "user,project_user,key,resource,allow,group_user",
     [
-        (MOCK_USER, None, "global/datasets/test-dataset/example.txt", "presigned-url", True),
-        (
-            MOCK_ADMIN_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/test-dataset/example.txt",
-            "presigned-url",
-            True,
-        ),
+        (MOCK_USER, None, "global/datasets/test-dataset/example.txt", "presigned-url", True, None),
+        # TODO Group
+        (MOCK_USER, None, "group/datasets/test-dataset/example.txt", "presigned-url", True, None),
+        (MOCK_ADMIN_USER, None, f"project/{MOCK_PROJECT_NAME}/test-dataset/example.txt", "presigned-url", True, None),
         (
             MOCK_USER,
             MOCK_REGULAR_PROJECT_USER,
             f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/example.txt",
             "presigned-url",
             True,
-        ),
-        (
-            MOCK_USER,
             None,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/example.txt",
-            "presigned-url",
-            False,
         ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_USER.username}/datasets/test-dataset/example.txt",
-            "presigned-url",
-            True,
-        ),
+        (MOCK_USER, None, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/example.txt", "presigned-url", False, None),
+        (MOCK_USER, None, f"private/{MOCK_USER.username}/datasets/test-dataset/example.txt", "presigned-url", True, None),
         (
             MOCK_USER,
             None,
             f"private/{MOCK_ADMIN_USER.username}/datasets/test-dataset/example.txt",
             "presigned-url",
             False,
-        ),
-        (MOCK_USER, None, "global/datasets/test-dataset/", "create", True),
-        (
-            MOCK_ADMIN_USER,
             None,
-            f"project/{MOCK_PROJECT_NAME}/test-dataset/",
-            "create",
-            True,
         ),
-        (
-            MOCK_USER,
-            MOCK_REGULAR_PROJECT_USER,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/",
-            "create",
-            True,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/",
-            "create",
-            False,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_USER.username}/datasets/test-dataset/",
-            "create",
-            True,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_ADMIN_USER.username}/datasets/test-dataset/",
-            "create",
-            False,
-        ),
+        # TODO: create Group ds
+        (MOCK_USER, None, "global/datasets/test-dataset/", "create", True, None),
+        (MOCK_ADMIN_USER, None, f"project/{MOCK_PROJECT_NAME}/test-dataset/", "create", True, None),
+        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/", "create", True, None),
+        (MOCK_USER, None, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/", "create", False, None),
+        (MOCK_USER, None, f"private/{MOCK_USER.username}/datasets/test-dataset/", "create", True, None),
+        (MOCK_USER, None, f"private/{MOCK_ADMIN_USER.username}/datasets/test-dataset/", "create", False, None),
     ],
     ids=[
         "global_dataset_presigned_url",
+        "group_dataset_presigned_url",  # TODO
         "project_dataset_admin_presigned_url",
         "project_dataset_member_presigned_url",
         "project_dataset_non_member_presigned_url",
         "private_same_user_presigned_url",
         "private_different_user_presigned_url",
         "global_dataset_create_dataset",
+        "group_dataset_create_dataset",  # TODO
         "project_dataset_admin_create_dataset",
         "project_dataset_member_create_dataset",
         "project_dataset_non_member_create_dataset",
@@ -558,11 +517,15 @@ def test_group_management(
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_dataset_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_generate_presigned_dataset_url(
     mock_user_dao,
     mock_project_user_dao,
+    mock_group_user_dao,
+    mock_group_dataset_dao,
     user: UserModel,
     project_user: ProjectUserModel,
     key: str,
@@ -574,6 +537,10 @@ def test_generate_presigned_dataset_url(
     mock_user_dao.get.return_value = user
     if key.startswith("project") and user.username != MOCK_ADMIN_USER.username:
         mock_project_user_dao.get.return_value = project_user
+    if mock_type == DatasetType.GROUP:
+        if resource == "create":
+            # TODO: group_dataset returns None
+            print("TODO")
     assert lambda_handler(
         mock_event(
             user=user,
