@@ -17,24 +17,24 @@
 import { TableProps } from '@cloudscape-design/components';
 import { IGroup } from '../../shared/model/group.model';
 import { linkify } from '../../shared/util/table-utils';
+import { IProjectGroup } from '../../shared/model/projectGroup.model';
+import { formatDisplayBoolean } from '../../shared/util/form-utils';
+import { hasPermission } from '../../shared/util/permission-utils';
+import { Permission } from '../../shared/model/user.model';
 
-
-const groupColumns: TableProps.ColumnDefinition<IGroup>[] = [
-    {
-        id: 'name',
-        header: 'Name',
-        sortingField: 'name',
-        cell: (item) => (
-            linkify('group', item.name, undefined)
-        ),
+export const groupColumns: TableProps.ColumnDefinition<IGroup>[] = [{
+    id: 'name',
+    header: 'Name',
+    sortingField: 'name',
+    cell: (item) => {
+        return linkify('group', item.name);
     },
-    {
-        id: 'description',
-        header: 'Description',
-        sortingField: 'description',
-        cell: (item) => item.description,
-    },
-];
+},{
+    id: 'description',
+    header: 'Description',
+    sortingField: 'description',
+    cell: (item) => item.description,
+}];
 
 const visibleColumns: string[] = ['name', 'description'];
 
@@ -51,8 +51,21 @@ const visibleContentPreference = {
     ],
 };
 
+export const projectGroupColumns: TableProps.ColumnDefinition<IProjectGroup>[] = [{
+    id: 'project',
+    header: 'Project name',
+    cell: (item) => {
+        return linkify('project', item.project, undefined, undefined, true);
+    },
+}, {
+    id: 'owner',
+    header: 'Owner',
+    cell: (item) => {
+        return formatDisplayBoolean(hasPermission(Permission.PROJECT_OWNER, item.permissions), ['Yes', 'No']);
+    },
+}];
+
 export {
-    groupColumns,
     visibleColumns,
     visibleContentPreference
 };

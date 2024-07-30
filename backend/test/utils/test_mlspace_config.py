@@ -71,6 +71,7 @@ def test_environment_variables():
             EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
             EnvVariable.PROJECTS_TABLE: "mlspace-projects",
             EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",
+            EnvVariable.PROJECT_GROUPS_TABLE: "mlspace-project-groups",
             EnvVariable.GROUPS_TABLE: "mlspace-groups",
             EnvVariable.GROUP_DATASETS_TABLE: "mlspace-group-datasets",
             EnvVariable.GROUP_USERS_TABLE: "mlspace-group-users",

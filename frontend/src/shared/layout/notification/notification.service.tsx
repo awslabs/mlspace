@@ -48,8 +48,18 @@ function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
 
     function showAxiosActionNotification (action: string, successMessage: string, result: any) {
         if (isFulfilled(result)) {
-            generateNotification(successMessage || `Successfully ${action}.`, 'success');
+            showAxiosFulfilledActionNotification(action, successMessage);
         } else if (isRejected(result)) {
+            showAxiosRejectedActionNotification(action, result);
+        }
+    }
+
+    function showAxiosFulfilledActionNotification (action: string, successMessage: string) {
+        generateNotification(successMessage || `Successfully ${action}.`, 'success');
+    }
+
+    function showAxiosRejectedActionNotification (action: string, result: any) {
+        if (isRejected(result)) {
             generateNotification(`Failed to ${action}.`, 'error', undefined, (
                 result.error.message ? (
                     <NotificationExpandableSection headerText={'Details'} headingTagOverride={'h5'}>
@@ -65,6 +75,8 @@ function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
         createNotification: createNotification,
         showActionNotification: showActionNotification,
         showAxiosActionNotification: showAxiosActionNotification,
+        showAxiosRejectedActionNotification: showAxiosRejectedActionNotification,
+        showAxiosFulfilledActionNotification: showAxiosFulfilledActionNotification
     };
 }
 

@@ -25,7 +25,10 @@ import boto3
 from cachetools.func import ttl_cache
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
+from ml_space_lambda.data_access_objects.group import GroupDAO
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO, ProjectModel
+from ml_space_lambda.data_access_objects.project_group import ProjectGroupDAO, ProjectGroupModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO, ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
@@ -40,13 +43,18 @@ from ml_space_lambda.utils.common_functions import (
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
+from ml_space_lambda.utils.project_utils import is_member_of_project, is_owner_of_project
+from ml_space_lambda.utils.user_utils import ensure_users_exist
 
-project_user_dao = ProjectUserDAO()
 resource_metadata_dao = ResourceMetadataDAO()
 project_dao = ProjectDAO()
+project_user_dao = ProjectUserDAO()
+project_group_dao = ProjectGroupDAO()
 dataset_dao = DatasetDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()
+group_dao = GroupDAO()
+group_user_dao = GroupUserDAO()
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +74,6 @@ def _add_project_user(project_name: str, username: str, permissions: Optional[Li
     if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         iam_role_arn = iam_manager.add_iam_role(project_name, username)
 
-    if not user_dao.get(username):
-        raise ValueError("Username specified is not associated with an active user.")
     try:
         project_user = ProjectUserModel(
             project_name=project_name,
@@ -123,16 +129,94 @@ def get(event, context):
         raise ResourceNotFound(f"Specified project {project_name} does not exist.")
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
     project_user = project_user_dao.get(project_name, user.username)
-    if Permission.ADMIN not in user.permissions and not project_user:
+    is_member = is_member_of_project(user.username, project_name)
+    if Permission.ADMIN not in user.permissions and not project_user and not is_member:
         raise ValueError(f"User is not a member of project {project_name}.")
+
+    permissions = set(serialize_permissions(project_user.permissions) if project_user else [])
+    if is_member:
+        permissions.add(Permission.COLLABORATOR)
+    if is_owner_of_project(user.username, project_name):
+        permissions.add(Permission.PROJECT_OWNER)
 
     return {
         "project": project.to_dict(),
-        "permissions": serialize_permissions(project_user.permissions) if project_user else [],
+        "permissions": sorted(list(permissions)),
         "resourceCounts": (
             _get_resource_counts(project_name) if event["queryStringParameters"]["includeResourceCounts"] == "true" else {}
         ),
     }
+
+
+@api_wrapper
+def project_groups(event, context):
+    project_name = event["pathParameters"]["projectName"]
+    project = project_dao.get(project_name)
+    if not project:
+        raise ResourceNotFound(f"Specified project {project_name} does not exist.")
+
+    user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
+    if Permission.ADMIN not in user.permissions and not is_member_of_project(user.username, project_name):
+        raise ValueError(f"User is not a member of project {project_name}.")
+
+    return [project_group.to_dict() for project_group in project_group_dao.get_groups_for_project(project_name)]
+
+
+@api_wrapper
+def add_groups(event, context):
+    project_name = event["pathParameters"]["projectName"]
+    request = json.loads(event["body"])
+    group_names = request["groupNames"]
+    for group_name in group_names:
+        group = group_dao.get(group_name)
+
+        if group and not project_group_dao.get(project_name, group_name):
+            project_group_dao.create(
+                ProjectGroupModel(
+                    project_name=project_name,
+                    group_name=group_name,
+                    permissions=[Permission.COLLABORATOR],
+                )
+            )
+
+            env_variables = get_environment_variables()
+            if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+                # ensure user-project dynamic roles and add project_user_group items
+                for group_user in group_user_dao.get_users_for_group(group_name):
+                    iam_role_arn = iam_manager.get_iam_role_arn(project_name, group_user.user)
+                    # don't create project-user role if it already exists
+                    if iam_role_arn is None:
+                        iam_role_arn = iam_manager.add_iam_role(project_name, group_user.user)
+
+    return f"Successfully added {len(group_names)} group(s) to {project_name}"
+
+
+@api_wrapper
+def remove_group(event, context):
+    project_name = event["pathParameters"]["projectName"]
+    group_name = urllib.parse.unquote(event["pathParameters"]["groupName"])
+
+    env_variables = get_environment_variables()
+
+    # first check if user is an owner on the project.
+    project_group = project_group_dao.get(project_name, group_name)
+    if not project_group:
+        raise Exception(f"{group_name} is not a member of {project_name}")
+
+    group_users = group_user_dao.get_users_for_group(group_name)
+    group_usernames = [group_user.user for group_user in group_users]
+    cleanup_user_resources(project_name, group_usernames)
+    project_group_dao.delete(project_name, group_name)
+
+    if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
+        for username in group_usernames:
+            # remove role if user doesn't have project membership directly or indirectly through other groups
+            if not is_member_of_project(username, project_name):
+                iam_role_arn = iam_manager.get_iam_role_arn(project_name, username)
+                if iam_role_arn:
+                    iam_manager.remove_project_user_roles([iam_role_arn])
+
+    return f"Successfully removed {group_name} from {project_name}"
 
 
 @api_wrapper
@@ -162,6 +246,8 @@ def create(event, context):
         new_project = ProjectModel.from_dict(event_body)
         project_dao.create(new_project)
         project_created = True
+
+        ensure_users_exist([username], user_dao)
         _add_project_user(project_name, username, [Permission.PROJECT_OWNER, Permission.COLLABORATOR])
 
         return f"Successfully created project '{project_name}'"
@@ -187,6 +273,8 @@ def add_users(event, context):
     project_name = event["pathParameters"]["projectName"]
     request = json.loads(event["body"])
     usernames = request["usernames"]
+
+    ensure_users_exist(usernames, user_dao)
     for username in usernames:
         _add_project_user(project_name, username, [Permission.COLLABORATOR])
 
@@ -207,53 +295,78 @@ def remove_user(event, context):
         raise Exception(f"{username} is not a member of {project_name}")
 
     if Permission.PROJECT_OWNER not in project_member.permissions or total_project_owners(project_user_dao, project_name) > 1:
-        # Terminate any running EMR Clusters the user owns that are associated with the project
-        clusters = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.EMR_CLUSTER, fetch_all=True)
-        cluster_ids = [cluster.id for cluster in clusters.records if cluster.user == username]
+        cleanup_user_resources(project_name, [username])
 
-        if cluster_ids:
-            emr.set_termination_protection(JobFlowIds=cluster_ids, TerminationProtected=False)
-            emr.terminate_job_flows(JobFlowIds=cluster_ids)
-
-        # Stop any running notebooks the user owns that are associated with the project, we're
-        # going to remove their custom role which is the execution role assigned to any
-        # notebook instances the user created within the project. Once the roles are removed the
-        # notebooks are essentially in a bricked state but the names are deterministic. If the
-        # user is added back to the project the notebooks will work again. If a user has a pending
-        # instance we're not going to block removing them but the instance will still end up
-        # in an unusable state due to the role being deleted.
-        notebooks = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.NOTEBOOK, fetch_all=True)
-        for notebook in notebooks.records:
-            if notebook.user == username and notebook.metadata["NotebookInstanceStatus"] == "InService":
-                sagemaker.stop_notebook_instance(NotebookInstanceName=notebook.id)
-
-        # Stop any ongoing batch translate jobs in this project that were started by this user
-        translate_jobs = resource_metadata_dao.get_all_for_project_by_type(
-            project_name, ResourceType.BATCH_TRANSLATE_JOB, fetch_all=True
-        )
-        for translation_job in translate_jobs.records:
-            if translation_job.user == username:
-                translate.stop_text_translation_job(JobId=translation_job.id)
+        project_user_dao.delete(project_name, username)
 
         # Remove IAM role for project user
         if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
-            iam_manager.remove_project_user_roles([project_member.role])
+            # Remove any (user,project) roles that are no longer in use
+            if not is_member_of_project(username, project_name):
+                iam_role_arn = iam_manager.get_iam_role_arn(project_name, username)
+                if iam_role_arn:
+                    iam_manager.remove_project_user_roles([iam_role_arn])
 
-        project_user_dao.delete(project_name, username)
         return f"Successfully removed {username} from {project_name}"
 
     raise Exception("You cannot delete the last owner of a project")
+
+
+def cleanup_user_resources(project_name: str, usernames: List[str]):
+    # Terminate any running EMR Clusters the user owns that are associated with the project
+    clusters = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.EMR_CLUSTER, fetch_all=True)
+    cluster_ids = [cluster.id for cluster in clusters.records if cluster.user in usernames]
+
+    if cluster_ids:
+        emr.set_termination_protection(JobFlowIds=cluster_ids, TerminationProtected=False)
+        emr.terminate_job_flows(JobFlowIds=cluster_ids)
+
+    # Stop any running notebooks the user owns that are associated with the project, we're
+    # going to remove their custom role which is the execution role assigned to any
+    # notebook instances the user created within the project. Once the roles are removed the
+    # notebooks are essentially in a bricked state but the names are deterministic. If the
+    # user is added back to the project the notebooks will work again. If a user has a pending
+    # instance we're not going to block removing them but the instance will still end up
+    # in an unusable state due to the role being deleted.
+    notebooks = resource_metadata_dao.get_all_for_project_by_type(project_name, ResourceType.NOTEBOOK, fetch_all=True)
+    for notebook in notebooks.records:
+        if notebook.user in usernames and notebook.metadata["NotebookInstanceStatus"] == "InService":
+            sagemaker.stop_notebook_instance(NotebookInstanceName=notebook.id)
+
+    # Stop any ongoing batch translate jobs in this project that were started by this user
+    translate_jobs = resource_metadata_dao.get_all_for_project_by_type(
+        project_name, ResourceType.BATCH_TRANSLATE_JOB, fetch_all=True
+    )
+    for translation_job in translate_jobs.records:
+        if translation_job.user in usernames:
+            translate.stop_text_translation_job(JobId=translation_job.id)
 
 
 @api_wrapper
 def list_all(event, context):
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
     if Permission.ADMIN in user.permissions:
-        projects = project_dao.get_all(include_suspended=True)
+        projects = [project.to_dict() for project in project_dao.get_all(include_suspended=True)]
     else:
-        project_names = [project.project for project in project_user_dao.get_projects_for_user(user.username)]
-        projects = project_dao.get_all(project_names=project_names)
-    return [project.to_dict() for project in projects]
+        direct_project_names = [project.project for project in project_user_dao.get_projects_for_user(user.username)]
+        projects = [project.to_dict() for project in project_dao.get_all(project_names=direct_project_names)]
+
+        # add projects from groups
+        indirect_project_groups = {}
+        for group_user in group_user_dao.get_groups_for_user(user.username):
+            # invert group -> project relationship
+            for project in project_group_dao.get_projects_for_group(group_user.group):
+                groups = indirect_project_groups.get(project.project, set())
+                groups.add(group_user.group)
+                indirect_project_groups[project.project] = groups
+
+        indirect_project_names = list(set(indirect_project_groups.keys()) - set(direct_project_names))
+        for indirect_project in project_dao.get_all(project_names=indirect_project_names):
+            project_dict = indirect_project.to_dict()
+            project_dict["indirect"] = list(indirect_project_groups.get(indirect_project.name, []))
+            projects.append(project_dict)
+
+    return list(projects)
 
 
 # When suspending resources we don't page responses because we need to ensure we suspend everything.
@@ -446,3 +559,21 @@ def update_project_user(event, context):
         project_user_dao.update(project_name, username, project_user)
 
     return "Successfuly updated project user record."
+
+
+@api_wrapper
+def update_project_group(event, context):
+    project_name = event["pathParameters"]["projectName"]
+    group_name = urllib.parse.unquote(event["pathParameters"]["groupName"])
+    updates = json.loads(event["body"])
+
+    project_group = project_group_dao.get(project_name, group_name)
+
+    if not project_group:
+        raise ResourceNotFound(f"User {group_name} is not a associated with {project_name}")
+
+    if sorted(updates["permissions"]) != sorted(serialize_permissions(project_group.permissions)):
+        project_group.permissions = [Permission(entry) for entry in updates["permissions"]]
+        project_group_dao.update(project_name, group_name, project_group)
+
+    return "Successfuly updated project group record."

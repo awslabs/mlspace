@@ -372,11 +372,15 @@ def test_user_management(mock_user_dao, user: UserModel, method: str, allow: boo
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_member_of_project")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_owner_of_project")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_project_management(
     mock_user_dao,
     mock_project_user_dao,
+    mock_is_owner_of_project,
+    mock_is_member_of_project,
     user: UserModel,
     project_user: ProjectUserModel,
     method: str,
@@ -384,6 +388,9 @@ def test_project_management(
 ):
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
+
+    mock_is_member_of_project.side_effect = lambda username, project_name: project_user is not None
+    mock_is_owner_of_project.side_effect = lambda username, project_name: username == MOCK_OWNER_USER.username
 
     assert lambda_handler(
         mock_event(
@@ -395,7 +402,15 @@ def test_project_management(
         {},
     ) == policy_response(allow=allow, user=user)
     mock_user_dao.get.assert_called_with(user.username)
-    mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
+
+    # this method is skipped because the check if they're an admin comes first
+    if user != MOCK_ADMIN_USER:
+        mock_is_member_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+
+    # these methods are only called if the user is an admin or they're a member of the project (owners are members)
+    if user == MOCK_ADMIN_USER or user == MOCK_OWNER_USER:
+        mock_is_owner_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+        mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
 
 @pytest.mark.parametrize(
@@ -1263,9 +1278,6 @@ def test_manage_project_sagemaker_resource(
         ),
         (f"/project/{MOCK_PROJECT_NAME}/endpoint-configs", MOCK_USER, None, False),
         (f"/project/{MOCK_PROJECT_NAME}/endpoint-configs", MOCK_ADMIN_USER, None, True),
-        (f"/project/{MOCK_PROJECT_NAME}/jobs/labeling", MOCK_USER, MOCK_REGULAR_PROJECT_USER, True),
-        (f"/project/{MOCK_PROJECT_NAME}/jobs/labeling", MOCK_USER, None, False),
-        (f"/project/{MOCK_PROJECT_NAME}/jobs/labeling", MOCK_ADMIN_USER, None, True),
     ],
     ids=[
         "project_training_jobs_project_user",
@@ -1292,17 +1304,18 @@ def test_manage_project_sagemaker_resource(
         "project_endpoint_configs_project_user",
         "project_endpoint_configs_non_project_user",
         "project_endpoint_configs_non_project_admin",
-        "project_labeling_jobs_project_user",
-        "project_labeling_jobs_non_project_user",
-        "project_labeling_jobs_non_project_admin",
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_member_of_project")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_owner_of_project")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_list_project_resources(
     mock_user_dao,
     mock_project_user_dao,
+    mock_is_owner_of_project,
+    mock_is_member_of_project,
     resource: str,
     user: UserModel,
     project_user: ProjectUserModel,
@@ -1310,6 +1323,9 @@ def test_list_project_resources(
 ):
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
+
+    mock_is_member_of_project.side_effect = lambda username, project_name: project_user is not None
+    mock_is_owner_of_project.side_effect = lambda username, project_name: username == MOCK_OWNER_USER.username
 
     assert lambda_handler(
         mock_event(
@@ -1322,7 +1338,15 @@ def test_list_project_resources(
     ) == policy_response(allow=allow, user=user)
 
     mock_user_dao.get.assert_called_with(user.username)
-    mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
+
+    # this method is skipped because the check if they're an admin comes first
+    if user != MOCK_ADMIN_USER:
+        mock_is_member_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+
+    # these methods are only called if the user is an admin or they're a member of the project (owners are members)
+    if user == MOCK_ADMIN_USER or user == MOCK_OWNER_USER:
+        mock_is_owner_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+        mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
 
 @pytest.mark.parametrize(
@@ -1840,11 +1864,15 @@ def test_config_routes(mock_user_dao, user: UserModel, method: str, allow: bool)
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_member_of_project")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_owner_of_project")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_app_config_routes(
     mock_user_dao,
     mock_project_user_dao,
+    mock_is_owner_of_project,
+    mock_is_member_of_project,
     user: UserModel,
     project_user: ProjectUserModel,
     method: str,
@@ -1853,6 +1881,10 @@ def test_app_config_routes(
 ):
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
+
+    mock_is_member_of_project.side_effect = lambda username, project_name: project_user is not None
+    mock_is_owner_of_project.side_effect = lambda username, project_name: username == MOCK_OWNER_USER.username
+
     # GET requests return an Allow policy immediately, so the user won't be set in the response
     assert lambda_handler(
         mock_event(
@@ -2323,6 +2355,16 @@ def test_verified_token_missing_oidc_endpoint(mock_http, mock_user_dao):
     mock_http.request.assert_not_called()
 
 
+def is_owner_of_project(username: str, project_name: str) -> bool:
+    return MOCK_OWNER_PROJECT_USER.user == username and MOCK_OWNER_PROJECT_USER.project == project_name
+
+
+def is_member_of_project(username: str, project_name: str) -> bool:
+    return (MOCK_REGULAR_PROJECT_USER.user == username and MOCK_REGULAR_PROJECT_USER.project == project_name) or (
+        MOCK_OWNER_PROJECT_USER.user == username and MOCK_OWNER_PROJECT_USER.project == project_name
+    )
+
+
 @pytest.mark.parametrize(
     "user,project_user,method,allow",
     [
@@ -2355,11 +2397,15 @@ def test_verified_token_missing_oidc_endpoint(mock_http, mock_user_dao):
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_member_of_project")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_owner_of_project")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_mange_project_users(
+def test_manage_project_users(
     mock_user_dao,
     mock_project_user_dao,
+    mock_is_owner_of_project,
+    mock_is_member_of_project,
     user: UserModel,
     project_user: ProjectUserModel,
     method: str,
@@ -2373,6 +2419,9 @@ def test_mange_project_users(
         resource += "/fakeUser"
         path_params["username"] = "fakeUser"
 
+    mock_is_member_of_project.side_effect = lambda username, project_name: project_user is not None
+    mock_is_owner_of_project.side_effect = lambda username, project_name: username == MOCK_OWNER_USER.username
+
     assert lambda_handler(
         mock_event(
             user=user,
@@ -2382,8 +2431,15 @@ def test_mange_project_users(
         ),
         {},
     ) == policy_response(allow=allow, user=user)
-    mock_user_dao.get.assert_called_with(user.username)
-    mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
+
+    # this method is skipped because the check if they're an admin comes first
+    if user != MOCK_ADMIN_USER:
+        mock_is_member_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+
+    # these methods are only called if the user is an admin or they're a member of the project (owners are members)
+    if user == MOCK_ADMIN_USER or user == MOCK_OWNER_USER:
+        mock_is_owner_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+        mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
 
 @pytest.mark.parametrize(
