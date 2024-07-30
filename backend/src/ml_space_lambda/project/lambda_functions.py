@@ -170,7 +170,7 @@ def add_groups(event, context):
     for group_name in group_names:
         group = group_dao.get(group_name)
 
-        if group:
+        if group and not project_group_dao.get(project_name, group_name):
             project_group_dao.create(
                 ProjectGroupModel(
                     project_name=project_name,
@@ -188,7 +188,7 @@ def add_groups(event, context):
                     if iam_role_arn is None:
                         iam_role_arn = iam_manager.add_iam_role(project_name, group_user.user)
 
-    return f"Successfully added {len(group_names)} user(s) to {project_name}"
+    return f"Successfully added {len(group_names)} group(s) to {project_name}"
 
 
 @api_wrapper

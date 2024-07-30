@@ -94,7 +94,7 @@ export const getProjectGroups = createAsyncThunk('project/get_project_groups', a
 });
 
 export const addGroupsToProject = createAsyncThunk(
-    'user/add_groups_to_project',
+    'project/add_groups_to_project',
     async (data: GroupProjectData) => {
         const requestUrl = `project/${data.projectName}/groups`;
         return axios.post<string>(requestUrl, { groupNames: data.groupNames }).catch(axiosCatch);
@@ -102,7 +102,7 @@ export const addGroupsToProject = createAsyncThunk(
 );
 
 export const removeGroupFromProject = createAsyncThunk(
-    'user/remove_user_from_project',
+    'project/remove_group_from_project',
     async (data: IProjectGroup) => {
         const requestUrl = `/project/${data.project}/groups/${encodeURIComponent(data.group || '')}`;
         return axios.delete(requestUrl).catch(axiosCatch);
@@ -110,7 +110,7 @@ export const removeGroupFromProject = createAsyncThunk(
 );
 
 export const updateProjectGroup = createAsyncThunk(
-    'user/remove_user_from_project',
+    'project/update_group_project',
     async (data: IProjectGroup) => {
         const requestUrl = `/project/${data.project}/groups/${encodeURIComponent(data.group || '')}`;
         return axios.put(requestUrl, data).catch(axiosCatch);

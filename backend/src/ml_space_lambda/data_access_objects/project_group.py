@@ -33,9 +33,8 @@ class ProjectGroupModel:
         self,
         group_name: str,
         project_name: str,
-        permissions: Optional[List[Permission]] = None,
+        permissions: Optional[List[Permission]] = [],
     ):
-        permissions = permissions if permissions else []
         self.group_name = group_name
         self.project = project_name
         self.permissions = permissions

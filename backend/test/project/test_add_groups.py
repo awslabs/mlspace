@@ -73,10 +73,11 @@ def test_project_groups(
     context = mock.MagicMock()
 
     mock_group_dao.get.side_effect = lambda group_name: next(x for x in groups if x.name == group_name)
+    mock_project_group_dao.get.return_value = None
     mock_group_user_dao.get_users_for_group.return_value = group_users
     mock_iam_manager.get_iam_role_arn.return_value = iam_role_arn
 
-    expected_response = generate_html_response(200, f"Successfully added {len(groups)} user(s) to {PROJECT_NAME}")
+    expected_response = generate_html_response(200, f"Successfully added {len(groups)} group(s) to {PROJECT_NAME}")
 
     with mock.patch.dict(
         "os.environ", {"AWS_DEFAULT_REGION": "us-east-1", "MANAGE_IAM_ROLES": "True" if dynamic_roles else ""}
@@ -87,7 +88,6 @@ def test_project_groups(
     mock_group_dao.get.assert_has_calls([mock.call(group.name) for group in groups])
 
     if dynamic_roles:
-        # mock_group_user_dao.get_users_for_group.assert_called()
         mock_group_user_dao.get_users_for_group.assert_has_calls([mock.call(group_user.group) for group_user in group_users])
         mock_iam_manager.get_iam_role_arn.assert_has_calls(
             [mock.call(PROJECT_NAME, group_user.user) for group_user in group_users]

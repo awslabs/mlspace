@@ -20,7 +20,6 @@ import urllib.parse
 from typing import List, Optional
 
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
-from ml_space_lambda.data_access_objects.project_group import ProjectGroupDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserDAO, UserModel
 from ml_space_lambda.enums import EnvVariable, Permission, TimezonePreference
@@ -30,7 +29,6 @@ from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 project_user_dao = ProjectUserDAO()
-project_group_dao = ProjectGroupDAO()
 group_user_dao = GroupUserDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()

@@ -111,7 +111,7 @@ export function GroupDetail () {
                             actions={GroupDetailDatasetActions}
                             itemNameProperty='name'
                             trackBy='location'
-                            allItems={groupDatasets || []}
+                            allItems={groupDatasets}
                             columnDefinitions={defaultColumnsWithUrlOverride}
                             visibleColumns={visibleColumns}
                             loadingItems={loadingDatasetData || !initialLoaded}
