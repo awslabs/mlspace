@@ -27,7 +27,7 @@ import Table from '../../../modules/table';
 import { groupUserColumns, visibleGroupUserColumns } from '../../user/user.columns';
 import { IGroupUser } from '../../../shared/model/groupUser.model';
 import { GroupDetailUserActions } from './group-detail-user.actions';
-import { DocTitle } from '../../../shared/doc';
+import { DocTitle, scrollToPageHeader } from '../../../shared/doc';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
@@ -37,6 +37,8 @@ import { GroupDetailDatasetActions } from './group-detail-dataset.actions';
 import { isFulfilled } from '@reduxjs/toolkit';
 import GroupDetailProjectActions from './group-detail-project.actions';
 import { projectGroupColumns } from '../group.columns';
+import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
+import { getBase } from '../../../shared/util/breadcrumb-utils';
 
 export function GroupDetail () {
     const dispatch = useAppDispatch();
@@ -52,10 +54,23 @@ export function GroupDetail () {
     const currentUser = useAppSelector(selectCurrentUser);
     const [initialLoaded, setInitialLoaded] = useState(false);
     DocTitle(`Group Details: ${groupName}`);
+    const baseUrl = window.location.href.includes('#/admin') ? '#/admin/groups' : '#/personal/group';
 
     const groupDetails = new Map<string, ReactNode>();
     groupDetails.set('Name', group?.name);
     groupDetails.set('Description', group?.description);
+
+    useEffect(() => {
+        dispatch(
+            setBreadcrumbs([
+                getBase(undefined),
+                { text: 'Groups', href: baseUrl },
+                { text: groupName, href: `${baseUrl}/${groupName}` },
+            ])
+        );
+
+        scrollToPageHeader('h1', `${groupName}`);
+    }, [dispatch, groupName, baseUrl]);
 
     useEffect(() => {
         if (initialLoaded === false && groupName) {
@@ -86,7 +101,7 @@ export function GroupDetail () {
 
                 <Tabs variant='container' tabs={[{
                     id: 'members',
-                    label: 'Group members',
+                    label: 'Members',
                     content: (
                         <Table
                             tableName='User'
@@ -104,7 +119,7 @@ export function GroupDetail () {
                     )
                 }, {
                     id: 'datasets',
-                    label: 'Group datasets',
+                    label: 'Datasets',
                     content: (
                         <Table
                             tableName='Dataset'
@@ -121,7 +136,7 @@ export function GroupDetail () {
                     )
                 }, {
                     id: 'projects',
-                    label: 'Group projects',
+                    label: 'Projects',
                     content: (
                         <Table
                             tableName='Project'
