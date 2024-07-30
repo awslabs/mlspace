@@ -50,9 +50,11 @@ export const getDownloadUrl = async (objectKey: string) => {
 function generateDatasetHeaders (key: string) {
     const datasetType = key.split('/')[0];
     let datasetScope = key.split('/')[1];
+    console.log(`Scope before split: ${datasetScope}`);
     if (datasetType === DatasetType.GROUP) {
         // for groups, set the scope to the dataset name
         datasetScope = key.split('/')[2];
+        console.log(`Scope after split: ${datasetScope}`);
     }
     const headerConfig = {
         headers: {
