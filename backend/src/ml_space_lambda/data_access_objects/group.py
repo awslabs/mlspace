@@ -78,13 +78,7 @@ class GroupDAO(DynamoDBObjectStore):
         update_exp = "SET description = :description, lastUpdatedAt = :lastUpdatedAt"
         exp_names = {"#name": "name"}
         exp_values = json.loads(
-            dynamodb_json.dumps(
-                {
-                    ":description": group.description,
-                    ":lastUpdatedAt": time.time(),
-                    ":name": name,
-                }
-            )
+            dynamodb_json.dumps({":description": group.description, ":lastUpdatedAt": time.time(), ":name": name})
         )
         self._update(
             json_key=json_key,

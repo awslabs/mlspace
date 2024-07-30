@@ -62,6 +62,7 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
             EnvVariable.MANAGE_IAM_ROLES: "",
             EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
             EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",
+            EnvVariable.PROJECT_GROUPS_TABLE: "mlspace-project-groups",
             EnvVariable.PROJECTS_TABLE: "mlspace-projects",
             EnvVariable.GROUP_DATASETS_TABLE: "mlspace-group-datasets",
             EnvVariable.GROUP_USERS_TABLE: "mlspace-group-users",

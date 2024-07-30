@@ -100,6 +100,13 @@ export class GroupsApiStack extends Stack {
                 method: 'GET',
             },
             {
+                name: 'group_projects',
+                resource: 'group',
+                description: 'Lists projects that belong to a group',
+                path: 'group/{groupName}/projects',
+                method: 'GET',
+            },
+            {
                 name: 'remove_user',
                 resource: 'group',
                 description: 'Removes a user from a group',

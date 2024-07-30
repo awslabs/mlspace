@@ -17,6 +17,7 @@
 from typing import List, Optional
 from unittest import mock
 
+import pytest
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
@@ -94,6 +95,26 @@ def mock_describe_cluster(ClusterId: Optional[str]):  # noqa: N803
     return {}
 
 
+@pytest.mark.parametrize(
+    "dynamic_roles,is_member,iam_role_arn",
+    [
+        (False, False, None),
+        (True, False, None),
+        (False, True, None),
+        (False, False, "arn:aws::012345678901:iam:role/my-fake-role"),
+        (True, True, None),
+        (True, True, "arn:aws::012345678901:iam:role/my-fake-role"),
+    ],
+    ids=[
+        "no_dynamic_roles__no_is_member__no_iam_role",
+        "yes_dynamic_roles__no_is_member__no_iam_role",
+        "no_dynamic_roles__yes_is_member__no_iam_role",
+        "no_dynamic_roles__no_is_member__yes_iam_role",
+        "yes_dynamic_roles__yes_is_member__no_iam_role",
+        "yes_dynamic_roles__yes_is_member__yes_iam_role",
+    ],
+)
+@mock.patch("ml_space_lambda.project.lambda_functions.is_member_of_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
@@ -107,6 +128,10 @@ def test_remove_user_from_project_success_not_owner(
     mock_project_user_dao,
     mock_iam_manager,
     mock_resource_metadata_dao,
+    mock_is_member_of_project,
+    dynamic_roles,
+    is_member,
+    iam_role_arn,
 ):
     user_notebook_name = "demo"
     mock_translate_job_id = "translate1"
@@ -178,9 +203,11 @@ def test_remove_user_from_project_success_not_owner(
 
     mock_emr.describe_cluster.side_effect = mock_describe_cluster
     mock_project_user_dao.get.return_value = MOCK_CO_USER
-    mock_iam_manager.remove_project_user_roles.return_value = None
+    mock_project_user_dao.get_users_for_project.return_value = [MOCK_CO_USER, MOCK_MO_USER]
+    mock_iam_manager.get_iam_role_arn.return_value = iam_role_arn
+    mock_is_member_of_project.return_value = is_member
 
-    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True"}):
+    with mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True" if dynamic_roles else ""}):
         assert (
             lambda_handler(
                 {
@@ -195,8 +222,6 @@ def test_remove_user_from_project_success_not_owner(
         )
 
     mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, MOCK_CO_USER.user)
-    mock_project_user_dao.get_users_for_project.assert_not_called()
-    mock_iam_manager.remove_project_user_roles.assert_called_with([MOCK_CO_USER.role])
     mock_project_user_dao.delete.assert_called_with(MOCK_PROJECT_NAME, MOCK_CO_USER.user)
     mock_emr.set_termination_protection.assert_called_with(JobFlowIds=["Cluster1"], TerminationProtected=False)
     mock_emr.terminate_job_flows.assert_called_with(JobFlowIds=["Cluster1"])
@@ -208,6 +233,12 @@ def test_remove_user_from_project_success_not_owner(
             mock.call(MOCK_PROJECT_NAME, ResourceType.BATCH_TRANSLATE_JOB, fetch_all=True),
         ]
     )
+    if dynamic_roles:
+        mock_is_member_of_project.assert_called_with(MOCK_CO_USER.user, MOCK_PROJECT_NAME)
+        if not is_member:
+            mock_iam_manager.get_iam_role_arn.assert_called_with(MOCK_PROJECT_NAME, MOCK_CO_USER.user)
+            if iam_role_arn:
+                mock_iam_manager.remove_project_user_roles.assert_called_with([MOCK_CO_USER.role])
 
 
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")

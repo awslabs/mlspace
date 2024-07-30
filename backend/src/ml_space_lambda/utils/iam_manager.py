@@ -120,11 +120,28 @@ class IAMManager:
         self.default_notebook_role_policy_arns = []
         self.permissions_boundary_arn = env_variables[EnvVariable.PERMISSIONS_BOUNDARY_ARN]
 
+    def get_iam_role_arn(self, project_name: str, username: str) -> Optional[str]:
+        """
+        Get the ARN of an existing dynamic role for this (project_name, username) pair.
+
+        Args:
+            project_name (str): The project name
+            username (str): The username of the user
+
+        Return:
+            Optional[str]: The ARN of the existing role, otherwise None if no such role exists.
+        """
+
+        iam_role_name = self._generate_iam_role_name(username, project_name)
+
+        # Check if the IAM role exists already
+        return self._fetch_iam_role(iam_role_name)
+
     def add_iam_role(self, project_name: str, username: str) -> str:
         iam_role_name = self._generate_iam_role_name(username, project_name)
 
         # Check if the IAM role exists already
-        existing_role_arn = self._check_iam_role_exists(iam_role_name)
+        existing_role_arn = self._fetch_iam_role(iam_role_name)
         if not existing_role_arn:
             iam_role_arn = self._create_iam_role(iam_role_name, project_name, username)
 
@@ -335,7 +352,7 @@ class IAMManager:
         self.iam_client.attach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
 
     # Checks the status of an IAM resource
-    def _check_iam_role_exists(self, resource_identifier: str) -> Optional[str]:
+    def _fetch_iam_role(self, resource_identifier: str) -> Optional[str]:
         try:
             existing_role = self.iam_client.get_role(RoleName=resource_identifier)
             return existing_role["Role"]["Arn"]

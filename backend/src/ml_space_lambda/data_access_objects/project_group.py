@@ -14,6 +14,7 @@
 #   limitations under the License.
 #
 
+# Project Group Table Data Access Object
 from __future__ import annotations
 
 import json
@@ -27,98 +28,91 @@ from ml_space_lambda.utils.common_functions import serialize_permissions
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
-class GroupUserModel:
+class ProjectGroupModel:
     def __init__(
         self,
-        username: str,
         group_name: str,
-        role: Optional[str] = None,
-        permissions: Optional[List[Permission]] = None,
+        project_name: str,
+        permissions: Optional[List[Permission]] = [],
     ):
-        permissions = permissions or []
-        self.user = username
-        self.group = group_name
+        self.group_name = group_name
+        self.project = project_name
         self.permissions = permissions
-        self.role = role or ""
 
     def to_dict(self) -> dict:
         return {
-            "user": self.user,
-            "group": self.group,
+            "group": self.group_name,
+            "project": self.project,
             "permissions": serialize_permissions(self.permissions),
-            "role": self.role,
         }
 
     @staticmethod
-    def from_dict(dict_object: dict) -> GroupUserModel:
+    def from_dict(dict_object: dict) -> ProjectGroupModel:
         permissions = [Permission(entry) for entry in dict_object.get("permissions", [])]
-        return GroupUserModel(
-            username=dict_object["user"],
+        return ProjectGroupModel(
             group_name=dict_object["group"],
+            project_name=dict_object["project"],
             permissions=permissions,
-            role=dict_object.get("role", ""),
         )
 
 
-class GroupUserDAO(DynamoDBObjectStore):
+class ProjectGroupDAO(DynamoDBObjectStore):
     def __init__(self, table_name: Optional[str] = None, client=None):
         self.env_vars = get_environment_variables()
-        table_name = table_name or self.env_vars[EnvVariable.GROUP_USERS_TABLE]
+        table_name = table_name if table_name else self.env_vars[EnvVariable.PROJECT_GROUPS_TABLE]
         DynamoDBObjectStore.__init__(self, table_name=table_name, client=client)
 
-    def create(self, group_user: GroupUserModel) -> None:
-        self._create(group_user.to_dict())
+    def create(self, project_group: ProjectGroupModel) -> None:
+        self._create(project_group.to_dict())
 
-    def get(self, group_name: str, username: str) -> Optional[GroupUserModel]:
+    def get(self, project_name: str, group_name: str) -> Optional[ProjectGroupModel]:
         json_key = {
-            "user": username,
             "group": group_name,
+            "project": project_name,
         }
         try:
             json_response = self._retrieve(json_key)
-            return GroupUserModel.from_dict(dict_object=json_response)
+            return ProjectGroupModel.from_dict(dict_object=json_response)
         except KeyError:
             # If we get a KeyError then the item doesn't exist in dynamo
             return None
 
-    def get_users_for_group(self, group_name: str) -> List[GroupUserModel]:
+    def get_groups_for_project(self, project_name: str) -> List[ProjectGroupModel]:
         json_response = self._query(
-            key_condition_expression="#p = :group",
-            expression_names={"#p": "group"},
-            expression_values=json.loads(dynamodb_json.dumps({":group": group_name})),
+            key_condition_expression="#p = :project",
+            expression_names={"#p": "project"},
+            expression_values=json.loads(dynamodb_json.dumps({":project": project_name})),
         ).records
-        return [GroupUserModel.from_dict(entry) for entry in json_response]
+        return [ProjectGroupModel.from_dict(entry) for entry in json_response]
 
-    # NOTE: This is a keys only projection. If you need the permissions that a user
-    #       has on a group you will need to query that record individually.
-    def get_groups_for_user(self, username: str):
+    # NOTE: This is a keys only projection. If you need the permissions that a group
+    #       has on a project you will need to query that record individually.
+    def get_projects_for_group(self, group_name: str):
         json_response = self._query(
             index_name="ReverseLookup",
-            key_condition_expression="#u = :user",
-            expression_names={"#u": "user"},
-            expression_values=json.loads(dynamodb_json.dumps({":user": username})),
+            key_condition_expression="#g = :group",
+            expression_names={"#g": "group"},
+            expression_values=json.loads(dynamodb_json.dumps({":group": group_name})),
         ).records
-        return [GroupUserModel.from_dict(entry) for entry in json_response]
+        return [ProjectGroupModel.from_dict(entry) for entry in json_response]
 
-    def delete(self, group_name: str, username: str) -> None:
+    def delete(self, project_name: str, group_name: str) -> None:
         json_key = {
-            "user": username,
             "group": group_name,
+            "project": project_name,
         }
         self._delete(json_key)
 
-    def update(self, group: str, user: str, group_user: GroupUserModel) -> None:
-        key = {"user": user, "group": group}
-        update_exp = "SET #r = :role, #p = :permissions"
+    def update(self, project: str, group_name: str, project_group: ProjectGroupModel) -> None:
+        key = {"group": group_name, "project": project}
+        update_exp = "SET #p = :permissions"
         exp_names = {
-            "#r": "role",
             "#p": "permissions",
         }
         exp_values = json.loads(
             dynamodb_json.dumps(
                 {
-                    ":role": group_user.role,
-                    ":permissions": serialize_permissions(group_user.permissions),
+                    ":permissions": serialize_permissions(project_group.permissions),
                 }
             )
         )
