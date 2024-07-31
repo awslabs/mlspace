@@ -41,7 +41,7 @@ import { modifyResourceTerminationSchedule } from '../../../shared/util/resource
 import { IProject } from '../../../shared/model/project.model';
 import { getProject } from '../../project/project.reducer';
 import { selectCurrentUser } from '../../user/user.reducer';
-import { hasPermission, isAdminOrProjectOwner } from '../../../shared/util/permission-utils';
+import { hasPermission, isAdminOrOwner } from '../../../shared/util/permission-utils';
 import { deletionDescription } from '../../../shared/util/form-utils';
 import { useBackgroundRefresh, useNotificationService } from '../../../shared/util/hooks';
 import ContentLayout from '../../../shared/layout/content-layout';
@@ -168,7 +168,7 @@ function NotebookDetail () {
         notebookInstanceURL === '';
     const ownerOrPrivileged =
         notebook.Owner === currentUser.username ||
-        isAdminOrProjectOwner(currentUser, projectPermissions);
+        isAdminOrOwner(currentUser, projectPermissions);
     return (
         <ContentLayout
             header={

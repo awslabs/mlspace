@@ -17,11 +17,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch } from '../../../../config/store';
 import Table from '../../../../modules/table';
-import { setBreadcrumbs } from '../../../../shared/layout/navigation/navigation.reducer';
 import { ProjectGroupActions } from './project.groups.actions';
 import { useParams } from 'react-router-dom';
-import { getBase } from '../../../../shared/util/breadcrumb-utils';
-import { DocTitle } from '../../../../shared/doc';
 import { getProject, getProjectGroups } from '../../project.reducer';
 import { isFulfilled } from '@reduxjs/toolkit';
 import { useNotificationService } from '../../../../shared/util/hooks';
@@ -33,8 +30,6 @@ export function ProjectGroups () {
     const [projectGroups, setProjectGroups] = useState<IProjectGroup[]>();
     const dispatch = useAppDispatch();
     const notificationService = useNotificationService(dispatch);
-
-    DocTitle(`${projectName} Project Groups`);
 
     const refreshHandler = useCallback(() => {
         dispatch(getProject({projectName: String(projectName)}));
@@ -49,19 +44,13 @@ export function ProjectGroups () {
     }, [dispatch, notificationService, projectName]);
 
     useEffect(() => {
-        dispatch(
-            setBreadcrumbs([
-                getBase(projectName),
-                { text: 'Groups', href: `#/project/${projectName}/groups` },
-            ])
-        );
-
         refreshHandler();
     }, [dispatch, projectName, refreshHandler]);
 
     return (
         <div>
             <Table
+                variant='embedded'
                 tableName='Project group'
                 tableType={'multi'}
                 actions={(e: any) => ProjectGroupActions({ ...e, projectName, refreshHandler, projectGroups })}
