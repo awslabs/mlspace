@@ -19,7 +19,6 @@ export type IProject = {
     description?: string;
     suspended?: boolean;
     isOwner?: boolean;
-    isCollaborator?: boolean;
     metadata?: ProjectMetadata;
 };
 

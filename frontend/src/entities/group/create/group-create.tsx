@@ -38,6 +38,9 @@ import Table from '../../../modules/table';
 import { IUser } from '../../../shared/model/user.model';
 import { addUsersToGroup } from '../user/group-user-functions';
 import { getAllUsers } from '../../user/user.reducer';
+import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
+import { getBase } from '../../../shared/util/breadcrumb-utils';
+import { scrollToPageHeader } from '../../../shared/doc';
 
 export type GroupCreateProperties = {
     isEdit?: boolean;
@@ -51,12 +54,26 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
     const [initialLoaded, setInitialLoaded] = useState(false);
     const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
     const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
+    const baseUrl = window.location.href.includes('#/admin') ? '#/admin/groups' : '#/personal/group';
 
     useEffect(() => {
         if (!isEdit){
             dispatch(getAllUsers(false));
         }
     }, [dispatch, isEdit]);
+
+    useEffect(() => {
+        dispatch(
+            setBreadcrumbs([
+                getBase(undefined),
+                { text: 'Groups', href: baseUrl },
+                ...(isEdit ? [{ text: groupName, href: `${baseUrl}/${groupName}` }] : []),
+                { text: isEdit ? `Update ${groupName}` : 'Create group', href: isEdit ? `#/admin/groups/edit/${groupName}` : '#/admin/groups/create'},
+            ])
+        );
+
+        scrollToPageHeader('h1', `${groupName}`);
+    }, [dispatch, isEdit, groupName, baseUrl]);
 
     const groupSchema = z.object({
         name: z

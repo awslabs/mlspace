@@ -92,13 +92,6 @@ function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
             id: 'owner',
             disabled: selectedUsers.length > 1 ? true : false,
         },
-        {
-            text: `${
-                selectedUsers[0]?.permissions?.includes(Permission.COLLABORATOR) ? 'Remove' : 'Make'
-            } Collaborator`,
-            id: 'collaborator',
-            disabled: selectedUsers.length > 1 ? true : false,
-        },
         { text: 'Remove from Project', id: 'remove' },
     ];
     
@@ -176,20 +169,6 @@ const ProjectUserActionHandler = async (
     setSelectedItems: (selectedItems: any[]) => void,
 ) => {
     switch (e.detail.id) {
-        case 'collaborator':
-            for (const user of selectedUsers) {
-                // Use lodash once it's added
-                const updatedUser: IProjectUser = JSON.parse(JSON.stringify(user));
-                togglePermission(Permission.COLLABORATOR, updatedUser.permissions!);
-                await dispatch(updateUsersInProject(updatedUser)).then((response) => {
-                    if (!response.type.endsWith('fulfilled')){
-                        notificationService.showAxiosActionNotification('update user permissions', '', response);
-                    } else {
-                        setSelectedItems([]);
-                    }
-                });
-            }
-            break;
         case 'owner':
             for (const user of selectedUsers) {
                 // Use lodash once it's added
