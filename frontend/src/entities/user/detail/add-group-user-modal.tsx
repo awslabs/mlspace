@@ -25,9 +25,9 @@ import { groupColumns } from '../../group/group.columns';
 import React, { useState } from 'react';
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { IGroup } from '../../../shared/model/group.model';
-import { addGroupUsers } from '../../group/group.reducer';
 import { useAppDispatch } from '../../../config/store';
 import { useNotificationService } from '../../../shared/util/hooks';
+import { useAddGroupUsersMutation } from '../../group/group.reducer';
 
 export type AddGroupUserModalProps = {
     dispatch:  ThunkDispatch<any, any, Action>,
@@ -43,6 +43,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
     const dispatch = useAppDispatch();
     const notificationService = useNotificationService(dispatch);
     const [performingAction, setPerformingAction] = useState(false);
+    const [ addGroupUsers ] = useAddGroupUsersMutation();
 
     return (
         <Modal
@@ -61,20 +62,18 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                             onClick={() => {
                                 setPerformingAction(true);
 
-                                Promise.allSettled(selectedGroups.map((group) => dispatch(addGroupUsers({
+                                Promise.allSettled(selectedGroups.map((group) => addGroupUsers({
                                     groupName: group.name,
                                     usernames: [props.username]
-                                })).then((response) => {
+                                }).then((response) => {
                                     notificationService.showAxiosActionNotification(
                                         'add user to group',
                                         `Added ${props.username} to group: ${group.name}.`,
                                         response
                                     );
                                 }))).finally(() => {
-                                    setPerformingAction(false);
                                     setSelectedGroups([]);
                                     props.setVisible(false);
-                                    props?.refresh?.(); 
                                 });
                             }}>
                             Add group
@@ -89,7 +88,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                     header={<></>}
                     tableType='single'
                     selectItemsCallback={(e) => {
-                        setSelectedGroups(e);
+                        setSelectedGroups(e || []);
                     }}
                     trackBy='name'
                     allItems={props.addableGroups}

@@ -14,21 +14,22 @@
  limitations under the License.
  */
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
-import { AddGroupUserRequest, addGroupUsers, getGroupUsers } from '../group.reducer';
+import { AddGroupUserRequest } from '../group.reducer';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { IUser } from '../../../shared/model/user.model';
 
 export async function addUsersToGroup (
     dispatch: ThunkDispatch<any, any, Action>,
     groupName: string,
-    users: IUser[]
+    users: IUser[],
+    addGroupUsers: any
 ) {
     const notificationService = NotificationService(dispatch);
     const request: AddGroupUserRequest = {
         groupName: groupName,
         usernames: users.map((user) => user.username)
     };
-    await dispatch(addGroupUsers(request)).then((result) => {
+    await addGroupUsers(request).then((result) => {
         notificationService.showActionNotification(
             'add group users',
             `Users added to group: ${groupName}.`,
@@ -40,7 +41,5 @@ export async function addUsersToGroup (
             `Unable to add users to group: ${groupName} with error ${e}.`,
             'error'
         );
-    }).finally(() => {
-        dispatch(getGroupUsers(groupName));
     });
 }

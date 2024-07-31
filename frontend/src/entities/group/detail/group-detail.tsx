@@ -14,64 +14,38 @@
  limitations under the License.
  */
 
-import React, { ReactNode, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { currentGroupDatasets, selectCurrentGroupProjects, currentGroupUsers, getGroup, getGroupDatasets, getGroupProjects, getGroupUsers, selectLoadingGroupProjects } from '../group.reducer';
+import React, { ReactNode } from 'react';
+import { useParams } from 'react-router-dom';
+import { useGetGroupDatasetsQuery, useGetGroupProjectsQuery, useGetGroupQuery, useGetGroupUsersQuery } from '../group.reducer';
 import { Header, SpaceBetween, Tabs } from '@cloudscape-design/components';
 import DetailsContainer from '../../../modules/details-container';
-import { IGroup } from '../../../shared/model/group.model';
 import ContentLayout from '../../../shared/layout/content-layout';
 import GroupDetailActions from './group-detail.actions';
 import Table from '../../../modules/table';
 import { groupUserColumns, visibleGroupUserColumns } from '../../user/user.columns';
-import { IGroupUser } from '../../../shared/model/groupUser.model';
 import { GroupDetailUserActions } from './group-detail-user.actions';
 import { DocTitle } from '../../../shared/doc';
-import { selectCurrentUser } from '../../user/user.reducer';
+import { useGetCurrentUserQuery } from '../../user/user.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
-import { IDataset } from '../../../shared/model';
 import { defaultColumnsWithUrlOverride, visibleColumns } from '../../dataset/dataset.columns';
 import { GroupDetailDatasetActions } from './group-detail-dataset.actions';
-import { isFulfilled } from '@reduxjs/toolkit';
 import GroupDetailProjectActions from './group-detail-project.actions';
 import { projectGroupColumns } from '../group.columns';
 
 export function GroupDetail () {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
     const {groupName} = useParams();
-    const [group, setGroup] = useState<IGroup>();
-    const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
-    const groupDatasets: IDataset[] = useAppSelector(currentGroupDatasets);
-    const groupProjects = useAppSelector(selectCurrentGroupProjects);
-    const loadingGroupProjects = useAppSelector(selectLoadingGroupProjects);
-    const loadingGroupData = useAppSelector((state) => state.group.loading);
-    const loadingDatasetData = useAppSelector((state) => state.group.datasetsLoading);
-    const currentUser = useAppSelector(selectCurrentUser);
-    const [initialLoaded, setInitialLoaded] = useState(false);
+    const { data: group, isFetching: isFetchingGroup } = useGetGroupQuery(groupName!);
+    const { data: groupUsers, isFetching: isFetchingGroupUsers } = useGetGroupUsersQuery(groupName!);
+    const { data: groupDatasets, isFetching: isFetchingGroupDatasets } = useGetGroupDatasetsQuery(groupName!);
+    const { data: groupProjects, isFetching: isFetchingGroupProjects } = useGetGroupProjectsQuery(groupName!);
+    const { data: currentUser } = useGetCurrentUserQuery();
+
     DocTitle(`Group Details: ${groupName}`);
 
     const groupDetails = new Map<string, ReactNode>();
-    groupDetails.set('Name', group?.name);
-    groupDetails.set('Description', group?.description);
-
-    useEffect(() => {
-        if (initialLoaded === false && groupName) {
-            dispatch(getGroup(groupName)).then((response) => {
-                if (isFulfilled(response)) {
-                    setGroup(response.payload.data.group);
-                    dispatch(getGroupUsers(groupName));
-                    dispatch(getGroupDatasets(groupName));
-                    dispatch(getGroupProjects(groupName));
-                    setInitialLoaded(true);
-                } else {
-                    navigate('/404');
-                }
-            });
-        }
-    }, [groupName, initialLoaded, dispatch, navigate]);
+    groupDetails.set('Name', group?.group.name);
+    groupDetails.set('Description', group?.group.description);
 
     return (
         <ContentLayout header={<Header variant='h1'>{groupName}</Header>}>
@@ -81,7 +55,7 @@ export function GroupDetail () {
                     header='Group details'
                     actions={GroupDetailActions()}
                     info={groupDetails}
-                    loading={!initialLoaded}
+                    loading={isFetchingGroup}
                 />
 
                 <Tabs variant='container' tabs={[{
@@ -90,14 +64,14 @@ export function GroupDetail () {
                     content: (
                         <Table
                             tableName='User'
-                            tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
+                            tableType={currentUser && hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
                             actions={GroupDetailUserActions}
                             itemNameProperty='user'
                             trackBy='user'
-                            allItems={groupUsers}
+                            allItems={groupUsers || []}
                             columnDefinitions={groupUserColumns}
                             visibleColumns={visibleGroupUserColumns}
-                            loadingItems={loadingGroupData || !initialLoaded}
+                            loadingItems={isFetchingGroupUsers}
                             loadingText='Loading Group users'
                             variant='borderless'
                         />
@@ -111,10 +85,10 @@ export function GroupDetail () {
                             actions={GroupDetailDatasetActions}
                             itemNameProperty='name'
                             trackBy='location'
-                            allItems={groupDatasets}
+                            allItems={groupDatasets || []}
                             columnDefinitions={defaultColumnsWithUrlOverride}
                             visibleColumns={visibleColumns}
-                            loadingItems={loadingDatasetData || !initialLoaded}
+                            loadingItems={isFetchingGroupDatasets}
                             loadingText='Loading Group datasets'
                             variant='borderless'
                         />
@@ -128,10 +102,10 @@ export function GroupDetail () {
                             actions={GroupDetailProjectActions}
                             itemNameProperty='project'
                             trackBy='project'
-                            allItems={groupProjects}
+                            allItems={groupProjects || []}
                             columnDefinitions={projectGroupColumns}
                             visibleColumns={projectGroupColumns.map((item) => item.id).filter((item): item is string => Boolean(item))}
-                            loadingItems={loadingGroupProjects || !initialLoaded}
+                            loadingItems={isFetchingGroupProjects}
                             loadingText='Loading Group projects'
                             variant='borderless'
                         />

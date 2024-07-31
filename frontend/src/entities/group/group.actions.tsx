@@ -13,27 +13,29 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import { useAppDispatch, useAppSelector } from '../../config/store';
+import { useAppDispatch } from '../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
-import { deleteGroup, getAllGroups } from './group.reducer';
-import React from 'react';
+import React, { useContext } from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { IGroup } from '../../shared/model/group.model';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
-import { NavigateFunction, useNavigate, useLocation } from 'react-router-dom';
-import { selectCurrentUser } from '../user/user.reducer';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
+import { useGetCurrentUserQuery } from '../user/user.reducer';
 import { IUser, Permission } from '../../shared/model/user.model';
 import { hasPermission } from '../../shared/util/permission-utils';
+import BasePathContext from '../../shared/layout/base-path-context';
+import { useGetAllGroupsQuery } from './group.reducer';
 
 function GroupActions (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const currentUser = useAppSelector(selectCurrentUser);
-    const {pathname} = useLocation();
+    const { data: currentUser } = useGetCurrentUserQuery();
+    const basePath = useContext(BasePathContext);
+    const { refetch: refetchAllGroups, isFetching: isFetchingAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath.includes('admin')});
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
-            <Button onClick={() => dispatch(getAllGroups(pathname.includes('admin')))} ariaLabel={'Refresh groups list'}>
+            <Button onClick={refetchAllGroups} ariaLabel={'Refresh groups list'} disabled={isFetchingAllGroups}>
                 <Icon name='refresh'/>
             </Button>
             {GroupActionButton(navigate, dispatch, currentUser, props)}
@@ -90,8 +92,7 @@ const GroupActionHandler = async (
                 setDeleteModal({
                     resourceName: 'Group',
                     resourceType: 'group',
-                    onConfirm: async () => dispatch(deleteGroup(selectedGroup.name)),
-                    postConfirm: () => dispatch(getAllGroups(true)),
+                    onConfirm: async () => deleteGroup(selectedGroup.name),
                     description: `This will delete the following group: ${selectedGroup.name}.`
                 })
             );

@@ -13,33 +13,28 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import { useAppDispatch, useAppSelector } from '../../../config/store';
+import { useAppDispatch } from '../../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
 import { getUserGroups } from '../user.reducer';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { IGroupUser } from '../../../shared/model/groupUser.model';
 import { TableActionProps } from '../../../modules/table/table.types';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
-import { getAllGroups, removeGroupUser, selectAllGroups } from '../../group/group.reducer';
 import AddGroupUserModal from './add-group-user-modal';
-import { IGroup } from '../../../shared/model/group.model';
 import { useNotificationService } from '../../../shared/util/hooks';
 import { isFulfilled } from '@reduxjs/toolkit';
+import { useGetAllGroupsQuery, useRemoveGroupUserMutation } from '../../group/group.reducer';
 
 function UserDetailGroupActions (props?: TableActionProps<IGroupUser>) {
     const dispatch = useAppDispatch();
     const {username} = useParams();
     const [addUserModalVisible, setAddUserModalVisible] = useState(false);
     const notificationService = useNotificationService(dispatch);
-    const allGroups: IGroup[] = useAppSelector(selectAllGroups);
+    const { data: allGroups } = useGetAllGroupsQuery({adminGetAll: true});
     const groupNames = useMemo(() => props?.allItems.map((group) => group.group) || [], [props?.allItems]);
-    const addableGroups = useMemo(() => allGroups.filter((group) => !groupNames.includes(group.name!)), [groupNames, allGroups]);
-    const [performingAction, setPerformingAction] = useState(false);
-
-    useEffect(() => {
-        dispatch(getAllGroups(true));
-    }, [dispatch]);
+    const addableGroups = useMemo(() => allGroups?.filter((group) => !groupNames.includes(group.name!)), [groupNames, allGroups]) || [];
+    const [ removeGroupUser, result ] = useRemoveGroupUserMutation();
 
     const refreshHandler = () => {
         if (username !== undefined) {
@@ -74,19 +69,14 @@ function UserDetailGroupActions (props?: TableActionProps<IGroupUser>) {
                                 resourceName: 'Group User',
                                 resourceType: 'groupUser',
                                 description: `This will remove user: ${groupUser.user} from the group: ${groupUser.group}.`,
-                                disabled: performingAction,
-                                onConfirm: async () => {
-                                    setPerformingAction(true);
-
-                                    await dispatch(removeGroupUser(groupUser)).then((response) => {
+                                disabled: result.isLoading,
+                                onConfirm: async () => {                                   
+                                    removeGroupUser(groupUser).then((response) => {
                                         notificationService.showAxiosActionNotification(
                                             'remove user from group',
                                             `User ${groupUser.user} removed from ${groupUser.group}.`,
                                             response
                                         );
-                                    }).finally(() => {
-                                        setPerformingAction(false);
-                                        dispatch(refreshHandler);
                                     });
                                 }
                             })));

@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import user from './user/user.reducer';
-import group from './group/group.reducer';
+import user, { userApi } from './user/user.reducer';
+import group, { groupApi } from './group/group.reducer';
 import notebook from './notebook/notebook.reducer';
 import project from './project/project.reducer';
 import projectCard from './project/card/project-card.reducer';
@@ -31,6 +31,7 @@ import batchTranslateJob from './batch-translate/batch-translate.reducer';
 import appConfig from './configuration/configuration-reducer';
 
 const entitiesReducers = {
+    [userApi.reducerPath]: userApi.reducer,
     user,
     group,
     notebook,
@@ -45,7 +46,8 @@ const entitiesReducers = {
     emr,
     logs,
     batchTranslateJob,
-    appConfig
+    appConfig,
+    [groupApi.reducerPath]: groupApi.reducer
 };
 
 export default entitiesReducers;

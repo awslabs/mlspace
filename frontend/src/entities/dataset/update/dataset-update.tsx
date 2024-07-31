@@ -45,8 +45,6 @@ import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { useNotificationService } from '../../../shared/util/hooks';
-import { getAllGroups } from '../../group/group.reducer';
-import { IGroup } from '../../../shared/model/group.model';
 
 const formSchema = z.object({
     description: z.string().regex(/^[\w\-\s']+$/, {
@@ -56,7 +54,7 @@ const formSchema = z.object({
 
 export function DatasetUpdate () {
     const dataset: IDataset = useAppSelector(datasetBinding);
-    const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
+    const { data: groups } = useGetAllGroupsQuery();
     const { projectName, type, scope, name } = useParams();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -94,7 +92,6 @@ export function DatasetUpdate () {
             .catch(() => {
                 navigate('/404');
             });
-        dispatch(getAllGroups());
     }, [dispatch, navigate, basePath, name, projectName, scope, type]);
 
     function handleSubmit () {

@@ -20,6 +20,8 @@ import storage from 'redux-persist/lib/storage';
 import { persistReducer, persistStore } from 'redux-persist';
 
 import sharedReducers from '../shared/reducers';
+import { groupApi } from '../entities/group/group.reducer';
+import { userApi } from '../entities/user/user.reducer';
 
 const persistConfig = {
     key: 'mlspace',
@@ -33,7 +35,8 @@ const store = configureStore({
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
             serializableCheck: false,
-        }),
+        }).concat(groupApi.middleware)
+            .concat(userApi.middleware),
 });
 
 const getStore = () => store;

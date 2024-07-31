@@ -14,7 +14,7 @@
  limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { z } from 'zod';
 import { useValidationReducer } from '../../../shared/validation';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
@@ -32,12 +32,11 @@ import {
 } from '@cloudscape-design/components';
 import Form from '@cloudscape-design/components/form';
 import ContentLayout from '../../../shared/layout/content-layout';
-import { createGroup, getGroup, updateGroup } from '../group.reducer';
 import { addUserVisibleColumns, userColumns } from '../../user/user.columns';
 import Table from '../../../modules/table';
 import { IUser } from '../../../shared/model/user.model';
 import { addUsersToGroup } from '../user/group-user-functions';
-import { getAllUsers } from '../../user/user.reducer';
+import { useAddGroupUsersMutation, useCreateGroupMutation, useGetGroupQuery, useUpdateGroupMutation } from '../group.reducer';
 
 export type GroupCreateProperties = {
     isEdit?: boolean;
@@ -48,15 +47,12 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
     const notificationService = NotificationService(dispatch);
     const navigate = useNavigate();
     const {groupName} = useParams();
-    const [initialLoaded, setInitialLoaded] = useState(false);
     const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
     const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
-
-    useEffect(() => {
-        if (!isEdit){
-            dispatch(getAllUsers(false));
-        }
-    }, [dispatch, isEdit]);
+    const [ createGroup ] = useCreateGroupMutation();
+    const [ updateGroup ] = useUpdateGroupMutation();
+    const { data: group } = useGetGroupQuery(groupName!);
+    const [ addGroupUsers ] = useAddGroupUsersMutation();
 
     const groupSchema = z.object({
         name: z
@@ -89,51 +85,32 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
         validateAll: false,
         needsValidation: false,
         form: {
-            name: '',
-            description: '',
+            name: group?.group.name || '',
+            description: group?.group.description || '',
         },
         touched: {},
         formErrors: {} as any,
         formSubmitting: false,
     });
 
-    useEffect(() => {
-        if (isEdit && !initialLoaded) {
-            setState({formSubmitting: true});
-            dispatch(getGroup(groupName)).then((response) => {
-                if (response.payload) {
-                    setInitialLoaded(true);
-                    setState({
-                        form: {
-                            name: response.payload?.data.group?.name || '',
-                            description: response.payload?.data.group?.description || '',
-                        },
-                        formSubmitting: false
-                    });
-                } else {
-                    navigate('/404');
-                }
-            });
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isEdit, groupName, initialLoaded, dispatch, navigate]);
-
     async function handleSubmit () {
         setState({formSubmitting: true});
-        let response = null;
         try {
+            let response;
             if (!isEdit) {
-                response = await dispatch(createGroup(state.form));
+                response = await createGroup(state.form);
             } else {
-                response = await dispatch(updateGroup(state.form));
+                response = await updateGroup(state.form);
             }
-            if (response.payload?.status === 200) {
+            
+            if (response.isSuccess) {
                 notificationService.generateNotification(
                     `Successfully ${isEdit ? 'updated' : 'created'} group ${state.form.name}`,
                     'success'
                 );
+                
                 if (!isEdit && selectedUsers.length > 0){
-                    await addUsersToGroup(dispatch, state.form.name, selectedUsers);
+                    await addUsersToGroup(dispatch, state.form.name, selectedUsers, addGroupUsers);
                 }
                 navigate(`/admin/groups/${state.form.name}`);
             } else {
@@ -168,7 +145,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                             header={<></>}
                             tableType='multi'
                             selectItemsCallback={(e) => {
-                                setSelectedUsers(e);
+                                setSelectedUsers(e || []);
                             }}
                             trackBy='username'
                             allItems={allUsers}

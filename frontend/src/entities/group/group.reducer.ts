@@ -14,12 +14,13 @@
  limitations under the License.
  */
 
-import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/toolkit';
-import axios, { axiosCatch } from '../../shared/util/axios-utils';
+import { createSlice } from '@reduxjs/toolkit';
+import { mlsBaseQuery } from '../../shared/util/axios-utils';
 import { IGroup, IGroupWithPermissions } from '../../shared/model/group.model';
 import { IGroupUser } from '../../shared/model/groupUser.model';
 import { IDataset } from '../../shared/model';
 import { IProjectGroup } from '../../shared/model/projectGroup.model';
+import { createApi } from '@reduxjs/toolkit/query/react';
 
 const initialState = {
     allGroups: [] as IGroup[],
@@ -36,121 +37,96 @@ export type AddGroupUserRequest = {
     usernames: string[];
 };
 
+type MLSServerRequestProperties = {
+    adminGetAll?: boolean
+};
 
-export const getAllGroups = createAsyncThunk('group/fetch_all_groups', async (adminGetAll?: boolean) => {
-    const params = new URLSearchParams();
-    if (adminGetAll) {
-        params.append('adminGetAll', 'true');
-    }
-    return axios.get<IGroup[]>(`/group${params.size > 0 ? '?' + params.toString() : ''}`);
-});
+export const groupApi = createApi({
+    reducerPath: 'group2',
+    baseQuery:  mlsBaseQuery(),
+    endpoints: (builder) => ({
+        createGroup: builder.mutation<string, IGroup>({
+            query: (group) => ({
+                url: '/group',
+                data: JSON.stringify(group)
+            }),
+            invalidatesTags: ['group']
+        }),
 
-export const getGroup = createAsyncThunk('group/fetch_group', async (groupName: string) => {
-    return axios.get<IGroupWithPermissions>(`/group/${groupName}`);
-});
+        getAllGroups: builder.query<IGroup[], MLSServerRequestProperties>({
+            query: (request) => ({
+                url: '/group',
+                params: {
+                    adminGetAll: request.adminGetAll
+                },
+            }),
+            providesTags: ['group']
+        }),
 
-export const deleteGroup = createAsyncThunk('group/delete_group', async (groupName: string) => {
-    const requestUrl = `/group/${groupName}`;
-    return axios.delete(requestUrl);
-});
+        getGroup: builder.query<IGroupWithPermissions, string>({
+            query: (groupName) => ({
+                url: `/group/${groupName}`,
+            })
+        }),
 
-export const createGroup = createAsyncThunk('group/create_group', async (group: IGroup) => {
-    return axios.post('/group', JSON.stringify(group));
-});
+        getGroupUsers: builder.query<IGroupUser[],string>({
+            query: (groupName) => ({
+                url: `/group/${groupName}/users`,
+            }),
+            providesTags: ['group/users']
+        }),
 
-export const updateGroup = createAsyncThunk('group/update_group', async (group: IGroup) => {
-    const requestUrl = `/group/${group.name}`;
-    return axios.put(requestUrl, JSON.stringify(group));
-});
+        getGroupDatasets: builder.query<IDataset[],string>({
+            query: (groupName) => ({
+                url: `/group/${groupName}/datasets`,
+            })
+        }),
 
-export const getGroupUsers = createAsyncThunk('group/group_users', async (groupName: string) => {
-    const requestUrl = `/group/${groupName}/users`;
-    return axios.get<IGroupUser[]>(requestUrl);
-});
+        getGroupProjects: builder.query<IProjectGroup[],string>({
+            query: (groupName) => ({
+                url: `/group/${groupName}/projects`,
+            })
+        }),
 
-export const getGroupDatasets = createAsyncThunk('group/group_datasets', async (groupName: string) => {
-    const requestUrl = `/group/${groupName}/datasets`;
-    return axios.get<IDataset[]>(requestUrl);
-});
+        addGroupUsers: builder.mutation<string,AddGroupUserRequest>({
+            query: (request) => ({
+                url: `/group/${request.groupName}/users`,
+                data: JSON.stringify(request),
+                method: 'POST'
+            }),
+            invalidatesTags: ['group/users']
+        }),
 
-export const getGroupProjects = createAsyncThunk('group/group_projects', async (groupName: string) => {
-    const requestUrl = `/group/${groupName}/projects`;
-    return axios.get<IProjectGroup[]>(requestUrl).catch(axiosCatch);
-});
+        removeGroupUser: builder.mutation<string,IGroupUser>({
+            query: (groupUser) => ({
+                url: `/group/${groupUser.group}/users/${encodeURIComponent(groupUser.user || '')}`,
+                method: 'DELETE'
+            }),
+            invalidatesTags: ['group/users']
+        }),
 
-export const removeGroupUser = createAsyncThunk('group/remove_user', async (data: IGroupUser) => {
-    return axios.delete(`/group/${data.group}/users/${encodeURIComponent(data.user || '')}`).catch(axiosCatch);
-});
+        updateGroup: builder.mutation<string, IGroup>({
+            query: (group) => ({
+                url: `/group/${group.name}`,
+                data: JSON.stringify(group)
+            })
+        }),
 
-export const addGroupUsers = createAsyncThunk('group/add_users', async (data: AddGroupUserRequest) => {
-    const requestUrl = `/group/${data.groupName}/users`;
-    return axios.post(requestUrl, JSON.stringify(data));
+        deleteGroup: builder.mutation<string,string>({
+            query: (groupName) => ({
+                url: `/group/${groupName}`,
+                method: 'DELETE'
+            }),
+            invalidatesTags: ['group']
+        }),
+    }),
 });
 
 export const GroupSlice = createSlice({
     name: 'group',
     initialState,
-    reducers: {},
-    extraReducers (builder) {
-        builder
-            .addMatcher(isFulfilled(getAllGroups), (state, action) => {
-                return {
-                    ...state,
-                    allGroups: action.payload.data,
-                    loading: false,
-                };
-            })
-            .addMatcher(isFulfilled(getGroupUsers), (state, action) => {
-                return {
-                    ...state,
-                    currentGroupUsers: action.payload.data,
-                    loading: false,
-                };
-            })
-            .addMatcher(isFulfilled(getGroupDatasets), (state, action) => {
-                return {
-                    ...state,
-                    currentGroupDatasets: action.payload.data,
-                    datasetsLoading: false,
-                };
-            })
-            .addMatcher(isFulfilled(getGroupProjects), (state, action) => {
-                return {
-                    ...state,
-                    currentGroupProjects: action.payload.data,
-                    projectsLoading: false
-                };
-            })
-            .addMatcher(isPending(getGroupDatasets), (state) => {
-                return {
-                    ...state,
-                    datasetsLoading: true,
-                };
-            })
-            .addMatcher(isFulfilled(deleteGroup, createGroup, updateGroup, removeGroupUser, addGroupUsers), (state) => {
-                return {
-                    ...state,
-                    loading: false,
-                };
-            })
-            .addMatcher(isPending(getAllGroups, deleteGroup, createGroup, updateGroup, getGroupUsers, removeGroupUser, addGroupUsers), (state) => {
-                return {
-                    ...state,
-                    loading: true,
-                };
-            })
-            .addMatcher(isPending(getGroupProjects), (state) => {
-                return {
-                    ...state,
-                    projectsLoading: true      
-                };
-            });
-    }
+    reducers: {}
 });
 
 export default GroupSlice.reducer;
-export const currentGroupUsers = (state: any): IGroupUser[] => state.group.currentGroupUsers;
-export const selectCurrentGroupProjects = (state: any): IProjectGroup[] => state.group.currentGroupProjects;
-export const selectLoadingGroupProjects = (state: any): boolean => state.group.projectsLoading;
-export const currentGroupDatasets = (state: any): IDataset[] => state.group.currentGroupDatasets;
-export const selectAllGroups = (state: any): IGroup[] => state.group.allGroups;
+export const { useGetGroupQuery, useGetGroupUsersQuery, useGetGroupDatasetsQuery, useGetGroupProjectsQuery, useAddGroupUsersMutation, useRemoveGroupUserMutation, useCreateGroupMutation, useUpdateGroupMutation, useGetAllGroupsQuery, useDeleteGroupMutation } = groupApi;

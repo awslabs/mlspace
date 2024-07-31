@@ -32,7 +32,7 @@ import {
     Multiselect,
     SelectProps,
 } from '@cloudscape-design/components';
-import { useAppDispatch, useAppSelector } from '../../../config/store';
+import { useAppDispatch } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import {
     IDataset,
@@ -53,12 +53,11 @@ import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-brows
 import { DatasetResourceObject } from '../../../modules/dataset/dataset-browser.reducer';
 import { useUsername } from '../../../shared/util/auth-utils';
 import ContentLayout from '../../../shared/layout/content-layout';
-import { getAllGroups } from '../../group/group.reducer';
-import { IGroup } from '../../../shared/model/group.model';
 import { useNotificationService } from '../../../shared/util/hooks';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import Condition from '../../../modules/condition';
 import Axios from 'axios';
+import { useGetAllGroupsQuery } from '../../group/group.reducer';
 
 const formSchema = z.object({
     name: z
@@ -81,7 +80,8 @@ export function DatasetCreate () {
     const username = useUsername();
     const [dataset] = useState(defaultDataset as IDataset);
     const [datasetFileList, setDatasetFileList] = useState([] as DatasetResourceObject[]);
-    const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
+    // const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
+    const { data: groups } = useGetAllGroupsQuery();
     const { projectName = '' } = useParams();
 
     scrollToPageHeader();
@@ -116,10 +116,6 @@ export function DatasetCreate () {
         scrollToPageHeader('h1', 'dataset');
     }, [dispatch, basePath, projectName]);
 
-    useEffect(() => {
-        dispatch(getAllGroups());
-    }, [dispatch]);
-
     function generateOptions () {
         // Standard options always available
         const options: { label: string; value?: string; options?: any[] }[] = [
@@ -140,7 +136,7 @@ export function DatasetCreate () {
 
     function generateGroupOptions () {
         const groupOptions: SelectProps.Option[] = [];
-        groups.map((group) => {
+        groups?.map((group) => {
             groupOptions.push({ label: group.name, value: group.name});
         });
         return groupOptions;

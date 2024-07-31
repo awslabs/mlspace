@@ -14,21 +14,21 @@
  limitations under the License.
  */
 
-import { useAppDispatch } from '../../../config/store';
 import { Button, Icon, SpaceBetween } from '@cloudscape-design/components';
-import { getGroupProjects } from '../group.reducer';
+import { useGetGroupProjectsQuery } from '../group.reducer';
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
 export function GroupDetailProjectActions () {
-    const dispatch = useAppDispatch();
     const { groupName } = useParams();
+    const { refetch: refetchGroupProjects, isFetching: isFetchingGroupProjects } = useGetGroupProjectsQuery(groupName!);
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
             <Button
-                onClick={() => dispatch(getGroupProjects(groupName!))}
+                onClick={refetchGroupProjects}
                 ariaLabel={'Refresh dataset list'}
+                disabled={isFetchingGroupProjects}
             >
                 <Icon name='refresh'/>
             </Button>

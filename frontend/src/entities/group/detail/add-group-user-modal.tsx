@@ -25,7 +25,7 @@ import Table from '../../../modules/table';
 import { addUserVisibleColumns, userColumns } from '../../user/user.columns';
 import React, { useState } from 'react';
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
-import { addUsersToGroup } from '../user/group-user-functions';
+import { useAddGroupUsersMutation } from '../group.reducer';
 
 export type AddGroupUserModalProps = {
     dispatch:  ThunkDispatch<any, any, Action>,
@@ -36,8 +36,8 @@ export type AddGroupUserModalProps = {
 };
 
 export function AddGroupUserModal (props: AddGroupUserModalProps) {
+    const [addGroupUsers, result] = useAddGroupUsersMutation();
     const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
-    const [performingAction, setPerformingAction] = useState(false);
 
     return (
         <Modal
@@ -49,16 +49,16 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                     <SpaceBetween direction='horizontal' size='xs'>
                         <Button onClick={() => props.setVisible(false)}>Cancel</Button>
                         <Button
-                            loading={performingAction}
+                            loading={result.isLoading}
                             variant='primary'
                             disabled={selectedUsers.length === 0}
                             onClick={ async () => {
-                                setPerformingAction(true);
-                                await addUsersToGroup(props.dispatch, props.groupName, selectedUsers).finally(() => {
+                                await addGroupUsers({
+                                    groupName: props.groupName,
+                                    usernames: selectedUsers.map((user) => user.username)
+                                }).finally(() => {
                                     setSelectedUsers([]);
                                     props.setVisible(false);
-                                }).finally(() => {
-                                    setPerformingAction(false);
                                 });
                             }}>
                             Add user{selectedUsers.length > 1 ? 's' : ''}
@@ -73,7 +73,7 @@ export function AddGroupUserModal (props: AddGroupUserModalProps) {
                     header={<></>}
                     tableType='multi'
                     selectItemsCallback={(e) => {
-                        setSelectedUsers(e);
+                        setSelectedUsers(e || []);
                     }}
                     trackBy='username'
                     allItems={props.addableUsers}

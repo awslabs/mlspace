@@ -16,7 +16,7 @@
 
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
-import { currentGroupUsers, getGroupUsers, removeGroupUser } from '../group.reducer';
+import { useGetGroupUsersQuery, useRemoveGroupUserMutation } from '../group.reducer';
 import React, { useEffect, useState } from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { NavigateFunction, useNavigate, useParams } from 'react-router-dom';
@@ -26,20 +26,19 @@ import { IGroupUser } from '../../../shared/model/groupUser.model';
 import AddGroupUserModal from './add-group-user-modal';
 import { IUser, Permission } from '../../../shared/model/user.model';
 import { hasPermission } from '../../../shared/util/permission-utils';
-import { useNotificationService } from '../../../shared/util/hooks';
 import { getAllUsers, selectCurrentUser } from '../../user/user.reducer';
-import { INotificationService } from '../../../shared/layout/notification/notification.service';
 
 function GroupDetailUserActions (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { groupName } = useParams();
     const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
-    const groupUsers: IGroupUser[] = useAppSelector(currentGroupUsers);
-    const groupUsernames = groupUsers.map((user) => user.user);
+    const { data: groupUsers } = useGetGroupUsersQuery(groupName!);
+    const groupUsernames = (groupUsers || []).map((user) => user.user);
     const addableUsers = allUsers.filter((user) => !groupUsernames.includes(user.username!));
     const [addUserModalVisible, setAddUserModalVisible] = useState(false);
     const currentUser = useAppSelector(selectCurrentUser);
+    const { refetch: refetchGroupUsers, isFetching: isFetchingGroupUsers } = useGetGroupUsersQuery(groupName!);
 
     useEffect(() => {
         dispatch(getAllUsers(false));
@@ -49,8 +48,9 @@ function GroupDetailUserActions (props?: any) {
         <SpaceBetween direction='horizontal' size='xs'>
             <AddGroupUserModal dispatch={dispatch} setVisible={setAddUserModalVisible} visible={addUserModalVisible} addableUsers={addableUsers} groupName={groupName!}/>
             <Button 
-                onClick={() => dispatch(getGroupUsers(groupName!))} 
+                onClick={refetchGroupUsers} 
                 ariaLabel={'Refresh groups list'}
+                disabled={isFetchingGroupUsers}
             >
                 <Icon name='refresh'/>
             </Button>
@@ -62,7 +62,8 @@ function GroupDetailUserActions (props?: any) {
 function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dispatch, currentUser: IUser, allUsers: IUser[], setAddUserModalVisible: (boolean) => void, props?: any) {
     const selectedUser: IGroupUser = props?.selectedItems[0];
     const items: ButtonDropdownProps.Item[] = [];
-    const notificationService = useNotificationService(dispatch);
+    const [removeGroupUser] = useRemoveGroupUserMutation();
+
     if (selectedUser) {
         items.push({
             text: 'Remove from Group',
@@ -83,7 +84,7 @@ function GroupDetailUserActionsButton (navigate: NavigateFunction, dispatch: Dis
                     items={items}
                     variant='primary'
                     disabled={!selectedUser}
-                    onItemClick={(e) => GroupDetailUserActionHandler(e, dispatch, modalState as ModalProps, setModalState, selectedUser, notificationService)}
+                    onItemClick={(e) => GroupDetailUserActionHandler(e, dispatch, modalState as ModalProps, setModalState, selectedUser, removeGroupUser)}
                 >
                     Actions
                 </ButtonDropdown>
@@ -106,8 +107,11 @@ const GroupDetailUserActionHandler = async (
     modalState: ModalProps,
     setModalState: (state: Partial<ModalProps>) => void,
     selectedUser: IGroupUser,
-    notificationService: INotificationService
+    removeGroupUser: any
+    // notificationService: INotificationService
 ) => {
+    // const { refetch: refetchGroupUsers } = useGetGroupUsersQuery(selectedUser.group);
+
     switch (e.detail.id) {
         case 'removeFromGroup':
             dispatch(
@@ -115,19 +119,22 @@ const GroupDetailUserActionHandler = async (
                     resourceName: 'Group User',
                     resourceType: 'groupUser',
                     onConfirm: async () => {
-                        await dispatch(removeGroupUser(selectedUser)).then((result) => {
-                            setModalState({
-                                ...modalState,
-                                visible: false,
-                            });
-                            notificationService.showActionNotification(
-                                'remove group user',
-                                `User ${selectedUser.user} removed from ${selectedUser.group}.`,
-                                result
-                            );
-                        }).finally(() => {
-                            dispatch(getGroupUsers(selectedUser.group));
+                        await removeGroupUser(selectedUser).then(() => {
+                            console.log('completed');
                         });
+                        // await dispatch(removeGroupUser(selectedUser)).then((result) => {
+                        //     setModalState({
+                        //         ...modalState,
+                        //         visible: false,
+                        //     });
+                        //     notificationService.showActionNotification(
+                        //         'remove group user',
+                        //         `User ${selectedUser.user} removed from ${selectedUser.group}.`,
+                        //         result
+                        //     );
+                        // }).finally(() => {
+                        //     refetchGroupUsers();
+                        // });
                     },
                     description: `This will remove user: ${selectedUser.user} from the following group: ${selectedUser.group}.`
                 })

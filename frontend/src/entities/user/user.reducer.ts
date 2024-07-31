@@ -17,8 +17,21 @@
 import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/toolkit';
 import { DEFAULT_PAGE_SIZE, IUser } from '../../shared/model/user.model';
 import { IProjectUser } from '../../shared/model/projectUser.model';
-import axios, { axiosCatch } from '../../shared/util/axios-utils';
+import axios, { axiosCatch, mlsBaseQuery } from '../../shared/util/axios-utils';
 import { IGroupUser } from '../../shared/model/groupUser.model';
+import { createApi } from '@reduxjs/toolkit/query/react';
+
+export const userApi = createApi({
+    reducerPath: 'user2',
+    baseQuery: mlsBaseQuery(),
+    endpoints: (builder) => ({
+        getCurrentUser: builder.query<IUser,void>({
+            query: () => ({
+                url: '/current-user'
+            }),
+        })
+    })
+});
 
 const initialState = {
     allUsers: [] as IUser[],
@@ -197,3 +210,4 @@ export const selectCurrentUser = (state: any): IUser => state.user.currentUser;
 // Reducer
 export default UserSlice.reducer;
 export const { toggleAddUserModal, setCurrentUser } = UserSlice.actions;
+export const { useGetCurrentUserQuery } = userApi;

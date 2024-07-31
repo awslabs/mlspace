@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Button,
     ButtonDropdown,
@@ -30,7 +30,7 @@ import { useParams } from 'react-router-dom';
 import { useNotificationService } from '../../../../shared/util/hooks';
 import AddProjectGroupModal from './add-project-group-modal';
 import { TableActionProps } from '../../../../modules/table/table.types';
-import { getAllGroups, selectAllGroups } from '../../../group/group.reducer';
+import { useGetAllGroupsQuery } from '../../../group/group.reducer';
 import { removeGroupFromProject, selectProject, updateProjectGroup } from '../../project.reducer';
 import { setDeleteModal } from '../../../../modules/modal/modal.reducer';
 import { CallbackFunction } from '../../../../types';
@@ -50,10 +50,10 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
     const [showModal, setShowModal] = useState<boolean>(false);
     const [performingAction, setPerformingAction] = useState<boolean>(false);
     const project = useAppSelector(selectProject);
-    const allGroups = useAppSelector(selectAllGroups);
-    const addableGroups = allGroups.filter((group) => {
+    const { data: allGroups } = useGetAllGroupsQuery({adminGetAll: false});
+    const addableGroups = allGroups?.filter((group) => {
         return !props?.projectGroups?.map((project_group) => project_group.group)?.includes(group.name);
-    });
+    }) || [];
 
     const actionItems = [
         {
@@ -66,10 +66,6 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
         },
         { text: 'Remove from Project', id: 'remove' },
     ];
-
-    useEffect(() => {
-        dispatch(getAllGroups());
-    }, [dispatch]);
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>

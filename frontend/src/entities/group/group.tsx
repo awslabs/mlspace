@@ -14,43 +14,37 @@
  limitations under the License.
  */
 
-import React, { useEffect } from 'react';
+import React, { useContext } from 'react';
 import { groupColumns, visibleColumns } from './group.columns';
 import Table from '../../modules/table';
-import { IGroup } from '../../shared/model/group.model';
-import { useAppDispatch, useAppSelector } from '../../config/store';
-import { getAllGroups } from './group.reducer';
 import { DocTitle } from '../../shared/doc';
 import { GroupActions } from './group.actions';
-import { selectCurrentUser } from '../user/user.reducer';
+import { useGetCurrentUserQuery } from '../user/user.reducer';
 import { hasPermission } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
 import { useLocation } from 'react-router-dom';
+import { useGetAllGroupsQuery } from './group.reducer';
+import BasePathContext from '../../shared/layout/base-path-context';
 
 export function Group () {
-    const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
-    const loadingGroups = useAppSelector((state) => state.group.loading);
-    const dispatch = useAppDispatch();
+    const basePath = useContext(BasePathContext);
+    const { data: groups, isFetching: isFetchingGroups } = useGetAllGroupsQuery({adminGetAll: basePath.includes('admin')});
     const {pathname} = useLocation();
-    const actions = (e: any) => GroupActions({...e});
-    const currentUser = useAppSelector(selectCurrentUser);
-    DocTitle('Groups');
+    const { data: currentUser } = useGetCurrentUserQuery();
 
-    useEffect(() => {
-        dispatch(getAllGroups(pathname.includes('admin')));
-    }, [dispatch, pathname]);
+    DocTitle('Groups');
 
     return (
         <Table
             tableName='Group'
             trackBy='name'
-            actions={actions}
-            allItems={groups}
-            tableType={hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
+            actions={GroupActions}
+            allItems={groups || []}
+            tableType={currentUser && hasPermission(Permission.ADMIN, currentUser.permissions) ? 'single' : undefined}
             tableDescription={pathname.includes('admin') ? `All ${window.env.APPLICATION_NAME} groups` : 'The groups that you are a member of'}
             columnDefinitions={groupColumns}
             visibleColumns={visibleColumns}
-            loadingItems={loadingGroups}
+            loadingItems={isFetchingGroups}
             loadingText='Loading groups'
         />
     );

@@ -14,18 +14,19 @@
  limitations under the License.
  */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { ButtonDropdown, ButtonDropdownProps, SpaceBetween } from '@cloudscape-design/components';
-import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { selectCurrentUser } from '../../user/user.reducer';
+import { useAppDispatch } from '../../../config/store';
+import { useGetCurrentUserQuery } from '../../user/user.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import Modal, { ModalProps } from '../../../modules/modal';
-import { deleteGroup, getAllGroups } from '../group.reducer';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
+import { BasePathContext } from '../../../shared/layout/base-path-context';
+import { useDeleteGroupMutation, useGetAllGroupsQuery } from '../group.reducer';
 
 function GroupDetailActions () {
     const dispatch = useAppDispatch();
@@ -46,7 +47,7 @@ function GroupActionButton (
     groupName: string
 ) {
     const actionItems: Array<ButtonDropdownProps.ItemOrGroup> = [];
-    const currentUser = useAppSelector(selectCurrentUser);
+    const { data: currentUser } = useGetCurrentUserQuery();
 
     const [modalState, setModalState] = React.useState<Partial<ModalProps>>({
         visible: false,
@@ -54,7 +55,7 @@ function GroupActionButton (
         dismissText: 'Cancel',
     });
 
-    if (hasPermission(Permission.ADMIN, currentUser.permissions)) {
+    if (currentUser && hasPermission(Permission.ADMIN, currentUser.permissions)) {
         actionItems.push(
             ...[
                 {text: 'Update', id: 'update_group'},
@@ -64,7 +65,7 @@ function GroupActionButton (
     }
 
     return (
-        <> { hasPermission(Permission.ADMIN, currentUser.permissions) && (
+        <> { currentUser && hasPermission(Permission.ADMIN, currentUser.permissions) && (
             <ButtonDropdown
                 items={actionItems}
                 variant='primary'
@@ -97,31 +98,38 @@ const GroupActionHandler = (
     setModalState: (state: Partial<ModalProps>) => void
 ) => {
     const notificationService = NotificationService(dispatch);
+    const basePath = useContext(BasePathContext);
+    const { refetch: refetchAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath.includes('admin')});
+    const [ deleteGroup ] = useDeleteGroupMutation();
+
     switch (e.detail.id) {
         case 'update_group':
-            nav(`/admin/groups/edit/${groupName}`);
+            nav(`${basePath}/${groupName}`);
             break;
         case 'delete_group':
             dispatch(
                 setDeleteModal({
                     resourceName: 'Group',
                     resourceType: 'group',
-                    postConfirm: () => dispatch(getAllGroups(window.location.href.includes('#/admin'))),
-                    onConfirm: async () =>
-                        dispatch(deleteGroup(groupName!)).then((result) => {
-                            setModalState({
-                                ...modalState,
-                                visible: false,
-                            });
-                            notificationService.showActionNotification(
-                                'delete group',
-                                `Group ${groupName} deleted.`,
-                                result
-                            );
-                            if (result.type.endsWith('/fulfilled')) {
-                                nav(window.location.href.includes('#/admin') ? '/admin/groups' : '/personal/group');
-                            }
-                        }),
+                    postConfirm: refetchAllGroups,
+                    onConfirm: async () =>  {
+                        const result = await deleteGroup(groupName!);
+
+                        setModalState({
+                            ...modalState,
+                            visible: false,
+                        });
+
+                        notificationService.showActionNotification(
+                            'delete group',
+                            `Group ${groupName} deleted.`,
+                            result
+                        );
+
+                        if (result.isSuccess) {
+                            nav(`${basePath}/groups`);
+                        }
+                    },
                     description: `This will delete the following group: ${groupName}.`
                 })
             );
