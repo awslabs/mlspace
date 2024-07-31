@@ -45,6 +45,7 @@ import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { useNotificationService } from '../../../shared/util/hooks';
+import { useGetAllGroupsQuery } from '../../group/group.reducer';
 
 const formSchema = z.object({
     description: z.string().regex(/^[\w\-\s']+$/, {

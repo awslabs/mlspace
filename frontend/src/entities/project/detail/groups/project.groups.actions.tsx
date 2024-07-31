@@ -50,7 +50,7 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
     const [showModal, setShowModal] = useState<boolean>(false);
     const [performingAction, setPerformingAction] = useState<boolean>(false);
     const project = useAppSelector(selectProject);
-    const { data: allGroups } = useGetAllGroupsQuery({adminGetAll: false});
+    const { data: allGroups } = useGetAllGroupsQuery();
     const addableGroups = allGroups?.filter((group) => {
         return !props?.projectGroups?.map((project_group) => project_group.group)?.includes(group.name);
     }) || [];

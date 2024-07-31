@@ -53,11 +53,11 @@ export const groupApi = createApi({
             invalidatesTags: ['group']
         }),
 
-        getAllGroups: builder.query<IGroup[], MLSServerRequestProperties>({
+        getAllGroups: builder.query<IGroup[], MLSServerRequestProperties | void>({
             query: (request) => ({
                 url: '/group',
                 params: {
-                    adminGetAll: request.adminGetAll
+                    adminGetAll: request?.adminGetAll
                 },
             }),
             providesTags: ['group']

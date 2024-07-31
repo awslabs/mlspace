@@ -80,7 +80,6 @@ export function DatasetCreate () {
     const username = useUsername();
     const [dataset] = useState(defaultDataset as IDataset);
     const [datasetFileList, setDatasetFileList] = useState([] as DatasetResourceObject[]);
-    // const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
     const { data: groups } = useGetAllGroupsQuery();
     const { projectName = '' } = useParams();
 
