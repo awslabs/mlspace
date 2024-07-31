@@ -50,11 +50,9 @@ export const getDownloadUrl = async (objectKey: string) => {
 function generateDatasetHeaders (key: string) {
     const datasetType = key.split('/')[0];
     let datasetScope = key.split('/')[1];
-    console.log(`Scope before split: ${datasetScope}`);
     if (datasetType === DatasetType.GROUP) {
         // for groups, set the scope to the dataset name
         datasetScope = key.split('/')[2];
-        console.log(`Scope after split: ${datasetScope}`);
     }
     const headerConfig = {
         headers: {
@@ -223,7 +221,7 @@ export async function createDataset (dataset: IDataset) {
         const headerConfig = {
             headers: {
                 'x-mlspace-dataset-type': dataset.type,
-                'x-mlspace-dataset-scope': dataset.scope,
+                'x-mlspace-dataset-scope': dataset.type === DatasetType.GROUP ? dataset.groups : dataset.scope,
             },
         };
         return axios.post(requestUrl, payload, headerConfig);

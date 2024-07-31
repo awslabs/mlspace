@@ -95,6 +95,8 @@ export const Dataset = ({isAdmin}: DatasetProperties) => {
                     loadingItems={loadingDatasets}
                     loadingAction={loadingAction}
                     //serverFetch={isAdmin ? getAllDatasets : getDatasetsList}
+                    //AsyncThunk<AxiosResponse<IDataset[], any>, void, AsyncThunkConfig>
+                    //AsyncThunk<AxiosResponse<IDataset[], any>, ServerRequestProps, AsyncThunkConfig>
                     storeClear={clearDatasetList}
                 />
             </div>

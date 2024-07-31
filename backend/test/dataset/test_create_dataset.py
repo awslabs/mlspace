@@ -42,11 +42,12 @@ def generate_event(dataset_type: str, dataset_scope: str):
                 "datasetType": dataset_type,
                 "datasetDescription": "example description",
                 "datasetScope": dataset_scope,
+                "datasetGroups": ["TestGroup1,TestGroup2"],
             }
         ),
         "headers": {
             "x-mlspace-dataset-type": dataset_type,
-            "x-mlspace-dataset-scope": dataset_scope,
+            "x-mlspace-dataset-scope": "TestGroup1,TestGroup2" if dataset_type == DatasetType.GROUP else dataset_scope,
         },
         "requestContext": {"authorizer": {"principalId": "jdoe"}},
     }
@@ -89,8 +90,8 @@ def test_create_dataset_success(
     mock_event = generate_event(dataset_type, scope)
     mock_dataset_dao.get.return_value = None
 
-    if scope == DatasetType.GLOBAL or scope == DatasetType.GROUP:
-        directory_name = f"{scope}/datasets/{test_dataset_name}/"
+    if dataset_type == DatasetType.GLOBAL or dataset_type == DatasetType.GROUP:
+        directory_name = f"{dataset_type}/datasets/{test_dataset_name}/"
     else:
         directory_name = f"{dataset_type}/{scope}/datasets/{test_dataset_name}/"
 
@@ -101,6 +102,8 @@ def test_create_dataset_success(
     expected_response = generate_html_response(200, success_response)
 
     assert lambda_handler(mock_event, mock_context) == expected_response
+    if dataset_type == DatasetType.GROUP:
+        mock_group_dataset_dao.create.assert_called()
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")

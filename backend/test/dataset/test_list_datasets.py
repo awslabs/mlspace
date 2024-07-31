@@ -38,12 +38,16 @@ project_name = "example_project"
 group_name = "test-group"
 group_dataset_name = "example_group_dataset1"
 
-mock_event = {
-    "pathParameters": {
-        "projectName": project_name,
-    },
-    "requestContext": {"authorizer": {"principalId": user_name}},
-}
+
+def generate_mock_event(resourcePath=None):
+    return {
+        "pathParameters": {
+            "projectName": project_name,
+        },
+        "requestContext": {"authorizer": {"principalId": user_name}, "resourcePath": resourcePath},
+    }
+
+
 mock_context = mock.Mock()
 
 PRIVATE_PREFIX = "s3://mlspace-data-bucket/private"
@@ -51,7 +55,7 @@ MOCK_GROUP_USERS = [GroupUserModel(user_name, group_name)]
 
 
 def _build_group_dataset(group: str, dataset: str) -> DatasetModel:
-    return GroupDatasetModel(group, dataset)
+    return GroupDatasetModel(dataset_name=dataset, group_name=group)
 
 
 def _build_dataset(scope: str, name: str, user_name: str, type: str) -> DatasetModel:
@@ -128,7 +132,7 @@ def test_list_datasets(mock_dataset_dao, mock_group_user_dao, mock_group_dataset
         [dataset.to_dict() for dataset in expected_datasets],
     )
 
-    assert lambda_handler(mock_event, mock_context) == expected_response
+    assert lambda_handler(generate_mock_event(), mock_context) == expected_response
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
@@ -167,7 +171,7 @@ def test_list_datasets_success_no_datasets(mock_dataset_dao, mock_group_user_dao
     mock_dataset_dao.get.return_value = _build_dataset("group", group_dataset_name, user_name, DatasetType.GROUP)
     expected_response = generate_html_response(200, [])
 
-    assert lambda_handler(mock_event, mock_context) == expected_response
+    assert lambda_handler(generate_mock_event(), mock_context) == expected_response
 
     mock_dataset_dao.get_all_for_scope.assert_has_calls(
         [
@@ -192,6 +196,6 @@ def test_list_datasets_client_error(mock_dataset_dao):
     )
     mock_dataset_dao.get_all_for_scope.side_effect = ClientError(error_msg, "Query")
 
-    assert lambda_handler(mock_event, mock_context) == expected_response
+    assert lambda_handler(generate_mock_event(), mock_context) == expected_response
 
     mock_dataset_dao.get_all_for_scope.assert_called_with(DatasetType.GLOBAL, DatasetType.GLOBAL)

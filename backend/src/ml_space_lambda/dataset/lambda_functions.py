@@ -179,8 +179,8 @@ def presigned_url(event, context):
     scope_from_key = key.split("/")[1]
     name_from_key = key.split("/")[2]
     if type_from_key == DatasetType.GROUP:
-        # for group datasets, the scope is 'group'
-        scope_from_key = DatasetType.GROUP
+        # for group datasets, the scope is the dataset name
+        scope_from_key = name_from_key
 
     # Ensure the headers match the values derived from the request key
     if type_from_key != event["headers"]["x-mlspace-dataset-type"] or not _is_scope_header_correct(
@@ -254,8 +254,8 @@ def create_dataset(event, context):
             dataset_scope = scope
             directory_name = f"global/datasets/{dataset_name}/"
         elif dataset_type == DatasetType.GROUP:
-            scope = DatasetType.GROUP
-            dataset_scope = scope
+            scope = ",".join(groups)
+            dataset_scope = DatasetType.GROUP
             directory_name = f"group/datasets/{dataset_name}/"
         else:
             scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
@@ -307,16 +307,18 @@ def list_resources(event, context):
     username = event["requestContext"]["authorizer"]["principalId"]
     is_admin = event["requestContext"].get("resourcePath") == "/admin/datasets"
     datasets = []
-    # Get global datasets
-    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
 
     # if this is an admin request, retrieve ALL the datasets
     if is_admin:
         datasets = dataset_dao.get_all()
         for dataset in datasets:
+            # Clear list to make sure it's up to date
+            dataset.groups = []
             for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset.name):
-                dataset.groups.append(group_dataset)
+                dataset.groups.append(group_dataset.group)
     else:
+        # Get global datasets
+        datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
         # Get the user's private datasets
         datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
         # Get the group datasets for groups this user is a member of

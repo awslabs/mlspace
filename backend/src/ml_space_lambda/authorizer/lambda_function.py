@@ -318,15 +318,13 @@ def lambda_handler(event, context):
                 if "x-mlspace-dataset-type" in event["headers"] and "x-mlspace-dataset-scope" in event["headers"]:
                     target_type = event["headers"]["x-mlspace-dataset-type"]
                     target_scope = event["headers"]["x-mlspace-dataset-scope"]
-                    if Permission.ADMIN in user.permissions:
+                    if IS_ADMIN:
                         policy_statement["Effect"] = "Allow"
                     elif target_type == DatasetType.GLOBAL:
                         policy_statement["Effect"] = "Allow"
                     elif target_type == DatasetType.PROJECT:
                         project_user = project_user_dao.get(target_scope, username)
                         if project_user:
-                            policy_statement["Effect"] = "Allow"
-                        if IS_ADMIN:
                             policy_statement["Effect"] = "Allow"
                         else:
                             project_user = project_user_dao.get(target_scope, username)
@@ -335,44 +333,28 @@ def lambda_handler(event, context):
                     elif target_type == DatasetType.PRIVATE and username == target_scope:
                         policy_statement["Effect"] = "Allow"
                     elif target_type == DatasetType.GROUP:
-                        if IS_ADMIN:
-                            policy_statement["Effect"] = "Allow"
-                        else:
-                            # target_scope is the dataset name for a group, so look up if this user
-                            # is a member of a group that can upload files to this dataset
-                            group_dataset = dataset_dao.get(DatasetType.GROUP, target_scope)
-                            if group_dataset:
-                                groups = group_user_dao.get_groups_for_user(username)
-                                for group in groups:
-                                    dataset = group_dataset_dao.get(group.group, target_scope)
-                                    if dataset:
-                                        policy_statement["Effect"] = "Allow"
-                                        break
-                            else:
-                                # dataset doesn't exist yet so this is a create. Check if the user is
-                                # in the group they're creating a dataset for
-                                group_user = group_user_dao.get(target_scope, username)
-                                if group_user:
-                                    policy_statement["Effect"] = "Allow"
-                        # TODO: is this correct for non-admins? A user just needs to be a member of the group
-                        # they're trying to create a group dataset for
+                        user_groups = group_user_dao.get_groups_for_user(username)
+                        user_group_names = set()
+                        for user_group in user_groups:
+                            user_group_names.add(user_group.group)
 
-                        # target_scope is the dataset name for a group, so look up if this user
-                        # is a member of a group that can upload files to this dataset
-                        group_dataset = dataset_dao.get(DatasetType.GROUP, target_scope)
-                        if group_dataset:
-                            groups = group_user_dao.get_groups_for_user(username)
+                        if requested_resource == "/dataset/create":
+                            groups = target_scope.split(",")
+                            # check that this user is a member of every group they're adding to the group dataset
+                            is_valid_group_list = True
+                            for group_names in user_group_names:
+                                if group_names not in groups:
+                                    is_valid_group_list = False
+                            if is_valid_group_list:
+                                policy_statement["Effect"] = "Allow"
+                        elif requested_resource == "/dataset/presigned-url":
+                            groups = group_dataset_dao.get_groups_for_dataset(target_scope)
                             for group in groups:
-                                dataset = group_dataset_dao.get(group.group, target_scope)
-                                if dataset:
+                                # validate the user is a member of at least one group associated with this dataset
+                                if group.group in user_group_names:
                                     policy_statement["Effect"] = "Allow"
                                     break
-                        else:
-                            # dataset doesn't exist yet so this is a create. Check if the user is
-                            # in the group they're creating a dataset for
-                            group_user = group_user_dao.get(target_scope, username)
-                            if group_user:
-                                policy_statement["Effect"] = "Allow"
+
                 else:
                     logger.info(
                         "Missing one or more required headers 'x-mlspace-dataset-type', "
