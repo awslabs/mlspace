@@ -20,7 +20,6 @@ export const DEFAULT_PAGE_SIZE = 10;
 
 export enum Permission {
     PROJECT_OWNER = 'MO',
-    COLLABORATOR = 'CO',
     ADMIN = 'PMO',
 }
 
