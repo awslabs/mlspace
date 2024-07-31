@@ -135,7 +135,7 @@ export function DatasetCreate () {
 
     function generateGroupOptions () {
         const groupOptions: SelectProps.Option[] = [];
-        groups?.map((group) => {
+        groups?.forEach((group) => {
             groupOptions.push({ label: group.name, value: group.name});
         });
         return groupOptions;

@@ -17,7 +17,12 @@ limitations under the License.
 import { default as Axios, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export const mlsAxios = Axios.create({
-    baseURL: `${window.env.LAMBDA_ENDPOINT}`
+    baseURL: `${window.env.LAMBDA_ENDPOINT}`,
+    headers: {
+        'common': {
+            'content-type': 'application/json'
+        }
+    }
 });
 
 export const mlsBaseQuery = ({ baseUrl } = { baseUrl: '' }) => async ({ url, method, data, params, headers }: AxiosRequestConfig) => {
@@ -32,12 +37,12 @@ export const mlsBaseQuery = ({ baseUrl } = { baseUrl: '' }) => async ({ url, met
 
         return { data: result.data };
     } catch (axiosError) {
-        const err = axiosError;
+        const err: AxiosError = axiosError;
 
         return {
             error: {
                 status: err.response?.status,
-                data: err.response?.data || err.message,
+                data: err.response?.data || err.cause?.message,
             }
         };
     }
@@ -50,7 +55,11 @@ mlsAxios.interceptors.request.use((config) => {
     const token = oidcString ? JSON.parse(oidcString).id_token : '';
 
     if (config.headers === undefined) {
-        config.headers = {};
+        config.headers = {
+            'post': {
+                'Content-Type': 'application/json'
+            }
+        };
     }
 
     config.headers['Authorization'] = `Bearer ${token}`;

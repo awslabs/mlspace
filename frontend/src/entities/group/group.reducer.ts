@@ -48,7 +48,8 @@ export const groupApi = createApi({
         createGroup: builder.mutation<string, IGroup>({
             query: (group) => ({
                 url: '/group',
-                data: JSON.stringify(group)
+                data: group,
+                method: 'POST'
             }),
             invalidatesTags: ['group']
         }),
@@ -66,7 +67,8 @@ export const groupApi = createApi({
         getGroup: builder.query<IGroupWithPermissions, string>({
             query: (groupName) => ({
                 url: `/group/${groupName}`,
-            })
+            }),
+            providesTags: ['group'],
         }),
 
         getGroupUsers: builder.query<IGroupUser[],string>({
@@ -79,19 +81,21 @@ export const groupApi = createApi({
         getGroupDatasets: builder.query<IDataset[],string>({
             query: (groupName) => ({
                 url: `/group/${groupName}/datasets`,
-            })
+            }),
+            providesTags: ['group/datasets']
         }),
 
         getGroupProjects: builder.query<IProjectGroup[],string>({
             query: (groupName) => ({
                 url: `/group/${groupName}/projects`,
-            })
+            }),
+            providesTags: ['group/projects']
         }),
 
         addGroupUsers: builder.mutation<string,AddGroupUserRequest>({
             query: (request) => ({
                 url: `/group/${request.groupName}/users`,
-                data: JSON.stringify(request),
+                data: request,
                 method: 'POST'
             }),
             invalidatesTags: ['group/users']
@@ -108,8 +112,10 @@ export const groupApi = createApi({
         updateGroup: builder.mutation<string, IGroup>({
             query: (group) => ({
                 url: `/group/${group.name}`,
-                data: JSON.stringify(group)
-            })
+                data: group,
+                method: 'PUT'
+            }),
+            invalidatesTags: ['group']
         }),
 
         deleteGroup: builder.mutation<string,string>({

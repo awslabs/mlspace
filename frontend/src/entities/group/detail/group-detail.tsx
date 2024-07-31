@@ -35,7 +35,7 @@ import { projectGroupColumns } from '../group.columns';
 
 export function GroupDetail () {
     const {groupName} = useParams();
-    const { data: group, isFetching: isFetchingGroup } = useGetGroupQuery(groupName!);
+    const { data: group, isFetching: isFetchingGroup } = useGetGroupQuery(groupName!, {refetchOnMountOrArgChange: true});
     const { data: groupUsers, isFetching: isFetchingGroupUsers } = useGetGroupUsersQuery(groupName!);
     const { data: groupDatasets, isFetching: isFetchingGroupDatasets } = useGetGroupDatasetsQuery(groupName!);
     const { data: groupProjects, isFetching: isFetchingGroupProjects } = useGetGroupProjectsQuery(groupName!);

@@ -46,7 +46,7 @@ import EMRClusterCreate from './emr/create/emr-cluster-create';
 import Configuration from './configuration/configuration';
 import Report from './report/report';
 import { selectCurrentUser } from './user/user.reducer';
-import { useAppDispatch, useAppSelector } from '../config/store';
+import { useAppSelector } from '../config/store';
 import { hasPermission, enableProjectCreation } from '../shared/util/permission-utils';
 import { Permission } from '../shared/model/user.model';
 import ResourceNotFound from '../modules/resource-not-found';
@@ -61,29 +61,31 @@ import GroupCreate from './group/create';
 import GroupDetail from './group/detail';
 import UserDetail from './user/detail';
 import ProjectGroups from './project/detail/groups';
-import { AdminBasePath, PersonalBasePath, ProjectBasePath, setBasePath } from '../config/base-path.reducer';
+import { AdminBasePath, PersonalBasePath, ProjectBasePath } from '../shared/layout/base-path-context';
+import { BasePathContextLayout } from '../shared/layout/base-path-context-layout';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const currentUser = useAppSelector(selectCurrentUser);
-    const dispatch = useAppDispatch();
 
 
     return (
         <div>
             <ErrorBoundaryRoutes>
-                <Route path='/admin' element={<RequireAdmin />} action={() => dispatch(setBasePath(AdminBasePath))}>
-                    <Route path='users' element={<User />} />
-                    <Route path='users/:username' element={<UserDetail />} />
-                    <Route path='groups' element={<Group />} />
-                    <Route path='groups/create' element={<GroupCreate />} />
-                    <Route path='groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />
-                    <Route path='groups/:groupName' element={<GroupDetail />} />
-                    <Route path='configuration' element={<Configuration />} />
-                    <Route path='reports' element={<Report />} />
+                <Route path='/admin' element={<RequireAdmin />}>
+                    <Route path='*' element={<BasePathContextLayout basePath={AdminBasePath} />}>
+                        <Route path='users' element={<User />} />
+                        <Route path='users/:username' element={<UserDetail />} />
+                        <Route path='groups' element={<Group />} />
+                        <Route path='groups/create' element={<GroupCreate />} />
+                        <Route path='groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />
+                        <Route path='groups/:groupName' element={<GroupDetail />} />
+                        <Route path='configuration' element={<Configuration />} />
+                        <Route path='reports' element={<Report />} />
+                    </Route>
                 </Route>
 
-                <Route path='/personal' action={() => dispatch(setBasePath(PersonalBasePath))}>
+                <Route path='/personal' element={<BasePathContextLayout basePath={PersonalBasePath} />}>
                     <Route path='group' element={<Group />} />
                     <Route path='group/:groupName' element={<GroupDetail />} />
                     <Route path='dataset' element={<Dataset />} />
@@ -99,7 +101,7 @@ const EntityRoutes = () => {
                     }
                 </Route>
             
-                <Route path='/project' action={() => dispatch(setBasePath(ProjectBasePath))}>
+                <Route path='/project' element={<BasePathContextLayout basePath={ProjectBasePath}  />}>
                     {enableProjectCreation(applicationConfig.configuration.ProjectCreation.isAdminOnly, currentUser) ? (
                         <Route path='project/create' element={<ProjectCreate />} />
                     ) : undefined}

@@ -49,9 +49,14 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
     const {groupName} = useParams();
     const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
     const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
-    const [ createGroup ] = useCreateGroupMutation();
-    const [ updateGroup ] = useUpdateGroupMutation();
-    const { data: group } = useGetGroupQuery(groupName!);
+    const [ createGroup, createGroupResult ] = useCreateGroupMutation();
+    const [ updateGroup, updateGroupResult ] = useUpdateGroupMutation();
+    const { data: group, isError: isErrorGroup } = useGetGroupQuery(groupName!);
+
+    if (isErrorGroup) {
+        navigate('/404');
+    }
+
     const [ addGroupUsers ] = useAddGroupUsersMutation();
 
     const groupSchema = z.object({
@@ -81,7 +86,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
             }),
     });
 
-    const {state, setState, errors, isValid, setFields, touchFields} = useValidationReducer(groupSchema, {
+    const {state, errors, isValid, setFields, touchFields} = useValidationReducer(groupSchema, {
         validateAll: false,
         needsValidation: false,
         form: {
@@ -93,39 +98,38 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
         formSubmitting: false,
     });
 
-    async function handleSubmit () {
-        setState({formSubmitting: true});
-        try {
-            let response;
-            if (!isEdit) {
-                response = await createGroup(state.form);
-            } else {
-                response = await updateGroup(state.form);
-            }
-            
-            if (response.isSuccess) {
-                notificationService.generateNotification(
-                    `Successfully ${isEdit ? 'updated' : 'created'} group ${state.form.name}`,
-                    'success'
-                );
-                
-                if (!isEdit && selectedUsers.length > 0){
-                    await addUsersToGroup(dispatch, state.form.name, selectedUsers, addGroupUsers);
-                }
-                navigate(`/admin/groups/${state.form.name}`);
-            } else {
-                notificationService.generateNotification(
-                    `Failed to ${isEdit ? 'update' : 'create'} group ${state.form.name} with error: ${response.error.message}`,
-                    'error'
-                );
-            }
-        } catch (e) {
+    [createGroupResult, updateGroupResult].forEach((result, index) => {
+        if (result.isError) {
+            console.log(index, result);
             notificationService.generateNotification(
-                `Failed to ${isEdit ? 'update' : 'create'} group ${state.form.name}`,
+                `Failed to ${isEdit ? 'update' : 'create' } group ${state.form.name} with error: ${result.error.data}`,
                 'error'
             );
-        } finally {
-            setState({formSubmitting: false});
+    
+            result.reset();
+        }
+    });
+
+    async function handleSubmit () {
+        let response;
+    
+        if (!isEdit) {
+            response = await createGroup(state.form);
+        } else {
+            response = await updateGroup(state.form);
+        }
+        console.log('response', response);
+        
+        if (!('error' in response)) {
+            notificationService.generateNotification(
+                `Successfully ${isEdit ? 'updated' : 'created'} group ${state.form.name}`,
+                'success'
+            );
+            
+            if (!isEdit && selectedUsers.length > 0){
+                await addUsersToGroup(dispatch, state.form.name, selectedUsers, addGroupUsers);
+            }
+            navigate(`/admin/groups/${state.form.name}`);
         }
     }
 
@@ -186,12 +190,12 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                         </Button>
                         <Button
                             data-cy='submit'
-                            loading={state.formSubmitting}
+                            loading={updateGroupResult.isLoading || createGroupResult.isLoading}
                             variant='primary'
                             onClick={() => {
                                 handleSubmit();
                             }}
-                            disabled={state.formSubmitting || !isValid}
+                            disabled={updateGroupResult.isLoading || createGroupResult.isLoading || !isValid}
                         >
                             Submit
                         </Button>

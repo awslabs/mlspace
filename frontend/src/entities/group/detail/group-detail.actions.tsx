@@ -14,11 +14,11 @@
  limitations under the License.
  */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
+import { Dispatch } from '@reduxjs/toolkit';
 import { ButtonDropdown, ButtonDropdownProps, SpaceBetween } from '@cloudscape-design/components';
-import { useAppDispatch, useAppSelector } from '../../../config/store';
+import { useAppDispatch } from '../../../config/store';
 import { useGetCurrentUserQuery } from '../../user/user.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
@@ -26,7 +26,8 @@ import NotificationService from '../../../shared/layout/notification/notificatio
 import Modal, { ModalProps } from '../../../modules/modal';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
 import { useDeleteGroupMutation, useGetAllGroupsQuery } from '../group.reducer';
-import { AdminBasePath, selectBasePath } from '../../../config/base-path.reducer';
+import { AdminBasePath } from '../../../shared/layout/base-path-context';
+import BasePathContext from '../../../shared/layout/base-path-context';
 
 function GroupDetailActions () {
     const dispatch = useAppDispatch();
@@ -48,6 +49,9 @@ function GroupActionButton (
 ) {
     const actionItems: Array<ButtonDropdownProps.ItemOrGroup> = [];
     const { data: currentUser } = useGetCurrentUserQuery();
+    const basePath = useContext(BasePathContext);
+    const { refetch: refetchAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath === AdminBasePath});
+    const [ deleteGroup ] = useDeleteGroupMutation();
 
     const [modalState, setModalState] = React.useState<Partial<ModalProps>>({
         visible: false,
@@ -70,16 +74,43 @@ function GroupActionButton (
                 items={actionItems}
                 variant='primary'
                 disabled={groupName === undefined}
-                onItemClick={(e) =>
-                    GroupActionHandler(
-                        e,
-                        groupName,
-                        nav,
-                        dispatch,
-                        modalState as ModalProps,
-                        setModalState
-                    )
-                }
+                onItemClick={(e) => {
+                    const notificationService = NotificationService(dispatch);
+
+                    switch (e.detail.id) {
+                        case 'update_group':
+                            nav(`${AdminBasePath.url}/groups/edit/${groupName}`);
+                            break;
+                        case 'delete_group':
+                            dispatch(
+                                setDeleteModal({
+                                    resourceName: 'Group',
+                                    resourceType: 'group',
+                                    postConfirm: refetchAllGroups,
+                                    onConfirm: async () =>  {
+                                        const result = await deleteGroup(groupName!);
+                
+                                        setModalState({
+                                            ...modalState,
+                                            visible: false,
+                                        });
+                
+                                        notificationService.showActionNotification(
+                                            'delete group',
+                                            `Group ${groupName} deleted.`,
+                                            result
+                                        );
+                
+                                        if (result.isSuccess) {
+                                            nav(`${basePath}/groups`);
+                                        }
+                                    },
+                                    description: `This will delete the following group: ${groupName}.`
+                                })
+                            );
+                            break;
+                    }
+                }}
             >
                 <Modal {...(modalState as ModalProps)} />
                 Actions
@@ -88,53 +119,5 @@ function GroupActionButton (
         </>
     );
 }
-
-const GroupActionHandler = (
-    e: CustomEvent<ButtonDropdownProps.ItemClickDetails>,
-    groupName: string,
-    nav: (endpoint: string) => void,
-    dispatch: ThunkDispatch<any, any, Action>,
-    modalState: ModalProps,
-    setModalState: (state: Partial<ModalProps>) => void
-) => {
-    const notificationService = NotificationService(dispatch);
-    const basePath = useAppSelector(selectBasePath);
-    const { refetch: refetchAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath === AdminBasePath});
-    const [ deleteGroup ] = useDeleteGroupMutation();
-
-    switch (e.detail.id) {
-        case 'update_group':
-            nav(`${basePath}/${groupName}`);
-            break;
-        case 'delete_group':
-            dispatch(
-                setDeleteModal({
-                    resourceName: 'Group',
-                    resourceType: 'group',
-                    postConfirm: refetchAllGroups,
-                    onConfirm: async () =>  {
-                        const result = await deleteGroup(groupName!);
-
-                        setModalState({
-                            ...modalState,
-                            visible: false,
-                        });
-
-                        notificationService.showActionNotification(
-                            'delete group',
-                            `Group ${groupName} deleted.`,
-                            result
-                        );
-
-                        if (result.isSuccess) {
-                            nav(`${basePath}/groups`);
-                        }
-                    },
-                    description: `This will delete the following group: ${groupName}.`
-                })
-            );
-            break;
-    }
-};
 
 export default GroupDetailActions;

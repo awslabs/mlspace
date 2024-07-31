@@ -14,7 +14,7 @@
  limitations under the License.
  */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { groupColumns, visibleColumns } from './group.columns';
 import Table from '../../modules/table';
 import { DocTitle } from '../../shared/doc';
@@ -24,12 +24,12 @@ import { hasPermission } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
 import { useLocation } from 'react-router-dom';
 import { useGetAllGroupsQuery } from './group.reducer';
-import { useAppSelector } from '../../config/store';
-import { selectBasePath } from '../../config/base-path.reducer';
+import { AdminBasePath } from '../../shared/layout/base-path-context';
+import BasePathContext from '../../shared/layout/base-path-context';
 
 export function Group () {
-    const basePath = useAppSelector(selectBasePath);
-    const { data: groups, isFetching: isFetchingGroups } = useGetAllGroupsQuery({adminGetAll: basePath.includes('admin')});
+    const basePath = useContext(BasePathContext);
+    const { data: groups, isFetching: isFetchingGroups } = useGetAllGroupsQuery({adminGetAll: basePath === AdminBasePath});
     const {pathname} = useLocation();
     const { data: currentUser } = useGetCurrentUserQuery();
 

@@ -13,9 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import { useAppDispatch, useAppSelector } from '../../config/store';
+import { useAppDispatch } from '../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
-import React from 'react';
+import React, { useContext } from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { IGroup } from '../../shared/model/group.model';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
@@ -24,21 +24,22 @@ import { useGetCurrentUserQuery } from '../user/user.reducer';
 import { IUser, Permission } from '../../shared/model/user.model';
 import { hasPermission } from '../../shared/util/permission-utils';
 import { useDeleteGroupMutation, useGetAllGroupsQuery } from './group.reducer';
-import { selectBasePath } from '../../config/base-path.reducer';
+import { AdminBasePath } from '../../shared/layout/base-path-context';
+import BasePathContext from '../../shared/layout/base-path-context';
 
 function GroupActions (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { data: currentUser } = useGetCurrentUserQuery();
-    const basePath = useAppSelector(selectBasePath);
-    const { refetch: refetchAllGroups, isFetching: isFetchingAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath.includes('admin')});
+    const basePath = useContext(BasePathContext);
+    const { refetch: refetchAllGroups, isFetching: isFetchingAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath === AdminBasePath});
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
             <Button onClick={refetchAllGroups} ariaLabel={'Refresh groups list'} disabled={isFetchingAllGroups}>
                 <Icon name='refresh'/>
             </Button>
-            {GroupActionButton(navigate, dispatch, currentUser, props)}
+            {currentUser && GroupActionButton(navigate, dispatch, currentUser, props)}
         </SpaceBetween>
     );
 }

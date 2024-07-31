@@ -1,31 +1,27 @@
 /**
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
+ 
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-
+ 
       http://www.apache.org/licenses/LICENSE-2.0
-
+ 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+import React from 'react';
 
-import { ReducersMapObject } from '@reduxjs/toolkit';
+export const DefaultBasePath = { type: 'default', url: '/' };
+export const AdminBasePath = { type: 'admin', url: '/admin' };
+export const PersonalBasePath = { type: 'personal', url: '/personal' };
+export const ProjectBasePath = { type: 'project', url: '/project' };
 
-import entitiesReducers from '../../entities/reducers';
-import navigationReducer from '../layout/navigation/navigation.reducer';
-import notificationReducer from '../layout/notification/notification.reducer';
-import metadataReducer from '../metadata/metadata.reducer';
+export type BasePath = typeof DefaultBasePath | typeof AdminBasePath | typeof PersonalBasePath | typeof ProjectBasePath;
 
-const rootReducer: ReducersMapObject = {
-    ...entitiesReducers,
-    navigation: navigationReducer,
-    notification: notificationReducer,
-    metadata: metadataReducer,
-};
+export const BasePathContext = React.createContext(DefaultBasePath);
 
-export default rootReducer;
+export default BasePathContext;
