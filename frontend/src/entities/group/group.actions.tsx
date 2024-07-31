@@ -13,9 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import { useAppDispatch } from '../../config/store';
+import { useAppDispatch, useAppSelector } from '../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
-import React, { useContext } from 'react';
+import React from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { IGroup } from '../../shared/model/group.model';
 import { setDeleteModal } from '../../modules/modal/modal.reducer';
@@ -23,14 +23,14 @@ import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { useGetCurrentUserQuery } from '../user/user.reducer';
 import { IUser, Permission } from '../../shared/model/user.model';
 import { hasPermission } from '../../shared/util/permission-utils';
-import BasePathContext from '../../shared/layout/base-path-context';
-import { useGetAllGroupsQuery } from './group.reducer';
+import { useDeleteGroupMutation, useGetAllGroupsQuery } from './group.reducer';
+import { selectBasePath } from '../../config/base-path.reducer';
 
 function GroupActions (props?: any) {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { data: currentUser } = useGetCurrentUserQuery();
-    const basePath = useContext(BasePathContext);
+    const basePath = useAppSelector(selectBasePath);
     const { refetch: refetchAllGroups, isFetching: isFetchingAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath.includes('admin')});
 
     return (
@@ -46,6 +46,7 @@ function GroupActions (props?: any) {
 function GroupActionButton (navigate: NavigateFunction, dispatch: Dispatch, currentUser: IUser, props?: any) {
     const selectedGroup: IGroup = props?.selectedItems[0];
     const items: ButtonDropdownProps.Item[] = [];
+    const [ deleteGroup ] = useDeleteGroupMutation();
     if (selectedGroup) {
         items.push({
             text: 'Delete Group',
@@ -64,7 +65,7 @@ function GroupActionButton (navigate: NavigateFunction, dispatch: Dispatch, curr
                     items={items}
                     variant='primary'
                     disabled={!selectedGroup}
-                    onItemClick={(e) => GroupActionHandler(e, selectedGroup, dispatch, navigate)}
+                    onItemClick={(e) => GroupActionHandler(e, selectedGroup, dispatch, navigate, deleteGroup)}
                 >
                     Actions
                 </ButtonDropdown>
@@ -84,7 +85,8 @@ const GroupActionHandler = async (
     e: CustomEvent<ButtonDropdownProps.ItemClickDetails>,
     selectedGroup: IGroup,
     dispatch: ThunkDispatch<any, any, Action>,
-    navigate: NavigateFunction
+    navigate: NavigateFunction,
+    deleteGroup: ReturnType<typeof useDeleteGroupMutation>[0]
 ) => {
     switch (e.detail.id) {
         case 'deleteGroup':
@@ -92,7 +94,9 @@ const GroupActionHandler = async (
                 setDeleteModal({
                     resourceName: 'Group',
                     resourceType: 'group',
-                    onConfirm: async () => deleteGroup(selectedGroup.name),
+                    onConfirm: async () => {
+                        deleteGroup(selectedGroup.name);
+                    },
                     description: `This will delete the following group: ${selectedGroup.name}.`
                 })
             );

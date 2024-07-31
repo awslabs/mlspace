@@ -20,12 +20,14 @@ import entitiesReducers from '../../entities/reducers';
 import navigationReducer from '../layout/navigation/navigation.reducer';
 import notificationReducer from '../layout/notification/notification.reducer';
 import metadataReducer from '../metadata/metadata.reducer';
+import basePathReducer from '../../config/base-path.reducer';
 
 const rootReducer: ReducersMapObject = {
     ...entitiesReducers,
     navigation: navigationReducer,
     notification: notificationReducer,
     metadata: metadataReducer,
+    basePathReducer,
 };
 
 export default rootReducer;

@@ -14,19 +14,19 @@
  limitations under the License.
  */
 
-import React, { useContext } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { ButtonDropdown, ButtonDropdownProps, SpaceBetween } from '@cloudscape-design/components';
-import { useAppDispatch } from '../../../config/store';
+import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { useGetCurrentUserQuery } from '../../user/user.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import Modal, { ModalProps } from '../../../modules/modal';
 import { setDeleteModal } from '../../../modules/modal/modal.reducer';
-import { BasePathContext } from '../../../shared/layout/base-path-context';
 import { useDeleteGroupMutation, useGetAllGroupsQuery } from '../group.reducer';
+import { AdminBasePath, selectBasePath } from '../../../config/base-path.reducer';
 
 function GroupDetailActions () {
     const dispatch = useAppDispatch();
@@ -98,8 +98,8 @@ const GroupActionHandler = (
     setModalState: (state: Partial<ModalProps>) => void
 ) => {
     const notificationService = NotificationService(dispatch);
-    const basePath = useContext(BasePathContext);
-    const { refetch: refetchAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath.includes('admin')});
+    const basePath = useAppSelector(selectBasePath);
+    const { refetch: refetchAllGroups } = useGetAllGroupsQuery({adminGetAll: basePath === AdminBasePath});
     const [ deleteGroup ] = useDeleteGroupMutation();
 
     switch (e.detail.id) {

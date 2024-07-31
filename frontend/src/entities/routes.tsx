@@ -46,10 +46,10 @@ import EMRClusterCreate from './emr/create/emr-cluster-create';
 import Configuration from './configuration/configuration';
 import Report from './report/report';
 import { selectCurrentUser } from './user/user.reducer';
-import { useAppSelector } from '../config/store';
+import { useAppDispatch, useAppSelector } from '../config/store';
 import { hasPermission, enableProjectCreation } from '../shared/util/permission-utils';
 import { Permission } from '../shared/model/user.model';
-// import ResourceNotFound from '../modules/resource-not-found';
+import ResourceNotFound from '../modules/resource-not-found';
 import EMRDetail from './emr/detail/emr-clusters-detail';
 import BatchTranslate from './batch-translate';
 import BatchTranslateCreate from './batch-translate/create';
@@ -61,141 +61,133 @@ import GroupCreate from './group/create';
 import GroupDetail from './group/detail';
 import UserDetail from './user/detail';
 import ProjectGroups from './project/detail/groups';
-import { BasePathContext } from '../shared/layout/base-path-context';
+import { AdminBasePath, PersonalBasePath, ProjectBasePath, setBasePath } from '../config/base-path.reducer';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const currentUser = useAppSelector(selectCurrentUser);
+    const dispatch = useAppDispatch();
 
 
     return (
         <div>
-            <BasePathContext.Provider value='#/admin'>
-                <ErrorBoundaryRoutes>
-                    <Route element={<RequireAdmin />}>
-                        <Route path='admin/users' element={<User />} />
-                        <Route path='admin/users/:username' element={<UserDetail />} />
-                        <Route path='admin/groups' element={<Group />} />
-                        <Route path='admin/groups/create' element={<GroupCreate />} />
-                        <Route path='admin/groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />
-                        <Route path='admin/groups/:groupName' element={<GroupDetail />} />
-                        <Route path='admin/configuration' element={<Configuration />} />
-                        <Route path='admin/reports' element={<Report />} />
-                    </Route>
-                </ErrorBoundaryRoutes>
-            </BasePathContext.Provider>
+            <ErrorBoundaryRoutes>
+                <Route path='/admin' element={<RequireAdmin />} action={() => dispatch(setBasePath(AdminBasePath))}>
+                    <Route path='users' element={<User />} />
+                    <Route path='users/:username' element={<UserDetail />} />
+                    <Route path='groups' element={<Group />} />
+                    <Route path='groups/create' element={<GroupCreate />} />
+                    <Route path='groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />
+                    <Route path='groups/:groupName' element={<GroupDetail />} />
+                    <Route path='configuration' element={<Configuration />} />
+                    <Route path='reports' element={<Report />} />
+                </Route>
 
-            <BasePathContext.Provider value='#/personal'>
-                <ErrorBoundaryRoutes>
-                    <Route path='personal/group' element={<Group />} />
-                    <Route path='personal/group/:groupName' element={<GroupDetail />} />
-                    <Route path='personal/dataset' element={<Dataset />} />
-                    <Route path='personal/dataset/create' element={<DatasetCreate />} />
-                    <Route path='personal/dataset/:type/:scope/:name/edit' element={<DatasetUpdate />} />
-                    <Route path='personal/dataset/:type/:scope/:name' element={<DatasetDetail />} />
-                    <Route path='personal/notebook' element={<Notebook />} />
-                    <Route path='personal/notebook/create' element={<NotebookCreate />} />
-                    <Route path='personal/notebook/:name' element={<NotebookDetail />} />
-                    <Route
-                        path='personal/notebook/:name/edit'
-                        element={<NotebookCreate update={true} />}
-                    />
-                    {applicationConfig.configuration.EnabledServices.realtimeTranslate ? (
+                <Route path='/personal' action={() => dispatch(setBasePath(PersonalBasePath))}>
+                    <Route path='group' element={<Group />} />
+                    <Route path='group/:groupName' element={<GroupDetail />} />
+                    <Route path='dataset' element={<Dataset />} />
+                    <Route path='dataset/create' element={<DatasetCreate />} />
+                    <Route path='dataset/:type/:scope/:name/edit' element={<DatasetUpdate />} />
+                    <Route path='dataset/:type/:scope/:name' element={<DatasetDetail />} />
+                    <Route path='notebook' element={<Notebook />} />
+                    <Route path='notebook/create' element={<NotebookCreate />} />
+                    <Route path='notebook/:name' element={<NotebookDetail />} />
+                    <Route path='notebook/:name/edit' element={<NotebookCreate update={true} />}/>
+                    {applicationConfig.configuration.EnabledServices.realtimeTranslate &&
                         <Route path='personal/translate/realtime' element={<TranslateRealtime />} />
-                    ) : undefined}
-                </ErrorBoundaryRoutes>
-            </BasePathContext.Provider>
+                    }
+                </Route>
             
-            <BasePathContext.Provider value='#/project'>
-                <ErrorBoundaryRoutes>
+                <Route path='/project' action={() => dispatch(setBasePath(ProjectBasePath))}>
                     {enableProjectCreation(applicationConfig.configuration.ProjectCreation.isAdminOnly, currentUser) ? (
                         <Route path='project/create' element={<ProjectCreate />} />
                     ) : undefined}
-                    <Route path='project/:projectName' element={<ProjectDetail />} />
-                    <Route path='project/:projectName/edit' element={<ProjectCreate isEdit={true} />} />
-                    <Route path='project/:projectName/user' element={<ProjectUser />} />
-                    <Route path='project/:projectName/groups' element={<ProjectGroups />} />
-                    <Route path='project/:projectName/endpoint' element={<Endpoint />} />
-                    <Route path='project/:projectName/endpoint/create' element={<EndpointCreate />} />
-                    <Route path='project/:projectName/endpoint/:name' element={<EndpointDetails />} />
-                    <Route path='project/:projectName/endpoint-config' element={<EndpointConfig />} />
+                    <Route path=':projectName' element={<ProjectDetail />} />
+                    <Route path=':projectName/edit' element={<ProjectCreate isEdit={true} />} />
+                    <Route path=':projectName/user' element={<ProjectUser />} />
+                    <Route path=':projectName/groups' element={<ProjectGroups />} />
+                    <Route path=':projectName/endpoint' element={<Endpoint />} />
+                    <Route path=':projectName/endpoint/create' element={<EndpointCreate />} />
+                    <Route path=':projectName/endpoint/:name' element={<EndpointDetails />} />
+                    <Route path=':projectName/endpoint-config' element={<EndpointConfig />} />
                     <Route
-                        path='project/:projectName/endpoint-config/create'
+                        path=':projectName/endpoint-config/create'
                         element={<EndpointConfigCreate />}
                     />
                     <Route
-                        path='project/:projectName/endpoint-config/:name'
+                        path=':projectName/endpoint-config/:name'
                         element={<EndpointConfigDetails />}
                     />
-                    <Route path='project/:projectName/notebook' element={<Notebook />} />
-                    <Route path='project/:projectName/notebook/create' element={<NotebookCreate />} />
-                    <Route path='project/:projectName/notebook/:name' element={<NotebookDetail />} />
+                    <Route path=':projectName/notebook' element={<Notebook />} />
+                    <Route path=':projectName/notebook/create' element={<NotebookCreate />} />
+                    <Route path=':projectName/notebook/:name' element={<NotebookDetail />} />
                     <Route
-                        path='project/:projectName/notebook/:name/edit'
+                        path=':projectName/notebook/:name/edit'
                         element={<NotebookCreate update={true} />}
                     />
-                    <Route path='project/:projectName/dataset' element={<Dataset />} />
-                    <Route path='project/:projectName/dataset/create' element={<DatasetCreate />} />
+                    <Route path=':projectName/dataset' element={<Dataset />} />
+                    <Route path=':projectName/dataset/create' element={<DatasetCreate />} />
                     <Route
-                        path='project/:projectName/dataset/:type/:scope/:name'
+                        path=':projectName/dataset/:type/:scope/:name'
                         element={<DatasetDetail />}
                     />
                     <Route
-                        path='project/:projectName/dataset/:type/:scope/:name/edit'
+                        path=':projectName/dataset/:type/:scope/:name/edit'
                         element={<DatasetUpdate />}
                     />
-                    <Route path='project/:projectName/model' element={<Model />} />
-                    <Route path='project/:projectName/model/create' element={<ModelCreate />} />
-                    <Route path='project/:projectName/model/:modelName' element={<ModelDetail />} />
+                    <Route path=':projectName/model' element={<Model />} />
+                    <Route path=':projectName/model/create' element={<ModelCreate />} />
+                    <Route path=':projectName/model/:modelName' element={<ModelDetail />} />
 
-                    {applicationConfig.configuration.EnabledServices.labelingJob ? (
+                    {applicationConfig.configuration.EnabledServices.labelingJob &&
                         <Route
-                            path='project/:projectName/jobs/labeling/*'
+                            path=':projectName/jobs/labeling/*'
                             element={<LabelingJobRoutes />}
                         />
-                    ) : undefined}
+                    }
 
                     <Route
-                        path='project/:projectName/jobs/training/*'
+                        path=':projectName/jobs/training/*'
                         element={<TrainingJobRoutes />}
                     />
-                    <Route path='project/:projectName/jobs/hpo/*' element={<HPOJobRoutes />} />
+                    <Route path=':projectName/jobs/hpo/*' element={<HPOJobRoutes />} />
                     <Route
-                        path='project/:projectName/jobs/transform/*'
+                        path=':projectName/jobs/transform/*'
                         element={<TransformJobRoutes />}
                     />
 
-                    {applicationConfig.configuration.EnabledServices.emrCluster ? (
+                    {applicationConfig.configuration.EnabledServices.emrCluster &&
                         <>
-                            <Route path='project/:projectName/emr' element={<EMRClusters />} />
+                            <Route path=':projectName/emr' element={<EMRClusters />} />
 
-                            <Route path='project/:projectName/emr/create' element={<EMRClusterCreate />} />
+                            <Route path=':projectName/emr/create' element={<EMRClusterCreate />} />
                             <Route
-                                path='project/:projectName/emr/:clusterId/:clusterName'
+                                path=':projectName/emr/:clusterId/:clusterName'
                                 element={<EMRDetail />}
                             />
                         </>
-                    ) : undefined}
-                    {applicationConfig.configuration.EnabledServices.batchTranslate ? (
+                    }
+                    {applicationConfig.configuration.EnabledServices.batchTranslate &&
                         <>
                             <Route
-                                path='project/:projectName/batch-translate'
+                                path=':projectName/batch-translate'
                                 element={<BatchTranslate />}
                             />
 
                             <Route
-                                path='project/:projectName/batch-translate/create'
+                                path=':projectName/batch-translate/create'
                                 element={<BatchTranslateCreate />}
                             />
                             <Route
-                                path='project/:projectName/batch-translate/:jobId'
+                                path=':projectName/batch-translate/:jobId'
                                 element={<BatchTranslateDetail />}
                             />
                         </>
-                    ) : undefined}
-                    {/* <Route path='*' element={<ResourceNotFound />} /> */}
-                </ErrorBoundaryRoutes>
-            </BasePathContext.Provider>
+                    }
+                </Route>
+                <Route path='*' element={<ResourceNotFound />} />
+            </ErrorBoundaryRoutes>
         </div>
     );
 };
