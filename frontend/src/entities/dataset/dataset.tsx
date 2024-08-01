@@ -95,6 +95,7 @@ export const Dataset = ({isAdmin}: DatasetProperties) => {
                     loadingItems={loadingDatasets}
                     loadingAction={loadingAction}
                     //serverFetch={isAdmin ? getAllDatasets : getDatasetsList}
+                    //TODO: look at groups to see how we refresh that table
                     //AsyncThunk<AxiosResponse<IDataset[], any>, void, AsyncThunkConfig>
                     //AsyncThunk<AxiosResponse<IDataset[], any>, ServerRequestProps, AsyncThunkConfig>
                     storeClear={clearDatasetList}

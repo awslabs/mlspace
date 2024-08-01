@@ -305,26 +305,21 @@ def create_dataset(event, context):
 
 @api_wrapper
 def list_resources(event, context):
-    print("Listing resources")
     username = event["requestContext"]["authorizer"]["principalId"]
-    print(f"Username is {username}")
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
-    print(f"Got user model {user.permissions}")
 
     is_admin = event["requestContext"].get("resourcePath") == "/admin/datasets"
-    print(f"is_admin: {is_admin}")
     datasets = []
 
     # if this is an admin request, retrieve ALL the datasets
     if is_admin and Permission.ADMIN in user.permissions:
-        print("is admin, getting all")
         datasets = dataset_dao.get_all()
-        print(f"Got datasets, {len(datasets)} total")
         for dataset in datasets:
-            # Clear list to make sure it's up to date
-            dataset.groups = []
-            for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset.name):
-                dataset.groups.append(group_dataset.group)
+            if dataset.type == DatasetType.GROUP:
+                # Clear list to make sure it's up to date
+                dataset.groups = []
+                for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset.name):
+                    dataset.groups.append(group_dataset.group)
     else:
         # Get global datasets
         datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)

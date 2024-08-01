@@ -69,7 +69,7 @@ def _build_group_dataset(group: str, dataset: str) -> GroupDatasetModel:
     return GroupDatasetModel(dataset_name=dataset, group_name=group)
 
 
-def _build_dataset(scope: str, name: str, user_name: str, type: str) -> DatasetModel:
+def _build_dataset(scope: str, name: str, user_name: str, type: str, groups=[]) -> DatasetModel:
     return DatasetModel(
         scope=scope,
         type=type,
@@ -77,6 +77,7 @@ def _build_dataset(scope: str, name: str, user_name: str, type: str) -> DatasetM
         description=f"{name} description",
         location=f"{PRIVATE_PREFIX}/{scope}/datasets/{name}",
         created_by=user_name,
+        groups=groups,
     )
 
 
@@ -159,7 +160,17 @@ def test_list_all(mock_dataset_dao, mock_group_dataset_dao):
 
     expected_datasets = mock_get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
     expected_datasets.extend(mock_get_all_for_scope(DatasetType.PRIVATE, user_name))
-    expected_datasets.extend(mock_get_all_for_scope(DatasetType.GROUP, DatasetType.GROUP))
+    expected_datasets.extend(
+        [
+            _build_dataset(
+                scope=DatasetType.GROUP,
+                name=group_dataset_name,
+                user_name=user_name,
+                type=DatasetType.GROUP,
+                groups=[group_name],
+            )
+        ]
+    )
     expected_datasets.extend(mock_get_all_for_scope(DatasetType.PROJECT, project_name))
 
     mock_dataset_dao.get_all.return_value = expected_datasets
