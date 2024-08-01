@@ -45,6 +45,9 @@ export const getDatasetsList = createAsyncThunk(
         if (params?.projectName !== undefined) {
             requestUrl = `/project/${params.projectName}/datasets`;
         }
+        if (params?.isAdmin) {
+            requestUrl = '/admin/datasets';
+        }
         return axios.get<IDataset[]>(requestUrl);
     }
 );

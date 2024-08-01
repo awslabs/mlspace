@@ -72,6 +72,7 @@ export default function Table ({
     storeClear,
     keepSelection = true,
     tableDescription,
+    isAdmin = false,
 }: TableProps) {
     const currentUser = useAppSelector(selectCurrentUser);
     const dispatch = useDispatch();
@@ -166,6 +167,7 @@ export default function Table ({
                 loading={serverSideLoading}
                 setLoading={setServerSideLoading}
                 storeClear={storeClear}
+                isAdmin={isAdmin}
             />
         );
     }

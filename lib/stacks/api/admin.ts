@@ -87,6 +87,14 @@ export class AdminApiStack extends Stack {
                 method: 'GET',
             },
             {
+                id: 'dataset-admin',
+                name: 'list_resources',
+                resource: 'dataset',
+                description: 'List all global, group, and private datasets',
+                path: 'admin/datasets',
+                method: 'GET',
+            },
+            {
                 name: 'update',
                 resource: 'user',
                 description: 'Update an MLSpace user',

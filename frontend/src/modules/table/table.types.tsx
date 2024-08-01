@@ -60,6 +60,7 @@ type TableProps<Entry = TableEntry> = {
     storeClear?: ActionCreatorWithoutPayload;
     keepSelection?: boolean;
     tableDescription?: string;
+    isAdmin?: boolean;
 };
 
 type TableEntry = any;

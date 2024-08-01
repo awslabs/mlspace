@@ -147,15 +147,12 @@ export type DatasetBrowserState = {
 export const getDatasetContents = createAsyncThunk(
     'dataset/list_files',
     async (props: DatasetServerRequestProps) => {
-        const { datasetContext, projectName, username } = props;
-        let scope: string | undefined = datasetContext.type;
+        const { datasetContext } = props;
 
         switch (datasetContext.type) {
-            case DatasetType.PROJECT:
-                scope = projectName;
-                break;
-            case DatasetType.PRIVATE:
-                scope = username;
+            case DatasetType.GROUP:
+            case DatasetType.GLOBAL:
+                datasetContext.scope = datasetContext.type;
                 break;
         }
 
@@ -172,7 +169,7 @@ export const getDatasetContents = createAsyncThunk(
             searchParams.set('prefix', datasetContext.location);
         }
 
-        return axios.get<ListFilesResponse>(`/v2/dataset/${datasetContext.type}/${scope}/${datasetContext.name}/files?${searchParams.toString()}`).then((response) => {
+        return axios.get<ListFilesResponse>(`/v2/dataset/${datasetContext.type}/${datasetContext.scope}/${datasetContext.name}/files?${searchParams.toString()}`).then((response) => {
             response.data.contents.forEach((resource) => {
                 // copy bucket from top level of response to individual resources for easier management
                 resource.bucket = response.data.bucket;

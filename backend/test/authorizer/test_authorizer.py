@@ -485,13 +485,8 @@ def test_group_management(
     "user,project_user,key,resource,allow",
     [
         (MOCK_USER, None, "global/datasets/test-dataset/example.txt", "presigned-url", True),
-        (
-            MOCK_ADMIN_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/test-dataset/example.txt",
-            "presigned-url",
-            True,
-        ),
+        (MOCK_USER, None, "group/datasets/test-dataset/example.txt", "presigned-url", True),
+        (MOCK_ADMIN_USER, None, f"project/{MOCK_PROJECT_NAME}/test-dataset/example.txt", "presigned-url", True),
         (
             MOCK_USER,
             MOCK_REGULAR_PROJECT_USER,
@@ -499,20 +494,8 @@ def test_group_management(
             "presigned-url",
             True,
         ),
-        (
-            MOCK_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/example.txt",
-            "presigned-url",
-            False,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_USER.username}/datasets/test-dataset/example.txt",
-            "presigned-url",
-            True,
-        ),
+        (MOCK_USER, None, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/example.txt", "presigned-url", False),
+        (MOCK_USER, None, f"private/{MOCK_USER.username}/datasets/test-dataset/example.txt", "presigned-url", True),
         (
             MOCK_USER,
             None,
@@ -521,50 +504,23 @@ def test_group_management(
             False,
         ),
         (MOCK_USER, None, "global/datasets/test-dataset/", "create", True),
-        (
-            MOCK_ADMIN_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/test-dataset/",
-            "create",
-            True,
-        ),
-        (
-            MOCK_USER,
-            MOCK_REGULAR_PROJECT_USER,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/",
-            "create",
-            True,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/",
-            "create",
-            False,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_USER.username}/datasets/test-dataset/",
-            "create",
-            True,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_ADMIN_USER.username}/datasets/test-dataset/",
-            "create",
-            False,
-        ),
+        (MOCK_USER, None, "group/datasets/test-dataset/", "create", True),
+        (MOCK_ADMIN_USER, None, f"project/{MOCK_PROJECT_NAME}/test-dataset/", "create", True),
+        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/", "create", True),
+        (MOCK_USER, None, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/", "create", False),
+        (MOCK_USER, None, f"private/{MOCK_USER.username}/datasets/test-dataset/", "create", True),
+        (MOCK_USER, None, f"private/{MOCK_ADMIN_USER.username}/datasets/test-dataset/", "create", False),
     ],
     ids=[
         "global_dataset_presigned_url",
+        "group_dataset_presigned_url",
         "project_dataset_admin_presigned_url",
         "project_dataset_member_presigned_url",
         "project_dataset_non_member_presigned_url",
         "private_same_user_presigned_url",
         "private_different_user_presigned_url",
         "global_dataset_create_dataset",
+        "group_dataset_create_dataset",
         "project_dataset_admin_create_dataset",
         "project_dataset_member_create_dataset",
         "project_dataset_non_member_create_dataset",
@@ -573,11 +529,15 @@ def test_group_management(
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_dataset_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_generate_presigned_dataset_url(
     mock_user_dao,
     mock_project_user_dao,
+    mock_group_user_dao,
+    mock_group_dataset_dao,
     user: UserModel,
     project_user: ProjectUserModel,
     key: str,
@@ -589,6 +549,16 @@ def test_generate_presigned_dataset_url(
     mock_user_dao.get.return_value = user
     if key.startswith("project") and user.username != MOCK_ADMIN_USER.username:
         mock_project_user_dao.get.return_value = project_user
+    if mock_type == DatasetType.GROUP:
+        mock_group_user_dao.get_groups_for_user.return_value = [MOCK_REGULAR_GROUP_USER]
+        if resource == "create":
+            mock_scope = MOCK_GROUP_NAME
+        else:
+            mock_group_dataset_dao.get_groups_for_dataset.return_value = [
+                GroupDatasetModel(dataset_name="MOCK_DATASET_NAME", group_name=MOCK_GROUP_NAME)
+            ]
+            mock_scope = "MOCK_DATASET_NAME"
+
     assert lambda_handler(
         mock_event(
             user=user,
@@ -606,6 +576,14 @@ def test_generate_presigned_dataset_url(
         mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
     else:
         mock_project_user_dao.get.assert_not_called()
+    if mock_type == DatasetType.GROUP:
+        mock_group_user_dao.get_groups_for_user.assert_called_with(MOCK_USER.username)
+        if resource == "presigned-url":
+            mock_group_dataset_dao.get_groups_for_dataset.assert_called_with(mock_scope)
+        else:
+            mock_group_dataset_dao.get_groups_for_dataset.assert_not_called()
+    else:
+        mock_group_user_dao.get_groups_for_user.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -1552,16 +1530,16 @@ def test_notebook_privileged(
     "user,method,scope,type,project_user,group_user,allow",
     [
         (MOCK_ADMIN_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
-        (MOCK_ADMIN_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
-        (MOCK_ADMIN_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_ADMIN_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
         (MOCK_ADMIN_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_ADMIN_USER, "PUT", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
-        (MOCK_ADMIN_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
-        (MOCK_ADMIN_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_ADMIN_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
         (MOCK_ADMIN_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_ADMIN_USER, "DELETE", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
-        (MOCK_ADMIN_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
-        (MOCK_ADMIN_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_ADMIN_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
         (MOCK_ADMIN_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
         (MOCK_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
         (MOCK_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
@@ -1692,7 +1670,12 @@ def test_dataset_routes(
     mock_user_dao.get.assert_called_with(user.username)
     mock_dataset_dao.get.assert_called_with(scope, mock_dataset.name)
     # We'll only grab the project user if it's a GET, Project Dataset, and the user wasn't the owner
-    if mock_dataset.type == DatasetType.PROJECT and method == "GET" and user.username != MOCK_OWNER_USER.username:
+    if (
+        mock_dataset.type == DatasetType.PROJECT
+        and method == "GET"
+        and user.username != MOCK_OWNER_USER.username
+        and Permission.ADMIN not in user.permissions
+    ):
         mock_project_user_dao.get.assert_called_with(scope, user.username)
     else:
         mock_project_user_dao.get.assert_not_called()
