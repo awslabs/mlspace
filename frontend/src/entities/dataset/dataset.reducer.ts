@@ -45,13 +45,12 @@ export const getDatasetsList = createAsyncThunk(
         if (params?.projectName !== undefined) {
             requestUrl = `/project/${params.projectName}/datasets`;
         }
+        if (params?.isAdmin) {
+            requestUrl = '/admin/datasets';
+        }
         return axios.get<IDataset[]>(requestUrl);
     }
 );
-
-export const getAllDatasets = createAsyncThunk('dataset/fetch_all_datasets', async () => {
-    return axios.get<IDataset[]>('/admin/datasets');
-});
 
 export const getDataset = createAsyncThunk(
     'dataset/fetch_entity_by_id',
@@ -105,14 +104,6 @@ export const DatasetSlice = createSlice({
     extraReducers (builder) {
         builder
             .addMatcher(isFulfilled(getDatasetsList), (state, action: any) => {
-                const { data } = action.payload;
-                return {
-                    ...state,
-                    loadingDatasetsList: false,
-                    datasetsList: data,
-                };
-            })
-            .addMatcher(isFulfilled(getAllDatasets), (state, action: any) => {
                 const { data } = action.payload;
                 return {
                     ...state,

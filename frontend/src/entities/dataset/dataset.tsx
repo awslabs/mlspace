@@ -16,7 +16,7 @@
 
 import React, { RefObject, useEffect, useRef } from 'react';
 import { adminDatasetColumns, defaultColumns, visibleAdminColumns, visibleColumns, visibleContentPreference } from './dataset.columns';
-import { getDatasetsList, loadingDatasetsList, loadingDatasetAction, clearDatasetList, getAllDatasets } from './dataset.reducer';
+import { getDatasetsList, loadingDatasetsList, loadingDatasetAction, clearDatasetList } from './dataset.reducer';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import Table from '../../modules/table';
 import { IDataset } from '../../shared/model/dataset.model';
@@ -70,14 +70,6 @@ export const Dataset = ({isAdmin}: DatasetProperties) => {
         }
     }, [dispatch, projectName, isAdmin]);
 
-    useEffect(() => {
-        if (isAdmin) {
-            dispatch(getAllDatasets());
-        } else {
-            dispatch(getDatasetsList({projectName}));
-        }
-    }, [dispatch, isAdmin, projectName]);
-
     return (
         datasetList && (
             <div>
@@ -94,11 +86,9 @@ export const Dataset = ({isAdmin}: DatasetProperties) => {
                     itemNameProperty='name'
                     loadingItems={loadingDatasets}
                     loadingAction={loadingAction}
-                    //serverFetch={isAdmin ? getAllDatasets : getDatasetsList}
-                    //TODO: look at groups to see how we refresh that table
-                    //AsyncThunk<AxiosResponse<IDataset[], any>, void, AsyncThunkConfig>
-                    //AsyncThunk<AxiosResponse<IDataset[], any>, ServerRequestProps, AsyncThunkConfig>
+                    serverFetch={getDatasetsList}
                     storeClear={clearDatasetList}
+                    isAdmin={isAdmin}
                 />
             </div>
         )
