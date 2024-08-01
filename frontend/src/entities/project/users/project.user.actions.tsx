@@ -34,7 +34,7 @@ import {
 } from '../../user/user.reducer';
 import { IUser, Permission } from '../../../shared/model/user.model';
 import { IProjectUser } from '../../../shared/model/projectUser.model';
-import { isAdminOrProjectOwner, togglePermission } from '../../../shared/util/permission-utils';
+import { isAdminOrOwner, togglePermission } from '../../../shared/util/permission-utils';
 import { useParams } from 'react-router-dom';
 import { setUpdateModal } from '../../../modules/modal/modal.reducer';
 import { useNotificationService } from '../../../shared/util/hooks';
@@ -43,6 +43,7 @@ import NotificationService from '../../../shared/layout/notification/notificatio
 function ProjectUserActions (props?: any) {
     const projectName = props?.projectName;
     const dispatch = useAppDispatch();
+    const canManage = IsAdminOrProjectOwner();
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
@@ -52,8 +53,10 @@ function ProjectUserActions (props?: any) {
             >
                 <Icon name='refresh' />
             </Button>
-            {ProjectUserActionButton(dispatch, props)}
-            {ProjectUserAddButton()}
+            { canManage && <>
+                {ProjectUserActionButton(dispatch, props)}
+                {ProjectUserAddButton()}            
+            </>}
         </SpaceBetween>
     );
 }
@@ -71,7 +74,7 @@ function AddProjectUserActions (props?: any) {
 function IsAdminOrProjectOwner () {
     const currentUser = useAppSelector(selectCurrentUser);
     const projectPermissions = useAppSelector((state) => state.project.permissions);
-    return isAdminOrProjectOwner(currentUser, projectPermissions);
+    return isAdminOrOwner(currentUser, projectPermissions);
 }
 
 function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
@@ -89,17 +92,10 @@ function ProjectUserActionButton (dispatch: Dispatch, props?: any) {
             id: 'owner',
             disabled: selectedUsers.length > 1 ? true : false,
         },
-        {
-            text: `${
-                selectedUsers[0]?.permissions?.includes(Permission.COLLABORATOR) ? 'Remove' : 'Make'
-            } Collaborator`,
-            id: 'collaborator',
-            disabled: selectedUsers.length > 1 ? true : false,
-        },
         { text: 'Remove from Project', id: 'remove' },
     ];
-    const disabled =
-        !IsAdminOrProjectOwner() || (Array.isArray(selectedUsers) && selectedUsers.length === 0);
+    
+    const disabled = selectedUsers?.length === 0;
     return (
         <ButtonDropdown
             items={items}
@@ -157,7 +153,6 @@ function ProjectUserAddButton () {
     return (
         <Button
             variant='primary'
-            disabled={!IsAdminOrProjectOwner()}
             onClick={() => dispatch(toggleAddUserModal(true))}
         >
             Add User
@@ -174,20 +169,6 @@ const ProjectUserActionHandler = async (
     setSelectedItems: (selectedItems: any[]) => void,
 ) => {
     switch (e.detail.id) {
-        case 'collaborator':
-            for (const user of selectedUsers) {
-                // Use lodash once it's added
-                const updatedUser: IProjectUser = JSON.parse(JSON.stringify(user));
-                togglePermission(Permission.COLLABORATOR, updatedUser.permissions!);
-                await dispatch(updateUsersInProject(updatedUser)).then((response) => {
-                    if (!response.type.endsWith('fulfilled')){
-                        notificationService.showAxiosActionNotification('update user permissions', '', response);
-                    } else {
-                        setSelectedItems([]);
-                    }
-                });
-            }
-            break;
         case 'owner':
             for (const user of selectedUsers) {
                 // Use lodash once it's added

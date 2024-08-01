@@ -20,12 +20,14 @@ import Table from '../../modules/table';
 import { IGroup } from '../../shared/model/group.model';
 import { useAppDispatch, useAppSelector } from '../../config/store';
 import { getAllGroups } from './group.reducer';
-import { DocTitle } from '../../shared/doc';
+import { DocTitle, scrollToPageHeader } from '../../shared/doc';
 import { GroupActions } from './group.actions';
 import { selectCurrentUser } from '../user/user.reducer';
 import { hasPermission } from '../../shared/util/permission-utils';
 import { Permission } from '../../shared/model/user.model';
 import { useLocation } from 'react-router-dom';
+import { setBreadcrumbs } from '../../shared/layout/navigation/navigation.reducer';
+import { getBase } from '../../shared/util/breadcrumb-utils';
 
 export function Group () {
     const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
@@ -39,6 +41,17 @@ export function Group () {
     useEffect(() => {
         dispatch(getAllGroups(pathname.includes('admin')));
     }, [dispatch, pathname]);
+
+    useEffect(() => {
+        dispatch(
+            setBreadcrumbs([
+                getBase(undefined),
+                { text: 'Groups', href: window.location.href.includes('#/admin') ? '#/admin/groups' : '#/personal/group' },
+            ])
+        );
+
+        scrollToPageHeader('h1', 'Groups');
+    }, [dispatch]);
 
     return (
         <Table
