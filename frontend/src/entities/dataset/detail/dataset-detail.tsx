@@ -62,7 +62,7 @@ function DatasetDetail ({isAdmin}: DatasetProperties) {
     datasetDetails.set('Access level', showAccessLevel(dataset));
     datasetDetails.set('Location', dataset.location);
     if (dataset.type === DatasetType.GROUP) {
-        datasetDetails.set(`Group${dataset.groups && dataset.groups.length > 1 ? 's' : ''}`, dataset.groups?.length === 0 ? 'None' : dataset.groups);
+        datasetDetails.set(`Group${dataset.groups && dataset.groups.length > 1 ? 's' : ''}`, dataset.groups?.length ? dataset.groups : 'None');
     }
    
 
