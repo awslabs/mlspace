@@ -305,15 +305,21 @@ def create_dataset(event, context):
 
 @api_wrapper
 def list_resources(event, context):
+    print("Listing resources")
     username = event["requestContext"]["authorizer"]["principalId"]
+    print(f"Username is {username}")
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
+    print(f"Got user model {user.permissions}")
 
     is_admin = event["requestContext"].get("resourcePath") == "/admin/datasets"
+    print(f"is_admin: {is_admin}")
     datasets = []
 
     # if this is an admin request, retrieve ALL the datasets
     if is_admin and Permission.ADMIN in user.permissions:
+        print("is admin, getting all")
         datasets = dataset_dao.get_all()
+        print(f"Got datasets, {len(datasets)} total")
         for dataset in datasets:
             # Clear list to make sure it's up to date
             dataset.groups = []
