@@ -14,34 +14,6 @@
   limitations under the License.
 */
 
-import { Mode } from '@cloudscape-design/global-styles';
+import ProjectMembership from './project-membership';
 
-export const DEFAULT_PAGE_SIZE = 10;
-
-export enum Permission {
-    PROJECT_OWNER = 'MO',
-    ADMIN = 'PMO',
-}
-
-export enum Timezone {
-    LOCAL = 'Local',
-    UTC = 'UTC',
-}
-
-export type IPreferences = {
-    timezone?: Timezone;
-    displayMode?: Mode;
-    pageSize?: Map<string, number>;
-};
-
-export type IUser = {
-    username: string;
-    email: string;
-    displayName: string;
-    suspended: boolean;
-    permissions?: Permission[];
-    lastLogin?: number;
-    preferences?: IPreferences;
-};
-
-export const defaultValue: Readonly<IUser> = {};
+export default ProjectMembership;

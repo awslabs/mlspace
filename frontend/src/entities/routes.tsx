@@ -30,7 +30,6 @@ import User from './user';
 import Group from './group';
 import ProjectDetail from './project/detail';
 import ProjectCreate from './project/create';
-import ProjectUser from './project/users/project-user';
 import TrainingJobRoutes from './jobs/training/training-job.routes';
 import EndpointConfig from './endpoint-config';
 import TransformJobRoutes from './jobs/transform';
@@ -60,7 +59,7 @@ import { IAppConfiguration } from '../shared/model/app.configuration.model';
 import GroupCreate from './group/create';
 import GroupDetail from './group/detail';
 import UserDetail from './user/detail';
-import ProjectGroups from './project/detail/groups';
+import ProjectMembership from './project/membership';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -104,8 +103,7 @@ const EntityRoutes = () => {
                 ) : undefined}
                 <Route path='project/:projectName' element={<ProjectDetail />} />
                 <Route path='project/:projectName/edit' element={<ProjectCreate isEdit={true} />} />
-                <Route path='project/:projectName/user' element={<ProjectUser />} />
-                <Route path='project/:projectName/groups' element={<ProjectGroups />} />
+                <Route path='project/:projectName/membership' element={<ProjectMembership />} />
                 <Route path='project/:projectName/endpoint' element={<Endpoint />} />
                 <Route path='project/:projectName/endpoint/create' element={<EndpointCreate />} />
                 <Route path='project/:projectName/endpoint/:name' element={<EndpointDetails />} />

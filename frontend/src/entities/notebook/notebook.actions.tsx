@@ -28,7 +28,7 @@ import { setDeleteModal } from '../../modules/modal/modal.reducer';
 import { openNotebookInstance } from './notebook.service';
 import { selectCurrentUser } from '../user/user.reducer';
 import { NotebookResourceMetadata } from '../../shared/model/resource-metadata.model';
-import { isAdminOrProjectOwner } from '../../shared/util/permission-utils';
+import { isAdminOrOwner } from '../../shared/util/permission-utils';
 import { deletionDescription } from '../../shared/util/form-utils';
 import { useNotificationService } from '../../shared/util/hooks';
 import { INotificationService } from '../../shared/layout/notification/notification.service';
@@ -71,7 +71,7 @@ function NotebookActionButton (
         selectedNotebook?.metadata.NotebookInstanceStatus !== 'InService';
     const ownerOrPrivileged =
         selectedNotebook?.user === props.currentUser.username ||
-        isAdminOrProjectOwner(props.currentUser, props.projectPermissions);
+        isAdminOrOwner(props.currentUser, props.projectPermissions);
     return (
         <ButtonDropdown
             items={[
