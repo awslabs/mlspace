@@ -16,7 +16,7 @@
 
 import { Route, Routes } from 'react-router-dom';
 import ErrorBoundaryRoutes from './shared/error/error-boundary-routes';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     setAdminItems,
     setBreadcrumbs,
@@ -34,9 +34,12 @@ import { applyMode } from '@cloudscape-design/global-styles';
 import keyLogo  from './shared/media/key.png';
 import groupLogo  from './shared/media/group.png';
 import docsLogo  from './shared/media/docs.png';
+import backgroundColor from './shared/media/background_color.png';
 import './routes.css';
 import { failedToLoadConfig, getConfiguration } from './entities/configuration/configuration-reducer';
 import { useNotificationService } from './shared/util/hooks';
+import MarkdownPreview from '@uiw/react-markdown-preview';
+import releaseNotes from './release-notes.md';
 
 export default function AppRoutes () {
     const auth = useAuth();
@@ -45,6 +48,7 @@ export default function AppRoutes () {
     const notificationService = useNotificationService(dispatch);
     const notifiedError = useRef(false);
     const configLoadError: boolean = useAppSelector(failedToLoadConfig);
+    const [markdown, setMarkdown] = useState<string>('');
 
     useEffect(() => {
         if (hasAuthParams() || auth.isAuthenticated || auth.activeNavigator || auth.isLoading) {
@@ -78,6 +82,9 @@ export default function AppRoutes () {
 
     useMemo(async () => {
         let configFetched = false;
+        fetch(releaseNotes).then((res) => res.text()).then((text) => {
+            setMarkdown(text);
+        });
         if (!configFetched) {
             await dispatch(getConfiguration({configScope: 'global'}));
         }
@@ -124,7 +131,7 @@ export default function AppRoutes () {
                                         Welcome to {window.env.APPLICATION_NAME}
                                 </h1>
                                 <p className='landing-page-description'>{window.env.APPLICATION_NAME} is an open source, web based, data science environment. Through {window.env.APPLICATION_NAME}&apos;s accessible portal, users leverage the power of Amazon SageMaker, a fully managed machine learning service, without needing individual AWS Accounts. {window.env.APPLICATION_NAME} allows data science teams to collaboratively build, train, and deploy machine learning models.</p>
-                                <ColumnLayout columns={3}>
+                                <ColumnLayout columns={4}>
                                     <Container
                                         className='landing-page-card'
                                         media={{
@@ -173,8 +180,20 @@ export default function AppRoutes () {
                                         >
                                             Documentation
                                         </Button>
-
-
+                                    </Container>
+                                    <Container
+                                        className='landing-page-card'
+                                        header={
+                                            <div style={{backgroundImage: 'url(' + backgroundColor + ')', width: '100%', height: '100%', padding: '10px', marginTop: '-15px', marginLeft: '-22px', paddingRight: '35px', borderTopRightRadius: '24px', borderTopLeftRadius: '23px'}}>
+                                                <h1 style={{color: 'white', marginLeft: '20px'}}>
+                                                    What's new?
+                                                </h1>
+                                            </div>
+                                        }
+                                        fitHeight={true}>
+                                        <div data-color-mode='light' style={{overflowY: 'scroll', maxHeight: '290px'}}>
+                                            <MarkdownPreview source={markdown} />
+                                        </div>
                                     </Container>
                                 </ColumnLayout>
                             </SpaceBetween>
