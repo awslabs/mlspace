@@ -72,6 +72,9 @@ const EntityRoutes = () => {
                 <Route element={<RequireAdmin />}>
                     <Route path='admin/users' element={<User />} />
                     <Route path='admin/users/:username' element={<UserDetail />} />
+                    <Route path='admin/datasets' element={<Dataset isAdmin={true} />} />
+                    <Route path='admin/datasets/:type/:scope/:name' element={<DatasetDetail isAdmin={true}/>} />
+                    <Route path='admin/datasets/:type/:scope/:name/edit' element={<DatasetUpdate isAdmin={true}/>} />
                     <Route path='admin/groups' element={<Group />} />
                     <Route path='admin/groups/create' element={<GroupCreate />} />
                     <Route path='admin/groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />

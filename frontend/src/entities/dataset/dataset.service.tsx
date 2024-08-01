@@ -221,7 +221,7 @@ export async function createDataset (dataset: IDataset) {
         const headerConfig = {
             headers: {
                 'x-mlspace-dataset-type': dataset.type,
-                'x-mlspace-dataset-scope': dataset.scope,
+                'x-mlspace-dataset-scope': dataset.type === DatasetType.GROUP ? dataset.groups : dataset.scope,
             },
         };
         return axios.post(requestUrl, payload, headerConfig);

@@ -139,3 +139,7 @@ class DatasetDAO(DynamoDBObjectStore):
         ).records
 
         return [DatasetModel.from_dict(entry) for entry in json_response]
+
+    def get_all(self) -> List[DatasetModel]:
+        json_response = self._scan(page_response=True).records
+        return [DatasetModel.from_dict(entry) for entry in json_response]

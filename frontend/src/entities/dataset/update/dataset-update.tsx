@@ -47,6 +47,7 @@ import { selectCurrentUser } from '../../user/user.reducer';
 import { useNotificationService } from '../../../shared/util/hooks';
 import { getAllGroups } from '../../group/group.reducer';
 import { IGroup } from '../../../shared/model/group.model';
+import { DatasetProperties } from '../dataset';
 
 const formSchema = z.object({
     description: z.string().regex(/^[\w\-\s']+$/, {
@@ -54,13 +55,18 @@ const formSchema = z.object({
     }),
 });
 
-export function DatasetUpdate () {
+export function DatasetUpdate ({isAdmin}: DatasetProperties) {
     const dataset: IDataset = useAppSelector(datasetBinding);
     const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
     const { projectName, type, scope, name } = useParams();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const basePath = projectName ? `/project/${projectName}` : '/personal';
+    let basePath = '';
+    if (isAdmin) {
+        basePath = '/admin/datasets';
+    } else {
+        basePath = `${projectName ? `/project/${projectName}` : '/personal'}/dataset`;
+    }
     const notificationService = useNotificationService(dispatch);
     const loadingDatasetEditPage = useAppSelector(loadingDataset);
 
@@ -85,8 +91,8 @@ export function DatasetUpdate () {
         dispatch(
             setBreadcrumbs([
                 getBase(projectName),
-                { text: 'Datasets', href: `#${basePath}/dataset` },
-                { text: `${name}`, href: `#${basePath}/dataset/${type}/${scope}/${name}/edit` },
+                { text: 'Datasets', href: `#${basePath}`},
+                { text: `${name}`, href: `#${basePath}/${type}/${scope}/${name}/edit` },
             ])
         );
         dispatch(getDataset({ type: type, scope: scope, name: name }))
@@ -95,7 +101,7 @@ export function DatasetUpdate () {
                 navigate('/404');
             });
         dispatch(getAllGroups());
-    }, [dispatch, navigate, basePath, name, projectName, scope, type]);
+    }, [dispatch, navigate, basePath, name, projectName, scope, type, isAdmin]);
 
     function handleSubmit () {
         if (state.formValid) {
@@ -106,7 +112,7 @@ export function DatasetUpdate () {
                         'Successfully updated Dataset.',
                         'success'
                     );
-                    navigate(`${basePath}/dataset`);
+                    navigate(basePath);
                 } else {
                     notificationService.generateNotification('Failed to update Dataset.', 'error');
                 }
@@ -142,7 +148,7 @@ export function DatasetUpdate () {
                                     <Button
                                         formAction='none'
                                         variant='link'
-                                        onClick={() => navigate(`${basePath}/dataset`)}
+                                        onClick={() => navigate(basePath)}
                                     >
                                         Cancel
                                     </Button>

@@ -30,6 +30,18 @@ export const showAccessLevel = (dataset: IDataset) => {
     }
 };
 
+export const showDatasetOwnership = (dataset: IDataset) => {
+    if (dataset.type === DatasetType.GROUP) {
+        return `${dataset.groups?.length || 0} group${dataset.groups && dataset.groups.length === 1 ? '' : 's'} associated`;
+    } else if (dataset.type === DatasetType.PRIVATE) {
+        return dataset.createdBy;
+    } else if (dataset.type === DatasetType.PROJECT) {
+        return dataset.scope;
+    } else {
+        return '-';
+    }
+};
+
 export const deleteButtonAriaLabel = 'Delete selected files';
 export const downloadButtonAriaLabel = 'Download selected file';
 export const copyButtonAriaLabel = 'Copy selected file S3 URI';
