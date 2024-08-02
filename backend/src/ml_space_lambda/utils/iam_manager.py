@@ -403,7 +403,9 @@ class IAMManager:
             for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
                 dataset = dataset_dao.get(DatasetType.GROUP, group_dataset.dataset)
                 if dataset is not None:
-                    dataset_arn_prefixes.add(f"arn:{self.aws_partition}:s3:::{self.data_bucket}/group/{dataset.name}/*")
+                    dataset_arn_prefixes.add(
+                        f"arn:{self.aws_partition}:s3:::{self.data_bucket}/group/datasets/{dataset.name}/*"
+                    )
 
         resource_arns.extend(list(dataset_arn_prefixes))
 
