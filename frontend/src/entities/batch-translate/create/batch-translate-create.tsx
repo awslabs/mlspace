@@ -333,7 +333,7 @@ export function BatchTranslateCreate () {
                     <Container header={<Header variant='h2'>Input data</Header>}>
                         <DatasetResourceSelector
                             fieldLabel={'S3 Location'}
-                            selectableItemsTypes={['objects', 'prefixes']}
+                            selectableItemsTypes={['prefixes']}
                             onChange={({detail}) => {
                                 setFields({
                                     'InputDataConfig.S3Uri': detail.resource,
