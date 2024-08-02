@@ -16,6 +16,7 @@
 - System Banner text is now bold
 - System version is now shown without scrolling if banner is enabled
 - Group breadcrumbs weren't updating correctly
+- Dynamic Role user polices now use correct s3 group resources
 
 ## Acknowledgements
 * @douglas1850
