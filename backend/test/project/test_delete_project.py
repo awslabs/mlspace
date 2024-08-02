@@ -318,7 +318,7 @@ def test_delete_project_external_iam(
             group_name="TestGroup2",
             project_name=MOCK_PROJECT_NAME,
             permissions=[Permission.COLLABORATOR],
-        )
+        ),
     ]
 
     mock_group_user_dao.get_users_for_group.side_effect = [
@@ -328,7 +328,6 @@ def test_delete_project_external_iam(
                 group_name="TestGroup1",
                 permissions=[Permission.COLLABORATOR],
             ),
-
             GroupUserModel(
                 username="foo@example.com",
                 group_name="TestGroup1",
@@ -342,7 +341,7 @@ def test_delete_project_external_iam(
                 permissions=[Permission.COLLABORATOR],
             ),
         ],
-    ];
+    ]
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
