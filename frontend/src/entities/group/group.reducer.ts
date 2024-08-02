@@ -21,6 +21,8 @@ import { IGroupUser } from '../../shared/model/groupUser.model';
 import { IDataset } from '../../shared/model';
 import { IProjectGroup } from '../../shared/model/projectGroup.model';
 import { createApi } from '@reduxjs/toolkit/query/react';
+import { PagedRequest, PagedResponse } from '../../modules/table/table-hook';
+import { DatasetResource } from '../../modules/dataset/dataset-browser.reducer';
 
 const initialState = {
     allGroups: [] as IGroup[],
@@ -62,6 +64,31 @@ export const groupApi = createApi({
                 },
             }),
             providesTags: ['group']
+        }),
+
+        getDatasetContents: builder.query<PagedResponse<DatasetResource>, Partial<PagedRequest>>({
+            query: (request) => {
+                const searchParams = new URLSearchParams();
+                if (request.nextToken) {
+                    searchParams.append('nextToken', request.nextToken);
+                }
+                if (request.pageSize) {
+                    searchParams.append('pageSize', String(request.pageSize));
+                }
+
+                return {
+                    url: `/v2/dataset/group/group/mlsDataset20240723v001/files?${searchParams}`
+                };
+            },
+            serializeQueryArgs: ({queryArgs}) => {
+                return JSON.stringify(queryArgs);
+            },
+            transformResponse: (baseQueryReturnValue) => {
+                return {
+                    ...baseQueryReturnValue,
+                    items: baseQueryReturnValue.contents
+                };
+            },
         }),
 
         getGroup: builder.query<IGroupWithPermissions, string>({
@@ -135,4 +162,4 @@ export const GroupSlice = createSlice({
 });
 
 export default GroupSlice.reducer;
-export const { useGetGroupQuery, useGetGroupUsersQuery, useGetGroupDatasetsQuery, useGetGroupProjectsQuery, useAddGroupUsersMutation, useRemoveGroupUserMutation, useCreateGroupMutation, useUpdateGroupMutation, useGetAllGroupsQuery, useDeleteGroupMutation } = groupApi;
+export const { useGetGroupQuery, useGetGroupUsersQuery, useGetGroupDatasetsQuery, useGetGroupProjectsQuery, useAddGroupUsersMutation, useRemoveGroupUserMutation, useCreateGroupMutation, useUpdateGroupMutation, useGetAllGroupsQuery, useDeleteGroupMutation, useGetDatasetContentsQuery } = groupApi;

@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
@@ -31,6 +32,8 @@ import {
     Textarea,
     Multiselect,
     SelectProps,
+    Table,
+    TextContent,
 } from '@cloudscape-design/components';
 import { useAppDispatch } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -57,7 +60,9 @@ import { useNotificationService } from '../../../shared/util/hooks';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import Condition from '../../../modules/condition';
 import Axios from 'axios';
-import { useGetAllGroupsQuery } from '../../group/group.reducer';
+import { groupApi, useGetAllGroupsQuery } from '../../group/group.reducer';
+import { ActionContext, useCollection } from '../../../modules/table/table-hook';
+import { MLSTextFilter } from '../../../modules/textfilter/textfilter';
 
 const formSchema = z.object({
     name: z
@@ -90,6 +95,29 @@ export function DatasetCreate () {
     const navigate = useNavigate();
     const basePath = projectName ? `/project/${projectName}` : '/personal';
     const notificationService = useNotificationService(dispatch);
+    const [pollingInterval, setPollingInterval] = useState<number>();
+
+    const context = useCollection(groupApi.endpoints.getDatasetContents, {}, {
+        itemName: 'object',
+        pollingInterval: pollingInterval,
+        headerActions: (
+            <ActionContext.Consumer>{ (context) => <>
+                <Button onClick={context?.actions?.refresh} disabled={context?.collectionProps?.loading}>refresh</Button>
+            </>}</ActionContext.Consumer>
+        ),
+        filtering: {
+            // defaultFilteringText: 'z',
+            // noMatch: <TextContent>Sorry no matches bro</TextContent>,
+            // empty: <TextContent>Nothing to see here ya dingus</TextContent>
+        },
+        pagination: {
+            pageSize: 5,
+            defaultPage: 1
+        },
+        selection: {
+            keepSelection: true
+        }
+    });
 
     const { state, setState, errors, isValid, touchFields, setFields } = useValidationReducer(formSchema, {
         validateAll: false,
@@ -233,6 +261,43 @@ export function DatasetCreate () {
                 }
             >
                 <SpaceBetween direction='vertical' size='xl'>
+                    <Container>
+                        <SpaceBetween direction='vertical' size='m'>
+                            <Table
+                                {...context.collectionProps}
+                                // header={
+                                //     <Header actions={<SpaceBetween direction='horizontal' size='s'>
+                                //         {context.headerActions}
+                                //         <Toggle onChange={({ detail }) => setPollingInterval(detail.checked ? 5000 : undefined)} checked={Boolean(pollingInterval)}>Auto-Refresh</Toggle>
+                                //     </SpaceBetween>}>abc</Header>
+                                // }
+                                selectionType='multi'
+                                key='dataset-table'
+                                // pagination={<Pagination {...context.paginationProps} />}
+                                items={context.items || []}
+                                // loadingText={'fetching more stuff'}
+                                columnDefinitions={[{
+                                    id: 'key',
+                                    header: 'Key',
+                                    cell: (item) => {
+                                        return <TextContent>{item.key}</TextContent>;
+                                    }
+                                }]}
+                                filter={<MLSTextFilter
+                                    {...context.filterProps}
+                                    filteringAriaLabel={'Filter apple'}
+                                    filteringClearAriaLabel={'Clear text for filtering apple'}
+                                />
+                                }
+                            />
+                            {/* <Button onClick={context.actions?.setNextPage}>loadmore</Button>
+                            <Button onClick={context.actions?.reset}>refetch</Button>
+                            <Button onClick={() => {
+                                console.log('refresh');
+                                context.actions?.refresh?.();
+                            }}>refresh</Button> */}
+                        </SpaceBetween>
+                    </Container>                 
                     <Container>
                         <SpaceBetween direction='vertical' size='s'>
                             <FormField

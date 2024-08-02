@@ -53,7 +53,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
     const [ updateGroup, updateGroupResult ] = useUpdateGroupMutation();
     const { data: group, isError: isErrorGroup } = useGetGroupQuery(groupName!);
 
-    if (isErrorGroup) {
+    if (isEdit && isErrorGroup) {
         navigate('/404');
     }
 

@@ -39,7 +39,7 @@ const store = configureStore({
             .concat(userApi.middleware),
 });
 
-const getStore = () => store;
+export const getStore = () => store;
 
 export type IRootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
