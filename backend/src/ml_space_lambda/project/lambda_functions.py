@@ -537,6 +537,8 @@ def delete(event, context):
                 if iam_role_arn:
                     iam_manager.remove_project_user_roles([iam_role_arn])
 
+        project_group_dao.delete(project_name, group.group_name)
+
     # Delete users associations and project itself
     # Check the deployment type to confirm IAM Vendor usage
     if env_variables[EnvVariable.MANAGE_IAM_ROLES]:

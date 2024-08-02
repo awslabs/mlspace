@@ -20,7 +20,9 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
+from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.data_access_objects.project import ProjectModel
+from ml_space_lambda.data_access_objects.project_group import ProjectGroupModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import PagedMetadataResults, ResourceMetadataModel
 from ml_space_lambda.enums import DatasetType, EnvVariable, Permission, ResourceType
@@ -76,6 +78,9 @@ def mock_project(suspened: Optional[bool] = True) -> ProjectModel:
     )
 
 
+@mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
+@mock.patch("ml_space_lambda.project.lambda_functions.group_user_dao")
+@mock.patch("ml_space_lambda.project.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.emr")
 @mock.patch("ml_space_lambda.project.lambda_functions.sagemaker")
@@ -91,11 +96,21 @@ def test_delete_project(
     mock_sagemaker,
     mock_emr,
     mock_resource_metadata_dao,
+    mock_project_group_dao,
+    mock_group_user_dao,
+    mock_iam_manager,
 ):
     mlspace_config.env_variables = {}
     env_vars = get_environment_variables()
     expected_response = generate_html_response(200, f"Successfully deleted {MOCK_PROJECT_NAME} and its associated resources.")
     mock_project_dao.get.return_value = mock_project()
+    project_name = mock_project().name
+    group_name = "my_group"
+    username = "my_username"
+    fake_role_arn = "arn:aws::012345678910:iam:role/fakeRole"
+    mock_project_group_dao.get_groups_for_project.return_value = [ProjectGroupModel(group_name, mock_project().name)]
+    mock_group_user_dao.get_users_for_group.return_value = [GroupUserModel(username, group_name)]
+    mock_iam_manager.get_iam_role_arn.return_value = fake_role_arn
     mock_resource_metadata_dao.get_all_for_project_by_type.side_effect = [
         PagedMetadataResults(
             [
@@ -178,6 +193,11 @@ def test_delete_project(
     assert lambda_handler(mock_event, mock_context) == expected_response
 
     mock_project_dao.get.assert_called_with(MOCK_PROJECT_NAME)
+    mock_project_group_dao.get_groups_for_project.assert_called_with(project_name)
+    mock_group_user_dao.get_users_for_group.assert_called_with(group_name)
+    mock_iam_manager.get_iam_role_arn.assert_called_with(project_name, username)
+    mock_iam_manager.remove_project_user_roles.assert_called_with([fake_role_arn])
+    mock_project_group_dao.delete.assert_called_with(project_name, group_name)
     mock_project_dao.delete.assert_called_with(MOCK_PROJECT_NAME)
     mock_resource_metadata_dao.get_all_for_project_by_type.assert_has_calls(
         [
