@@ -523,8 +523,21 @@ def delete(event, context):
         emr.set_termination_protection(JobFlowIds=cluster_ids, TerminationProtected=False)
         emr.terminate_job_flows(JobFlowIds=cluster_ids)
 
-    # Delete users associations and project itself
     project_users = project_user_dao.get_users_for_project(project_name)
+    direct_project_user_names = [user.user for user in project_users]
+
+    # Delete group users associations
+    project_groups = project_group_dao.get_groups_for_project(project_name)
+    for group in project_groups:
+        group_users = group_user_dao.get_users_for_group(group.group_name)
+        for group_user in group_users:
+            # remove role if user doesn't have project membership directly or indirectly through other groups
+            if group_user.user not in direct_project_user_names:
+                iam_role_arn = iam_manager.get_iam_role_arn(project_name, group_user.user)
+                if iam_role_arn:
+                    iam_manager.remove_project_user_roles([iam_role_arn])
+
+    # Delete users associations and project itself
     # Check the deployment type to confirm IAM Vendor usage
     if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
         iam_manager.remove_project_user_roles([user.role for user in project_users], project=project_name)
