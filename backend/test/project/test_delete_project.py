@@ -78,6 +78,9 @@ def mock_project(suspened: Optional[bool] = True) -> ProjectModel:
     )
 
 
+@mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
+@mock.patch("ml_space_lambda.project.lambda_functions.group_user_dao")
+@mock.patch("ml_space_lambda.project.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.emr")
 @mock.patch("ml_space_lambda.project.lambda_functions.sagemaker")
