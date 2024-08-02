@@ -93,7 +93,7 @@ export function BatchTranslateCreate () {
         InputDataConfig: z.object({
             S3Uri: z
                 .string({ required_error: 'You must select an S3 input URI.' })
-                .s3Uri(),
+                .s3Prefix(),
             ContentType: z.string({ required_error: 'A content type must be selected.' }),
         }),
         OutputDataConfig: z.object({
