@@ -52,13 +52,13 @@ const adminDatasetColumns: TableProps.ColumnDefinition<IDataset>[] = defaultColu
     },
 ]);
 
-const defaultColumnsWithUrlOverride: TableProps.ColumnDefinition<IDataset>[] = [
+export const createDefaultColumnsWithUrlOverride = (path: string): TableProps.ColumnDefinition<IDataset>[] => [
     {
         id: 'datasetName',
         header: 'Dataset name',
         sortingField: 'datasetName',
         cell: (item) => (
-            <div data-cy={item.name}>{linkify('personal/dataset', item.name!, `${item.type!}/${item.scope!}`,undefined, true)}</div>
+            <div data-cy={item.name}>{linkify(path, item.name!, `${item.type!}/${item.scope!}`,undefined, true)}</div>
         ),
     },
     { id: 'type', header: 'Dataset type', sortingField: 'type', cell: (item) => item.type },
@@ -93,5 +93,4 @@ export {
     visibleColumns,
     visibleAdminColumns,
     visibleContentPreference,
-    defaultColumnsWithUrlOverride,
 };
