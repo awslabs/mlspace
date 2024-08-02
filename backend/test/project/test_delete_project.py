@@ -78,9 +78,6 @@ def mock_project(suspened: Optional[bool] = True) -> ProjectModel:
     )
 
 
-@mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
-@mock.patch("ml_space_lambda.project.lambda_functions.group_user_dao")
-@mock.patch("ml_space_lambda.project.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.emr")
 @mock.patch("ml_space_lambda.project.lambda_functions.sagemaker")
@@ -241,6 +238,8 @@ def test_delete_project_not_suspended(mock_project_dao, mock_resource_metadata_d
 
 
 @mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True"})
+@mock.patch("ml_space_lambda.project.lambda_functions.group_user_dao")
+@mock.patch("ml_space_lambda.project.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.project.lambda_functions.emr")
@@ -258,6 +257,8 @@ def test_delete_project_external_iam(
     mock_emr,
     mock_iam_manager,
     mock_resource_metadata_dao,
+    mock_project_group_dao,
+    mock_group_user_dao,
 ):
     mlspace_config.env_variables = {}
     env_vars = get_environment_variables()
@@ -303,6 +304,42 @@ def test_delete_project_external_iam(
         ),
     ]
     mock_project_user_dao.delete.return_value = None
+
+    mock_project_group_dao.get_groups_for_project.return_value = [
+        ProjectGroupModel(
+            group_name="TestGroup1",
+            project_name=MOCK_PROJECT_NAME,
+            permissions=[Permission.PROJECT_OWNER],
+        ),
+        ProjectGroupModel(
+            group_name="TestGroup2",
+            project_name=MOCK_PROJECT_NAME,
+            permissions=[Permission.COLLABORATOR],
+        )
+    ]
+
+    mock_group_user_dao.get_users_for_group.side_effect = [
+        [
+            GroupUserModel(
+                username="jdoe@example.com",
+                group_name="TestGroup1",
+                permissions=[Permission.COLLABORATOR],
+            ),
+
+            GroupUserModel(
+                username="foo@example.com",
+                group_name="TestGroup1",
+                permissions=[Permission.COLLABORATOR],
+            ),
+        ],
+        [
+            GroupUserModel(
+                username="bar@example.com",
+                group_name="TestGroup2",
+                permissions=[Permission.COLLABORATOR],
+            ),
+        ],
+    ];
 
     assert lambda_handler(mock_event, mock_context) == expected_response
 
