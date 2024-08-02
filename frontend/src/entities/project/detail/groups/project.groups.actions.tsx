@@ -114,8 +114,8 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
                                         
                                         await Promise.allSettled((props?.selectedItems || []).map((project_group) => dispatch(removeGroupFromProject(project_group)).then((response) => {
                                             notificationService.showAxiosActionNotification(
-                                                'add group to project',
-                                                `Added ${project_group.group}} to project: ${projectName}.`,
+                                                'remove group from project',
+                                                `Removed ${project_group.group} from project: ${projectName}.`,
                                                 response
                                             );
                                         }))).finally(() => {
