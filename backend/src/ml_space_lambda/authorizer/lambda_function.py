@@ -342,8 +342,8 @@ def lambda_handler(event, context):
                             groups = target_scope.split(",")
                             # check that this user is a member of every group they're adding to the group dataset
                             is_valid_group_list = True
-                            for group_names in user_group_names:
-                                if group_names not in groups:
+                            for group in groups:
+                                if group not in user_group_names:
                                     is_valid_group_list = False
                             if is_valid_group_list:
                                 policy_statement["Effect"] = "Allow"
