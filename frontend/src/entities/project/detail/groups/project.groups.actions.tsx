@@ -25,7 +25,7 @@ import { useAppDispatch, useAppSelector } from '../../../../config/store';
 import {
     selectCurrentUser,
 } from '../../../user/user.reducer';
-import { isAdminOrOwner, togglePermission } from '../../../../shared/util/permission-utils';
+import { hasPermission, isAdminOrOwner, togglePermission } from '../../../../shared/util/permission-utils';
 import { useParams } from 'react-router-dom';
 import { useNotificationService } from '../../../../shared/util/hooks';
 import AddProjectGroupModal from './add-project-group-modal';
@@ -51,6 +51,7 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
     const [performingAction, setPerformingAction] = useState<boolean>(false);
     const project = useAppSelector(selectProject);
     const allGroups = useAppSelector(selectAllGroups);
+    const currentUser = useAppSelector(selectCurrentUser);
     const addableGroups = allGroups.filter((group) => {
         return !props?.projectGroups?.map((project_group) => project_group.group)?.includes(group.name);
     });
@@ -69,8 +70,8 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
     ];
 
     useEffect(() => {
-        dispatch(getAllGroups());
-    }, [dispatch]);
+        dispatch(getAllGroups(hasPermission(Permission.ADMIN, currentUser.permissions)));
+    }, [dispatch, currentUser.permissions]);
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
@@ -113,8 +114,8 @@ function ProjectGroupActions (props?: ProjectGroupActionProps) {
                                         
                                         await Promise.allSettled((props?.selectedItems || []).map((project_group) => dispatch(removeGroupFromProject(project_group)).then((response) => {
                                             notificationService.showAxiosActionNotification(
-                                                'add group to project',
-                                                `Added ${project_group.group}} to project: ${projectName}.`,
+                                                'remove group from project',
+                                                `Removed ${project_group.group} from project: ${projectName}.`,
                                                 response
                                             );
                                         }))).finally(() => {

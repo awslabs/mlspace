@@ -397,15 +397,21 @@ class IAMManager:
             f"arn:{self.aws_partition}:s3:::{self.data_bucket}/private/{user}/*",
             f"arn:{self.aws_partition}:s3:::{self.data_bucket}/global/*",
         ]
+        resource_prefixes = [f"private/{user}/*", "global/*", "index/*"]
 
         dataset_arn_prefixes = set()
+        group_prefixes = set()
         for group in group_user_dao.get_groups_for_user(user):
             for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
                 dataset = dataset_dao.get(DatasetType.GROUP, group_dataset.dataset)
                 if dataset is not None:
-                    dataset_arn_prefixes.add(f"arn:{self.aws_partition}:s3:::{self.data_bucket}/group/{dataset.name}/*")
+                    dataset_arn_prefixes.add(
+                        f"arn:{self.aws_partition}:s3:::{self.data_bucket}/group/datasets/{dataset.name}/*"
+                    )
+                    group_prefixes.add(f"group/datasets/{dataset.name}/*")
 
         resource_arns.extend(list(dataset_arn_prefixes))
+        resource_prefixes.extend(list(group_prefixes))
 
         user_policy = {
             "Version": "2012-10-17",
@@ -424,7 +430,7 @@ class IAMManager:
                     "Effect": "Allow",
                     "Action": "s3:ListBucket",
                     "Resource": f"arn:{self.aws_partition}:s3:::{self.data_bucket}",
-                    "Condition": {"StringLike": {"s3:prefix": [f"private/{user}/*", "global/*", "index/*"]}},
+                    "Condition": {"StringLike": {"s3:prefix": resource_prefixes}},
                 },
                 {
                     "Effect": "Allow",

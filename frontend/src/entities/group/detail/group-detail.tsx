@@ -14,8 +14,8 @@
  limitations under the License.
  */
 
-import React, { ReactNode, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { currentGroupDatasets, selectCurrentGroupProjects, currentGroupUsers, getGroup, getGroupDatasets, getGroupProjects, getGroupUsers, selectLoadingGroupProjects } from '../group.reducer';
 import { Header, SpaceBetween, Tabs } from '@cloudscape-design/components';
@@ -32,7 +32,7 @@ import { selectCurrentUser } from '../../user/user.reducer';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import { IDataset } from '../../../shared/model';
-import { defaultColumnsWithUrlOverride, visibleColumns } from '../../dataset/dataset.columns';
+import { createDefaultColumnsWithUrlOverride, visibleColumns } from '../../dataset/dataset.columns';
 import { GroupDetailDatasetActions } from './group-detail-dataset.actions';
 import { isFulfilled } from '@reduxjs/toolkit';
 import GroupDetailProjectActions from './group-detail-project.actions';
@@ -88,6 +88,12 @@ export function GroupDetail () {
         }
     }, [groupName, initialLoaded, dispatch, navigate]);
 
+    const {pathname} = useLocation();
+    let pathPrefix = 'personal/dataset';
+    if (pathname.match(/^\/admin/)) {
+        pathPrefix = 'admin/datasets';
+    }
+
     return (
         <ContentLayout header={<Header variant='h1'>{groupName}</Header>}>
             <SpaceBetween direction='vertical' size='xxl'>
@@ -126,8 +132,8 @@ export function GroupDetail () {
                             actions={GroupDetailDatasetActions}
                             itemNameProperty='name'
                             trackBy='location'
-                            allItems={groupDatasets}
-                            columnDefinitions={defaultColumnsWithUrlOverride}
+                            allItems={groupDatasets || []}
+                            columnDefinitions={useMemo(() => createDefaultColumnsWithUrlOverride(pathPrefix), [pathPrefix])}
                             visibleColumns={visibleColumns}
                             loadingItems={loadingDatasetData || !initialLoaded}
                             loadingText='Loading Group datasets'
