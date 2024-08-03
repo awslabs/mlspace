@@ -40,12 +40,16 @@ export const linkify = (
     id: string,
     prefix?: string,
     displayText?: string,
+    override?: boolean,
     cypressTag = `${resource}-${id}`
 ) => {
     const location = window.location.href;
     const splits = location.split('#');
     let href = '#' + splits[1] + '/';
 
+    if (override) {
+        href = '#';
+    }
     if (!href.includes(resource!)) {
         const spliceHref = href.split('/');
         let newHref = '';
@@ -211,6 +215,7 @@ export type PagedResponsePayload<T> = {
 
 export type ServerRequestProps = {
     projectName?: string;
+    isAdmin?: boolean;
     sortOrder?: TableSortOrder;
     sortBy?: string;
     pageSize?: number;
@@ -227,6 +232,7 @@ export type ServerSidePaginatorProps<T extends ServerRequestProps> = {
     fetchDataThunk: AsyncThunk<any, T, any>;
     ariaLabels: PaginationProps.Labels;
     storeClear: ActionCreatorWithoutPayload;
+    isAdmin?: boolean
 };
 
 export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerSidePaginatorProps<T>): JSX.Element => {
@@ -241,9 +247,9 @@ export const ServerSidePaginator = <T extends ServerRequestProps>(props: ServerS
     const fetchData = async (usePagination: boolean, callback?: () => void) => {
         // Disable pagination user input until loading completes
         setDisabled(true);
-
         const params = {
             nextToken: usePagination ? nextToken : undefined,
+            isAdmin: props.isAdmin,
             projectName,
             ...props.requestProps,
         } as T;

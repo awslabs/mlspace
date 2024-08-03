@@ -66,20 +66,19 @@ function ProjectActionButton (
         dismissText: 'Cancel',
     });
 
+    const canManage = hasPermission(Permission.PROJECT_OWNER, projectPermissions) || hasPermission(Permission.ADMIN, currentUser.permissions);
+    const actionVerb = canManage ? 'Manage' : 'View';
+
     actionItems.push(
         ...[
-            { text: 'List members', id: 'list_members' },
+            { text: `${actionVerb} membership`, id: 'membership' },
             { text: 'Leave Project', id: 'leave_project' },
         ]
     );
 
-    if (
-        hasPermission(Permission.PROJECT_OWNER, projectPermissions) ||
-        hasPermission(Permission.ADMIN, currentUser.permissions)
-    ) {
+    if (canManage) {
         actionItems.push(
             ...[
-                { text: 'Manage members', id: 'manage_members' },
                 { text: 'Update', id: 'update' },
             ]
         );
@@ -132,9 +131,8 @@ const ProjectActionHandler = (
         case 'update':
             nav(`/project/${project.name}/edit`);
             break;
-        case 'list_members':
-        case 'manage_members':
-            nav(`/project/${project.name}/user`);
+        case 'membership':
+            nav(`/project/${project.name}/membership`);
             break;
         case 'leave_project':
             dispatch(removeUserFromProject({ user: username, project: project.name! })).then(() => {

@@ -24,7 +24,8 @@ from botocore.config import Config
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO, DatasetModel
 from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO, GroupDatasetModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
-from ml_space_lambda.enums import DatasetType, EnvVariable
+from ml_space_lambda.data_access_objects.user import UserModel
+from ml_space_lambda.enums import DatasetType, EnvVariable, Permission
 from ml_space_lambda.utils.common_functions import api_wrapper, retry_config
 from ml_space_lambda.utils.dict_utils import filter_dict_by_keys, rename_dict_keys
 from ml_space_lambda.utils.exceptions import ResourceNotFound
@@ -107,6 +108,31 @@ def edit(event, context):
             raise Exception("Dataset description is over the max length of 254 characters.")
         if dataset_description_regex.search(body["description"]):
             raise Exception("Dataset description contains invalid character.")
+    if dataset.type == DatasetType.GROUP:
+        # get the new list of groups that have this dataset shared with them.
+        # this list may be adding or removing existing groups from this dataset
+        new_groups_list = body.get("groups", [])
+        # get the current list of groups with access to this dataset so we can determine which groups were added/removed
+        groups = group_dataset_dao.get_groups_for_dataset(dataset_name)
+        old_group_names = []
+        group_difference = []
+
+        # Check for existing groups that are no longer in the group list
+        for group in groups:
+            old_group_names.append(group.group)
+            if group.group not in new_groups_list:
+                # this group was removed from the dataset
+                group_dataset_dao.delete(group.group, dataset_name)
+                group_difference.append(group.group)
+
+        # Check for new groups that are not in the list of existing groups
+        for new_group in new_groups_list:
+            if new_group not in old_group_names:
+                # this group was added to the dataset
+                group_dataset_dao.create(GroupDatasetModel(dataset_name, new_group))
+                group_difference.append(new_group)
+
+        iam_manager.update_groups(group_difference)
 
     # will get updated anyway
     original = dataset.to_dict()
@@ -124,6 +150,10 @@ def get(event, context):
     dataset_name = event["pathParameters"]["datasetName"]
 
     dataset = dataset_dao.get(scope, dataset_name)
+    if scope == DatasetType.GROUP:
+        groups = group_dataset_dao.get_groups_for_dataset(dataset_name)
+        for group in groups:
+            dataset.groups.append(group.group)
     if dataset:
         return dataset.to_dict()
 
@@ -150,8 +180,8 @@ def presigned_url(event, context):
     scope_from_key = key.split("/")[1]
     name_from_key = key.split("/")[2]
     if type_from_key == DatasetType.GROUP:
-        # for group datasets, the scope is 'group'
-        scope_from_key = DatasetType.GROUP
+        # for group datasets, the scope is the dataset name
+        scope_from_key = name_from_key
 
     # Ensure the headers match the values derived from the request key
     if type_from_key != event["headers"]["x-mlspace-dataset-type"] or not _is_scope_header_correct(
@@ -213,18 +243,20 @@ def presigned_url(event, context):
 def create_dataset(event, context):
     try:
         dataset_created = False
+        group_dataset_created = False
         body = json.loads(event["body"])
         dataset_type = body.get("datasetType")
         dataset_name = body.get("datasetName")
+        groups = body.get("datasetGroups", [])
         env_variables = get_environment_variables()
 
         if dataset_type == DatasetType.GLOBAL:
-            scope = "global"
+            scope = DatasetType.GLOBAL
             dataset_scope = scope
             directory_name = f"global/datasets/{dataset_name}/"
         elif dataset_type == DatasetType.GROUP:
-            scope = body.get("datasetScope")
-            dataset_scope = "group"
+            scope = ",".join(groups)
+            dataset_scope = DatasetType.GROUP
             directory_name = f"group/datasets/{dataset_name}/"
         else:
             scope = body.get("datasetScope")  # username, group name, or project name for private/project scope respectively
@@ -244,12 +276,16 @@ def create_dataset(event, context):
                 location=dataset_location,
                 created_by=event["requestContext"]["authorizer"]["principalId"],
             )
+            # For groups, create one entry per group that shares this dataset
+            if dataset_type == DatasetType.GROUP:
+                for group in groups:
+                    group_dataset_dao.create(GroupDatasetModel(dataset_name, group))
+                    group_dataset_created = True
+
             dataset_dao.create(dataset)
             dataset_created = True
 
-            if dataset_type == DatasetType.GROUP:
-                group_dataset_dao.create(GroupDatasetModel(dataset_name, scope))
-                iam_manager.update_groups([scope])
+            iam_manager.update_groups(groups)
 
             return {"status": "success", "dataset": dataset.to_dict()}
         else:
@@ -259,28 +295,48 @@ def create_dataset(event, context):
         if dataset_created:
             dataset_dao.delete(dataset_scope, dataset_name)
 
+        if group_dataset_created:
+            for group in groups:
+                group_dataset_dao.delete(dataset_name, group)
+            iam_manager.update_groups(groups)
+
         raise e
 
 
 @api_wrapper
 def list_resources(event, context):
     username = event["requestContext"]["authorizer"]["principalId"]
-    datasets = []
-    # Get global datasets
-    datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
-    # Get the users private datasets
-    datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
-    # Get the group datasets for groups this user is a member of
-    group_datasets = set()
-    for group in group_user_dao.get_groups_for_user(username):
-        for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
-            group_datasets.add(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
-    datasets.extend(list(group_datasets))
+    user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
 
-    if event["pathParameters"] and "projectName" in event["pathParameters"]:
-        project_name = event["pathParameters"]["projectName"].replace('"', "")
-        # Get project datasets
-        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PROJECT, project_name))
+    is_admin = event["requestContext"].get("resourcePath") == "/admin/datasets"
+    datasets = []
+
+    # if this is an admin request, retrieve ALL the datasets
+    if is_admin and Permission.ADMIN in user.permissions:
+        datasets = dataset_dao.get_all()
+        for dataset in datasets:
+            if dataset.type == DatasetType.GROUP:
+                # Clear list to make sure it's up to date
+                dataset.groups = []
+                for group_dataset in group_dataset_dao.get_groups_for_dataset(dataset.name):
+                    dataset.groups.append(group_dataset.group)
+    else:
+        # Get global datasets
+        datasets = dataset_dao.get_all_for_scope(DatasetType.GLOBAL, DatasetType.GLOBAL)
+        # Get the user's private datasets
+        datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PRIVATE, username))
+        # Get the group datasets for groups this user is a member of
+        group_datasets = set()
+        for group in group_user_dao.get_groups_for_user(username):
+            for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
+                if group_dataset.dataset not in group_datasets:
+                    group_datasets.add(group_dataset.dataset)
+                    datasets.append(dataset_dao.get(DatasetType.GROUP, group_dataset.dataset))
+
+        if event["pathParameters"] and "projectName" in event["pathParameters"]:
+            project_name = event["pathParameters"]["projectName"].replace('"', "")
+            # Get project datasets
+            datasets.extend(dataset_dao.get_all_for_scope(DatasetType.PROJECT, project_name))
 
     return [dataset.to_dict() for dataset in datasets]
 

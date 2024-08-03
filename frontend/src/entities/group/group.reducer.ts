@@ -18,11 +18,17 @@ import { createAsyncThunk, createSlice, isFulfilled, isPending } from '@reduxjs/
 import axios, { axiosCatch } from '../../shared/util/axios-utils';
 import { IGroup, IGroupWithPermissions } from '../../shared/model/group.model';
 import { IGroupUser } from '../../shared/model/groupUser.model';
+import { IDataset } from '../../shared/model';
+import { IProjectGroup } from '../../shared/model/projectGroup.model';
 
 const initialState = {
     allGroups: [] as IGroup[],
     currentGroupUsers: [] as IGroupUser[],
+    currentGroupProjects: [] as IProjectGroup[],
+    currentGroupDatasets: [] as IDataset[],
     loading: false,
+    datasetsLoading: false,
+    projectsLoading: false
 };
 
 export type AddGroupUserRequest = {
@@ -36,7 +42,7 @@ export const getAllGroups = createAsyncThunk('group/fetch_all_groups', async (ad
     if (adminGetAll) {
         params.append('adminGetAll', 'true');
     }
-    return axios.get(`/group${params.size > 0 ? '?' + params.toString() : ''}`);
+    return axios.get<IGroup[]>(`/group${params.size > 0 ? '?' + params.toString() : ''}`);
 });
 
 export const getGroup = createAsyncThunk('group/fetch_group', async (groupName: string) => {
@@ -60,6 +66,16 @@ export const updateGroup = createAsyncThunk('group/update_group', async (group: 
 export const getGroupUsers = createAsyncThunk('group/group_users', async (groupName: string) => {
     const requestUrl = `/group/${groupName}/users`;
     return axios.get<IGroupUser[]>(requestUrl);
+});
+
+export const getGroupDatasets = createAsyncThunk('group/group_datasets', async (groupName: string) => {
+    const requestUrl = `/group/${groupName}/datasets`;
+    return axios.get<IDataset[]>(requestUrl);
+});
+
+export const getGroupProjects = createAsyncThunk('group/group_projects', async (groupName: string) => {
+    const requestUrl = `/group/${groupName}/projects`;
+    return axios.get<IProjectGroup[]>(requestUrl).catch(axiosCatch);
 });
 
 export const removeGroupUser = createAsyncThunk('group/remove_user', async (data: IGroupUser) => {
@@ -91,6 +107,26 @@ export const GroupSlice = createSlice({
                     loading: false,
                 };
             })
+            .addMatcher(isFulfilled(getGroupDatasets), (state, action) => {
+                return {
+                    ...state,
+                    currentGroupDatasets: action.payload.data,
+                    datasetsLoading: false,
+                };
+            })
+            .addMatcher(isFulfilled(getGroupProjects), (state, action) => {
+                return {
+                    ...state,
+                    currentGroupProjects: action.payload.data,
+                    projectsLoading: false
+                };
+            })
+            .addMatcher(isPending(getGroupDatasets), (state) => {
+                return {
+                    ...state,
+                    datasetsLoading: true,
+                };
+            })
             .addMatcher(isFulfilled(deleteGroup, createGroup, updateGroup, removeGroupUser, addGroupUsers), (state) => {
                 return {
                     ...state,
@@ -102,10 +138,19 @@ export const GroupSlice = createSlice({
                     ...state,
                     loading: true,
                 };
+            })
+            .addMatcher(isPending(getGroupProjects), (state) => {
+                return {
+                    ...state,
+                    projectsLoading: true      
+                };
             });
     }
 });
 
 export default GroupSlice.reducer;
 export const currentGroupUsers = (state: any): IGroupUser[] => state.group.currentGroupUsers;
+export const selectCurrentGroupProjects = (state: any): IProjectGroup[] => state.group.currentGroupProjects;
+export const selectLoadingGroupProjects = (state: any): boolean => state.group.projectsLoading;
+export const currentGroupDatasets = (state: any): IDataset[] => state.group.currentGroupDatasets;
 export const selectAllGroups = (state: any): IGroup[] => state.group.allGroups;

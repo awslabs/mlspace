@@ -30,6 +30,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { colorTextBodyDefault } from '@cloudscape-design/design-tokens';
 import Logo from '../logo/logo';
 import HorizontalLine from '../horizontal-line';
+import { IAppConfiguration } from '../../model/app.configuration.model';
+import { appConfig } from '../../../entities/configuration/configuration-reducer';
 
 export default function SideNavigation () {
     const items: SideNavigationProps.Item[] = useAppSelector((state) => state.navigation.navItems);
@@ -40,6 +42,7 @@ export default function SideNavigation () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const project: IProject = useAppSelector((state) => state.project.project);
+    const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
     const defaultState: OptionDefinition = {
         label: 'Select a project',
         value: '',
@@ -102,7 +105,7 @@ export default function SideNavigation () {
             flexDirection: 'column',
             flex: '1',
             // eslint-disable-next-line spellcheck/spell-checker
-            height: '100vh',
+            height: `${applicationConfig.configuration.SystemBanner.isEnabled ? '94vh' : '100vh'}`,
         }}>
             {
                 // Cloudscape built-in nav header doesn't allow us to include the select dropdown and

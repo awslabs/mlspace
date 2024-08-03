@@ -29,6 +29,7 @@ export const SystemBanner = ({ position }: BannerOptions) => {
 
     if (applicationConfig.configuration.SystemBanner.isEnabled) {
         document.getElementById('root')!.style.paddingTop = '1.5em';
+        document.getElementById('root')!.style.paddingBottom = '1.5em';
     }
     
     const bannerStyle: React.CSSProperties = {
@@ -50,7 +51,7 @@ export const SystemBanner = ({ position }: BannerOptions) => {
     return (
         <TextContent>
             <div style={bannerStyle} id={position === 'TOP' ? 'topBanner' : 'bottomBanner'}>
-                <span>{applicationConfig.configuration.SystemBanner.text}</span>
+                <span><strong>{applicationConfig.configuration.SystemBanner.text}</strong></span>
             </div>
         </TextContent>
     );

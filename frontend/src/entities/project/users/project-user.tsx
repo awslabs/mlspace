@@ -18,7 +18,6 @@ import React, { useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../config/store';
 import Modal from '../../../modules/modal';
 import Table from '../../../modules/table';
-import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { IUser } from '../../../shared/model/user.model';
 import { projectUserColumns, visibleProjectUserColumns } from '../../user/user.columns';
 import AddProjectUser from './add/user-add';
@@ -31,8 +30,6 @@ import {
 } from '../../user/user.reducer';
 import { IProjectUser } from '../../../shared/model/projectUser.model';
 import { useParams } from 'react-router-dom';
-import { getBase } from '../../../shared/util/breadcrumb-utils';
-import { DocTitle } from '../../../../src/shared/doc';
 import { useNotificationService } from '../../../shared/util/hooks';
 
 export function ProjectUser () {
@@ -49,17 +46,9 @@ export function ProjectUser () {
     const dispatch = useAppDispatch();
     const notificationService = useNotificationService(dispatch);
 
-    DocTitle(projectName!.concat(' Project Members'));
-
     let selectedUsers: IUser[] = [];
 
     useEffect(() => {
-        dispatch(
-            setBreadcrumbs([
-                getBase(projectName),
-                { text: 'Users', href: `#/project/${projectName}/user` },
-            ])
-        );
         dispatch(getUsersInProject(projectName!));
         dispatch(getAllUsers(false));
     }, [dispatch, projectName]);
@@ -76,6 +65,7 @@ export function ProjectUser () {
                 visibleColumns={visibleProjectUserColumns}
                 loadingItems={loadingProjectUsers}
                 loadingText='Loading Project users'
+                variant='embedded'
             />
             <Modal
                 title='Add user to Project'

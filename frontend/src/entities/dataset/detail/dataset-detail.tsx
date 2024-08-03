@@ -27,7 +27,7 @@ import {
     getDataset,
     loadingDataset,
 } from '../../../entities/dataset/dataset.reducer';
-import { IDataset } from '../../../shared/model/dataset.model';
+import { DatasetType, IDataset } from '../../../shared/model/dataset.model';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -39,10 +39,17 @@ import DatasetBrowser from '../../../modules/dataset/dataset-browser';
 import { DatasetBrowserActions } from '../dataset.actions';
 import { DatasetBrowserManageMode } from '../../../modules/dataset/dataset-browser.types';
 import ContentLayout from '../../../shared/layout/content-layout';
+import { DatasetProperties } from '../dataset';
 
-function DatasetDetail () {
+function DatasetDetail ({isAdmin}: DatasetProperties) {
     const { projectName, type, scope, name } = useParams();
-    const basePath = projectName ? `/project/${projectName}` : '/personal';
+    let basePath = '';
+    if (isAdmin) {
+        basePath = '/admin/datasets';
+    } else {
+        basePath = `${projectName ? `/project/${projectName}` : '/personal'}/dataset`;
+    }
+    
 
     const dataset: IDataset = useAppSelector(datasetBinding);
     const datasetLoading = useAppSelector(loadingDataset);
@@ -54,6 +61,10 @@ function DatasetDetail () {
     datasetDetails.set('Description', dataset.description);
     datasetDetails.set('Access level', showAccessLevel(dataset));
     datasetDetails.set('Location', dataset.location);
+    if (dataset.type === DatasetType.GROUP) {
+        datasetDetails.set(`Group${dataset.groups && dataset.groups.length > 1 ? 's' : ''}`, dataset.groups?.length ? dataset.groups : 'None');
+    }
+   
 
     // Make sure the existing Dataset matches the Dataset we're trying to view. If a Dataset was previously
     // loaded then datasetLoading will be false even though we haven't fetched the new Dataset. That would
@@ -67,8 +78,8 @@ function DatasetDetail () {
         dispatch(
             setBreadcrumbs([
                 getBase(projectName),
-                { text: 'Datasets', href: `#${basePath}/dataset` },
-                { text: `${name}`, href: `#${basePath}/dataset/${type}/${scope}/${name}` },
+                { text: 'Datasets', href: `#${basePath}`},
+                { text: `${name}`, href: `#${basePath}/${type}/${scope}/${name}` },
             ])
         );
         dispatch(getDataset({ type: type, scope: scope, name: name }))
@@ -76,7 +87,7 @@ function DatasetDetail () {
             .catch(() => {
                 navigate('/404');
             });
-    }, [dispatch, navigate, basePath, name, projectName, scope, type]);
+    }, [dispatch, navigate, basePath, name, projectName, scope, type, isAdmin]);
 
     return (
         <ContentLayout header={<Header variant='h1'>{dataset.name}</Header>}>
@@ -89,7 +100,7 @@ function DatasetDetail () {
                         <Button
                             onClick={() =>
                                 navigate(
-                                    `${basePath}/dataset/${dataset.type}/${dataset.scope}/${dataset.name}/edit`
+                                    `${basePath}/${dataset.type}/${dataset.scope}/${dataset.name}/edit`
                                 )
                             }
                         >

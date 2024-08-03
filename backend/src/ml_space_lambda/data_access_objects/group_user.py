@@ -69,9 +69,9 @@ class GroupUserDAO(DynamoDBObjectStore):
     def create(self, group_user: GroupUserModel) -> None:
         self._create(group_user.to_dict())
 
-    def get(self, group_name: str, user_name: str) -> Optional[GroupUserModel]:
+    def get(self, group_name: str, username: str) -> Optional[GroupUserModel]:
         json_key = {
-            "user": user_name,
+            "user": username,
             "group": group_name,
         }
         try:
@@ -100,9 +100,9 @@ class GroupUserDAO(DynamoDBObjectStore):
         ).records
         return [GroupUserModel.from_dict(entry) for entry in json_response]
 
-    def delete(self, group_name: str, user_name: str) -> None:
+    def delete(self, group_name: str, username: str) -> None:
         json_key = {
-            "user": user_name,
+            "user": username,
             "group": group_name,
         }
         self._delete(json_key)

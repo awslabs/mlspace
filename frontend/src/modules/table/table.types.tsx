@@ -29,7 +29,7 @@ type TableProps<Entry = TableEntry> = {
     tableName?: string;
     tableType?: CloudscapeTableProps.SelectionType;
     actions?: CallbackFunction<TableActionProps<Entry>, ReactNode | undefined>;
-    selectItemsCallback?: CallbackFunction;
+    selectItemsCallback?: CallbackFunction<Entry[]>;
     allItems: Entry[];
     setItemsOverride?: CallbackFunction;
     columnDefinitions: CloudscapeTableProps.ColumnDefinition<Entry>[];
@@ -60,6 +60,7 @@ type TableProps<Entry = TableEntry> = {
     storeClear?: ActionCreatorWithoutPayload;
     keepSelection?: boolean;
     tableDescription?: string;
+    isAdmin?: boolean;
 };
 
 type TableEntry = any;
