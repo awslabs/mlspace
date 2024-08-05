@@ -220,20 +220,27 @@ export function DynamicConfiguration () {
                             statusIconAriaLabel='Warning'
                             type='warning'
                         >
-                            Dynamic Roles are not currently configured. We highly recommend using Dynamic Roles for the most secure configuration. Please see documentation for details. By default, all instance types and services are activated in {window.env.APPLICATION_NAME} when Dynamic Roles are not in use.
+                            Dynamic Roles are not currently configured. 
+                            We highly recommend using Dynamic Roles for the most secure configuration. 
+                            Please see documentation for details. 
+                            Configuring instance types and services will only control access to those resources 
+                            in the {window.env.APPLICATION_NAME} UI but will not affect the availability of instance
+                            types or services within notebooks.
                         </Alert>
                     }
-                    { window.env.MANAGE_IAM_ROLES && <AllowedInstanceTypesConfiguration
+                    <AllowedInstanceTypesConfiguration
                         setFields={setFields}
                         expandedSections={expandedSections}
                         setExpandedSections={setExpandedSections}
                         enabledNotebookInstanceTypes={state.form.configuration.EnabledInstanceTypes.notebook}
                         enabledTrainingInstanceTypes={state.form.configuration.EnabledInstanceTypes.trainingJob}
                         enabledTransformInstanceTypes={state.form.configuration.EnabledInstanceTypes.transformJob}
-                        enabledEndpointInstanceTypes={state.form.configuration.EnabledInstanceTypes.endpoint} /> }
-                    { window.env.MANAGE_IAM_ROLES && <ActivatedServicesConfiguration
+                        enabledEndpointInstanceTypes={state.form.configuration.EnabledInstanceTypes.endpoint} 
+                    />
+                    <ActivatedServicesConfiguration
                         setFields={setFields}
-                        enabledServices={state.form.configuration.EnabledServices} /> }
+                        enabledServices={state.form.configuration.EnabledServices} 
+                    />
                     <EmrConfiguration
                         expandedSections={expandedSections}
                         setExpandedSections={setExpandedSections}

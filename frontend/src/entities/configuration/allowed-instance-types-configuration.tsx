@@ -15,6 +15,7 @@
  */
 
 import {
+    Alert,
     Container,
     ExpandableSection,
     Header
@@ -66,6 +67,8 @@ export function AllowedInstanceTypesConfiguration (props: AllowedInstanceTypesCo
         };
     }), [props.enabledEndpointInstanceTypes]);
 
+    //TODO: based on whether DR is enabled, display a warning that enable/disable will only cause visual changes
+
     return (
         <Container
             header={
@@ -76,6 +79,16 @@ export function AllowedInstanceTypesConfiguration (props: AllowedInstanceTypesCo
                 </Header>
             }
         >
+            { !window.env.MANAGE_IAM_ROLES && 
+                <Alert 
+                    statusIconAriaLabel='Warning'
+                    type='warning'
+                >
+                    Due to dynamic roles not being in use, the allowed instance types
+                    will only be applied to resources created in the {window.env.APPLICATION_NAME} UI
+                    and will have no affect on resources created in notebooks
+                </Alert>
+            }
             <ExpandableSection headerText='Notebook instances' variant='default' expanded={props.expandedSections.notebookInstances} onChange={({ detail }) =>
                 props.setExpandedSections({...props.expandedSections, notebookInstances: detail.expanded})
             }>
