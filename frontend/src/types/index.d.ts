@@ -27,15 +27,8 @@ declare global {
             OIDC_CLIENT_NAME: string;
             LAMBDA_ENDPOINT: string;
             DATASET_BUCKET: string;
-            SYSTEM_BANNER?: {
-                text: string,
-                backgroundColor: string;
-                fontColor: string;
-            };
             MANAGE_IAM_ROLES?: boolean;
             SHOW_MIGRATION_OPTIONS?: boolean;
-            ENABLE_TRANSLATE?: boolean;
-            ENABLE_GROUNDTRUTH?: boolean;
             APPLICATION_NAME?: string;
             AWS_REGION: string;
             BACKGROUND_REFRESH_INTERVAL: number;

@@ -105,20 +105,6 @@ export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = true;
 // SSM property names
 export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
 
-// Whether or not translate functionality should be include in the deployment
-/**
- * @deprecated This constant will be removed in the next release. Activating and deactivating the Translate service
- * is now handled by the app config feature.
- */
-export const ENABLE_TRANSLATE = true;
-
-// Whether or not Ground Truth labeling functionality should be include in the deployment
-/**
- * @deprecated This constant will be removed in the next release. Activating and deactivating the GroundTruth service
- * is now handled by the app config feature.
- */
-export const ENABLE_GROUNDTRUTH = true;
-
 // The default name for the application
 export const APPLICATION_NAME = 'MLSpace';
 
@@ -143,11 +129,6 @@ export const OIDC_VERIFY_SSL = true;
 export const OIDC_VERIFY_SIGNATURE = true;
 // This defaults to the APIGW url but if you're using custom DNS you should set this to that
 export const OIDC_REDIRECT_URI = '';
-// Optional system banner which will be displayed at the top and the bottom of MLSpace
-// These Banner settings are deprecated. Use the Dynamic configuration instead.
-export const SYSTEM_BANNER_BACKGROUND_COLOR = 'black';
-export const SYSTEM_BANNER_TEXT = '';   // If this value is not set then no banner will be displayed
-export const SYSTEM_BANNER_TEXT_COLOR = 'white';
 // Interval (in minutes) to run the resource termination cleanup lambda
 export const RESOURCE_TERMINATION_INTERVAL = 60;
 // Interval (in minutes) to run background resource data updates

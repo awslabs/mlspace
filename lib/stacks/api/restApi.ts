@@ -289,7 +289,6 @@ export class RestApiStack extends Stack {
             MANAGE_IAM_ROLES:  props.mlspaceConfig.MANAGE_IAM_ROLES,
             SHOW_MIGRATION_OPTIONS: props.enableMigrationUI,
             ENABLE_TRANSLATE: props.enableTranslate,
-            ENABLE_GROUNDTRUTH: props.mlspaceConfig.ENABLE_GROUNDTRUTH,
             APPLICATION_NAME: props.mlspaceConfig.APPLICATION_NAME,
             DATASET_BUCKET: props.dataBucketName,
             AWS_REGION: props.mlspaceConfig.AWS_REGION,

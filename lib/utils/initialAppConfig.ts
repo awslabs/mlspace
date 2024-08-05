@@ -14,11 +14,10 @@
   limitations under the License.
 */
 
-import { MLSpaceConfig } from './configTypes';
 import * as fs from 'fs';
 
 
-export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
+export function generateAppConfig () {
     //Create a default clusterConfig in case cluster-config.json doesn't exist
     let clusterConfig = {
         'Small': {
@@ -116,12 +115,12 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
         'createdAt': {'S': Math.round(date.getTime() / 1000).toString()},
         'configuration': {'M': {
             'EnabledServices': {'M': {
-                'realtimeTranslate': {'BOOL': mlspaceConfig.ENABLE_TRANSLATE ? 'True' : 'False'},
-                'batchTranslate': {'BOOL': mlspaceConfig.ENABLE_TRANSLATE ? 'True' : 'False'},
+                'realtimeTranslate': {'BOOL': 'False'},
+                'batchTranslate': {'BOOL': 'False'},
                 'emrCluster': {'BOOL': 'True'},
                 'endpoint': {'BOOL': 'True'},
                 'endpointConfig': {'BOOL': 'True'},
-                'labelingJob': {'BOOL': mlspaceConfig.ENABLE_GROUNDTRUTH ? 'True' : 'False'},
+                'labelingJob': {'BOOL': 'True'},
                 'transformJob': {'BOOL': 'True'},
                 'notebook': {'BOOL': 'True'},
                 'trainingJob': {'BOOL': 'True'},
@@ -136,10 +135,10 @@ export function generateAppConfig (mlspaceConfig: MLSpaceConfig) {
                 ]}
             }},
             'SystemBanner': {'M': {
-                'isEnabled': {'BOOL': mlspaceConfig.SYSTEM_BANNER_TEXT !== ''},
-                'text': {'S': mlspaceConfig.SYSTEM_BANNER_TEXT},
-                'textColor': {'S': mlspaceConfig.SYSTEM_BANNER_TEXT_COLOR},
-                'backgroundColor': {'S': mlspaceConfig.SYSTEM_BANNER_BACKGROUND_COLOR}
+                'isEnabled': {'BOOL': 'False'},
+                'text': {'S': ''},
+                'textColor': {'S': ''},
+                'backgroundColor': {'S': ''}
             }},
             'EMRConfig': {'M': {
                 'autoScaling': {'M': {

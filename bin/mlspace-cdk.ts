@@ -77,12 +77,15 @@ const websiteBucketName = `${config.WEBSITE_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 const cwlBucketName = `${config.LOGS_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 const accessLogsBucketName = `${config.ACCESS_LOGS_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 
+//Translate is not currently available in us-isob-east1
+const enableTranslate = config.AWS_REGION !== 'us-isob-east-1';
+
 const iamStack = new IAMStack(app, 'mlspace-iam', {
     env: envProperties,
     dataBucketName,
     configBucketName,
     websiteBucketName,
-    enableTranslate: config.ENABLE_TRANSLATE,
+    enableTranslate: enableTranslate,
     encryptionKey: kmsStack.masterKey,
     mlSpaceVPC: vpcStack.vpc,
     mlSpaceDefaultSecurityGroupId: vpcStack.vpcSecurityGroupId,
@@ -147,7 +150,7 @@ const restStack = new RestApiStack(app, 'mlspace-web-tier', {
     mlSpaceVPC,
     lambdaSecurityGroups: [vpcStack.vpcSecurityGroup],
     isIso,
-    enableTranslate: config.ENABLE_TRANSLATE,
+    enableTranslate: enableTranslate,
     mlspaceConfig: config
 });
 
@@ -194,7 +197,7 @@ const apiStacks = [
     new GroupsApiStack(app, 'mlspace-group-apis', apiStackProperties),
 ];
 
-if (config.ENABLE_TRANSLATE) {
+if (enableTranslate) {
     apiStacks.push(new TranslateApiStack(app, 'mlspace-translate-apis', apiStackProperties));
 }
 const apiDeploymentStack = new ApiDeploymentStack(app, 'mlspace-api-deployment', {
