@@ -54,7 +54,7 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
 
         for (const key in json) {
             const value = json[key];
-            output.push((<li><p><strong>{key}</strong></p></li>));
+            output.push((<li><p><strong>{_.startCase(key)}</strong></p></li>));
 
             if (_.isPlainObject(value)) {
                 const recursiveJson = jsonToOutline(value); // recursively call
