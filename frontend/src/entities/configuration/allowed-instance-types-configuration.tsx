@@ -67,8 +67,6 @@ export function AllowedInstanceTypesConfiguration (props: AllowedInstanceTypesCo
         };
     }), [props.enabledEndpointInstanceTypes]);
 
-    //TODO: based on whether DR is enabled, display a warning that enable/disable will only cause visual changes
-
     return (
         <Container
             header={

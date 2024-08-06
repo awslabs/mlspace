@@ -78,7 +78,7 @@ const cwlBucketName = `${config.LOGS_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 const accessLogsBucketName = `${config.ACCESS_LOGS_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 
 //Translate is not currently available in us-isob-east1
-const enableTranslate = config.AWS_REGION !== 'us-isob-east-1';
+const enableTranslate = !['us-isob-east-1'].includes(config.AWS_REGION);
 
 const iamStack = new IAMStack(app, 'mlspace-iam', {
     env: envProperties,
