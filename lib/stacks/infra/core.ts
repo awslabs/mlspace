@@ -587,7 +587,7 @@ export class CoreStack extends Stack {
                 action: 'putItem',
                 parameters: {
                     TableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
-                    Item: generateAppConfig(props.mlspaceConfig),
+                    Item: generateAppConfig(),
                 },
                 physicalResourceId: PhysicalResourceId.of('initAppConfigData'),
             },

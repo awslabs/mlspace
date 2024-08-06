@@ -73,15 +73,6 @@ async function advancedConfigPrompts () {
         await askRoleQuestions();
     }
 
-    const bannerResponse = await prompt({
-        type: 'confirm',
-        name: 'createBanner',
-        message: 'Do you want to modify the banner displayed on MLSpace? (selecting no will default in MLSpace having no banner)',
-    });
-    if (bannerResponse.createBanner) {
-        await askBannerQuestions();
-    }
-
     // List of other advanced settings which don't fit into a category
     const otherAdvancedSettings = [
         {
@@ -204,26 +195,4 @@ async function askRoleQuestions () {
     ];
     const rolePromptAnswers = await prompt(roleQuestions);
     answers = {...answers, ...rolePromptAnswers};
-}
-
-async function askBannerQuestions () {
-    const bannerQuestions = [
-        {
-            type: 'input',
-            name: 'SYSTEM_BANNER_TEXT',
-            message: 'System Banner Text: the text to display on the system banner displayed at the top and bottom of the MLSpace web application. If set to a blank string no banner will be displayed',
-        },
-        {
-            type: 'input',
-            name: 'SYSTEM_BANNER_BACKGROUND_COLOR',
-            message: 'System Banner Background Color: the background color of the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and rgb values',
-        },
-        {
-            type: 'input',
-            name: 'SYSTEM_BANNER_TEXT_COLOR',
-            message: 'System Banner Text Color: the color of the text displayed in the system banner if enabled. Supports valid CSS colors including predefined color names, hex values, and rgb values',
-        },
-    ];
-    const bannerPromptAnswers = await prompt(bannerQuestions);
-    answers = {...answers, ...bannerPromptAnswers};
 }

@@ -38,6 +38,18 @@ export type ActivatedServicesConfigurationProps = {
     enabledServices: {[key: string]: boolean};
 };
 
+const generateDescription = () => {
+    return `
+        Activate or deactivate services within MLSpace. Deactivated 
+        services will no longer appear within the MLSpace user interface${window.env.MANAGE_IAM_ROLES ? ` or 
+        be available for use within notebooks. IAM permissions  that control access to these services within 
+        the MLSpace user interface and Jupyter Notebooks will automatically update.  Deactivating services will 
+        suspend all active corresponding jobs and instances associated with the service.` : 
+        `. Due to dynamic roles not being in use, deactivating a service will not limit the ability of users to
+        leverage that service in notebooks.`}
+    `;
+};
+
 export function ActivatedServicesConfiguration (props: ActivatedServicesConfigurationProps) {
     return (
         <Container
@@ -47,13 +59,11 @@ export function ActivatedServicesConfiguration (props: ActivatedServicesConfigur
                 </Header>
             }>
             <SpaceBetween direction='vertical' size='m'>
-                <Alert statusIconAriaLabel='Info'>
-                    Activated Services: Activate or deactivate services within MLSpace. IAM permissions
-                    that control access to these services within the MLSpace user interface and Jupyter
-                    Notebooks will automatically update. Deactivated services will no longer appear within
-                    the MLSpace user interface or be available for use within Notebooks. Deactivating
-                    services will suspend all active corresponding jobs and instances associated with the
-                    service.
+                <Alert
+                    type={window.env.MANAGE_IAM_ROLES ? 'info' : 'warning'}
+                    statusIconAriaLabel={window.env.MANAGE_IAM_ROLES ? 'Info' : 'Warning'}
+                >
+                    {generateDescription()}
                 </Alert>
                 <Grid gridDefinition={Object.keys(configurableServices).map(() => ({colspan: 3}))}>
                     {Object.keys(configurableServices).map((service) => {
