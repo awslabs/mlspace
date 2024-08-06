@@ -3,14 +3,17 @@ outline: deep
 ---
 
 # Endpoints
+
 Deploy a model using an endpoint configuration for real time inference using SageMaker hosting services.
 
 ## Create Endpoint
+
 From the endpoints view within the context of a project, users can create new endpoints by clicking
 the "Create endpoint" button. Endpoints must be associated with a single endpoint configuration, you
 can choose an existing endpoint or create a new configuration using an embedded form.
 
 ## Managing Endpoints
+
 Endpoints can be deleted by the configuration owner, project owners, or system administrators.
 Additionally all members of a project can view the endpoint details which will display the endpoint
 status, endpoint logs, configuration information pertaining to each of the associated production variants

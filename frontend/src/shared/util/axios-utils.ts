@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { default as Axios, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { default as Axios, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export const setProjectHeader = (projectName: string): AxiosRequestConfig => {
     return {
@@ -53,16 +53,12 @@ const config = (requestConfig: AxiosRequestConfig = {}) => {
     const oidcString = sessionStorage.getItem(
         `oidc.user:${window.env.OIDC_URL}:${window.env.OIDC_CLIENT_NAME}`
     );
-    if (oidcString) {
-        const token = JSON.parse(oidcString).id_token;
-        const headerName = 'Authorization';
-        const headerValue = `Bearer ${token}`;
+    const token = oidcString ? JSON.parse(oidcString).id_token : '';
 
-        if (undefined === requestConfig.headers) {
-            requestConfig.headers = {};
-        }
-        requestConfig.headers[headerName] = headerValue;
+    if (requestConfig.headers === undefined) {
+        requestConfig.headers = {};
     }
+    requestConfig.headers['Authorization'] = `Bearer ${token}`;
 
     return requestConfig;
 };
@@ -72,6 +68,18 @@ const axios = {
     post: AxiosHelper.post,
     put: AxiosHelper.put,
     delete: AxiosHelper.delete,
+};
+
+export const axiosCatch = (reason: Error | AxiosError) => {
+    if (Axios.isAxiosError(reason)) {
+        return Promise.reject({
+            name: reason.name,
+            message: reason.response?.data,
+            code: reason.response?.status
+        });
+    }
+
+    throw reason;
 };
 
 export default axios;

@@ -83,6 +83,26 @@ export class ProjectsApiStack extends Stack {
                 method: 'PUT',
             },
             {
+                name: 'add_groups',
+                resource: 'project',
+                description: 'Adds groups to a project',
+                path: 'project/{projectName}/groups',
+                method: 'POST',
+                environment: {
+                    DATA_BUCKET: props.dataBucketName,
+                },
+            },
+            {
+                name: 'update_project_group',
+                resource: 'project',
+                description: 'Change the role of an MLSpace group within a project',
+                path: 'project/{projectName}/groups/{groupName}',
+                method: 'PUT',
+                environment: {
+                    DATA_BUCKET: props.dataBucketName,
+                },
+            },
+            {
                 name: 'delete',
                 resource: 'project',
                 description: 'Delete an MLSpace project',
@@ -104,6 +124,16 @@ export class ProjectsApiStack extends Stack {
                 resource: 'project',
                 description: 'Removes a user from a project',
                 path: 'project/{projectName}/users/{username}',
+                method: 'DELETE',
+                environment: {
+                    DATA_BUCKET: props.dataBucketName,
+                },
+            },
+            {
+                name: 'remove_group',
+                resource: 'project',
+                description: 'Removes a group from a project',
+                path: 'project/{projectName}/groups/{groupName}',
                 method: 'DELETE',
                 environment: {
                     DATA_BUCKET: props.dataBucketName,
@@ -205,6 +235,7 @@ export class ProjectsApiStack extends Stack {
                     EMR_SECURITY_CONFIGURATION: props.mlspaceConfig.EMR_SECURITY_CONFIG_NAME,
                     EMR_EC2_ROLE_NAME: props.emrEC2RoleName || '',
                     EMR_SERVICE_ROLE_NAME: props.emrServiceRoleName || '',
+                    EMR_EC2_SSH_KEY: props.mlspaceConfig.EMR_EC2_SSH_KEY,
                     DATA_BUCKET: props.dataBucketName,
                     LOG_BUCKET: props.cwlBucketName,
                 },
@@ -216,14 +247,23 @@ export class ProjectsApiStack extends Stack {
                 path: 'project/{projectName}/batch-translate-jobs',
                 method: 'GET',
             },
+            {
+                name: 'project_groups',
+                resource: 'project',
+                description: 'Lists groups that belong to a project',
+                path: 'project/{projectName}/groups',
+                method: 'GET',
+            },
         ];
 
         apis.forEach((f) => {
+            const system_permissions = ['remove_user', 'update', 'delete'];
             registerAPIEndpoint(
                 this,
                 restApi,
                 props.authorizer,
-                props.applicationRole,
+                system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
+                props.applicationRole.roleName,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],

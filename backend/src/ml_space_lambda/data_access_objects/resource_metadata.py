@@ -17,13 +17,13 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from botocore.exceptions import ClientError
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
@@ -71,7 +71,7 @@ class ResourceMetadataModel:
 class ResourceMetadataDAO(DynamoDBObjectStore):
     def __init__(self, table_name: Optional[str] = None, client=None):
         self.env_vars = get_environment_variables()
-        table_name = table_name if table_name else self.env_vars["RESOURCE_METADATA_TABLE"]
+        table_name = table_name if table_name else self.env_vars[EnvVariable.RESOURCE_METADATA_TABLE]
         DynamoDBObjectStore.__init__(self, table_name=table_name, client=client)
 
     def create(self, resource_metadata: ResourceMetadataModel) -> None:
@@ -112,7 +112,7 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
         fetch_all: Optional[bool] = False,
         filter_expression: Optional[str] = None,
         filter_values: Optional[Dict[str, Any]] = None,
-        expression_names: Optional[str] = None,
+        expression_names: Optional[Dict[str, Any]] = None,
     ) -> PagedMetadataResults:
         expression_values: Dict[str, Any] = {":project": project, ":resourceType": type}
         if filter_expression and filter_values:
@@ -162,6 +162,62 @@ class ResourceMetadataDAO(DynamoDBObjectStore):
             key_condition_expression="#u = :user and resourceType = :resourceType",
             expression_values=json.loads(dynamodb_json.dumps(expression_values)),
             expression_names={"#u": "user"},
+            limit=limit if not fetch_all else None,
+            page_response=not fetch_all,
+            next_token=next_token,
+            filter_expression=filter_expression,
+        )
+        return PagedMetadataResults(
+            [ResourceMetadataModel.from_dict(entry) for entry in ddb_response.records],
+            ddb_response.next_token,
+        )
+
+    def get_all_of_type_with_filters(
+        self,
+        type: ResourceType,
+        project: str = None,
+        user: str = None,
+        limit: Optional[int] = None,
+        next_token: Optional[str] = None,
+        fetch_all: Optional[bool] = False,
+        filter_expression: Optional[str] = None,
+        filter_values: Optional[Dict[str, Any]] = None,
+        filter_names: Optional[Dict[str, Any]] = None,
+        index_name: Literal["ProjectResources", "UserResources", None] = None,
+    ) -> PagedMetadataResults:
+        # Base values
+        expression_values: Dict[str, Any] = {":resourceType": type}
+        key_condition_expressions = ["resourceType = :resourceType"]
+
+        if project is not None and user is not None:
+            raise ValueError(
+                "Can't use both the 'project' and 'user' parameters. Provide the key_condition as the input parameter and the other as a part of the filter expression and values"
+            )
+        elif project is not None:
+            expression_values[":project"] = project
+            index_name = "ProjectResources"
+            key_condition_expressions.append("project = :project")
+        elif user is not None:
+            expression_values[":user"] = user
+            index_name = "UserResources"
+            key_condition_expressions.append("user = :user")
+
+        if filter_expression and filter_values:
+            if ":resourceType" in filter_values:
+                raise ValueError("Reserved expression value ':resourceType' specified in filter_values.")
+            expression_values.update(filter_values)
+
+        # Assemble the key condition expression
+        if len(key_condition_expressions) > 1:
+            key_condition_expression = " and ".join(key_condition_expressions)
+        else:
+            key_condition_expression = key_condition_expressions[0]
+
+        ddb_response = self._query(
+            index_name=index_name,
+            key_condition_expression=key_condition_expression,
+            expression_values=json.loads(dynamodb_json.dumps(expression_values)),
+            expression_names=filter_names,
             limit=limit if not fetch_all else None,
             page_response=not fetch_all,
             next_token=next_token,

@@ -24,7 +24,7 @@ import pytest
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationDAO, AppConfigurationModel
-from ml_space_lambda.enums import ServiceType
+from ml_space_lambda.enums import EnvVariable, ServiceType
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
@@ -62,27 +62,27 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
         "changedBy": "Tester",
         "createdAt": mock_time,
         "configuration": {
-            "DisabledInstanceTypes": {
-                ServiceType.NOTEBOOK.value: ["ml.t3.medium", "ml.r5.large"],
-                ServiceType.ENDPOINT.value: ["ml.t3.large", "ml.r5.medium"],
-                ServiceType.TRAINING_JOB.value: ["ml.t3.xlarge", "ml.r5.small"],
-                ServiceType.TRANSFORM_JOB.value: ["ml.t3.kindabig", "ml.r5.kindasmall"],
+            "EnabledInstanceTypes": {
+                ServiceType.NOTEBOOK: ["ml.t3.medium", "ml.r5.large"],
+                ServiceType.ENDPOINT: ["ml.t3.large", "ml.r5.medium"],
+                ServiceType.TRAINING_JOB: ["ml.t3.xlarge", "ml.r5.small"],
+                ServiceType.TRANSFORM_JOB: ["ml.t3.kindabig", "ml.r5.kindasmall"],
             },
             "EnabledServices": {
-                ServiceType.REALTIME_TRANSLATE.value: "true",
-                ServiceType.BATCH_TRANSLATE.value: "false",
-                ServiceType.LABELING_JOB.value: "true",
-                ServiceType.EMR_CLUSTER.value: "true",
-                ServiceType.ENDPOINT.value: "true",
-                ServiceType.ENDPOINT_CONFIG.value: "false",
-                ServiceType.HPO_JOB.value: "true",
-                ServiceType.MODEL.value: "true",
-                ServiceType.NOTEBOOK.value: "false",
-                ServiceType.TRAINING_JOB.value: "true",
-                ServiceType.TRANSFORM_JOB.value: "true",
+                ServiceType.REALTIME_TRANSLATE: "true",
+                ServiceType.BATCH_TRANSLATE: "false",
+                ServiceType.LABELING_JOB: "true",
+                ServiceType.EMR_CLUSTER: "true",
+                ServiceType.ENDPOINT: "true",
+                ServiceType.ENDPOINT_CONFIG: "false",
+                ServiceType.HPO_JOB: "true",
+                ServiceType.MODEL: "true",
+                ServiceType.NOTEBOOK: "false",
+                ServiceType.TRAINING_JOB: "true",
+                ServiceType.TRANSFORM_JOB: "true",
             },
             "EMRConfig": {
-                "clusterSizes": [
+                "clusterTypes": [
                     {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                     {"name": "Medium", "size": 5, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                     {"name": "Large", "size": 7, "masterType": "m5.xlarge", "coreType": "p3.8xlarge"},
@@ -94,13 +94,13 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
                     "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
                 },
                 "applications": [
-                    {"name": "Hadoop"},
-                    {"name": "Spark"},
-                    {"name": "Ganglia"},
-                    {"name": "Hive"},
-                    {"name": "Tez"},
-                    {"name": "Presto"},
-                    {"name": "Livy"},
+                    {"Name": "Hadoop"},
+                    {"Name": "Spark"},
+                    {"Name": "Ganglia"},
+                    {"Name": "Hive"},
+                    {"Name": "Tez"},
+                    {"Name": "Presto"},
+                    {"Name": "Livy"},
                 ],
             },
         },
@@ -133,7 +133,7 @@ class TestAppConfigDAO(TestCase):
         from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
         env_vars = get_environment_variables()
-        self.TEST_TABLE = env_vars["APP_CONFIGURATION_TABLE"]
+        self.TEST_TABLE = env_vars[EnvVariable.APP_CONFIGURATION_TABLE]
         self.ddb = boto3.client(
             "dynamodb",
             config=retry_config,
@@ -202,3 +202,21 @@ class TestAppConfigDAO(TestCase):
         new_record = AppConfigurationModel.from_dict(generate_test_config("project1", 1, True))  # versionId 1 already exists
         with pytest.raises(self.ddb.exceptions.ConditionalCheckFailedException):
             self.app_config_dao.create(new_record)
+
+    def test_update_app_config(self):
+        # Update the initial app config
+        new_record = generate_test_config("global", 0, False)
+        new_record["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK].append("ml.t3.large")
+        self.app_config_dao.update(new_record)
+
+        # Check that the update succeeded
+        from_ddb = self.app_config_dao.get(self.GLOBAL_RECORD.configScope, 2)
+        initial_config = from_ddb[0]
+        assert (
+            initial_config["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK]
+            == new_record["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK]
+        )
+
+        # Revert the update so it doesn't impact other tests
+        new_record["configuration"]["EnabledInstanceTypes"][ServiceType.NOTEBOOK].pop()
+        self.app_config_dao.update(new_record)

@@ -21,7 +21,7 @@ import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { CfnSecurityConfiguration } from 'aws-cdk-lib/aws-emr';
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
-import { Effect, IRole, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { Effect, IManagedPolicy, IRole, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { IKey } from 'aws-cdk-lib/aws-kms';
 import { Code, Function } from 'aws-cdk-lib/aws-lambda';
 import {
@@ -39,7 +39,7 @@ import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 import { createLambdaLayer } from '../../utils/layers';
 import { MLSpaceConfig } from '../../utils/configTypes';
-import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { AwsCustomResource, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { generateAppConfig } from '../../utils/initialAppConfig';
 
 export type CoreStackProps = {
@@ -52,7 +52,10 @@ export type CoreStackProps = {
     readonly accessLogsBucketName: string;
     readonly encryptionKey: IKey;
     readonly mlSpaceAppRole: IRole;
+    readonly mlspaceKmsInstanceConditionsPolicy: IManagedPolicy;
     readonly mlSpaceNotebookRole: IRole;
+    readonly mlspaceEndpointConfigInstanceConstraintPolicy?: IManagedPolicy,
+    readonly mlspaceJobInstanceConstraintPolicy?: IManagedPolicy,
     readonly mlSpaceVPC: IVpc;
     readonly mlSpaceDefaultSecurityGroupId: string;
     readonly isIso?: boolean;
@@ -216,6 +219,111 @@ export class CoreStack extends Stack {
                 : undefined,
         });
 
+        const commonLambdaLayer = createLambdaLayer(this, 'common');
+
+        // Save common layer arn to SSM to avoid issue related to cross stack references
+        new StringParameter(this, 'VersionArn', {
+            parameterName: props.mlspaceConfig.COMMON_LAYER_ARN_PARAM,
+            stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
+        });
+
+        // Lambda for populating the initial allowed instances in the app config 
+        const appConfigLambda = new Function(this, 'appConfigDeployment', {
+            functionName: 'mls-lambda-app-config-deployment',
+            description:
+                'Populates the initial app config',
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
+            handler: 'ml_space_lambda.initial_app_config.lambda_function.lambda_handler',
+            code: Code.fromAsset(props.lambdaSourcePath),
+            timeout: Duration.seconds(30),
+            role: props.mlSpaceAppRole,
+            environment: {
+                APP_CONFIG_TABLE: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
+                SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
+                MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
+                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceEndpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
+                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceJobInstanceConstraintPolicy?.managedPolicyArn || '',
+            },
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+        });
+
+        const dynamicRolesAttachPoliciesOnDeployLambda = new Function(this, 'drAttachPoliciesOnDeployLambda', {
+            functionName: 'mls-lambda-dr-attach-policies-on-deploy',
+            description: 'Attaches policies from notebook role to all dynamic user roles.',
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
+            handler: 'ml_space_lambda.initial_app_config.lambda_function.update_dynamic_roles_with_notebook_policies',
+            code: Code.fromAsset(props.lambdaSourcePath),
+            timeout: Duration.seconds(30),
+            role: props.mlSpaceAppRole,
+            environment: {
+                ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceEndpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
+                JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.mlspaceJobInstanceConstraintPolicy?.managedPolicyArn || '',
+                KMS_INSTANCE_CONDITIONS_POLICY_ARN: props.mlspaceKmsInstanceConditionsPolicy.managedPolicyArn,
+                NOTEBOOK_ROLE_NAME: props.mlSpaceNotebookRole.roleName,
+                SYSTEM_TAG: props.mlspaceConfig.SYSTEM_TAG,
+                MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
+            },
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+        });
+
+        // run dynamicRolesAttachPoliciesOnDeployLambda every deploy
+        new AwsCustomResource(this, 'drAttachPoliciesOnDeploy', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                physicalResourceId: PhysicalResourceId.of(`drAttachPoliciesOnDeployLambda-${Date.now()}`),
+                parameters: {
+                    FunctionName: dynamicRolesAttachPoliciesOnDeployLambda.functionName,
+                    Payload: '{}'
+                }, 
+            },
+            role: props.mlSpaceAppRole
+        });
+
+        const updateInstanceKmsConditionsLambda = new Function(this, 'updateInstanceKmsConditionsLambda', {
+            functionName: 'mls-lambda-instance-kms-conditions',
+            description: '',
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
+            handler: 'ml_space_lambda.utils.lambda_functions.update_instance_kms_key_conditions',
+            code: Code.fromAsset(props.lambdaSourcePath),
+            timeout: Duration.seconds(30),
+            role: props.mlSpaceAppRole,
+            environment: {
+                MANAGE_IAM_ROLES: props.mlspaceConfig.MANAGE_IAM_ROLES ? 'True' : '',
+                KMS_INSTANCE_CONDITIONS_POLICY_ARN: props.mlspaceKmsInstanceConditionsPolicy.managedPolicyArn
+            },
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+        });
+
+        // run updateInstanceKmsConditionsLambda every deploy
+        new AwsCustomResource(this, 'kms-key-constraints', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                physicalResourceId: PhysicalResourceId.of(`kmsKeyConstraints-${Date.now()}`),
+                parameters: {
+                    FunctionName: updateInstanceKmsConditionsLambda.functionName,
+                    Payload: '{}'
+                }, 
+            },
+            role: props.mlSpaceAppRole
+        });
+
+        // schedule updateInstanceKmsConditionsLambda to run every day
+        const updateInstanceKmsConditionsLambdaScheduleRule = new Rule(this, 'updateInstanceKmsConditionsLambdaScheduleRule', {
+            schedule: Schedule.cron({hour: '2', minute: '45'})
+        });
+        updateInstanceKmsConditionsLambdaScheduleRule.addTarget(new LambdaFunction(updateInstanceKmsConditionsLambda));
+
         const notifierLambdaLayer = createLambdaLayer(this, 'common', 'notifier');
 
         const s3NotificationLambda = new Function(this, 's3Notifier', {
@@ -252,14 +360,6 @@ export class CoreStack extends Stack {
             EventType.OBJECT_CREATED,
             new LambdaDestination(s3NotificationLambda)
         );
-
-        const commonLambdaLayer = createLambdaLayer(this, 'common');
-
-        // Save common layer arn to SSM to avoid issue related to cross stack references
-        new StringParameter(this, 'VersionArn', {
-            parameterName: props.mlspaceConfig.COMMON_LAYER_ARN_PARAM,
-            stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
-        });
 
         const terminateResourcesLambda = new Function(this, 'resourceTerminator', {
             functionName: 'mls-lambda-resource-terminator',
@@ -372,12 +472,71 @@ export class CoreStack extends Stack {
             projectionType: ProjectionType.KEYS_ONLY,
         });
 
+        // Groups Table
+        new Table(this, 'mlspace-ddb-groups', {
+            tableName: props.mlspaceConfig.GROUPS_TABLE_NAME,
+            partitionKey: { name: 'name', type: AttributeType.STRING },
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        // Group Datasets Table
+        const groupAttribute = { name: 'group', type: AttributeType.STRING };
+        const groupDatasetAttribute = { name: 'dataset', type: AttributeType.STRING };
+        const groupDatasetTable = new Table(this, 'mlspace-ddb-group-datasets', {
+            tableName: props.mlspaceConfig.GROUP_DATASETS_TABLE_NAME,
+            partitionKey: groupAttribute,
+            sortKey: groupDatasetAttribute,
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        groupDatasetTable.addGlobalSecondaryIndex({
+            indexName: 'ReverseLookup',
+            partitionKey: groupDatasetAttribute,
+            sortKey: groupAttribute,
+            projectionType: ProjectionType.KEYS_ONLY
+        });
+
+        // Group Users Table
+        const groupUserAttribute = { name: 'user', type: AttributeType.STRING };
+        const groupUsersTable = new Table(this, 'mlspace-ddb-group-users', {
+            tableName: props.mlspaceConfig.GROUP_USERS_TABLE_NAME,
+            partitionKey: groupAttribute,
+            sortKey: groupUserAttribute,
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        groupUsersTable.addGlobalSecondaryIndex({
+            indexName: 'ReverseLookup',
+            partitionKey: groupUserAttribute,
+            sortKey: groupAttribute,
+            projectionType: ProjectionType.KEYS_ONLY,
+        });
+
         // Users Table
         new Table(this, 'mlspace-ddb-users', {
             tableName: props.mlspaceConfig.USERS_TABLE_NAME,
             partitionKey: { name: 'username', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
             encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        // Project Groups Table
+        const projectGroupsTable = new Table(this, 'mlspace-ddb-project-groups', {
+            tableName: props.mlspaceConfig.PROJECT_GROUPS_TABLE_NAME,
+            partitionKey: projectAttribute,
+            sortKey: groupAttribute,
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        projectGroupsTable.addGlobalSecondaryIndex({
+            indexName: 'ReverseLookup',
+            partitionKey: groupAttribute,
+            sortKey: projectAttribute,
+            projectionType: ProjectionType.KEYS_ONLY,
         });
 
         // Resource Termination Schedule Table
@@ -413,7 +572,7 @@ export class CoreStack extends Stack {
         });
 
         // App Configuration Table
-        const appConfigTable = new Table(this, 'mlspace-ddb-app-configuration', {
+        new Table(this, 'mlspace-ddb-app-configuration', {
             tableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
             partitionKey: { name: 'configScope', type: AttributeType.STRING },
             sortKey: { name: 'versionId', type: AttributeType.NUMBER },
@@ -432,7 +591,20 @@ export class CoreStack extends Stack {
                 },
                 physicalResourceId: PhysicalResourceId.of('initAppConfigData'),
             },
-            policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: [appConfigTable.tableArn] }),
+            role: props.mlSpaceAppRole
+        });
+
+        new AwsCustomResource(this, 'initial-app-config-deployment-001', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                physicalResourceId: PhysicalResourceId.of('initAllowedInstanceTypes'),
+                parameters: {
+                    FunctionName: appConfigLambda.functionName,
+                    Payload: '{}'
+                }, 
+            },
+            role: props.mlSpaceAppRole
         });
 
         // EMR Security Configuration

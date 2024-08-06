@@ -19,9 +19,12 @@ import random
 import string
 from unittest import mock
 
+import pytest
 from botocore.exceptions import ClientError
 
 import ml_space_lambda.utils.mlspace_config as mlspace_config
+from ml_space_lambda.data_access_objects.dataset import DatasetModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
 from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -33,18 +36,35 @@ TEST_ENV_CONFIG = {
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.dataset.lambda_functions import edit as lambda_handler
 
-mock_ds_scope = DatasetType.GLOBAL.value
+mock_ds_scope = DatasetType.GLOBAL
 mock_ds_name = "example_dataset"
+mock_group_name = "TestGroup1"
 event_body = {
     "scope": mock_ds_scope,
     "name": mock_ds_name,
     "description": "This is an updated description for the existing dataset.",
+    "groups": [mock_group_name],
 }
 mock_event = {
     "body": json.dumps(event_body),
     "pathParameters": {"scope": mock_ds_scope, "datasetName": mock_ds_name},
 }
 mock_context = mock.Mock()
+
+
+def generate_dataset():
+    return DatasetModel(
+        DatasetType.GROUP,
+        DatasetType.GROUP,
+        "sample-group-dataset",
+        "Dataset for testing edit.",
+        "s3://mlspace-datasets-123456789/group/datasets/sample-group-dataset",
+        "testUser",
+    )
+
+
+def generate_group_dataset(group_name=mock_group_name):
+    return GroupDatasetModel(group_name=group_name, dataset_name=mock_ds_name)
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
@@ -61,6 +81,35 @@ def test_edit_dataset_success(mock_dataset_dao, mock_global_dataset):
     # because the arg is a class so the comparison will fail due to pointer issues
     # in this particular case because we're building the class inside of update
     assert mock_dataset_dao.update.call_args.args[2].to_dict() == updated_dict
+
+
+@pytest.mark.parametrize(
+    "group_dataset_name",
+    [
+        ("some_group_name"),
+        (mock_group_name),
+    ],
+    ids=[
+        "group_added_and_removed",
+        "no_new_groups",
+    ],
+)
+@mock.patch("ml_space_lambda.dataset.lambda_functions.iam_manager")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
+@mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
+def test_edit_group_dataset_success(
+    mock_dataset_dao,
+    mock_group_dataset_dao,
+    mock_iam_manager,
+    group_dataset_name: str,
+):
+    # The event body always has a group named "mock_group_name"
+    mock_dataset_dao.get.return_value = generate_dataset()
+
+    mock_group_dataset_dao.get_groups_for_dataset.return_value = [generate_group_dataset(group_dataset_name)]
+
+    expected_response = generate_html_response(200, "Successfully updated example_dataset.")
+    assert lambda_handler(mock_event, mock_context) == expected_response
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
@@ -131,3 +180,16 @@ def test_edit_dataset_long_description(mock_dataset_dao, mock_global_dataset):
 
     assert lambda_handler(update_event, mock_context) == expected_response
     mock_dataset_dao.update.assert_not_called()
+
+
+@mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
+def test_edit_dataset_no_description(mock_dataset_dao, mock_global_dataset):
+    expected_response = generate_html_response(200, "Successfully updated example_dataset.")
+    update_event = {
+        "body": json.dumps({}),
+        "pathParameters": {"scope": mock_ds_scope, "datasetName": mock_ds_name},
+    }
+    mock_dataset_dao.get.return_value = mock_global_dataset
+
+    assert lambda_handler(update_event, mock_context) == expected_response
+    mock_dataset_dao.update.assert_called_once()

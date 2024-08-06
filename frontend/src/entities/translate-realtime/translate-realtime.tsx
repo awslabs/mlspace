@@ -18,11 +18,12 @@ import { useAppDispatch } from '../../config/store';
 import { setBreadcrumbs } from '../../shared/layout/navigation/navigation.reducer';
 import { useParams } from 'react-router-dom';
 import { getBase } from '../../shared/util/breadcrumb-utils';
-import { Container, ContentLayout, Header, Tabs } from '@cloudscape-design/components';
+import { Container, Header, Tabs } from '@cloudscape-design/components';
 import Form from '@cloudscape-design/components/form';
 import { DocTitle, scrollToPageHeader } from '../../shared/doc';
 import { TranslateRealtimeText } from './translate-realtime.text';
 import { TranslateRealtimeDocument } from './translate-realtime.document';
+import ContentLayout from '../../shared/layout/content-layout';
 
 export const TranslateRealtime = () => {
     DocTitle('Real-time translation');

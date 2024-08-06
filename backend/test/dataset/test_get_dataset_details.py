@@ -20,6 +20,8 @@ from botocore.exceptions import ClientError
 
 import ml_space_lambda.utils.mlspace_config as mlspace_config
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
+from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
@@ -27,6 +29,24 @@ TEST_ENV_CONFIG = {
 }
 
 mock_context = mock.Mock()
+mock_group_name = "TestGroup1"
+mock_ds_name = "sample-group-dataset"
+
+
+def generate_group_dataset():
+    return GroupDatasetModel(group_name=mock_group_name, dataset_name=mock_ds_name)
+
+
+def generate_dataset():
+    return DatasetModel(
+        DatasetType.GROUP,
+        DatasetType.GROUP,
+        mock_ds_name,
+        "Dataset for testing edit.",
+        "s3://mlspace-datasets-123456789/group/datasets/sample-group-dataset",
+        "testUser",
+    )
+
 
 # Need to mock the region in order to do the import......
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
@@ -37,15 +57,24 @@ def build_mock_event(dataset: DatasetModel):
     return {"pathParameters": {"scope": dataset.scope, "datasetName": dataset.name}}
 
 
+@mock.patch("ml_space_lambda.dataset.lambda_functions.group_dataset_dao")
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
-def test_get_dataset_details_success(mock_dataset_dao, mock_global_dataset):
+def test_get_dataset_details_success(mock_dataset_dao, mock_group_dataset_dao):
     # clear out global config if set to make lambda tests independent of each other
     mlspace_config.env_variables = {}
-    mock_dataset_dao.get.return_value = mock_global_dataset
-    expected_response = generate_html_response(200, mock_global_dataset.to_dict())
-    mock_event = build_mock_event(mock_global_dataset)
+
+    mock_dataset_with_groups = generate_dataset()
+    mock_dataset_with_groups.groups = [mock_group_name]
+
+    mock_dataset = generate_dataset()
+    mock_dataset_dao.get.return_value = mock_dataset
+
+    mock_group_dataset_dao.get_groups_for_dataset.return_value = [generate_group_dataset()]
+
+    expected_response = generate_html_response(200, mock_dataset_with_groups.to_dict())
+    mock_event = build_mock_event(mock_dataset)
     assert lambda_handler(mock_event, mock_context) == expected_response
-    mock_dataset_dao.get.assert_called_with(mock_global_dataset.scope, mock_global_dataset.name)
+    mock_dataset_dao.get.assert_called_with(mock_dataset.scope, mock_dataset.name)
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")

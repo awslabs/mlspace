@@ -21,13 +21,18 @@ import boto3
 import moto
 import pytest
 
+from ml_space_lambda.data_access_objects.dataset import DatasetModel
+from ml_space_lambda.data_access_objects.group import GroupModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
+from ml_space_lambda.data_access_objects.group_user import GroupUserModel
+from ml_space_lambda.enums import DatasetType
 from ml_space_lambda.utils.common_functions import generate_tags
-from ml_space_lambda.utils.iam_manager import PROJECT_POLICY_VERSION, USER_POLICY_VERSION
+from ml_space_lambda.utils.iam_manager import DYNAMIC_USER_ROLE_TAG, PROJECT_POLICY_VERSION, USER_POLICY_VERSION, IAMManager
 
+DYNAMIC_USER_ROLE_NAME = "MLSpace-myproject1-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"
+UNTAGGED_DYNAMIC_USER_ROLE_NAME = "MLSpace-myproject2-0fb265a4573777a0442ec4c6edeaf707216a2f5b16aa"
 NOTEBOOK_ROLE_NAME = "MLSpace-notebook-role"
-DEFAULT_NOTEBOOK_POLICY_NAME = "MLSpace-notebook-policy"
-SYSTEM_TAG = "MLSpace"
-IAM_RESOURCE_PREFIX = "MLSpace"
+TEST_PERMISSIONS_BOUNDARY_ARN = "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary"
 
 TEST_ENV_CONFIG = {
     # Moto doesn't work with iso regions...
@@ -38,12 +43,67 @@ TEST_ENV_CONFIG = {
     "AWS_SECURITY_TOKEN": "testing",
     "AWS_SESSION_TOKEN": "testing",
     "NOTEBOOK_ROLE_NAME": NOTEBOOK_ROLE_NAME,
-    "PERMISSIONS_BOUNDARY_ARN": "arn:aws:iam::123456789012:policy/mlspace-project-user-permission-boundary",
+    "PERMISSIONS_BOUNDARY_ARN": TEST_PERMISSIONS_BOUNDARY_ARN,
 }
 
+with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
+    import ml_space_lambda.utils.account_utils as account_utils
+    import ml_space_lambda.utils.mlspace_config as mlspace_config
+
+    mlspace_config.env_variables = {}
+    from ml_space_lambda.enums import IAMEffect, IAMStatementProperty
+    from ml_space_lambda.utils.common_functions import generate_tags
+    from ml_space_lambda.utils.iam_manager import PROJECT_POLICY_VERSION, USER_POLICY_VERSION
+
+
+DEFAULT_NOTEBOOK_POLICY_NAME = "MLSpace-notebook-policy"
+DEFAULT_DYNAMIC_USER_POLICY_NAME = "MLSpace-dynamic-user-policy"
+SYSTEM_TAG = "MLSpace"
+IAM_RESOURCE_PREFIX = "MLSpace"
+
+TEST_DYNAMIC_POLICY_NAME = "test-dynamic-policy"
+EXPECTED_TEST_DYNAMIC_POLICY_NAME = f"{IAM_RESOURCE_PREFIX}-{TEST_DYNAMIC_POLICY_NAME}"
 
 MOCK_PROJECT_NAME = "example_project"
 MOCK_USER_NAME = "jdoe"
+
+DENY_TRANSLATE_STATEMENT = {
+    IAMStatementProperty.EFFECT: IAMEffect.DENY,
+    IAMStatementProperty.ACTION: ["translate:*"],
+    IAMStatementProperty.RESOURCE: "*",
+}
+
+MOCK_GROUPS = [
+    GroupModel(
+        name="example_group_1",
+        description="example description 1",
+        created_by="polly@example.com",
+    ),
+    GroupModel(
+        name="example_group_2",
+        description="example description 2",
+        created_by="finn@example.com",
+    ),
+    GroupModel(
+        name="example_group_3",
+        description="example description 3",
+        created_by="finn@example.com",
+    ),
+    GroupModel(
+        name="example_group_4",
+        description="example description 4",
+        created_by="gina@example.com",
+    ),
+]
+
+MOCK_GROUP_USERS = [
+    GroupUserModel(group_name=MOCK_GROUPS[1].name, username=MOCK_USER_NAME),
+    GroupUserModel(group_name=MOCK_GROUPS[2].name, username=MOCK_USER_NAME),
+]
+
+MOCK_GROUP_DATASETS = [
+    GroupDatasetModel(dataset_name="dataset001", group_name="group001"),
+]
 
 mock.patch.TEST_PREFIX = (
     "test",
@@ -59,9 +119,10 @@ class TestIAMSupport(TestCase):
     def setUp(self):
         from ml_space_lambda.utils.common_functions import retry_config
         from ml_space_lambda.utils.iam_manager import IAMManager
-        from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
-        get_environment_variables()
+        mlspace_config.env_variables = {}
+        account_utils.aws_partition = "aws"
+        account_utils.aws_account = "123456789012"
         self.iam_client = boto3.client("iam", config=retry_config)
         self.sts_client = boto3.client("sts", config=retry_config)
 
@@ -99,14 +160,79 @@ class TestIAMSupport(TestCase):
             Description="MLSpace Notebook Policy",
         )
         self.iam_client.attach_role_policy(RoleName=NOTEBOOK_ROLE_NAME, PolicyArn=notebook_policy_response["Policy"]["Arn"])
-        self.iam_manager = IAMManager(self.iam_client, self.sts_client)
+        self.iam_client.create_role(
+            RoleName=DYNAMIC_USER_ROLE_NAME,
+            AssumeRolePolicyDocument=json.dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"Service": "sagemaker.amazonaws.com"},
+                            "Action": "sts:AssumeRole",
+                        }
+                    ],
+                }
+            ),
+            Description="Some Dynamic User Role",
+            Tags=generate_tags("someuser", "myproject1", "MLSpace", [DYNAMIC_USER_ROLE_TAG]),
+        )
+        dynamic_user_role_policy_response = self.iam_client.create_policy(
+            PolicyName=DEFAULT_DYNAMIC_USER_POLICY_NAME,
+            PolicyDocument="""{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": ["sagemaker:*"],
+                        "Resource": "*"
+                    }
+                ]
+            }
+            """,
+            Description="Some Dynamic User Policy",
+        )
+        self.iam_client.attach_role_policy(
+            RoleName=DYNAMIC_USER_ROLE_NAME, PolicyArn=dynamic_user_role_policy_response["Policy"]["Arn"]
+        )
+        self.iam_client.create_role(
+            RoleName=UNTAGGED_DYNAMIC_USER_ROLE_NAME,
+            AssumeRolePolicyDocument=json.dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"Service": "sagemaker.amazonaws.com"},
+                            "Action": "sts:AssumeRole",
+                        }
+                    ],
+                }
+            ),
+            Description="Some Dynamic User Role",
+            Tags=generate_tags("someuser", "myproject2", "MLSpace"),
+        )
+        self.iam_manager = IAMManager(self.iam_client)
 
     def tearDown(self):
         self.iam_client = None
         self.sts_client = None
         self.iam_manager = None
 
-    def test_add_iam_role(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.dataset_dao")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_dataset_dao")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_add_iam_role(self, mock_group_user_dao, mock_group_dataset_dao, mock_dataset_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+        mock_group_dataset_dao.get_datasets_for_group.return_value = MOCK_GROUP_DATASETS
+        mock_dataset_dao.get.return_value = DatasetModel(
+            DatasetType.GROUP,
+            DatasetType.GROUP,
+            "dataset001",
+            "dataset001 description",
+            "s3://mybucket/group/datasets/dataset001",
+            "pmo",
+        )
         self.iam_manager.add_iam_role(MOCK_PROJECT_NAME, MOCK_USER_NAME)
 
         # Check that expected iam role and policies were created
@@ -133,7 +259,20 @@ class TestIAMSupport(TestCase):
         assert f"{IAM_RESOURCE_PREFIX}-project-{MOCK_PROJECT_NAME}" in policy_names
         assert f"{IAM_RESOURCE_PREFIX}-user-{MOCK_USER_NAME}" in policy_names
 
-    def test_add_iam_role_exists(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.dataset_dao")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_dataset_dao")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_add_iam_role_exists(self, mock_group_user_dao, mock_group_dataset_dao, mock_dataset_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+        mock_group_dataset_dao.get_datasets_for_group.return_value = MOCK_GROUP_DATASETS
+        mock_dataset_dao.get.return_value = DatasetModel(
+            DatasetType.GROUP,
+            DatasetType.GROUP,
+            "dataset001",
+            "dataset001 description",
+            "s3://mybucket/group/datasets/dataset001",
+            "pmo",
+        )
         test_user = "existing@amazon.com"
         # Add role initially
         self.iam_manager.add_iam_role(MOCK_PROJECT_NAME, test_user)
@@ -159,7 +298,11 @@ class TestIAMSupport(TestCase):
         assert f"IAM role name 'MLSpace-{long_name}-" in str(e_info.value)
         assert "' (127 characters) is over the 64 character limit for IAM role names." in str(e_info.value)
 
-    def test_add_iam_role_exists_outdated_policies(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_dataset_dao")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_add_iam_role_exists_outdated_policies(self, mock_group_user_dao, mock_group_dataset_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+        mock_group_dataset_dao.get_datasets_for_group.return_value = []
         test_user = "old-user"
         policy_arns = []
         # Add role initially
@@ -232,6 +375,7 @@ class TestIAMSupport(TestCase):
             )
             # Should have system, policyVersion, and user or project
             assert len(policy_tags["Tags"]) == 3
+
             policy_type = None
             mls_policy_version = None
             for tag in policy_tags["Tags"]:
@@ -248,6 +392,7 @@ class TestIAMSupport(TestCase):
 
             if policy_type == "user" and mls_policy_version == USER_POLICY_VERSION:
                 policy_version_tags += 1
+
             if policy_type == "project" and mls_policy_version == PROJECT_POLICY_VERSION:
                 policy_version_tags += 1
 
@@ -257,16 +402,20 @@ class TestIAMSupport(TestCase):
         assert user_tags == 1
         assert project_tags == 1
 
-    def test_remove_project_user_roles_single_user(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_dataset_dao")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_remove_project_user_roles_single_user(self, mock_group_user_dao, mock_group_dataset_dao):
         # Add a new user
         test_user = "matt@example.com"
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+        mock_group_dataset_dao.get_datasets_for_group.return_value = []
         new_role_arn = self.iam_manager.add_iam_role(MOCK_PROJECT_NAME, test_user)
 
         # Verify role and policies exist
         role_lookup_response = self.iam_client.get_role(RoleName=new_role_arn.split("/")[-1])
         existing_role = role_lookup_response["Role"]
         # Ensure role was tagged up appropriately
-        assert existing_role["Tags"] == generate_tags(test_user, MOCK_PROJECT_NAME, SYSTEM_TAG)
+        assert existing_role["Tags"] == generate_tags(test_user, MOCK_PROJECT_NAME, SYSTEM_TAG, [DYNAMIC_USER_ROLE_TAG])
 
         response = self.iam_client.list_attached_role_policies(RoleName=existing_role["RoleName"])
         user_policy_arn = ""
@@ -296,7 +445,11 @@ class TestIAMSupport(TestCase):
         assert notebook_policy_found
         assert project_policy_found
 
-    def test_remove_project_user_roles_multi_user_with_project(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_dataset_dao")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_remove_project_user_roles_multi_user_with_project(self, mock_group_user_dao, mock_group_dataset_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+        mock_group_dataset_dao.get_datasets_for_group.return_value = []
         # Add some users to a new project
         test_user = "matt@example.com"
         test_user2 = "bill@example.com"
@@ -325,7 +478,12 @@ class TestIAMSupport(TestCase):
         for policy_arn in self.iam_manager.default_notebook_role_policy_arns:
             self.iam_client.get_policy(PolicyArn=policy_arn)
 
-    def test_remove_all_user_roles(self):
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_dataset_dao")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_remove_all_user_roles(self, mock_group_user_dao, mock_group_dataset_dao):
+        mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+        mock_group_dataset_dao.get_datasets_for_group.return_value = []
+
         # Add a few roles for the same user
         test_user = "bob@example.com"
         test_project_1 = "test_project_1"
@@ -361,4 +519,136 @@ class TestIAMSupport(TestCase):
         # Ensure all policies were cleaned up as expected. Project policies
         # should not have been deleted as the projects were not deleted.
         response = self.iam_client.list_policies(Scope="Local")
-        assert initial_role_count + 4 == len(response["Policies"])
+        assert initial_policy_count + 4 == len(response["Policies"])
+
+    def test_generate_policy(self):
+        policy = self.iam_manager.generate_policy_string([DENY_TRANSLATE_STATEMENT])
+        assert (
+            policy
+            == '{"Version": "2012-10-17", "Statement": [{"Effect": "Deny", "Action": ["translate:*"], "Resource": "*"}]}'
+        )
+
+        policy = self.iam_manager.generate_policy([])
+        assert policy == None
+
+    def test_update_dynamic_policy(self):
+        # Test creating a brand new role
+        policy = self.iam_manager.generate_policy_string([DENY_TRANSLATE_STATEMENT])
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+            on_create_attach_to_notebook_role=True,
+            on_create_attach_to_existing_dynamic_roles=True,
+            expected_policy_version="2",
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+        assert self.iam_client.get_policy(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            )
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=DYNAMIC_USER_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+
+        # Test updating the policy
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+            on_create_attach_to_notebook_role=True,
+            expected_policy_version=3,
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+        assert self.iam_client.get_policy_version(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v2",
+        )
+
+        # Test invalid update to policy (same version as before)
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+            on_create_attach_to_notebook_role=True,
+            expected_policy_version=3,
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+        with pytest.raises(self.iam_client.exceptions.NoSuchEntityException):
+            self.iam_client.get_policy_version(
+                PolicyArn=account_utils.account_arn_from_example_arn(
+                    TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+                ),
+                VersionId="v3",
+            )
+
+        # Test update to the policy with no expected version
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 2
+        assert self.iam_client.get_policy_version(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v3",
+        )
+
+    def test_find_dynamic_user_roles(self):
+        dynamic_roles = self.iam_manager.find_dynamic_user_roles()
+        assert len(dynamic_roles) == 2
+
+        all_roles = self.iam_client.list_roles()
+        assert len(dynamic_roles) < len(all_roles)
+
+    def test_create_dynamic_policy_not_attached(self):
+        policy = self.iam_manager.generate_policy_string([DENY_TRANSLATE_STATEMENT])
+        self.iam_manager.update_dynamic_policy(
+            policy, TEST_DYNAMIC_POLICY_NAME, "test-type", "test-type-1", expected_policy_version=2
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 1
+        assert self.iam_client.get_policy(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            )
+        )
+
+        # Test updating the policy
+        self.iam_manager.update_dynamic_policy(
+            policy,
+            TEST_DYNAMIC_POLICY_NAME,
+            "test-type",
+            "test-type-1",
+            on_create_attach_to_notebook_role=True,
+        )
+        attached_policies_response = self.iam_client.list_attached_role_policies(RoleName=NOTEBOOK_ROLE_NAME)
+        assert len(attached_policies_response["AttachedPolicies"]) == 1
+        assert self.iam_client.get_policy_version(
+            PolicyArn=account_utils.account_arn_from_example_arn(
+                TEST_PERMISSIONS_BOUNDARY_ARN, "iam", f"policy/{EXPECTED_TEST_DYNAMIC_POLICY_NAME}"
+            ),
+            VersionId="v2",
+        )
+
+    @mock.patch.object(IAMManager, "update_user_policy")
+    @mock.patch("ml_space_lambda.utils.iam_manager.group_user_dao")
+    def test_update_groups(self, mock_group_user_dao, mock_update_user_policy):
+        mock_group_user_dao.get_users_for_group.side_effect = [
+            [GroupUserModel("user1", "group1")],
+            [GroupUserModel("user2", "group2")],
+        ]
+        self.iam_manager.update_groups(["group1", "group2"])
+        mock_update_user_policy.assert_has_calls([mock.call("user1"), mock.call("user2")], any_order=True)

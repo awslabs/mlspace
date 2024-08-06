@@ -14,37 +14,76 @@
   limitations under the License.
 */
 import {
-    ExpandableSection,
-    Header,
-    SpaceBetween,
-    Container,
+    Alert,
     Button,
-    Input,
-    FileUpload,
-    Toggle,
-    FormField,
+    ButtonDropdown,
+    Container,
+    Grid,
+    Header,
+    SpaceBetween
 } from '@cloudscape-design/components';
 import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../config/store';
-import { appConfig, appConfigList, getConfiguration, listConfigurations, updateConfiguration } from './configuration-reducer';
-import { IAppConfiguration } from '../../shared/model/app.configuration.model';
-import { useValidationReducer } from '../../shared/validation';
 import { z } from 'zod';
-import NotificationService from '../../shared/layout/notification/notification.service';
+import { useAppDispatch, useAppSelector } from '../../config/store';
+import { IAppConfiguration } from '../../shared/model/app.configuration.model';
+import { scrollToInvalid, useValidationReducer } from '../../shared/validation';
+import { listEMRApplications } from '../emr/emr.reducer';
+import ActivatedServicesConfiguration from './activated-services-configuration';
+import AllowedInstanceTypesConfiguration from './allowed-instance-types-configuration';
+import { ConfigurationImportModal } from './configuration-import-modal';
+import { appConfig, getConfiguration, updateConfiguration } from './configuration-reducer';
+import ConfirmConfigurationChangesModal from './confirm-configuration-changes-modal';
+import EmrConfiguration from './emr-configuration';
+import ProjectCreationConfiguration from './project-creation-configuration';
+import SystemBannerConfiguration from './system-banner-configuration';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export function DynamicConfiguration () {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
-    const configList: IAppConfiguration[] = useAppSelector(appConfigList);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
+    const [importConfigVisible, setImportConfigVisible] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File[]>([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [expandedSections, setExpandedSections] = useState({notebookInstances: false, trainingAndHpo: false, transform: false, endpoints: false, applications: false, clusterTypes: false, autoScaling: false});
 
     const formSchema = z.object({
         configuration: z.object({
+            EMRConfig: z.object({
+                autoScaling: z.object({
+                    maxInstances: z.number().positive(),
+                    minInstances: z.number().positive(),
+                    scaleOut: z.object({
+                        increment: z.number().positive(),
+                        cooldown: z.number().positive(),
+                        percentageMemAvailable: z.number().positive(),
+                        evalPeriods: z.number().positive(),
+                    }),
+                    scaleIn: z.object({
+                        increment: z.number().negative(),
+                        cooldown: z.number().positive(),
+                        percentageMemAvailable: z.number().positive(),
+                        evalPeriods: z.number().positive(),
+                    })
+                }),
+                clusterTypes: z.array(
+                    z.object({
+                        name: z.string().min(1),
+                        size: z.number().positive()
+                    })
+                )
+            }),
+            SystemBanner: z.object({
+                isEnabled: z.boolean(),
+                text: z.string()
+            }).refine((data) => !data.isEnabled || (data.isEnabled && data.text.length >= 1), {
+                message: 'Text is required when banner is activated.',
+                path: ['text']
+            })
         }),
     });
 
-    const { state, setState, isValid, setFields, touchFields } = useValidationReducer(formSchema, {
+    const { state, setState, setFields, touchFields, isValid, errors } = useValidationReducer(formSchema, {
         validateAll: false as boolean,
         needsValidation: false,
         touched: {},
@@ -56,7 +95,7 @@ export function DynamicConfiguration () {
     });
 
     useEffect(() => {
-        dispatch(listConfigurations({configScope: 'global', numVersions: 5}));
+        dispatch(listEMRApplications());
     }, [dispatch]);
 
 
@@ -78,12 +117,22 @@ export function DynamicConfiguration () {
                     );
                 }
             } else {
-                dispatch(getConfiguration('global'));
-                notificationService.generateNotification(
-                    'Successfully updated configuration.',
-                    'success'
-                );
+                dispatch(getConfiguration({configScope: 'global'}));
+                if (responseStatus === 207) {
+                    notificationService.generateNotification(
+                        resp.payload.data,
+                        'warning'
+                    );
+                } else {
+                    notificationService.generateNotification(
+                        'Successfully updated configuration.',
+                        'success'
+                    );
+                }
+                setFields({ 'versionId': state.form.versionId + 1});
             }
+        } else {
+            scrollToInvalid();
         }
         setState({ formSubmitting: false });
     };
@@ -118,172 +167,123 @@ export function DynamicConfiguration () {
     };
 
     return (
-        <Container
-            header={
-                <Header
-                    variant='h2'
-                    description={`The current dynamic configuration of ${window.env.APPLICATION_NAME}. These settings can be modified without redeploying the application.`}
-                >
-                    {window.env.APPLICATION_NAME} Dynamic Configuration
-                </Header>
-            }
-        >
-            <SpaceBetween direction='vertical' size='xl'>
-                <ExpandableSection headerText='Allowed Instance Types' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
-                </ExpandableSection>
-                <ExpandableSection headerText='Enabled Services' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
-                </ExpandableSection>
-                <ExpandableSection headerText='EMR Config' variant='default' defaultExpanded>
-                    {<pre>TODO</pre>}
-                    <Input
-                        data-cy='test-input'
-                        value={state.form.configuration.EMRConfig.clusterSizes[0].name}
-                        onChange={(event) => {
-                            setFields({ 'configuration.EMRConfig.clusterSizes[0].name': event.detail.value });
-                        }}
-                        onBlur={() => touchFields(['configuration.EMRConfig.clusterSizes[0].name'])}
-                    />
-                </ExpandableSection>
-                <ExpandableSection headerText='Project Creation' variant='default' defaultExpanded>
-                    <Toggle
-                        onChange={({ detail }) => {
-                            setFields({ 'configuration.ProjectCreation.isAdminOnly': detail.checked });
-                        }}
-                        checked={state.form.configuration.ProjectCreation.isAdminOnly}
-                    >
-                        Admin Only - restrict creation of projects to users with Admin permissions
-                    </Toggle>
-                </ExpandableSection>
-                <ExpandableSection headerText='System Banner' variant='default' defaultExpanded>
-                    <SpaceBetween direction='vertical' size='l'>
-                        <Toggle
-                            onChange={({ detail }) => {
-                                setFields({ 'configuration.SystemBanner.isEnabled': detail.checked });
-                            }}
-                            checked={state.form.configuration.SystemBanner.isEnabled!}
+        <>
+            <ConfigurationImportModal
+                visible={importConfigVisible}
+                setVisible={setImportConfigVisible}
+                upload={handleFileUpload}
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile} />
+            <ConfirmConfigurationChangesModal
+                visible={modalVisible}
+                setVisible={setModalVisible}
+                setFields={setFields}
+                isSubmitting={state.formSubmitting}
+                appConfiguration={applicationConfig.configuration}
+                inMemoryConfiguration={state.form.configuration}
+                submit={handleSubmit} />
+            <Container
+                header={
+                    <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
+                        <Header
+                            variant='h2'
+                            description={`Manage ${window.env.APPLICATION_NAME}'s configuration below. These settings apply across the application.`}
                         >
-                            Enable System Banner
-                        </Toggle>
-                        <FormField
-                            label='Banner Text'
-                        >
-                            <Input
-                                onChange={({ detail }) => {
-                                    setFields({ 'configuration.SystemBanner.text': detail.value });
+                            {window.env.APPLICATION_NAME} Dynamic Configuration
+                        </Header>
+                        <SpaceBetween direction='vertical' alignItems='end' size='m'>
+                            <ButtonDropdown
+                                items={[
+                                    { text: 'Import Configuration', id: 'import-config' },
+                                    { text: 'Export Configuration', id: 'export-config'},
+                                    { text: 'Expand All', id: 'expand-all' },
+                                ]}
+                                onItemClick={(e) => {
+                                    if (e.detail.id === 'export-config') {
+                                        JSONToFile();
+                                    } else if (e.detail.id === 'expand-all') {
+                                        setExpandedSections({notebookInstances: true, trainingAndHpo: true, transform: true, endpoints: true, applications: true, clusterTypes: true, autoScaling: true});
+                                    } else if (e.detail.id === 'import-config') {
+                                        setImportConfigVisible(true);
+                                    }
                                 }}
-                                onBlur={() => touchFields(['configuration.SystemBanner.text'])}
-                                value={state.form.configuration.SystemBanner.text}
-                                placeholder='Enter system banner text'
-                                disabled={!state.form.configuration.SystemBanner.isEnabled}
-                            />
-                        </FormField>
-                        <SpaceBetween direction='horizontal' size='l'>
-                            <FormField
-                                label='Text Color'
                             >
-                                <input
-                                    type='color'
-                                    onInput={(event) =>
-                                        setFields({ 'configuration.SystemBanner.textColor': event.target.value })
-                                    }
-                                    value={state.form.configuration.SystemBanner.textColor}
-                                    disabled={!state.form.configuration.SystemBanner.isEnabled}
-                                    style={{border: '2px solid #7F8897', borderRadius: '6px', padding: '3px'}}
-                                />
-                            </FormField>
-                            <FormField
-                                label='Background Color'
-                            >   
-                                <input
-                                    type='color'
-                                    onInput={(event) =>
-                                        setFields({ 'configuration.SystemBanner.backgroundColor': event.target.value })
-                                    }
-                                    value={state.form.configuration.SystemBanner.backgroundColor}
-                                    disabled={!state.form.configuration.SystemBanner.isEnabled}
-                                    style={{border: '2px solid #7F8897', borderRadius: '6px', padding: '3px'}}
-                                />
-                            </FormField>
+                                    Actions
+                            </ButtonDropdown>
                         </SpaceBetween>
-                    </SpaceBetween>
-                </ExpandableSection>
-                <Button
-                    iconAlt='Update dynamic configuration'
-                    variant='primary'
-                    onClick={handleSubmit}
-                    loading={state.formSubmitting}
-                    data-cy='dynamic-configuration-submit'
-                    disabled={!isValid}
-                >
-                    Save Changes
-                </Button>
-                <Container
-                    header={
-                        <Header
-                            variant='h3'
-                            description={`Export the latest dynamic configuration of ${window.env.APPLICATION_NAME}. This will download a JSON file to your machine with the current configuration. This JSON file can be used for a new ${window.env.APPLICATION_NAME} to ensure it has the same settings.`}
-
+                    </Grid>
+                }
+            >
+                <SpaceBetween direction='vertical' size='xl'>
+                    { !window.env.MANAGE_IAM_ROLES && 
+                        <Alert 
+                            statusIconAriaLabel='Warning'
+                            type='warning'
                         >
-                            Export Configuration
-                        </Header>
+                            Dynamic Roles are not currently configured. We highly recommend using Dynamic Roles for the most secure configuration. Please see documentation for details. By default, all instance types and services are activated in {window.env.APPLICATION_NAME} when Dynamic Roles are not in use.
+                        </Alert>
                     }
-                >
-                    <Button
-                        iconAlt='Export dynamic configuration'
-                        variant='primary'
-                        onClick={JSONToFile}
-                        loading={state.formSubmitting}
-                        data-cy='export-configuration-submit'
-                        iconName='download'
-                    >
-                        Export Configuration as JSON File
-                    </Button>
-                </Container>
-                <Container
-                    header={
-                        <Header
-                            variant='h3'
-                            description={`Upload a JSON configuration for ${window.env.APPLICATION_NAME}. This will be parsed for validity and then uploaded as the active configuraion. The import will fail if the provided configuration doesn't have the required values.`}
-                        >
-                            Import Configuration
-                        </Header>
-                    }
-                >
-                    <SpaceBetween direction='vertical' size='s'>
-                        <FileUpload
-                            onChange={({ detail }) => { 
-                                setSelectedFile([]); // ensure there's never more than one file
-                                setSelectedFile(detail.value);
-                            }}
-                            value={selectedFile}
-                            i18nStrings={{
-                                uploadButtonText: (e) =>
-                                    e ? 'Choose files' : 'Choose file',
-                                dropzoneText: (e) =>
-                                    e ? 'Drop files to upload' : 'Drop file to upload',
-                                removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
-                                limitShowFewer: 'Show fewer files',
-                                limitShowMore: 'Show more files',
-                                errorIconAriaLabel: 'Error uploading file'
-                            }}
-                        />
+                    { window.env.MANAGE_IAM_ROLES && <AllowedInstanceTypesConfiguration
+                        setFields={setFields}
+                        expandedSections={expandedSections}
+                        setExpandedSections={setExpandedSections}
+                        enabledNotebookInstanceTypes={state.form.configuration.EnabledInstanceTypes.notebook}
+                        enabledTrainingInstanceTypes={state.form.configuration.EnabledInstanceTypes.trainingJob}
+                        enabledTransformInstanceTypes={state.form.configuration.EnabledInstanceTypes.transformJob}
+                        enabledEndpointInstanceTypes={state.form.configuration.EnabledInstanceTypes.endpoint} /> }
+                    { window.env.MANAGE_IAM_ROLES && <ActivatedServicesConfiguration
+                        setFields={setFields}
+                        enabledServices={state.form.configuration.EnabledServices} /> }
+                    <EmrConfiguration
+                        expandedSections={expandedSections}
+                        setExpandedSections={setExpandedSections}
+                        setFields={setFields}
+                        touchFields={touchFields}
+                        errors={errors}
+                        form={state.form}
+                        maxInstances={state.form.configuration.EMRConfig.autoScaling.maxInstances}
+                        minInstances={state.form.configuration.EMRConfig.autoScaling.minInstances}
+                        scaleInCooldown={state.form.configuration.EMRConfig.autoScaling.scaleIn?.cooldown}
+                        scaleInEvalPeriods={state.form.configuration.EMRConfig.autoScaling.scaleIn?.evalPeriods}
+                        scaleInIncrement={state.form.configuration.EMRConfig.autoScaling.scaleIn?.increment}
+                        scaleInPercentageMemAvailable={state.form.configuration.EMRConfig.autoScaling.scaleIn?.percentageMemAvailable}
+                        scaleOutCooldown={state.form.configuration.EMRConfig.autoScaling.scaleOut?.cooldown}
+                        scaleOutEvalPeriods={state.form.configuration.EMRConfig.autoScaling.scaleOut?.evalPeriods}
+                        scaleOutIncrement={state.form.configuration.EMRConfig.autoScaling.scaleOut?.increment}
+                        scaleOutPercentageMemAvailable={state.form.configuration.EMRConfig.autoScaling.scaleOut?.percentageMemAvailable} />
+                    <ProjectCreationConfiguration
+                        setFields={setFields}
+                        isAdminOnly={state.form.configuration.ProjectCreation.isAdminOnly} />
+                    <SystemBannerConfiguration
+                        setFields={setFields}
+                        touchFields={touchFields}
+                        errors={errors}
+                        isEnabled={state.form.configuration.SystemBanner.isEnabled}
+                        text={state.form.configuration.SystemBanner.text}
+                        backgroundColor={state.form.configuration.SystemBanner.backgroundColor}
+                        textColor={state.form.configuration.SystemBanner.textColor} />
+                    <SpaceBetween alignItems='end' direction='vertical'>
                         <Button
-                            onClick={async () => handleFileUpload()}
-                            disabled={selectedFile.length === 0}
+                            iconAlt='Update dynamic configuration'
                             variant='primary'
+                            onClick={() => {
+                                if (!isValid) {
+                                    setState({ validateAll: true, formSubmitting: false });
+                                    scrollToInvalid();
+                                } else {
+                                    setModalVisible(true);
+                                }
+                            }}
+                            loading={state.formSubmitting}
+                            data-cy='dynamic-configuration-submit'
+                            disabled={state.formSubmitting}
                         >
-                            Upload Configuration
+                        Save Changes
                         </Button>
                     </SpaceBetween>
-                </Container>
-                <ExpandableSection headerText='Configuration History' variant='default' defaultExpanded>
-                    {<pre>View the configuration history and rollback to prior versions.</pre>}
-                    {configList.length}
-                </ExpandableSection>
-            </SpaceBetween>
-        </Container>
+                </SpaceBetween>
+            </Container>
+        </>
     );
 }
 

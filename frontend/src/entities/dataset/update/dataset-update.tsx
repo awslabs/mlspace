@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Form from '@cloudscape-design/components/form';
 import {
@@ -23,26 +23,31 @@ import {
     Header,
     FormField,
     Container,
-    ContentLayout,
     StatusIndicator,
     Textarea,
     Input,
+    ContentLayout,
+    Multiselect,
+    SelectProps,
 } from '@cloudscape-design/components';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
-import { IDataset } from '../../../shared/model/dataset.model';
+import { DatasetType, IDataset } from '../../../shared/model/dataset.model';
 import {
-    getDatasetByScopeAndName,
+    getDataset,
     editDataset,
     datasetBinding,
     loadingDataset,
 } from '../dataset.reducer';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { z } from 'zod';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { selectCurrentUser } from '../../user/user.reducer';
+import { useNotificationService } from '../../../shared/util/hooks';
+import { getAllGroups } from '../../group/group.reducer';
+import { IGroup } from '../../../shared/model/group.model';
+import { DatasetProperties } from '../dataset';
 
 const formSchema = z.object({
     description: z.string().regex(/^[\w\-\s']+$/, {
@@ -50,20 +55,25 @@ const formSchema = z.object({
     }),
 });
 
-export function DatasetUpdate () {
+export function DatasetUpdate ({isAdmin}: DatasetProperties) {
     const dataset: IDataset = useAppSelector(datasetBinding);
-    const { projectName, scope, name } = useParams();
-    const [submitLoading, setSubmitLoading] = useState(false);
+    const groups: IGroup[] = useAppSelector((state) => state.group.allGroups);
+    const { projectName, type, scope, name } = useParams();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const basePath = projectName ? `/project/${projectName}` : '/personal';
-    const notificationService = NotificationService(dispatch);
+    let basePath = '';
+    if (isAdmin) {
+        basePath = '/admin/datasets';
+    } else {
+        basePath = `${projectName ? `/project/${projectName}` : '/personal'}/dataset`;
+    }
+    const notificationService = useNotificationService(dispatch);
     const loadingDatasetEditPage = useAppSelector(loadingDataset);
 
     scrollToPageHeader();
     DocTitle('Edit Dataset: ', dataset.name);
 
-    const { updateForm, touchFieldHandler, setState, state } = useValidationState(formSchema, {
+    const { updateForm, updateList, touchFieldHandler, setState, state } = useValidationState(formSchema, {
         validateAll: false,
         needsValidation: false,
         form: {
@@ -81,29 +91,28 @@ export function DatasetUpdate () {
         dispatch(
             setBreadcrumbs([
                 getBase(projectName),
-                { text: 'Datasets', href: `#${basePath}/dataset` },
-                { text: `${name}`, href: `#${basePath}/dataset/${scope}/${name}/edit` },
+                { text: 'Datasets', href: `#${basePath}`},
+                { text: `${name}`, href: `#${basePath}/${type}/${scope}/${name}/edit` },
             ])
         );
-        dispatch(getDatasetByScopeAndName({ scope: scope, name: name }))
+        dispatch(getDataset({ type: type, scope: scope, name: name }))
             .unwrap()
             .catch(() => {
                 navigate('/404');
             });
-    }, [dispatch, navigate, basePath, name, projectName, scope]);
+        dispatch(getAllGroups());
+    }, [dispatch, navigate, basePath, name, projectName, scope, type, isAdmin]);
 
     function handleSubmit () {
         if (state.formValid) {
             setState({ type: 'updateState', payload: { formSubmitting: true } });
-            setSubmitLoading(true);
-
             dispatch(editDataset({ ...state.form })).then((response) => {
                 if (response.type.endsWith('/fulfilled')) {
                     notificationService.generateNotification(
                         'Successfully updated Dataset.',
                         'success'
                     );
-                    navigate(`${basePath}/dataset`);
+                    navigate(basePath);
                 } else {
                     notificationService.generateNotification('Failed to update Dataset.', 'error');
                 }
@@ -112,7 +121,14 @@ export function DatasetUpdate () {
             scrollToInvalid();
         }
         setState({ type: 'updateState', payload: { formSubmitting: false } });
-        setSubmitLoading(false);
+    }
+
+    function generateGroupOptions () {
+        const groupOptions: SelectProps.Option[] = [];
+        groups.map((group) => {
+            groupOptions.push({ label: group.name, value: group.name});
+        });
+        return groupOptions;
     }
 
     const currentUser = useAppSelector(selectCurrentUser);
@@ -132,12 +148,12 @@ export function DatasetUpdate () {
                                     <Button
                                         formAction='none'
                                         variant='link'
-                                        onClick={() => navigate(`${basePath}/dataset`)}
+                                        onClick={() => navigate(basePath)}
                                     >
                                         Cancel
                                     </Button>
                                     <Button
-                                        loading={submitLoading}
+                                        loading={state.formSubmitting}
                                         variant='primary'
                                         onClick={() => {
                                             setState({ type: 'validateAll' });
@@ -186,6 +202,31 @@ export function DatasetUpdate () {
                                         onBlur={touchFieldHandler('description')}
                                     />
                                 </FormField>
+                                {dataset.type === DatasetType.GROUP &&
+                                    <FormField
+                                        label='Groups'
+                                        description='Select which groups to share this Group dataset with.'
+                                    >
+                                        <Multiselect
+                                            selectedOptions={state.form.groups.map((group) => {
+                                                return {label: group, value: group};
+                                            })}
+                                            onChange={({ detail }) => {
+                                                const groupList = detail.selectedOptions.map((option) => {
+                                                    return option.value;
+                                                });
+                                                updateList({groups: groupList});
+                                            }}
+                                            
+                                            options={generateGroupOptions()}
+                                            placeholder='Choose one or more groups'
+                                            deselectAriaLabel={(e) => `Remove ${e.label}`}
+                                            selectedAriaLabel='Selected groups'
+                                            filteringType='auto'
+                                            data-cy='group-name-multiselect'
+                                        />
+                                    </FormField>
+                                }
                             </SpaceBetween>
                         </Form>
                     )}

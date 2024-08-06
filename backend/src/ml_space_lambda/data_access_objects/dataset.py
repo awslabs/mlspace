@@ -23,7 +23,7 @@ from typing import List, Optional
 from dynamodb_json import json_util as dynamodb_json
 
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
-from ml_space_lambda.enums import DatasetType
+from ml_space_lambda.enums import DatasetType, EnvVariable
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 
@@ -31,29 +31,28 @@ class DatasetModel:
     def __init__(
         self,
         scope: str,
+        type: DatasetType,
         name: str,
         description: str,
         location: str,
         created_by: str,
         created_at: Optional[float] = None,
         last_updated_at: Optional[float] = None,
+        groups: List[str] = [],
     ):
         now = int(time.time())
         self.scope = scope
+        self.type = type
         self.name = name
         self.description = description
         self.location = location
         self.created_by = created_by
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
-        if scope == DatasetType.GLOBAL.value:
-            self.type = DatasetType.GLOBAL
-        elif scope == created_by:
-            self.type = DatasetType.PRIVATE
-        else:
-            self.type = DatasetType.PROJECT
+        self.groups = groups
+
         env_variables = get_environment_variables()
-        self.prefix = self.location.replace(f's3://{env_variables["DATA_BUCKET"]}/', "")
+        self.prefix = self.location.replace(f"s3://{env_variables[EnvVariable.DATA_BUCKET]}/", "")
         if not self.prefix.endswith("/"):
             self.prefix = self.prefix + "/"
 
@@ -61,31 +60,34 @@ class DatasetModel:
         return {
             "name": self.name,
             "scope": self.scope,
-            "type": self.type.value,
+            "type": self.type,
             "description": self.description,
             "location": self.location,
             "createdBy": self.created_by,
             "createdAt": self.created_at,
             "lastUpdatedAt": self.last_updated_at,
+            "groups": self.groups,
         }
 
     @staticmethod
     def from_dict(dict_object: dict) -> DatasetModel:
         return DatasetModel(
             dict_object["scope"],
+            dict_object["type"],
             dict_object["name"],
             dict_object["description"],
             dict_object["location"],
             dict_object["createdBy"],
             dict_object.get("createdAt", None),
             dict_object.get("lastUpdatedAt", None),
+            dict_object.get("groups", []),
         )
 
 
 class DatasetDAO(DynamoDBObjectStore):
     def __init__(self, table_name: Optional[str] = None, client=None):
         self.env_vars = get_environment_variables()
-        table_name = table_name if table_name else self.env_vars["DATASETS_TABLE"]
+        table_name = table_name if table_name else self.env_vars[EnvVariable.DATASETS_TABLE]
         DynamoDBObjectStore.__init__(self, table_name=table_name, client=client)
 
     def create(self, dataset: DatasetModel) -> None:
@@ -133,7 +135,11 @@ class DatasetDAO(DynamoDBObjectStore):
             key_condition_expression="#s = :scope",
             filter_expression="#t = :type",
             expression_names={"#s": "scope", "#t": "type"},
-            expression_values=json.loads(dynamodb_json.dumps({":scope": scope, ":type": dataset_type.value})),
+            expression_values=json.loads(dynamodb_json.dumps({":scope": scope, ":type": dataset_type})),
         ).records
 
+        return [DatasetModel.from_dict(entry) for entry in json_response]
+
+    def get_all(self) -> List[DatasetModel]:
+        json_response = self._scan(page_response=True).records
         return [DatasetModel.from_dict(entry) for entry in json_response]

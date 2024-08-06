@@ -40,13 +40,13 @@ import { ConfigureTuningJobResources } from './configure-tuning-job-resources';
 import { EditTrainingJobDefinition } from './edit-training-job-definition';
 import { useAuth } from 'react-oidc-context';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
-import NotificationService from '../../../../shared/layout/notification/notification.service';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { getDate, getPaddedNumberString } from '../../../../shared/util/date-utils';
 import { ML_ALGORITHMS } from '../../algorithms';
 import { getImageName } from './training-definitions/algorithm-options';
 import { tryCreateDataset } from '../../../dataset/dataset.service';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
+import { useNotificationService } from '../../../../shared/util/hooks';
 
 export type HPOJobCreateState = {
     editingJobDefinition: any;
@@ -64,7 +64,7 @@ export function HPOJobCreate () {
     const auth = useAuth();
     const userName = auth.user!.profile.preferred_username;
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     DocTitle('Create HPO Jobs');
 
@@ -376,6 +376,7 @@ export function HPOJobCreate () {
                 element={
                     <Wizard
                         activeStepIndex={state.activeStepIndex}
+                        isLoadingNextStep={state.formSubmitting}
                         onNavigate={(event) => {
                             switch (event.detail.reason) {
                                 case 'step':

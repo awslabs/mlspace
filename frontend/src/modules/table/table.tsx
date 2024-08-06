@@ -70,6 +70,9 @@ export default function Table ({
     serverFetch,
     serverRequestProps,
     storeClear,
+    keepSelection = true,
+    tableDescription,
+    isAdmin = false,
 }: TableProps) {
     const currentUser = useAppSelector(selectCurrentUser);
     const dispatch = useDispatch();
@@ -81,7 +84,7 @@ export default function Table ({
     };
     const [preferences, setPreferences] = useState(initialState);
     const emptyState = empty || EmptyState(`No ${tableName ? tableName : 'Entrie'}s exist`);
-    const { items, filteredItemsCount, collectionProps, filterProps, paginationProps } =
+    const { items, filteredItemsCount, collectionProps, filterProps, paginationProps, actions: {setSelectedItems} } =
         useCollection(allItems, {
             filtering: {
                 empty: emptyState,
@@ -89,7 +92,7 @@ export default function Table ({
             },
             pagination: { pageSize: preferences.pageSize },
             sorting: {},
-            selection: {keepSelection: true},
+            selection: {keepSelection},
         });
 
     const { selectedItems } = collectionProps;
@@ -164,6 +167,7 @@ export default function Table ({
                 loading={serverSideLoading}
                 setLoading={setServerSideLoading}
                 storeClear={storeClear}
+                isAdmin={isAdmin}
             />
         );
     }
@@ -185,7 +189,7 @@ export default function Table ({
             loading={
                 serverFetch
                     ? serverSideLoading.loadingAdditional || serverSideLoading.loadingEmpty
-                    : loadingItems && serverSideLoading.loadingInBackground
+                    : loadingItems
             }
             loadingText={loadingText}
             selectionType={tableType}
@@ -212,6 +216,7 @@ export default function Table ({
                     <Condition condition={tableName !== undefined}>
                         <Header
                             variant={tableHeaderVariant}
+                            description={tableDescription}
                             counter={
                                 showCounter
                                     ? selectedItems?.length
@@ -248,6 +253,7 @@ export default function Table ({
                                             loadingAction,
                                             focusProps,
                                             focusFileUploadProps,
+                                            setSelectedItems
                                         })}
                                     </SpaceBetween>
                                 )

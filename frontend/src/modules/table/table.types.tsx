@@ -28,8 +28,8 @@ import { ActionCreatorWithoutPayload, AsyncThunk } from '@reduxjs/toolkit';
 type TableProps<Entry = TableEntry> = {
     tableName?: string;
     tableType?: CloudscapeTableProps.SelectionType;
-    actions?: any;
-    selectItemsCallback?: CallbackFunction;
+    actions?: CallbackFunction<TableActionProps<Entry>, ReactNode | undefined>;
+    selectItemsCallback?: CallbackFunction<Entry[]>;
     allItems: Entry[];
     setItemsOverride?: CallbackFunction;
     columnDefinitions: CloudscapeTableProps.ColumnDefinition<Entry>[];
@@ -58,9 +58,16 @@ type TableProps<Entry = TableEntry> = {
     serverRequestProps?: ServerRequestProps;
     serverFetch?: AsyncThunk<any, ServerRequestProps, any>;
     storeClear?: ActionCreatorWithoutPayload;
+    keepSelection?: boolean;
+    tableDescription?: string;
+    isAdmin?: boolean;
 };
 
 type TableEntry = any;
+
+export type TableActionProps<T = any> = Pick<TableProps<T>, 'allItems' | 'setItemsOverride' | 'loadingAction' | 'focusProps' | 'focusFileUploadProps'> & {
+    selectedItems?: readonly T[],
+};
 
 function EmptyState (title: string) {
     return (

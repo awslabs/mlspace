@@ -14,8 +14,10 @@
   limitations under the License.
 */
 
+import { Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { DebouncedFunc, debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import NotificationService from '../layout/notification/notification.service';
 
 /**
  * A custom hook that runs an action periodically in the background to refresh data.
@@ -26,7 +28,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
  * @param {Array} deps - The dependencies of the action function
  * @param {boolean} condition - A condition that must be true for the action to run
 */
-export function useBackgroundRefresh (action: () => void, deps: readonly unknown[] = [], condition = true): boolean {
+export function useBackgroundRefresh (action: () => void, deps: readonly unknown[] = [], condition = true, interval = window.env.BACKGROUND_REFRESH_INTERVAL): boolean {
     const callbackAction = useCallback(action, [action, ...deps]);
     const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false);
 
@@ -46,16 +48,13 @@ export function useBackgroundRefresh (action: () => void, deps: readonly unknown
                 setTimeout(() => {
                     setIsBackgroundRefreshing(false);
                 }, waitTime);
-            }, (window.env.BACKGROUND_REFRESH_INTERVAL || 60) * 1000);
-
+            }, (interval || 60) * 1000);
             
             return () => {
                 clearInterval(timerId);
             };
         }
-        // We only want to recreate the interval if the condition changes
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [condition]);
+    }, [callbackAction, condition, interval]);
     return isBackgroundRefreshing;
 }
 
@@ -75,4 +74,11 @@ export function useDebounce<T extends (...args: any[]) => void> (callback: T, de
     const debounced = useMemo(() => debounce(callback, delay), [callback, delay]);
     
     return useCallback(debounced, [debounced]);
+}
+
+/**
+ * Creates a memoized NotificationService based on {@link dispatch}
+ */
+export function useNotificationService (dispatch: ThunkDispatch<any, any, Action>): ReturnType<typeof NotificationService> {
+    return useMemo(() => NotificationService(dispatch), [dispatch]);
 }

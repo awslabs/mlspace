@@ -16,12 +16,14 @@
 
 import { BreadcrumbGroupProps, SideNavigationProps } from '@cloudscape-design/components';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {IEnabledServices} from '../../model/app.configuration.model';
 
 const initialState = {
     breadcrumbs: [] as BreadcrumbGroupProps.Item[],
     activeHref: '#/',
     navItems: [] as SideNavigationProps.Item[],
     adminItems: undefined as SideNavigationProps.Item | undefined,
+    enabledServices: {} as IEnabledServices,
 };
 
 // slice
@@ -35,6 +37,9 @@ const navigationSlice = createSlice({
         setActiveHref (state, action: PayloadAction<string>) {
             state.activeHref = action.payload;
         },
+        setEnabledServices (state, action: PayloadAction<IEnabledServices>) {
+            state.enabledServices = action.payload;
+        },
         setAdminItems (state, action: PayloadAction<boolean>) {
             if (action.payload) {
                 state.adminItems = {
@@ -43,6 +48,8 @@ const navigationSlice = createSlice({
                     defaultExpanded: true,
                     items: [
                         { type: 'link', text: 'Users', href: '#/admin/users' },
+                        { type: 'link', text: 'Groups', href: '#/admin/groups' },
+                        { type: 'link', text: 'Datasets', href: '#/admin/datasets' },
                         { type: 'link', text: 'Configuration', href: '#/admin/configuration' },
                         { type: 'link', text: 'Reports', href: '#/admin/reports' },
                     ],
@@ -54,24 +61,35 @@ const navigationSlice = createSlice({
         setItemsForProjectName (state, action: PayloadAction<string | undefined>) {
             const projectName = action.payload;
             if (projectName) {
-                const translateItems: any = window.env.ENABLE_TRANSLATE
+                const translateItems: any = state.enabledServices.batchTranslate || state.enabledServices.realtimeTranslate
                     ? [
                         {
                             type: 'section',
                             text: 'Translation',
                             defaultExpanded: false,
                             items: [
-                                {
-                                    type: 'link',
-                                    text: 'Batch translate',
-                                    href: `#/project/${projectName}/batch-translate`,
-                                },
                             ],
                         },
                     ]
                     : [];
 
-                const groundTruthItems: any = window.env.ENABLE_GROUNDTRUTH
+                if (state.enabledServices.batchTranslate) {
+                    translateItems[0].items.push({
+                        type: 'link',
+                        text: 'Batch translate',
+                        href: `#/project/${projectName}/batch-translate`,
+                    });
+                }
+
+                if (state.enabledServices.realtimeTranslate) {
+                    translateItems[0].items.push({
+                        type: 'link',
+                        text: 'Real-time translation',
+                        href: '#/personal/translate/realtime',
+                    });
+                }
+
+                const groundTruthItems: any = state.enabledServices.labelingJob
                     ? [
                         {
                             type: 'section',
@@ -104,11 +122,11 @@ const navigationSlice = createSlice({
                                 text: 'Datasets',
                                 href: `#/project/${projectName}/dataset`,
                             },
-                            {
+                            ...state.enabledServices.emrCluster ? [{
                                 type: 'link',
                                 text: 'EMR clusters',
                                 href: `#/project/${projectName}/emr`,
-                            },
+                            }] : [],
                             {
                                 type: 'section',
                                 text: 'Inference',
@@ -167,6 +185,6 @@ const navigationSlice = createSlice({
 });
 
 // Reducer
-export const { setBreadcrumbs, setActiveHref, setItemsForProjectName, setAdminItems } =
+export const { setBreadcrumbs, setActiveHref, setItemsForProjectName, setAdminItems, setEnabledServices } =
     navigationSlice.actions;
 export default navigationSlice.reducer;

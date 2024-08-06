@@ -15,7 +15,7 @@
 */
 
 import React, { ReactNode, useEffect, useState } from 'react';
-import { SpaceBetween, Header, Button, ContentLayout } from '@cloudscape-design/components';
+import { SpaceBetween, Header, Button } from '@cloudscape-design/components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../config/store';
 import { INotebook } from '../../../shared/model/notebook.model';
@@ -32,7 +32,6 @@ import { prettyStatus } from '../../../shared/util/table-utils';
 import DetailsContainer from '../../../modules/details-container';
 import { formatDate, formatTerminationTimestamp } from '../../../shared/util/date-utils';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { setDeleteModal, setResourceScheduleModal } from '../../../modules/modal/modal.reducer';
 import { getNotebookInstanceUrl, notebookCluster } from '../notebook.service';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
@@ -42,9 +41,10 @@ import { modifyResourceTerminationSchedule } from '../../../shared/util/resource
 import { IProject } from '../../../shared/model/project.model';
 import { getProject } from '../../project/project.reducer';
 import { selectCurrentUser } from '../../user/user.reducer';
-import { hasPermission, isAdminOrProjectOwner } from '../../../shared/util/permission-utils';
+import { hasPermission, isAdminOrOwner } from '../../../shared/util/permission-utils';
 import { deletionDescription } from '../../../shared/util/form-utils';
-import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import { useBackgroundRefresh, useNotificationService } from '../../../shared/util/hooks';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function NotebookDetail () {
     const { projectName, name } = useParams();
@@ -59,7 +59,7 @@ function NotebookDetail () {
     const [initialLoaded, setInitialLoaded] = useState(false);
 
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
     const basePath = projectName ? `/project/${projectName}` : '/personal';
 
@@ -168,7 +168,7 @@ function NotebookDetail () {
         notebookInstanceURL === '';
     const ownerOrPrivileged =
         notebook.Owner === currentUser.username ||
-        isAdminOrProjectOwner(currentUser, projectPermissions);
+        isAdminOrOwner(currentUser, projectPermissions);
     return (
         <ContentLayout
             header={

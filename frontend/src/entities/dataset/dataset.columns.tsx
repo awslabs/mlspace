@@ -14,10 +14,10 @@
   limitations under the License.
 */
 import React from 'react';
-import { TableProps } from '@cloudscape-design/components';
-import { IDataset } from '../../shared/model/dataset.model';
+import { StatusIndicator, TableProps } from '@cloudscape-design/components';
+import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 import { linkify } from '../../shared/util/table-utils';
-import { showAccessLevel } from './dataset.utils';
+import { showDatasetOwnership } from './dataset.utils';
 
 const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
     {
@@ -25,7 +25,7 @@ const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
         header: 'Dataset name',
         sortingField: 'datasetName',
         cell: (item) => (
-            <div data-cy={item.name}>{linkify('dataset', item.name!, item.scope!)}</div>
+            <div data-cy={item.name}>{linkify('dataset', item.name!, `${item.type!}/${item.scope!}`)}</div>
         ),
     },
     { id: 'type', header: 'Dataset type', sortingField: 'type', cell: (item) => item.type },
@@ -39,11 +39,39 @@ const defaultColumns: TableProps.ColumnDefinition<IDataset>[] = [
         id: 'accessLevel',
         header: 'Access Level',
         sortingField: 'scope',
-        cell: (item) => showAccessLevel(item),
+        cell: (item) => item.type,
+    },
+];
+
+const adminDatasetColumns: TableProps.ColumnDefinition<IDataset>[] = defaultColumns.concat([
+    {
+        id: 'owners',
+        header: 'Owners',
+        sortingField: 'owners',
+        cell: (item) => item.type === DatasetType.GROUP && item.groups && item.groups.length === 0 ? <StatusIndicator type='warning'>{showDatasetOwnership(item)}</StatusIndicator> : showDatasetOwnership(item),
+    },
+]);
+
+export const createDefaultColumnsWithUrlOverride = (path: string): TableProps.ColumnDefinition<IDataset>[] => [
+    {
+        id: 'datasetName',
+        header: 'Dataset name',
+        sortingField: 'datasetName',
+        cell: (item) => (
+            <div data-cy={item.name}>{linkify(path, item.name!, `${item.type!}/${item.scope!}`,undefined, true)}</div>
+        ),
+    },
+    { id: 'type', header: 'Dataset type', sortingField: 'type', cell: (item) => item.type },
+    {
+        id: 'description',
+        header: 'Description',
+        sortingField: 'description',
+        cell: (item) => item.description,
     },
 ];
 
 const visibleColumns: string[] = ['datasetName', 'description', 'accessLevel'];
+const visibleAdminColumns: string[] = visibleColumns.concat(['owners']);
 
 const visibleContentPreference = {
     title: 'Select visible Dataset content',
@@ -61,6 +89,8 @@ const visibleContentPreference = {
 
 export {
     defaultColumns,
+    adminDatasetColumns,
     visibleColumns,
+    visibleAdminColumns,
     visibleContentPreference,
 };

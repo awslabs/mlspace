@@ -20,7 +20,6 @@ import {
     SpaceBetween,
     Header,
     Button,
-    ContentLayout,
     StatusIndicator,
 } from '@cloudscape-design/components';
 import React, { useEffect, ReactNode, useState } from 'react';
@@ -42,6 +41,7 @@ import { getLabelingJobType, getTotalLabelingObjectCount } from '../labeling-job
 import DetailsContainer from '../../../../modules/details-container';
 import { useBackgroundRefresh } from '../../../../shared/util/hooks';
 import { JobStatus } from '../../job.model';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 export function LabelingJobDetail () {
     const { projectName, jobName } = useParams();

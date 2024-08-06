@@ -26,6 +26,9 @@ import pytest
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.dataset import DatasetModel
+from ml_space_lambda.data_access_objects.group import GroupModel
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
+from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.data_access_objects.project import ProjectModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataModel
@@ -54,6 +57,7 @@ MOCK_OWNER_USER = UserModel("resource_owner", "owner@amazon.com", "Resource Owne
 MOCK_USER = UserModel("jdoe", "jdoe@amazon.com", "John Doe", False, [])
 
 MOCK_PROJECT_NAME = "UnitTestProject"
+MOCK_GROUP_NAME = "UnitTestGroup"
 MOCK_JOB_NAME = "UnitTestJob"
 MOCK_REPORT_NAME = "UnitTestReport"
 MOCK_SUSPENDED_PROJECT_NAME = "SuspendedTestProject"
@@ -66,6 +70,10 @@ MOCK_SUSPENDED_PROJECT = ProjectModel(
 )
 MOCK_OWNER_PROJECT_USER = ProjectUserModel(MOCK_OWNER_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.PROJECT_OWNER])
 MOCK_REGULAR_PROJECT_USER = ProjectUserModel(MOCK_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.COLLABORATOR])
+MOCK_REGULAR_GROUP_USER = GroupUserModel(MOCK_USER.username, MOCK_GROUP_NAME, permissions=[Permission.COLLABORATOR])
+
+MOCK_GROUP_NAME = "UnitTestGroup"
+MOCK_GROUP = GroupModel(MOCK_GROUP_NAME, "Group used for unit tests", MOCK_USER.username)
 
 
 def policy_response(
@@ -74,12 +82,13 @@ def policy_response(
     project: ProjectModel = None,
     username: str = MOCK_USERNAME,
     valid_token: bool = True,
+    default_to_username: bool = False,
 ):
     response_context = {}
     principal_id = "Unknown"
     if valid_token:
-        principal_id = user.username if user else username
-        if user and not user.suspended:
+        principal_id = user.username if user and not default_to_username else username
+        if user and not user.suspended and not default_to_username:
             response_context = {"user": json.dumps(user.to_dict())}
         if project:
             response_context["projectName"] = project.name
@@ -143,27 +152,27 @@ def generate_test_config(config_scope: str = "global", is_project: bool = False,
         "changedBy": "Tester",
         "createdAt": 1,
         "configuration": {
-            "DisabledInstanceTypes": {
-                ServiceType.NOTEBOOK.value: [],
-                ServiceType.ENDPOINT.value: [],
-                ServiceType.TRAINING_JOB.value: [],
-                ServiceType.TRANSFORM_JOB.value: [],
+            "EnabledInstanceTypes": {
+                ServiceType.NOTEBOOK: [],
+                ServiceType.ENDPOINT: [],
+                ServiceType.TRAINING_JOB: [],
+                ServiceType.TRANSFORM_JOB: [],
             },
             "EnabledServices": {
-                ServiceType.REALTIME_TRANSLATE.value: "true",
-                ServiceType.BATCH_TRANSLATE.value: "false",
-                ServiceType.LABELING_JOB.value: "true",
-                ServiceType.EMR_CLUSTER.value: "true",
-                ServiceType.ENDPOINT.value: "true",
-                ServiceType.ENDPOINT_CONFIG.value: "false",
-                ServiceType.HPO_JOB.value: "true",
-                ServiceType.MODEL.value: "true",
-                ServiceType.NOTEBOOK.value: "false",
-                ServiceType.TRAINING_JOB.value: "true",
-                ServiceType.TRANSFORM_JOB.value: "true",
+                ServiceType.REALTIME_TRANSLATE: "true",
+                ServiceType.BATCH_TRANSLATE: "false",
+                ServiceType.LABELING_JOB: "true",
+                ServiceType.EMR_CLUSTER: "true",
+                ServiceType.ENDPOINT: "true",
+                ServiceType.ENDPOINT_CONFIG: "false",
+                ServiceType.HPO_JOB: "true",
+                ServiceType.MODEL: "true",
+                ServiceType.NOTEBOOK: "false",
+                ServiceType.TRAINING_JOB: "true",
+                ServiceType.TRANSFORM_JOB: "true",
             },
             "EMRConfig": {
-                "clusterSizes": [
+                "clusterTypes": [
                     {"name": "Small", "size": 3, "masterType": "m5.xlarge", "coreType": "m5.xlarge"},
                 ],
                 "autoScaling": {
@@ -173,8 +182,8 @@ def generate_test_config(config_scope: str = "global", is_project: bool = False,
                     "scaleIn": {"increment": -1, "percentageMemAvailable": 75, "evalPeriods": 1, "cooldown": 300},
                 },
                 "applications": [
-                    {"name": "Hadoop"},
-                    {"name": "Spark"},
+                    {"Name": "Hadoop"},
+                    {"Name": "Spark"},
                 ],
             },
         },
@@ -363,11 +372,15 @@ def test_user_management(mock_user_dao, user: UserModel, method: str, allow: boo
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_member_of_project")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_owner_of_project")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_project_management(
     mock_user_dao,
     mock_project_user_dao,
+    mock_is_owner_of_project,
+    mock_is_member_of_project,
     user: UserModel,
     project_user: ProjectUserModel,
     method: str,
@@ -375,6 +388,9 @@ def test_project_management(
 ):
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
+
+    mock_is_member_of_project.side_effect = lambda username, project_name: project_user is not None
+    mock_is_owner_of_project.side_effect = lambda username, project_name: username == MOCK_OWNER_USER.username
 
     assert lambda_handler(
         mock_event(
@@ -386,20 +402,91 @@ def test_project_management(
         {},
     ) == policy_response(allow=allow, user=user)
     mock_user_dao.get.assert_called_with(user.username)
-    mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
+
+    # this method is skipped because the check if they're an admin comes first
+    if user != MOCK_ADMIN_USER:
+        mock_is_member_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+
+    # these methods are only called if the user is an admin or they're a member of the project (owners are members)
+    if user == MOCK_ADMIN_USER or user == MOCK_OWNER_USER:
+        mock_is_owner_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+        mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
+
+
+@pytest.mark.parametrize(
+    "user,allow",
+    [
+        (MOCK_ADMIN_USER, True),
+        (MOCK_USER, False),
+    ],
+    ids=[
+        "admin_user",
+        "normal_user",
+    ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_create_group(mock_user_dao, user: UserModel, allow: bool):
+    mock_user_dao.get.return_value = user
+
+    assert lambda_handler(
+        mock_event(
+            user=user,
+            resource="/group",
+            method="POST",
+        ),
+        {},
+    ) == policy_response(allow=allow, user=user)
+    mock_user_dao.get.assert_called_with(user.username)
+
+
+@pytest.mark.parametrize(
+    "user,method,allow",
+    [
+        (MOCK_ADMIN_USER, "DELETE", True),
+        (MOCK_ADMIN_USER, "PUT", True),
+        (MOCK_ADMIN_USER, "GET", True),
+        (MOCK_USER, "DELETE", False),
+        (MOCK_USER, "PUT", False),
+        (MOCK_USER, "GET", True),
+    ],
+    ids=[
+        "admin_delete_project",
+        "admin_update_project",
+        "admin_get_project",
+        "non_admin_delete_project",
+        "non_admin_update_project",
+        "non_admin_get_project",
+    ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_group_management(
+    mock_user_dao,
+    user: UserModel,
+    method: str,
+    allow: bool,
+):
+    mock_user_dao.get.return_value = user
+
+    assert lambda_handler(
+        mock_event(
+            user=user,
+            resource=f"/group/{MOCK_GROUP_NAME}",
+            method=method,
+            path_params={"groupName": MOCK_GROUP_NAME},
+        ),
+        {},
+    ) == policy_response(allow=allow, user=user)
+    mock_user_dao.get.assert_called_with(user.username)
 
 
 @pytest.mark.parametrize(
     "user,project_user,key,resource,allow",
     [
         (MOCK_USER, None, "global/datasets/test-dataset/example.txt", "presigned-url", True),
-        (
-            MOCK_ADMIN_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/test-dataset/example.txt",
-            "presigned-url",
-            True,
-        ),
+        (MOCK_USER, None, "group/datasets/test-dataset/example.txt", "presigned-url", True),
+        (MOCK_ADMIN_USER, None, f"project/{MOCK_PROJECT_NAME}/test-dataset/example.txt", "presigned-url", True),
         (
             MOCK_USER,
             MOCK_REGULAR_PROJECT_USER,
@@ -407,20 +494,8 @@ def test_project_management(
             "presigned-url",
             True,
         ),
-        (
-            MOCK_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/example.txt",
-            "presigned-url",
-            False,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_USER.username}/datasets/test-dataset/example.txt",
-            "presigned-url",
-            True,
-        ),
+        (MOCK_USER, None, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/example.txt", "presigned-url", False),
+        (MOCK_USER, None, f"private/{MOCK_USER.username}/datasets/test-dataset/example.txt", "presigned-url", True),
         (
             MOCK_USER,
             None,
@@ -429,50 +504,23 @@ def test_project_management(
             False,
         ),
         (MOCK_USER, None, "global/datasets/test-dataset/", "create", True),
-        (
-            MOCK_ADMIN_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/test-dataset/",
-            "create",
-            True,
-        ),
-        (
-            MOCK_USER,
-            MOCK_REGULAR_PROJECT_USER,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/",
-            "create",
-            True,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/",
-            "create",
-            False,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_USER.username}/datasets/test-dataset/",
-            "create",
-            True,
-        ),
-        (
-            MOCK_USER,
-            None,
-            f"private/{MOCK_ADMIN_USER.username}/datasets/test-dataset/",
-            "create",
-            False,
-        ),
+        (MOCK_USER, None, "group/datasets/test-dataset/", "create", True),
+        (MOCK_ADMIN_USER, None, f"project/{MOCK_PROJECT_NAME}/test-dataset/", "create", True),
+        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/", "create", True),
+        (MOCK_USER, None, f"project/{MOCK_PROJECT_NAME}/datasets/test-dataset/", "create", False),
+        (MOCK_USER, None, f"private/{MOCK_USER.username}/datasets/test-dataset/", "create", True),
+        (MOCK_USER, None, f"private/{MOCK_ADMIN_USER.username}/datasets/test-dataset/", "create", False),
     ],
     ids=[
         "global_dataset_presigned_url",
+        "group_dataset_presigned_url",
         "project_dataset_admin_presigned_url",
         "project_dataset_member_presigned_url",
         "project_dataset_non_member_presigned_url",
         "private_same_user_presigned_url",
         "private_different_user_presigned_url",
         "global_dataset_create_dataset",
+        "group_dataset_create_dataset",
         "project_dataset_admin_create_dataset",
         "project_dataset_member_create_dataset",
         "project_dataset_non_member_create_dataset",
@@ -481,11 +529,15 @@ def test_project_management(
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_dataset_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_generate_presigned_dataset_url(
     mock_user_dao,
     mock_project_user_dao,
+    mock_group_user_dao,
+    mock_group_dataset_dao,
     user: UserModel,
     project_user: ProjectUserModel,
     key: str,
@@ -497,6 +549,16 @@ def test_generate_presigned_dataset_url(
     mock_user_dao.get.return_value = user
     if key.startswith("project") and user.username != MOCK_ADMIN_USER.username:
         mock_project_user_dao.get.return_value = project_user
+    if mock_type == DatasetType.GROUP:
+        mock_group_user_dao.get_groups_for_user.return_value = [MOCK_REGULAR_GROUP_USER]
+        if resource == "create":
+            mock_scope = MOCK_GROUP_NAME
+        else:
+            mock_group_dataset_dao.get_groups_for_dataset.return_value = [
+                GroupDatasetModel(dataset_name="MOCK_DATASET_NAME", group_name=MOCK_GROUP_NAME)
+            ]
+            mock_scope = "MOCK_DATASET_NAME"
+
     assert lambda_handler(
         mock_event(
             user=user,
@@ -514,6 +576,14 @@ def test_generate_presigned_dataset_url(
         mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
     else:
         mock_project_user_dao.get.assert_not_called()
+    if mock_type == DatasetType.GROUP:
+        mock_group_user_dao.get_groups_for_user.assert_called_with(MOCK_USER.username)
+        if resource == "presigned-url":
+            mock_group_dataset_dao.get_groups_for_dataset.assert_called_with(mock_scope)
+        else:
+            mock_group_dataset_dao.get_groups_for_dataset.assert_not_called()
+    else:
+        mock_group_user_dao.get_groups_for_user.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -1186,9 +1256,6 @@ def test_manage_project_sagemaker_resource(
         ),
         (f"/project/{MOCK_PROJECT_NAME}/endpoint-configs", MOCK_USER, None, False),
         (f"/project/{MOCK_PROJECT_NAME}/endpoint-configs", MOCK_ADMIN_USER, None, True),
-        (f"/project/{MOCK_PROJECT_NAME}/jobs/labeling", MOCK_USER, MOCK_REGULAR_PROJECT_USER, True),
-        (f"/project/{MOCK_PROJECT_NAME}/jobs/labeling", MOCK_USER, None, False),
-        (f"/project/{MOCK_PROJECT_NAME}/jobs/labeling", MOCK_ADMIN_USER, None, True),
     ],
     ids=[
         "project_training_jobs_project_user",
@@ -1215,17 +1282,18 @@ def test_manage_project_sagemaker_resource(
         "project_endpoint_configs_project_user",
         "project_endpoint_configs_non_project_user",
         "project_endpoint_configs_non_project_admin",
-        "project_labeling_jobs_project_user",
-        "project_labeling_jobs_non_project_user",
-        "project_labeling_jobs_non_project_admin",
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_member_of_project")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_owner_of_project")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_list_project_resources(
     mock_user_dao,
     mock_project_user_dao,
+    mock_is_owner_of_project,
+    mock_is_member_of_project,
     resource: str,
     user: UserModel,
     project_user: ProjectUserModel,
@@ -1233,6 +1301,9 @@ def test_list_project_resources(
 ):
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
+
+    mock_is_member_of_project.side_effect = lambda username, project_name: project_user is not None
+    mock_is_owner_of_project.side_effect = lambda username, project_name: username == MOCK_OWNER_USER.username
 
     assert lambda_handler(
         mock_event(
@@ -1245,7 +1316,15 @@ def test_list_project_resources(
     ) == policy_response(allow=allow, user=user)
 
     mock_user_dao.get.assert_called_with(user.username)
-    mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
+
+    # this method is skipped because the check if they're an admin comes first
+    if user != MOCK_ADMIN_USER:
+        mock_is_member_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+
+    # these methods are only called if the user is an admin or they're a member of the project (owners are members)
+    if user == MOCK_ADMIN_USER or user == MOCK_OWNER_USER:
+        mock_is_owner_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+        mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
 
 @pytest.mark.parametrize(
@@ -1448,73 +1527,99 @@ def test_notebook_privileged(
 
 
 @pytest.mark.parametrize(
-    "user,method,scope,project_user,allow",
+    "user,method,scope,type,project_user,group_user,allow",
     [
-        (MOCK_ADMIN_USER, "GET", DatasetType.GLOBAL.value, None, True),
-        (MOCK_ADMIN_USER, "GET", MOCK_PROJECT_NAME, None, False),
-        (MOCK_ADMIN_USER, "GET", MOCK_OWNER_USER.username, None, False),
-        (MOCK_ADMIN_USER, "PUT", DatasetType.GLOBAL.value, None, False),
-        (MOCK_ADMIN_USER, "PUT", MOCK_PROJECT_NAME, None, False),
-        (MOCK_ADMIN_USER, "PUT", MOCK_OWNER_USER.username, None, False),
-        (MOCK_ADMIN_USER, "DELETE", DatasetType.GLOBAL.value, None, False),
-        (MOCK_ADMIN_USER, "DELETE", MOCK_PROJECT_NAME, None, False),
-        (MOCK_ADMIN_USER, "DELETE", MOCK_OWNER_USER.username, None, False),
-        (MOCK_USER, "GET", DatasetType.GLOBAL.value, None, True),
-        (MOCK_USER, "GET", MOCK_PROJECT_NAME, None, False),
-        (MOCK_USER, "GET", MOCK_OWNER_USER.username, None, False),
-        (MOCK_USER, "PUT", DatasetType.GLOBAL.value, None, False),
-        (MOCK_USER, "PUT", MOCK_PROJECT_NAME, None, False),
-        (MOCK_USER, "PUT", MOCK_OWNER_USER.username, None, False),
-        (MOCK_USER, "DELETE", DatasetType.GLOBAL.value, None, False),
-        (MOCK_USER, "DELETE", MOCK_PROJECT_NAME, None, False),
-        (MOCK_USER, "DELETE", MOCK_OWNER_USER.username, None, False),
-        (MOCK_OWNER_USER, "GET", DatasetType.GLOBAL.value, None, True),
-        (MOCK_OWNER_USER, "GET", MOCK_PROJECT_NAME, None, True),
-        (MOCK_OWNER_USER, "GET", MOCK_OWNER_USER.username, None, True),
-        (MOCK_OWNER_USER, "PUT", DatasetType.GLOBAL.value, None, True),
-        (MOCK_OWNER_USER, "PUT", MOCK_PROJECT_NAME, None, True),
-        (MOCK_OWNER_USER, "PUT", MOCK_OWNER_USER.username, None, True),
-        (MOCK_OWNER_USER, "DELETE", DatasetType.GLOBAL.value, None, True),
-        (MOCK_OWNER_USER, "DELETE", MOCK_PROJECT_NAME, None, True),
-        (MOCK_OWNER_USER, "DELETE", MOCK_OWNER_USER.username, None, True),
-        (MOCK_USER, "GET", MOCK_PROJECT_NAME, MOCK_REGULAR_PROJECT_USER, True),
-        (MOCK_USER, "PUT", MOCK_PROJECT_NAME, MOCK_REGULAR_PROJECT_USER, False),
-        (MOCK_USER, "DELETE", MOCK_PROJECT_NAME, MOCK_REGULAR_PROJECT_USER, False),
+        (MOCK_ADMIN_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
+        (MOCK_ADMIN_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
+        (MOCK_ADMIN_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
+        (MOCK_ADMIN_USER, "PUT", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
+        (MOCK_ADMIN_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
+        (MOCK_ADMIN_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
+        (MOCK_ADMIN_USER, "DELETE", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
+        (MOCK_ADMIN_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_ADMIN_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
+        (MOCK_ADMIN_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
+        (MOCK_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
+        (MOCK_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
+        (MOCK_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, None, False),
+        (MOCK_USER, "PUT", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, False),
+        (MOCK_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
+        (MOCK_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, None, False),
+        (MOCK_USER, "DELETE", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, False),
+        (MOCK_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, False),
+        (MOCK_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, False),
+        (MOCK_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, None, False),
+        (MOCK_OWNER_USER, "GET", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
+        (MOCK_OWNER_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_OWNER_USER, "GET", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
+        (MOCK_OWNER_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
+        (MOCK_OWNER_USER, "PUT", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
+        (MOCK_OWNER_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_OWNER_USER, "PUT", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
+        (MOCK_OWNER_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
+        (MOCK_OWNER_USER, "DELETE", DatasetType.GLOBAL, DatasetType.GLOBAL, None, None, True),
+        (MOCK_OWNER_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, None, None, True),
+        (MOCK_OWNER_USER, "DELETE", MOCK_OWNER_USER.username, DatasetType.PRIVATE, None, None, True),
+        (MOCK_OWNER_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, None, True),
+        (MOCK_USER, "GET", MOCK_PROJECT_NAME, DatasetType.PROJECT, MOCK_REGULAR_PROJECT_USER, None, True),
+        (MOCK_USER, "PUT", MOCK_PROJECT_NAME, DatasetType.PROJECT, MOCK_REGULAR_PROJECT_USER, None, False),
+        (MOCK_USER, "DELETE", MOCK_PROJECT_NAME, DatasetType.PROJECT, MOCK_REGULAR_PROJECT_USER, None, False),
+        (MOCK_USER, "GET", DatasetType.GROUP, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, True),
+        (MOCK_USER, "PUT", DatasetType.GROUP, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, False),
+        (MOCK_USER, "DELETE", DatasetType.GROUP, DatasetType.GROUP, None, MOCK_REGULAR_GROUP_USER, False),
     ],
     ids=[
         "admin_get_global",
         "admin_get_project",
         "admin_get_private",
+        "admin_get_group",
         "admin_update_global",
         "admin_update_project",
         "admin_update_private",
+        "admin_update_group",
         "admin_delete_global",
         "admin_delete_project",
         "admin_delete_private",
+        "admin_delete_group",
         "user_get_global",
         "user_get_project",
         "user_get_private",
+        "user_get_group",
         "user_update_global",
         "user_update_project",
         "user_update_private",
+        "user_update_group",
         "user_delete_global",
         "user_delete_project",
         "user_delete_private",
+        "user_delete_group",
         "owner_get_global",
         "owner_get_project",
         "owner_get_private",
+        "owner_get_group",
         "owner_update_global",
         "owner_update_project",
         "owner_update_private",
+        "owner_update_group",
         "owner_delete_global",
         "owner_delete_project",
         "owner_delete_private",
+        "owner_delete_group",
         "project_member_get_project",
         "project_member_update_project",
         "project_member_delete_project",
+        "group_member_get_group",
+        "group_member_update_group",
+        "group_member_delete_group",
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_dataset_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.dataset_dao")
@@ -1522,22 +1627,35 @@ def test_dataset_routes(
     mock_dataset_dao,
     mock_user_dao,
     mock_project_user_dao,
+    mock_group_user_dao,
+    mock_group_dataset_dao,
     user: UserModel,
     method: str,
     scope: str,
+    type: str,
     project_user: ProjectUserModel,
+    group_user: GroupUserModel,
     allow: bool,
 ):
+    dataset_name = "UnitTestDataset"
     mock_dataset = DatasetModel(
         scope=scope,
-        name="UnitTestDataset",
+        type=type,
+        name=dataset_name,
         description="For unit tests",
         location="s3://fake-location/",
         created_by=MOCK_OWNER_USER.username,
     )
+    mock_group_dataset = GroupDatasetModel(dataset_name=dataset_name, group_name=MOCK_GROUP_NAME)
     mock_dataset_dao.get.return_value = mock_dataset
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
+    mock_group_user_dao.get.return_value = group_user
+    if group_user:
+        mock_group_user_dao.get_groups_for_user.return_value = [MOCK_REGULAR_GROUP_USER]
+    else:
+        mock_group_user_dao.get_groups_for_user.return_value = []
+    mock_group_dataset_dao.get.return_value = mock_group_dataset
 
     assert lambda_handler(
         mock_event(
@@ -1552,17 +1670,23 @@ def test_dataset_routes(
     mock_user_dao.get.assert_called_with(user.username)
     mock_dataset_dao.get.assert_called_with(scope, mock_dataset.name)
     # We'll only grab the project user if it's a GET, Project Dataset, and the user wasn't the owner
-    if mock_dataset.type == DatasetType.PROJECT and method == "GET" and user.username != MOCK_OWNER_USER.username:
+    if (
+        mock_dataset.type == DatasetType.PROJECT
+        and method == "GET"
+        and user.username != MOCK_OWNER_USER.username
+        and Permission.ADMIN not in user.permissions
+    ):
         mock_project_user_dao.get.assert_called_with(scope, user.username)
     else:
         mock_project_user_dao.get.assert_not_called()
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.dataset_dao")
-def test_dataset_adversarial(mock_dataset_dao, mock_user_dao, mock_project_user_dao):
+def test_dataset_adversarial(mock_dataset_dao, mock_user_dao, mock_project_user_dao, mock_group_user_dao):
     method = "GET"
     allow = False
 
@@ -1572,6 +1696,7 @@ def test_dataset_adversarial(mock_dataset_dao, mock_user_dao, mock_project_user_
 
     mock_private_dataset = DatasetModel(
         scope=MOCK_OWNER_USER.username,
+        type=DatasetType.PRIVATE,
         name="UnitTestDataset",
         description="For unit tests",
         location="s3://fake-location/",
@@ -1582,6 +1707,7 @@ def test_dataset_adversarial(mock_dataset_dao, mock_user_dao, mock_project_user_
     mock_dataset_dao.get.return_value = mock_private_dataset
     mock_user_dao.get.return_value = MOCK_USER
     mock_project_user_dao.get.return_value = MOCK_USER
+    mock_group_user_dao.get.return_value = MOCK_REGULAR_GROUP_USER
 
     assert lambda_handler(
         mock_event(
@@ -1721,11 +1847,15 @@ def test_config_routes(mock_user_dao, user: UserModel, method: str, allow: bool)
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_member_of_project")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_owner_of_project")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_app_config_routes(
     mock_user_dao,
     mock_project_user_dao,
+    mock_is_owner_of_project,
+    mock_is_member_of_project,
     user: UserModel,
     project_user: ProjectUserModel,
     method: str,
@@ -1734,6 +1864,11 @@ def test_app_config_routes(
 ):
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
+
+    mock_is_member_of_project.side_effect = lambda username, project_name: project_user is not None
+    mock_is_owner_of_project.side_effect = lambda username, project_name: username == MOCK_OWNER_USER.username
+
+    # GET requests return an Allow policy immediately, so the user won't be set in the response
     assert lambda_handler(
         mock_event(
             user=user,
@@ -1742,9 +1877,13 @@ def test_app_config_routes(
             path_params=path_params,
         ),
         {},
-    ) == policy_response(allow=allow, user=user)
-    if user:
+    ) == policy_response(
+        allow=allow, user=user, username="Unknown" if method == "GET" else MOCK_USERNAME, default_to_username=method == "GET"
+    )
+    if user and method != "GET":
         mock_user_dao.get.assert_called_with(user.username)
+    elif user and method == "GET":
+        mock_user_dao.get.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -2199,6 +2338,16 @@ def test_verified_token_missing_oidc_endpoint(mock_http, mock_user_dao):
     mock_http.request.assert_not_called()
 
 
+def is_owner_of_project(username: str, project_name: str) -> bool:
+    return MOCK_OWNER_PROJECT_USER.user == username and MOCK_OWNER_PROJECT_USER.project == project_name
+
+
+def is_member_of_project(username: str, project_name: str) -> bool:
+    return (MOCK_REGULAR_PROJECT_USER.user == username and MOCK_REGULAR_PROJECT_USER.project == project_name) or (
+        MOCK_OWNER_PROJECT_USER.user == username and MOCK_OWNER_PROJECT_USER.project == project_name
+    )
+
+
 @pytest.mark.parametrize(
     "user,project_user,method,allow",
     [
@@ -2231,11 +2380,15 @@ def test_verified_token_missing_oidc_endpoint(mock_http, mock_user_dao):
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_member_of_project")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.is_owner_of_project")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_mange_project_users(
+def test_manage_project_users(
     mock_user_dao,
     mock_project_user_dao,
+    mock_is_owner_of_project,
+    mock_is_member_of_project,
     user: UserModel,
     project_user: ProjectUserModel,
     method: str,
@@ -2249,6 +2402,9 @@ def test_mange_project_users(
         resource += "/fakeUser"
         path_params["username"] = "fakeUser"
 
+    mock_is_member_of_project.side_effect = lambda username, project_name: project_user is not None
+    mock_is_owner_of_project.side_effect = lambda username, project_name: username == MOCK_OWNER_USER.username
+
     assert lambda_handler(
         mock_event(
             user=user,
@@ -2258,8 +2414,15 @@ def test_mange_project_users(
         ),
         {},
     ) == policy_response(allow=allow, user=user)
-    mock_user_dao.get.assert_called_with(user.username)
-    mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
+
+    # this method is skipped because the check if they're an admin comes first
+    if user != MOCK_ADMIN_USER:
+        mock_is_member_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+
+    # these methods are only called if the user is an admin or they're a member of the project (owners are members)
+    if user == MOCK_ADMIN_USER or user == MOCK_OWNER_USER:
+        mock_is_owner_of_project.assert_called_with(user.username, MOCK_PROJECT_NAME)
+        mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
 
 @pytest.mark.parametrize(
@@ -2398,7 +2561,6 @@ def test_username_normalization(mock_user_dao, user: UserModel, method: str, all
     modified_policy_response = policy_response(allow=allow, user=user)
     modified_policy_response["principalId"] = response_username
 
-    print(f"caca = {response_username}")
     assert (
         lambda_handler(
             mock_event(

@@ -17,6 +17,11 @@
 import { TableProps } from '@cloudscape-design/components';
 import { IProjectUser } from '../../shared/model/projectUser.model';
 import { IUser, Permission } from '../../shared/model/user.model';
+import { IGroupUser } from '../../shared/model/groupUser.model';
+
+const groupUserColumns: TableProps.ColumnDefinition<IGroupUser>[] = [
+    { id: 'name', header: 'Name', sortingField: 'name', cell: (item) => item.user },
+];
 
 const projectUserColumns: TableProps.ColumnDefinition<IProjectUser>[] = [
     { id: 'name', header: 'Name', sortingField: 'name', cell: (item) => item.user },
@@ -26,14 +31,8 @@ const projectUserColumns: TableProps.ColumnDefinition<IProjectUser>[] = [
         sortingField: 'mo',
         cell: (item) => (item.permissions?.includes(Permission.PROJECT_OWNER) ? 'Yes' : 'No'),
     },
-    {
-        id: 'co',
-        header: 'Collaborator',
-        sortingField: 'co',
-        cell: (item) => (item.permissions?.includes(Permission.COLLABORATOR) ? 'Yes' : 'No'),
-    },
 ];
-// These columns should be updated once the lambdas are updated. Displaying MO/CO status doesn't make
+// These columns should be updated once the lambdas are updated. Displaying MO status doesn't make
 // sense for a generic user table
 const userColumns: TableProps.ColumnDefinition<IUser>[] = [
     { id: 'name', header: 'Username', sortingField: 'name', cell: (item) => item.username },
@@ -65,7 +64,8 @@ const userColumns: TableProps.ColumnDefinition<IUser>[] = [
 ];
 
 const visibleColumns: string[] = ['name', 'suspended', 'admin', 'lastLogin'];
-const visibleProjectUserColumns: string[] = ['name', 'mo', 'co'];
+const visibleGroupUserColumns: string[] = ['name'];
+const visibleProjectUserColumns: string[] = ['name', 'mo'];
 
 const visibleContentPreference = {
     title: 'Select visible user content',
@@ -75,7 +75,6 @@ const visibleContentPreference = {
             options: [
                 { id: 'name', label: 'Name' },
                 { id: 'mo', label: 'MO' },
-                { id: 'co', label: 'CO' },
             ],
         },
     ],
@@ -84,6 +83,8 @@ const visibleContentPreference = {
 const addUserVisibleColumns: string[] = ['name', 'displayName', 'email'];
 
 export {
+    groupUserColumns,
+    visibleGroupUserColumns,
     projectUserColumns,
     userColumns,
     visibleColumns,

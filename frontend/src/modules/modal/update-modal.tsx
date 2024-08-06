@@ -21,12 +21,13 @@ import React, { useState } from 'react';
 import { IProjectUser } from '../../shared/model/projectUser.model';
 import { IUser } from '../../shared/model/user.model';
 import { useAppDispatch } from '../../config/store';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { CallbackFunction } from '../../types';
 import { dismissModal } from './modal.reducer';
+import { useNotificationService } from '../../shared/util/hooks';
+import { IGroupUser } from '../../shared/model/groupUser.model';
 
 export type UpdateModalProps = {
-    selectedUser: IUser | IProjectUser;
+    selectedUser: IUser | IProjectUser | IGroupUser;
     onConfirm: () => Promise<PayloadAction<any, string>> | Promise<AxiosResponse<any, any>>;
     postConfirm?: CallbackFunction;
     description?: string;
@@ -35,8 +36,8 @@ export type UpdateModalProps = {
 function UpdateModal ({ selectedUser, onConfirm, postConfirm, description }: UpdateModalProps) {
     const [processing, setProcessing] = useState(false);
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
-    const username = (selectedUser as IUser).username || (selectedUser as IProjectUser).user;
+    const notificationService = useNotificationService(dispatch);
+    const username = (selectedUser as IUser).username || (selectedUser as IProjectUser).user || (selectedUser as IGroupUser).user;
 
     const responseHandler = (
         response: PayloadAction<any, string> | AxiosResponse<any, any> | undefined

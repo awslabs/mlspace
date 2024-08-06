@@ -17,7 +17,6 @@
 import { setBreadcrumbs } from '../../shared/layout/navigation/navigation.reducer';
 import { useAppDispatch } from '../../config/store';
 import {
-    ExpandableSection,
     Header,
     SpaceBetween,
     Container,
@@ -26,15 +25,15 @@ import {
     MultiselectProps,
     SelectProps,
     Button,
+    Tabs,
 } from '@cloudscape-design/components';
 import { defaultEnvConfig } from '../../shared/model/configuration.model';
 import React, { useEffect, useState } from 'react';
 import { getEnvironmentConfig } from './configuration.service';
 import { getBase } from '../../shared/util/breadcrumb-utils';
 import { useParams } from 'react-router-dom';
-import Condition from '../../modules/condition';
 import axios from '../../shared/util/axios-utils';
-import NotificationService from '../../shared/layout/notification/notification.service';
+import { useNotificationService } from '../../shared/util/hooks';
 
 export function DeploymentConfiguration () {
     const [config, setEnvConfig] = useState(defaultEnvConfig);
@@ -42,7 +41,7 @@ export function DeploymentConfiguration () {
     const dispatch = useAppDispatch();
     const { projectName } = useParams();
     const [syncingMetadata, setSyncingMetadata] = useState(false);
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     const generateDescription = (service: string) => {
         return `Sync metadata for all ${service} associated with ${window.env.APPLICATION_NAME}`;
@@ -123,31 +122,34 @@ export function DeploymentConfiguration () {
             }
         >
             <SpaceBetween direction='vertical' size='xl'>
-                <ExpandableSection headerText='Environment Variables' variant='default'>
-                    {<pre>{JSON.stringify(config?.environmentVariables, null, 2) || ''}</pre>}
-                </ExpandableSection>
-                <ExpandableSection headerText='S3 Config File' variant='default'>
-                    {<pre>{JSON.stringify(config?.s3ParamFile, null, 2) || ''}</pre>}
-                </ExpandableSection>
-                <ExpandableSection headerText='Notebook Lifecycle Config' variant='default'>
+                <Tabs tabs={[
                     {
-                        <pre>
-                            {(JSON.stringify(config?.notebookLifecycleConfig, null, 2) || '')
-                                .split('\\n')
-                                .map(function (item, index) {
-                                    return (
-                                        <span key={index} style={{ whiteSpace: 'pre-wrap' }}>
-                                            {item}
-                                            <br />
-                                        </span>
-                                    );
-                                }) || ''}
-                        </pre>
-                    }
-                </ExpandableSection>
-                <Condition condition={window.env.SHOW_MIGRATION_OPTIONS === true}>
-                    <ExpandableSection headerText='Metadata Migration' variant='default'>
-                        <SpaceBetween size='l'>
+                        label: 'Environment Variables',
+                        id: 'env-vars',
+                        content: <pre>{JSON.stringify(config?.environmentVariables, null, 2) || ''}</pre>
+                    },
+                    {
+                        label: 'S3 Config File',
+                        id: 's3-config',
+                        content: <pre>{JSON.stringify(config?.s3ParamFile, null, 2) || ''}</pre>
+                    },
+                    {
+                        label: 'Notebook Lifecycle Config',
+                        id: 'notebook-lifecycle',
+                        content: <pre>{(JSON.stringify(config?.notebookLifecycleConfig, null, 2) || '')
+                            .split('\\n')
+                            .map(function (item, index) {
+                                return (
+                                    <span key={index} style={{ whiteSpace: 'pre-wrap' }}>
+                                        {item}
+                                        <br />
+                                    </span>
+                                );
+                            }) || ''}</pre>
+                    },...window.env.SHOW_MIGRATION_OPTIONS ? [{
+                        label: 'Metadata Migration',
+                        id: 'metadata-migration',
+                        content: <SpaceBetween size='l'>
                             <FormField
                                 label='Resource Types'
                                 description='Select the resource you wish to manually sync metadata for'
@@ -199,8 +201,8 @@ export function DeploymentConfiguration () {
                                 Sync metadata
                             </Button>
                         </SpaceBetween>
-                    </ExpandableSection>
-                </Condition>
+                    }] : []
+                ]}/>
             </SpaceBetween>
         </Container>
     );

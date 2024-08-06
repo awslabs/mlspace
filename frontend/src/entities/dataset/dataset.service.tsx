@@ -19,6 +19,8 @@ import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 import axios from '../../shared/util/axios-utils';
 import { default as Axios } from 'axios';
 import { DatasetContext } from '../../shared/util/dataset-utils';
+import { Box, Button, ColumnLayout, ProgressBar } from '@cloudscape-design/components';
+import React from 'react';
 
 export const getPresignedUrls = async (data: any) => {
     const requestUrl = '/dataset/presigned-url';
@@ -28,13 +30,7 @@ export const getPresignedUrls = async (data: any) => {
         isUpload: true,
         key: data.key,
     };
-    const [datasetType, datasetScope] = data.key.split('/');
-    const headerConfig = {
-        headers: {
-            'x-mlspace-dataset-type': datasetType,
-            'x-mlspace-dataset-scope': datasetScope,
-        },
-    };
+    const headerConfig = generateDatasetHeaders(data.key);
     return axios.post(requestUrl, payload, headerConfig);
 };
 
@@ -43,19 +39,29 @@ export const getDownloadUrl = async (objectKey: string) => {
     const payload = {
         key: objectKey,
     };
-    const [datasetType, datasetScope] = objectKey.split('/');
-    const headerConfig = {
-        headers: {
-            'x-mlspace-dataset-type': datasetType,
-            'x-mlspace-dataset-scope': datasetScope,
-        },
-    };
+    const headerConfig = generateDatasetHeaders(objectKey);
     const response = await axios.post(requestUrl, payload, headerConfig);
     if (response && response.data) {
         return response.data;
     }
     return undefined;
 };
+
+function generateDatasetHeaders (key: string) {
+    const datasetType = key.split('/')[0];
+    let datasetScope = key.split('/')[1];
+    if (datasetType === DatasetType.GROUP) {
+        // for groups, set the scope to the dataset name
+        datasetScope = key.split('/')[2];
+    }
+    const headerConfig = {
+        headers: {
+            'x-mlspace-dataset-type': datasetType,
+            'x-mlspace-dataset-scope': datasetScope,
+        },
+    };
+    return headerConfig;
+}
 
 export const uploadToS3 = async (presignedUrl: any, file: any) => {
     //This method uploads a file to S3 using a pre-signed post
@@ -97,6 +103,8 @@ export const buildS3KeysForResourceObjects = (
                 return [`private/${datasetContext.scope}/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
             case DatasetType.GLOBAL:
                 return [`global/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
+            case DatasetType.GROUP:
+                return [`group/datasets/${datasetContext.name}/${resourceObject.key}`, resourceObject];
         }
     });
 };
@@ -126,6 +134,8 @@ export const determineScope = (
             return DatasetType.GLOBAL;
         case DatasetType.PROJECT:
             return projectName!;
+        case DatasetType.GROUP:
+            return DatasetType.GROUP;
         default:
             // Default to private
             return username;
@@ -135,8 +145,12 @@ export const determineScope = (
 export async function uploadResources (datasetContext: DatasetContext, resourceObjects: DatasetResourceObject[], notificationService: any) {
     let successCount = 0;
     const failedUploads: string[] = [];
+    let stopUpload = false;
 
     for (const [s3Uri, resourceObject] of buildS3KeysForResourceObjects(resourceObjects, datasetContext)) {
+        if (stopUpload) {
+            break;
+        }
         const presignedUrl = await fetchPresignedURL(s3Uri);
 
         if (presignedUrl?.data) {
@@ -144,6 +158,25 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
 
             if (uploadResponse.status === 204) {
                 successCount++;
+                notificationService.generateNotification(
+                    `Successfully uploaded ${successCount}/${resourceObjects.length} file(s).`,
+                    'in-progress',
+                    'upload-notification',
+                    (<ColumnLayout columns={2}>
+                        <ProgressBar
+                            label='Uploading files to dataset'
+                            description={`Uploading ${resourceObject.name}`}
+                            value={successCount / resourceObjects.length * 100}
+                            variant='flash'
+                        />
+                        <Box float='right'>
+                            <Button onClick={() => stopUpload = true}>Stop</Button>
+                        </Box>
+                        
+                    </ColumnLayout>
+                    ),
+                    false
+                );
                 continue;
             }
         }
@@ -154,7 +187,13 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
     if (successCount > 0) {
         notificationService.generateNotification(
             `Successfully uploaded ${successCount} file(s).`,
-            'success'
+            'success',
+            'upload-notification',
+            (<ProgressBar
+                label='Uploading files to dataset'
+                value={successCount / resourceObjects.length * 100}
+                variant='flash'
+            />)
         );
     }
     
@@ -162,7 +201,7 @@ export async function uploadResources (datasetContext: DatasetContext, resourceO
         notificationService.generateNotification(
             `Failed to upload file: ${failedUploads.pop()}` +
                 (failedUploads.length > 0 ? ` and ${failedUploads.length} other files.` : '.'),
-            'error'
+            'error',
         );
     }
 }
@@ -177,11 +216,12 @@ export async function createDataset (dataset: IDataset) {
             datasetScope: dataset.scope,
             datasetDescription: dataset.description,
             datasetFormat: dataset.format,
+            datasetGroups: dataset.groups,
         };
         const headerConfig = {
             headers: {
                 'x-mlspace-dataset-type': dataset.type,
-                'x-mlspace-dataset-scope': dataset.scope,
+                'x-mlspace-dataset-scope': dataset.type === DatasetType.GROUP ? dataset.groups : dataset.scope,
             },
         };
         return axios.post(requestUrl, payload, headerConfig);

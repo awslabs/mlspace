@@ -37,6 +37,7 @@ import { ADCLambdaCABundleAspect } from '../lib/utils/adcCertBundleAspect';
 import { ApiDeploymentStack } from '../lib/stacks/api/apiDeployment';
 import { MLSpaceConfig, generateConfig } from '../lib/utils/configTypes';
 import { AppConfigurationApiStack } from '../lib/stacks/api/appConfiguration';
+import { GroupsApiStack } from '../lib/stacks/api/groups';
 
 
 const config: MLSpaceConfig = generateConfig();
@@ -93,8 +94,12 @@ iamStack.addDependency(kmsStack);
 stacks.push(iamStack);
 
 const mlSpaceNotebookRole = iamStack.mlSpaceNotebookRole;
+const mlspaceEndpointConfigInstanceConstraintPolicy = iamStack.mlspaceEndpointConfigInstanceConstraintPolicy;
+const mlspaceJobInstanceConstraintPolicy = iamStack.mlspaceJobInstanceConstraintPolicy;
+const mlspaceKmsInstanceConditionsPolicy = iamStack.mlspaceKmsInstanceConditionsPolicy;
 const mlSpaceAppRole = iamStack.mlSpaceAppRole;
 const websiteS3ReaderRole = iamStack.s3ReaderRole;
+const mlSpaceSystemRole = iamStack.mlSpaceSystemRole;
 
 const lambdaSourcePath = './backend/src/';
 const frontEndAssetsPath = './frontend/build/';
@@ -109,7 +114,10 @@ const coreStack = new CoreStack(app, 'mlspace-core', {
     notificationDistro: config.NOTIFICATION_DISTRO,
     encryptionKey: kmsStack.masterKey,
     mlSpaceAppRole,
+    mlspaceKmsInstanceConditionsPolicy,
     mlSpaceNotebookRole,
+    mlspaceEndpointConfigInstanceConstraintPolicy,
+    mlspaceJobInstanceConstraintPolicy,
     mlSpaceVPC,
     lambdaSecurityGroups: [vpcStack.vpcSecurityGroup],
     mlSpaceDefaultSecurityGroupId: vpcStack.vpcSecurityGroupId,
@@ -157,7 +165,11 @@ const apiStackProperties: ApiStackProperties = {
     configBucketName,
     cwlBucketName,
     applicationRole: mlSpaceAppRole,
+    systemRole: mlSpaceSystemRole,
     notebookInstanceRole: mlSpaceNotebookRole,
+    endpointConfigInstanceConstraintPolicy: mlspaceEndpointConfigInstanceConstraintPolicy,
+    jobInstanceConstraintPolicy: mlspaceJobInstanceConstraintPolicy,
+    mlspaceKmsInstanceConditionsPolicy: mlspaceKmsInstanceConditionsPolicy,
     notebookParamFileKey: config.NOTEBOOK_PARAMETERS_FILE_NAME,
     deploymentEnvironmentName: 'mlspace',
     authorizer: restStack.mlspaceRequestAuthorizer,
@@ -179,6 +191,7 @@ const apiStacks = [
     new ProjectsApiStack(app, 'mlspace-project-apis', apiStackProperties),
     new EmrApiStack(app, 'mlspace-emr-apis', apiStackProperties),
     new AppConfigurationApiStack(app, 'mlspace-app-config-apis', apiStackProperties),
+    new GroupsApiStack(app, 'mlspace-group-apis', apiStackProperties),
 ];
 
 if (config.ENABLE_TRANSLATE) {
@@ -194,6 +207,7 @@ apiStacks.forEach((stack) => {
     stack.addDependency(iamStack);
     stack.addDependency(vpcStack);
     apiDeploymentStack.addDependency(stack);
+    
     if (isIso) {
         Aspects.of(stack).add(new ADCLambdaCABundleAspect());
     }

@@ -103,19 +103,26 @@ def test_list_all_projects_admin(mock_project_dao, mock_project_user_dao):
     mock_project_user_dao.get_projects_for_user.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.project.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
-def test_list_all_projects_user(mock_project_dao, mock_project_user_dao):
-    mock_project_dao.get_all.return_value = [MOCK_PROJECTS[1]]
+def test_list_all_projects_user(mock_project_dao, mock_project_user_dao, mock_group_user_dao):
+    mock_project_dao.get_all.side_effect = lambda **kwargs: [] if not kwargs.get("project_names") else [MOCK_PROJECTS[1]]
     mock_project_user_dao.get_projects_for_user.return_value = MOCK_PROJECT_USERS
+    mock_group_user_dao.get_groups_for_user.return_value = []
     expected_response = generate_html_response(
         200,
         [MOCK_PROJECTS[1].to_dict()],
     )
 
     assert lambda_handler(mock_event(False), mock_context) == expected_response
-    mock_project_dao.get_all.assert_called_with(project_names=[project_user.project for project_user in MOCK_PROJECT_USERS])
     mock_project_user_dao.get_projects_for_user.assert_called_with(MOCK_USERNAME)
+    mock_project_dao.get_all.assert_has_calls(
+        [
+            mock.call(project_names=[project_user.project for project_user in MOCK_PROJECT_USERS]),
+            mock.call(project_names=[]),
+        ]
+    )
 
 
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")

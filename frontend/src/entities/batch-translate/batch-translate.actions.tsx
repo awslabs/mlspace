@@ -20,8 +20,9 @@ import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { Button, ButtonDropdown, SpaceBetween } from '@cloudscape-design/components';
 import { stopBatchTranslateJob } from './batch-translate.reducer';
 import { useAppDispatch } from '../../config/store';
-import NotificationService from '../../shared/layout/notification/notification.service';
 import { BatchTranslateResourceMetadata } from '../../shared/model/resource-metadata.model';
+import { useNotificationService } from '../../shared/util/hooks';
+import { INotificationService } from '../../shared/layout/notification/notification.service';
 
 function BatchTranslateActions (props?: any) {
     const navigate = useNavigate();
@@ -45,6 +46,7 @@ function BatchTranslateActionButton (
     props?: any
 ) {
     const selectedTranslateJob = props?.selectedItems[0];
+    const notificationService = useNotificationService(dispatch);
 
     return (
         <ButtonDropdown
@@ -55,7 +57,7 @@ function BatchTranslateActionButton (
             variant='primary'
             disabled={selectedTranslateJob === undefined}
             onItemClick={(e) =>
-                BatchTranslateActionHandler(e, selectedTranslateJob, nav, dispatch, projectName)
+                BatchTranslateActionHandler(e, selectedTranslateJob, nav, dispatch, projectName, notificationService)
             }
         >
             Actions
@@ -84,9 +86,9 @@ const BatchTranslateActionHandler = async (
     batchJob: BatchTranslateResourceMetadata,
     nav: any,
     dispatch: ThunkDispatch<any, any, Action>,
-    projectName: string
+    projectName: string,
+    notificationService: INotificationService
 ) => {
-    const notificationService = NotificationService(dispatch);
     let response: any | undefined = undefined;
     switch (e.detail.id) {
         case 'details':

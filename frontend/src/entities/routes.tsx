@@ -27,9 +27,9 @@ import Model from './model';
 import ModelCreate from './model/create';
 import ModelDetail from './model/detail';
 import User from './user';
+import Group from './group';
 import ProjectDetail from './project/detail';
 import ProjectCreate from './project/create';
-import ProjectUser from './project/users/project-user';
 import TrainingJobRoutes from './jobs/training/training-job.routes';
 import EndpointConfig from './endpoint-config';
 import TransformJobRoutes from './jobs/transform';
@@ -56,6 +56,10 @@ import BatchTranslateDetail from './batch-translate/detail';
 import TranslateRealtime from './translate-realtime/translate-realtime';
 import { appConfig } from './configuration/configuration-reducer';
 import { IAppConfiguration } from '../shared/model/app.configuration.model';
+import GroupCreate from './group/create';
+import GroupDetail from './group/detail';
+import UserDetail from './user/detail';
+import ProjectMembership from './project/membership';
 
 const EntityRoutes = () => {
     const applicationConfig: IAppConfiguration = useAppSelector(appConfig);
@@ -67,13 +71,23 @@ const EntityRoutes = () => {
             <ErrorBoundaryRoutes>
                 <Route element={<RequireAdmin />}>
                     <Route path='admin/users' element={<User />} />
+                    <Route path='admin/users/:username' element={<UserDetail />} />
+                    <Route path='admin/datasets' element={<Dataset isAdmin={true} />} />
+                    <Route path='admin/datasets/:type/:scope/:name' element={<DatasetDetail isAdmin={true}/>} />
+                    <Route path='admin/datasets/:type/:scope/:name/edit' element={<DatasetUpdate isAdmin={true}/>} />
+                    <Route path='admin/groups' element={<Group />} />
+                    <Route path='admin/groups/create' element={<GroupCreate />} />
+                    <Route path='admin/groups/edit/:groupName' element={<GroupCreate isEdit={true} />} />
+                    <Route path='admin/groups/:groupName' element={<GroupDetail />} />
                     <Route path='admin/configuration' element={<Configuration />} />
                     <Route path='admin/reports' element={<Report />} />
                 </Route>
+                <Route path='personal/group' element={<Group />} />
+                <Route path='personal/group/:groupName' element={<GroupDetail />} />
                 <Route path='personal/dataset' element={<Dataset />} />
                 <Route path='personal/dataset/create' element={<DatasetCreate />} />
-                <Route path='personal/dataset/:scope/:name/edit' element={<DatasetUpdate />} />
-                <Route path='personal/dataset/:scope/:name' element={<DatasetDetail />} />
+                <Route path='personal/dataset/:type/:scope/:name/edit' element={<DatasetUpdate />} />
+                <Route path='personal/dataset/:type/:scope/:name' element={<DatasetDetail />} />
                 <Route path='personal/notebook' element={<Notebook />} />
                 <Route path='personal/notebook/create' element={<NotebookCreate />} />
                 <Route path='personal/notebook/:name' element={<NotebookDetail />} />
@@ -89,7 +103,7 @@ const EntityRoutes = () => {
                 ) : undefined}
                 <Route path='project/:projectName' element={<ProjectDetail />} />
                 <Route path='project/:projectName/edit' element={<ProjectCreate isEdit={true} />} />
-                <Route path='project/:projectName/user' element={<ProjectUser />} />
+                <Route path='project/:projectName/membership' element={<ProjectMembership />} />
                 <Route path='project/:projectName/endpoint' element={<Endpoint />} />
                 <Route path='project/:projectName/endpoint/create' element={<EndpointCreate />} />
                 <Route path='project/:projectName/endpoint/:name' element={<EndpointDetails />} />
@@ -112,11 +126,11 @@ const EntityRoutes = () => {
                 <Route path='project/:projectName/dataset' element={<Dataset />} />
                 <Route path='project/:projectName/dataset/create' element={<DatasetCreate />} />
                 <Route
-                    path='project/:projectName/dataset/:scope/:name'
+                    path='project/:projectName/dataset/:type/:scope/:name'
                     element={<DatasetDetail />}
                 />
                 <Route
-                    path='project/:projectName/dataset/:scope/:name/edit'
+                    path='project/:projectName/dataset/:type/:scope/:name/edit'
                     element={<DatasetUpdate />}
                 />
                 <Route path='project/:projectName/model' element={<Model />} />
@@ -140,26 +154,34 @@ const EntityRoutes = () => {
                     element={<TransformJobRoutes />}
                 />
 
-                <Route path='project/:projectName/emr' element={<EMRClusters />} />
-                <Route path='project/:projectName/emr/create' element={<EMRClusterCreate />} />
-                <Route
-                    path='project/:projectName/emr/:clusterId/:clusterName'
-                    element={<EMRDetail />}
-                />
-                {applicationConfig.configuration.EnabledServices.batchTranslate ? (
-                    <Route
-                        path='project/:projectName/batch-translate'
-                        element={<BatchTranslate />}
-                    />
+                {applicationConfig.configuration.EnabledServices.emrCluster ? (
+                    <>
+                        <Route path='project/:projectName/emr' element={<EMRClusters />} />
+
+                        <Route path='project/:projectName/emr/create' element={<EMRClusterCreate />} />
+                        <Route
+                            path='project/:projectName/emr/:clusterId/:clusterName'
+                            element={<EMRDetail />}
+                        />
+                    </>
                 ) : undefined}
-                <Route
-                    path='project/:projectName/batch-translate/create'
-                    element={<BatchTranslateCreate />}
-                />
-                <Route
-                    path='project/:projectName/batch-translate/:jobId'
-                    element={<BatchTranslateDetail />}
-                />
+                {applicationConfig.configuration.EnabledServices.batchTranslate ? (
+                    <>
+                        <Route
+                            path='project/:projectName/batch-translate'
+                            element={<BatchTranslate />}
+                        />
+
+                        <Route
+                            path='project/:projectName/batch-translate/create'
+                            element={<BatchTranslateCreate />}
+                        />
+                        <Route
+                            path='project/:projectName/batch-translate/:jobId'
+                            element={<BatchTranslateDetail />}
+                        />
+                    </>
+                ) : undefined}
                 <Route path='*' element={<ResourceNotFound />} />
             </ErrorBoundaryRoutes>
         </div>

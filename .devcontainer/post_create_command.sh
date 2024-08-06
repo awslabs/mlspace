@@ -11,6 +11,8 @@ npm install
 
 python3 -m venv .venv
 . .venv/bin/activate
+echo ". .venv/bin/activate" >> ~/.bashrc
+echo ". .venv/bin/activate" >> ~/.zshrc
 cd backend
 pip install .
 pip3 install -r requirements.txt

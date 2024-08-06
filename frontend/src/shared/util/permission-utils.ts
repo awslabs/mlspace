@@ -28,9 +28,9 @@ export const hasPermission = (permission: Permission, permissions: Permission[] 
     return permissions ? permissions.includes(permission) : false;
 };
 
-export const isAdminOrProjectOwner = (user: IUser, projectPermissions: Permission[]) => {
+export const isAdminOrOwner = (user: IUser, permissions: Permission[]) => {
     return (
-        hasPermission(Permission.PROJECT_OWNER, projectPermissions) ||
+        hasPermission(Permission.PROJECT_OWNER, permissions) ||
         hasPermission(Permission.ADMIN, user.permissions)
     );
 };

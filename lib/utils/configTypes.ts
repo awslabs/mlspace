@@ -32,6 +32,7 @@ import {
     EMR_DEFAULT_ROLE_ARN,
     EMR_EC2_INSTANCE_ROLE_ARN,
     EMR_SECURITY_CONFIG_NAME,
+    EMR_EC2_SSH_KEY,
     ENABLE_ACCESS_LOGGING,
     ENABLE_GROUNDTRUTH,
     ENABLE_TRANSLATE,
@@ -43,12 +44,15 @@ import {
     IDP_ENDPOINT_SSM_PARAM,
     INTERNAL_OIDC_URL,
     KEY_MANAGER_ROLE_NAME,
+    KMS_INSTANCE_CONDITIONS_POLICY_ARN,
     LAMBDA_ARCHITECTURE,
     LAMBDA_RUNTIME,
     LOGS_BUCKET_NAME,
     MANAGE_IAM_ROLES,
     MLSPACE_LIFECYCLE_CONFIG_NAME,
     NEW_USERS_SUSPENDED,
+    ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN,
+    JOB_INSTANCE_CONSTRAINT_POLICY_ARN,
     NOTEBOOK_PARAMETERS_FILE_NAME,
     NOTEBOOK_ROLE_ARN,
     NOTIFICATION_DISTRO,
@@ -60,9 +64,13 @@ import {
     PERMISSIONS_BOUNDARY_POLICY_NAME,
     PROJECTS_TABLE_NAME,
     PROJECT_USERS_TABLE_NAME,
+    PROJECT_GROUPS_TABLE_NAME,
     RESOURCE_METADATA_TABLE_NAME,
     RESOURCE_SCHEDULE_TABLE_NAME,
     APP_CONFIGURATION_TABLE_NAME,
+    GROUPS_TABLE_NAME,
+    GROUP_DATASETS_TABLE_NAME,
+    GROUP_USERS_TABLE_NAME,
     RESOURCE_TERMINATION_INTERVAL,
     S3_READER_ROLE_ARN,
     SYSTEM_TAG,
@@ -70,7 +78,8 @@ import {
     WEBSITE_BUCKET_NAME,
     SYSTEM_BANNER_BACKGROUND_COLOR,
     SYSTEM_BANNER_TEXT,
-    SYSTEM_BANNER_TEXT_COLOR
+    SYSTEM_BANNER_TEXT_COLOR,
+    SYSTEM_ROLE_ARN,
 } from '../constants';
 import * as fs from 'fs';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -80,10 +89,14 @@ export type MLSpaceConfig = {
     DATASETS_TABLE_NAME: string,
     PROJECTS_TABLE_NAME: string,
     PROJECT_USERS_TABLE_NAME: string,
+    PROJECT_GROUPS_TABLE_NAME: string,
     USERS_TABLE_NAME: string,
     RESOURCE_SCHEDULE_TABLE_NAME: string,
     RESOURCE_METADATA_TABLE_NAME: string,
     APP_CONFIGURATION_TABLE_NAME: string,
+    GROUPS_TABLE_NAME: string,
+    GROUP_DATASETS_TABLE_NAME: string,
+    GROUP_USERS_TABLE_NAME: string,
     //Bucket names
     CONFIG_BUCKET_NAME: string,
     DATA_BUCKET_NAME: string,
@@ -95,6 +108,7 @@ export type MLSpaceConfig = {
     NOTEBOOK_PARAMETERS_FILE_NAME: string,
     // EMR settings
     EMR_SECURITY_CONFIG_NAME: string,
+    EMR_EC2_SSH_KEY: string,
     // OIDC settings
     IDP_ENDPOINT_SSM_PARAM: string,
     INTERNAL_OIDC_URL: string,
@@ -121,6 +135,7 @@ export type MLSpaceConfig = {
     NEW_USERS_SUSPENDED: boolean,
     LAMBDA_ARCHITECTURE: Architecture,
     LAMBDA_RUNTIME: Runtime,
+    SYSTEM_ROLE_ARN: string,
     //Properties that can optionally be set in config.json
     AWS_ACCOUNT: string,
     AWS_REGION: string,
@@ -131,6 +146,10 @@ export type MLSpaceConfig = {
     EXISTING_VPC_DEFAULT_SECURITY_GROUP: string,
     S3_READER_ROLE_ARN: string,
     BUCKET_DEPLOYMENT_ROLE_ARN: string,
+    ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: string,
+    JOB_INSTANCE_CONSTRAINT_POLICY_ARN: string,
+    KMS_INSTANCE_CONDITIONS_POLICY_ARN: string,
+
     NOTEBOOK_ROLE_ARN: string,
     APP_ROLE_ARN: string,
     EMR_DEFAULT_ROLE_ARN: string,
@@ -159,10 +178,14 @@ export function generateConfig () {
         DATASETS_TABLE_NAME: DATASETS_TABLE_NAME,
         PROJECTS_TABLE_NAME: PROJECTS_TABLE_NAME,
         PROJECT_USERS_TABLE_NAME: PROJECT_USERS_TABLE_NAME,
+        PROJECT_GROUPS_TABLE_NAME: PROJECT_GROUPS_TABLE_NAME,
         USERS_TABLE_NAME: USERS_TABLE_NAME,
         RESOURCE_SCHEDULE_TABLE_NAME: RESOURCE_SCHEDULE_TABLE_NAME,
         RESOURCE_METADATA_TABLE_NAME: RESOURCE_METADATA_TABLE_NAME,
         APP_CONFIGURATION_TABLE_NAME: APP_CONFIGURATION_TABLE_NAME,
+        GROUPS_TABLE_NAME: GROUPS_TABLE_NAME,
+        GROUP_DATASETS_TABLE_NAME: GROUP_DATASETS_TABLE_NAME,
+        GROUP_USERS_TABLE_NAME: GROUP_USERS_TABLE_NAME,
         // Bucket names
         CONFIG_BUCKET_NAME: CONFIG_BUCKET_NAME,
         DATA_BUCKET_NAME: DATA_BUCKET_NAME,
@@ -172,8 +195,11 @@ export function generateConfig () {
         // Notebook settings
         MLSPACE_LIFECYCLE_CONFIG_NAME: MLSPACE_LIFECYCLE_CONFIG_NAME,
         NOTEBOOK_PARAMETERS_FILE_NAME: NOTEBOOK_PARAMETERS_FILE_NAME,
+        ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN,
+        JOB_INSTANCE_CONSTRAINT_POLICY_ARN: JOB_INSTANCE_CONSTRAINT_POLICY_ARN,
         // EMR settings
         EMR_SECURITY_CONFIG_NAME: EMR_SECURITY_CONFIG_NAME,
+        EMR_EC2_SSH_KEY: EMR_EC2_SSH_KEY,
         // OIDC settings
         IDP_ENDPOINT_SSM_PARAM: IDP_ENDPOINT_SSM_PARAM,
         INTERNAL_OIDC_URL: INTERNAL_OIDC_URL,
@@ -198,6 +224,8 @@ export function generateConfig () {
         RESOURCE_TERMINATION_INTERVAL: RESOURCE_TERMINATION_INTERVAL,
         LAMBDA_ARCHITECTURE: LAMBDA_ARCHITECTURE,
         LAMBDA_RUNTIME: LAMBDA_RUNTIME,
+        SYSTEM_ROLE_ARN: SYSTEM_ROLE_ARN,
+        KMS_INSTANCE_CONDITIONS_POLICY_ARN: KMS_INSTANCE_CONDITIONS_POLICY_ARN,
         //Properties that are prompted for in the config-helper wizard
         AWS_ACCOUNT: AWS_ACCOUNT,
         AWS_REGION: AWS_REGION,
@@ -227,6 +255,16 @@ export function generateConfig () {
             fs.readFileSync('lib/config.json').toString('utf8')
         );
         _.merge(config, fileConfig);
+    }
+    //Check if the cluster-config file exists, and if it does use the ec2-key value
+    if (fs.existsSync('lib/resources/config/cluster-config.json')) {
+        const clusterConfig = JSON.parse(
+            fs.readFileSync('lib/resources/config/cluster-config.json').toString('utf8')
+        );
+        //Skip if ec2-key isn't defined or it's set to EC2_KEY which is the (invalid) default value
+        if (clusterConfig['ec2-key'] && clusterConfig['ec2-key'] !== 'EC2_KEY') {
+            config.EMR_EC2_SSH_KEY = clusterConfig['ec2-key'];
+        }
     }
 
     validateRequiredProperty(config.AWS_ACCOUNT, 'AWS_ACCOUNT');

@@ -14,6 +14,7 @@ npm-debug.log*
 .vscode
 .attach_pid*
 cdk.context.json
+.idea
 
 # Cypress Tests
 cypress/cypress/screenshots/

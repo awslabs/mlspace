@@ -17,13 +17,15 @@
 import hashlib
 import json
 import logging
-import os
 from typing import List, Optional
 
 import boto3
 
-from ml_space_lambda.enums import IAMResourceType
-from ml_space_lambda.utils.common_functions import generate_tags, retry_config
+from ml_space_lambda.data_access_objects.dataset import DatasetDAO
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
+from ml_space_lambda.enums import DatasetType, EnvVariable, IAMResourceType
+from ml_space_lambda.utils.common_functions import generate_tags, has_tags, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,11 @@ IAM_ROLE_NAME_MAX_LENGTH = 64
 IAM_POLICY_NAME_MAX_LENGTH = 128
 USER_POLICY_VERSION = 1
 PROJECT_POLICY_VERSION = 1
+DYNAMIC_USER_ROLE_TAG = {"Key": "dynamic-user-role", "Value": "true"}
+
+group_user_dao = GroupUserDAO()
+group_dataset_dao = GroupDatasetDAO()
+dataset_dao = DatasetDAO()
 
 
 class IAMManager:
@@ -104,121 +111,52 @@ class IAMManager:
             ]
         }
         """
-        # If you update this you need to increment the USER_POLICY_VERSION value
-        self.user_policy = """{
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "s3:GetObject",
-                        "s3:DeleteObject",
-                        "s3:PutObject",
-                        "s3:PutObjectTagging"
-                    ],
-                    "Resource": [
-                        "arn:$PARTITION:s3:::$BUCKET_NAME/private/$USER_NAME/*",
-                        "arn:$PARTITION:s3:::$BUCKET_NAME/global/*"
-                    ]
-                },
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "s3:GetObject",
-                        "s3:PutObject",
-                        "s3:PutObjectTagging"
-                    ],
-                    "Resource": "arn:$PARTITION:s3:::$BUCKET_NAME/index/*"
-                },
-                {
-                    "Effect": "Allow",
-                    "Action": "s3:ListBucket",
-                    "Resource": "arn:$PARTITION:s3:::$BUCKET_NAME",
-                    "Condition": {
-                        "StringLike": {
-                            "s3:prefix": [
-                                "private/$USER_NAME/*",
-                                "global/*",
-                                "index/*"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "Effect": "Allow",
-                    "Action": "s3:GetBucketLocation",
-                    "Resource": "arn:$PARTITION:s3:::$BUCKET_NAME"
-                },
-                {
-                    "Effect": "Deny",
-                    "Action": [
-                        "sagemaker:CreateEndpoint"
-                    ],
-                    "Resource": "arn:$PARTITION:sagemaker:*:*:endpoint/*",
-                    "Condition": {
-                        "StringNotEqualsIgnoreCase": {
-                            "aws:RequestTag/user": "$USER_NAME"
-                        }
-                    }
-                },
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "sagemaker:CreateEndpoint"
-                    ],
-                    "Resource": "arn:$PARTITION:sagemaker:*:*:endpoint-config/*"
-                },
-                {
-                    "Effect": "Deny",
-                    "Action": [
-                        "sagemaker:CreateModel",
-                        "sagemaker:CreateEndpointConfig",
-                        "sagemaker:CreateTrainingJob",
-                        "sagemaker:CreateProcessingJob",
-                        "sagemaker:CreateHyperParameterTuningJob",
-                        "sagemaker:CreateTransformJob"
-                    ],
-                    "Resource": "*",
-                    "Condition": {
-                        "StringNotEqualsIgnoreCase": {
-                            "aws:RequestTag/user": "$USER_NAME"
-                        }
-                    }
-                }
-            ]
-        }
-        """
 
         env_variables = get_environment_variables()
-        self.data_bucket = env_variables["DATA_BUCKET"]
-        self.system_tag = env_variables["SYSTEM_TAG"]
-        self.notebook_role_name = os.getenv("NOTEBOOK_ROLE_NAME", "")
+        self.data_bucket = env_variables[EnvVariable.DATA_BUCKET]
+        self.system_tag = env_variables[EnvVariable.SYSTEM_TAG]
+        self.app_role_name = env_variables[EnvVariable.APP_ROLE_NAME]
+        self.notebook_role_name = env_variables[EnvVariable.NOTEBOOK_ROLE_NAME]
         self.default_notebook_role_policy_arns = []
-        self.permissions_boundary_arn = os.getenv("PERMISSIONS_BOUNDARY_ARN", "")
+        self.permissions_boundary_arn = env_variables[EnvVariable.PERMISSIONS_BOUNDARY_ARN]
+
+    def get_iam_role_arn(self, project_name: str, username: str) -> Optional[str]:
+        """
+        Get the ARN of an existing dynamic role for this (project_name, username) pair.
+
+        Args:
+            project_name (str): The project name
+            username (str): The username of the user
+
+        Return:
+            Optional[str]: The ARN of the existing role, otherwise None if no such role exists.
+        """
+
+        iam_role_name = self._generate_iam_role_name(username, project_name)
+
+        # Check if the IAM role exists already
+        return self._fetch_iam_role(iam_role_name)
 
     def add_iam_role(self, project_name: str, username: str) -> str:
         iam_role_name = self._generate_iam_role_name(username, project_name)
 
         # Check if the IAM role exists already
-        existing_role_arn = self._check_iam_role_exists(iam_role_name)
+        existing_role_arn = self._fetch_iam_role(iam_role_name)
         if not existing_role_arn:
             iam_role_arn = self._create_iam_role(iam_role_name, project_name, username)
 
         # Build additional resource name variables
         project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{project_name}"
-        user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
 
         aws_account = self.sts_client.get_caller_identity()["Account"]
         project_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
-        user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
 
         # Confirm policy name lengths are compliant
-        self._check_name_length(IAMResourceType.POLICY, user_policy_name)
         self._check_name_length(IAMResourceType.POLICY, project_policy_name)
         self._check_name_length(IAMResourceType.ROLE, iam_role_name)
 
         # Check if the project policy exists
-        existing_project_policy_version = self._get_policy_verison(project_policy_arn)
+        existing_project_policy_version = self._get_policy_version(project_policy_arn)
         if existing_project_policy_version is None:
             project_policy_arn = self._create_iam_policy(
                 project_policy_name,
@@ -243,33 +181,7 @@ class IAMManager:
                     {"Key": "system", "Value": self.system_tag},
                 ],
             )
-
-        # Check if the user policy exists
-        existing_user_policy_version = self._get_policy_verison(user_policy_arn)
-        if existing_user_policy_version is None:
-            user_policy_arn = self._create_iam_policy(
-                user_policy_name,
-                self._generate_user_policy(username),
-                "User",
-                username,
-                USER_POLICY_VERSION,
-            )
-        elif existing_user_policy_version < USER_POLICY_VERSION:
-            # Remove unused versions of the policy making room for the new policy if needed
-            self._delete_unused_policy_versions(user_policy_arn)
-            self.iam_client.create_policy_version(
-                PolicyArn=user_policy_arn,
-                PolicyDocument=self._generate_user_policy(username),
-                SetAsDefault=True,
-            )
-            self.iam_client.tag_policy(
-                PolicyArn=user_policy_arn,
-                Tags=[
-                    {"Key": "user", "Value": username},
-                    {"Key": "policyVersion", "Value": str(USER_POLICY_VERSION)},
-                    {"Key": "system", "Value": self.system_tag},
-                ],
-            )
+        user_policy_arn = self.update_user_policy(username)
 
         # The notebook policy and pass role policies don't support/need dynamic
         # policy updates between versions. The notebook policy is updated by CDK
@@ -320,6 +232,43 @@ class IAMManager:
         )
 
         return iam_role_arn
+
+    # Create or update the user policy
+    def update_user_policy(
+        self,
+        username: str,
+    ) -> str:
+        user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
+        aws_account = self.sts_client.get_caller_identity()["Account"]
+        user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
+        self._check_name_length(IAMResourceType.POLICY, user_policy_name)
+        # Check if the user policy exists
+        existing_user_policy_version = self._get_policy_version(user_policy_arn)
+        if existing_user_policy_version is None:
+            user_policy_arn = self._create_iam_policy(
+                user_policy_name,
+                self._generate_user_policy(username),
+                "User",
+                username,
+                USER_POLICY_VERSION,
+            )
+        else:
+            # Remove unused versions of the policy making room for the new policy if needed
+            self._delete_unused_policy_versions(user_policy_arn)
+            self.iam_client.create_policy_version(
+                PolicyArn=user_policy_arn,
+                PolicyDocument=self._generate_user_policy(username),
+                SetAsDefault=True,
+            )
+            self.iam_client.tag_policy(
+                PolicyArn=user_policy_arn,
+                Tags=[
+                    {"Key": "user", "Value": username},
+                    {"Key": "policyVersion", "Value": str(USER_POLICY_VERSION)},
+                    {"Key": "system", "Value": self.system_tag},
+                ],
+            )
+        return user_policy_arn
 
     # Removes the passed in roles and deletes any detached user specific policies. If a
     # project is passed in then the project policy is removed as well.
@@ -372,7 +321,7 @@ class IAMManager:
                 }
             ),
             Description=f"Default SageMaker Notebook role for Project: {project_name} - User: {username}",
-            Tags=generate_tags(username, project_name, self.system_tag),
+            Tags=generate_tags(username, project_name, self.system_tag, [DYNAMIC_USER_ROLE_TAG]),
             PermissionsBoundary=self.permissions_boundary_arn,
         )
         return iam_role_response["Role"]["Arn"]
@@ -403,14 +352,14 @@ class IAMManager:
         self.iam_client.attach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
 
     # Checks the status of an IAM resource
-    def _check_iam_role_exists(self, resource_identifier: str) -> Optional[str]:
+    def _fetch_iam_role(self, resource_identifier: str) -> Optional[str]:
         try:
             existing_role = self.iam_client.get_role(RoleName=resource_identifier)
             return existing_role["Role"]["Arn"]
         except self.iam_client.exceptions.NoSuchEntityException:
             return None
 
-    def _get_policy_verison(self, resource_identifier: str) -> Optional[int]:
+    def _get_policy_version(self, resource_identifier: str) -> Optional[int]:
         try:
             existing_policy = self.iam_client.get_policy(PolicyArn=resource_identifier)
             # Grab policy version from tags otherwise return a version of -1 if the policy exists
@@ -444,12 +393,198 @@ class IAMManager:
         )
 
     def _generate_user_policy(self, user: str) -> str:
-        return (
-            self.user_policy.replace("\n", "")
-            .replace("$USER_NAME", user)
-            .replace("$BUCKET_NAME", self.data_bucket)
-            .replace("$PARTITION", self.aws_partition)
-        )
+        resource_arns = [
+            f"arn:{self.aws_partition}:s3:::{self.data_bucket}/private/{user}/*",
+            f"arn:{self.aws_partition}:s3:::{self.data_bucket}/global/*",
+        ]
+        resource_prefixes = [f"private/{user}/*", "global/*", "index/*"]
+
+        dataset_arn_prefixes = set()
+        group_prefixes = set()
+        for group in group_user_dao.get_groups_for_user(user):
+            for group_dataset in group_dataset_dao.get_datasets_for_group(group.group):
+                dataset = dataset_dao.get(DatasetType.GROUP, group_dataset.dataset)
+                if dataset is not None:
+                    dataset_arn_prefixes.add(
+                        f"arn:{self.aws_partition}:s3:::{self.data_bucket}/group/datasets/{dataset.name}/*"
+                    )
+                    group_prefixes.add(f"group/datasets/{dataset.name}/*")
+
+        resource_arns.extend(list(dataset_arn_prefixes))
+        resource_prefixes.extend(list(group_prefixes))
+
+        user_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": ["s3:GetObject", "s3:DeleteObject", "s3:PutObject", "s3:PutObjectTagging"],
+                    "Resource": resource_arns,
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": ["s3:GetObject", "s3:PutObject", "s3:PutObjectTagging"],
+                    "Resource": f"arn:{self.aws_partition}:s3:::{self.data_bucket}/index/*",
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:ListBucket",
+                    "Resource": f"arn:{self.aws_partition}:s3:::{self.data_bucket}",
+                    "Condition": {"StringLike": {"s3:prefix": resource_prefixes}},
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:GetBucketLocation",
+                    "Resource": f"arn:{self.aws_partition}:s3:::{self.data_bucket}",
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": ["sagemaker:CreateEndpoint"],
+                    "Resource": f"arn:{self.aws_partition}:sagemaker:*:*:endpoint/*",
+                    "Condition": {"StringNotEqualsIgnoreCase": {"aws:RequestTag/user": user}},
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": ["sagemaker:CreateEndpoint"],
+                    "Resource": f"arn:{self.aws_partition}:sagemaker:*:*:endpoint-config/*",
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": [
+                        "sagemaker:CreateModel",
+                        "sagemaker:CreateEndpointConfig",
+                        "sagemaker:CreateTrainingJob",
+                        "sagemaker:CreateProcessingJob",
+                        "sagemaker:CreateHyperParameterTuningJob",
+                        "sagemaker:CreateTransformJob",
+                    ],
+                    "Resource": "*",
+                    "Condition": {"StringNotEqualsIgnoreCase": {"aws:RequestTag/user": user}},
+                },
+            ],
+        }
+
+        return json.dumps(user_policy)
+
+    def _generate_user_hash(self, username: str) -> str:
+        return hashlib.sha256(username.encode()).hexdigest()
+
+    def generate_policy(self, statements: list):
+        if len(statements) > 0:
+            return {"Version": "2012-10-17", "Statement": statements}
+        else:
+            return None
+
+    def generate_policy_string(self, statements: list):
+        policy = self.generate_policy(statements)
+        return json.dumps(policy) if policy else None
+
+    # If the provided policy doesn't exist, it will be created
+    def update_dynamic_policy(
+        self,
+        policy: str,
+        policy_name: str,
+        policy_type: str,
+        policy_type_identifier: str,
+        on_create_attach_to_notebook_role: bool = False,
+        on_create_attach_to_app_role: bool = False,
+        on_create_attach_to_existing_dynamic_roles: bool = False,
+        expected_policy_version: int = None,
+    ):
+        aws_account = self.sts_client.get_caller_identity()["Account"]
+        prefixed_policy_name = f"{IAM_RESOURCE_PREFIX}-{policy_name}"
+        self._check_name_length(IAMResourceType.POLICY, prefixed_policy_name)
+        policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{prefixed_policy_name}"
+        logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
+        # Create the policy if it doesn't exist
+        existing_policy_version = self._get_policy_version(policy_arn)
+        if existing_policy_version is None and policy:
+            logger.info(f"Creating a new {policy_name} dynamic policy")
+            policy_arn = self._create_iam_policy(
+                prefixed_policy_name,
+                policy,
+                policy_type,
+                policy_type_identifier,
+                1 if expected_policy_version is None else expected_policy_version,
+            )
+
+            # Attaches the policy to the notebook role so it will get attached to new dynamic roles
+            if on_create_attach_to_notebook_role:
+                self.iam_client.attach_role_policy(RoleName=self.notebook_role_name, PolicyArn=policy_arn)
+
+            if on_create_attach_to_app_role:
+                self.iam_client.attach_role_policy(RoleName=self.app_role_name, PolicyArn=policy_arn)
+
+            if on_create_attach_to_existing_dynamic_roles:
+                role_names = self.find_dynamic_user_roles()
+                self.attach_policies_to_roles([policy_arn], role_names)
+
+        # If the policy does exist, then update it
+        elif expected_policy_version is None or existing_policy_version < expected_policy_version:
+            logger.info(f"Updating the existing {policy_name} dynamic policy")
+            # Remove unused versions of the policy making room for the new policy if needed
+            self._delete_unused_policy_versions(policy_arn)
+            self.iam_client.create_policy_version(
+                PolicyArn=policy_arn,
+                PolicyDocument=policy,
+                SetAsDefault=True,
+            )
+            self.iam_client.tag_policy(
+                PolicyArn=policy_arn,
+                Tags=[
+                    {"Key": policy_type, "Value": policy_type_identifier},
+                    {
+                        "Key": "policyVersion",
+                        "Value": str(
+                            (existing_policy_version + 1) if expected_policy_version is None else expected_policy_version
+                        ),
+                    },
+                    {"Key": "system", "Value": self.system_tag},
+                ],
+            )
+        else:
+            logger.info(f"Provided inputs didn't meet criteria for updating or creating a new policy")
+
+    def find_dynamic_user_roles(self) -> list[str]:
+        paginator = self.iam_client.get_paginator("list_roles")
+        role_names = []
+
+        for page in paginator.paginate():
+            if "Roles" not in page:
+                continue
+
+            for role in page["Roles"]:
+                tags = self.iam_client.list_role_tags(RoleName=role["RoleName"])
+
+                if "Tags" not in tags:
+                    continue
+
+                # try the simple case first
+                if DYNAMIC_USER_ROLE_TAG in tags["Tags"]:
+                    role_names.append(role["RoleName"])
+                    continue
+
+                # make sure all expected tags exist to try and ensure this is an MLSpace role
+                if not has_tags(tags["Tags"], system_tag=self.system_tag):
+                    continue
+
+                # convert to simple dict
+                tags = dict((tag["Key"], tag["Value"]) for tag in tags["Tags"])
+
+                # some application roles would be tagged properly but should be skipped
+                if tags["user"] == "MLSpaceApplication":
+                    continue
+
+                expected_role_name = self._generate_iam_role_name(tags["user"], tags["project"])
+                if expected_role_name == role["RoleName"]:
+                    role_names.append(role["RoleName"])
+
+        return role_names
+
+    def attach_policies_to_roles(self, policy_arns: list[str], role_names: list[str]):
+        for role_name in role_names:
+            for policy_arn in policy_arns:
+                self._attach_iam_policy(role_name, policy_arn)
 
     def _generate_user_hash(self, username: str) -> str:
         return hashlib.sha256(username.encode()).hexdigest()
@@ -471,8 +606,8 @@ class IAMManager:
             max_length = IAM_ROLE_NAME_MAX_LENGTH
         if len(name) > max_length:
             raise ValueError(
-                f"IAM {resource_type.value} name '{name}' ({len(name)} characters) is "
-                + f"over the {max_length} character limit for IAM {resource_type.value} names."
+                f"IAM {resource_type} name '{name}' ({len(name)} characters) is "
+                + f"over the {max_length} character limit for IAM {resource_type} names."
             )
 
     def _delete_unused_policy_versions(self, policy_arn: str) -> None:
@@ -481,3 +616,12 @@ class IAMManager:
         for version in policy_versions["Versions"]:
             if not version["IsDefaultVersion"]:
                 self.iam_client.delete_policy_version(PolicyArn=policy_arn, VersionId=version["VersionId"])
+
+    def update_groups(self, groups: list[str]) -> None:
+        users_to_update = set()
+        for group in groups:
+            for user in group_user_dao.get_users_for_group(group):
+                users_to_update.add(user.user)
+
+        for username in users_to_update:
+            self.update_user_policy(username)

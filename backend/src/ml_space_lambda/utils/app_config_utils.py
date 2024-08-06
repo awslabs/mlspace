@@ -24,3 +24,26 @@ app_configuration_dao = AppConfigurationDAO()
 @cached(cache=TTLCache(maxsize=1, ttl=10))
 def get_app_config() -> AppConfigurationModel:
     return AppConfigurationModel.from_dict(app_configuration_dao.get(configScope="global", num_versions=1)[0])
+
+
+def get_emr_application_list() -> list:
+    return [
+        "Flink",
+        "Ganglia",
+        "HBase",
+        "HCatalog",
+        "Hadoop",
+        "Hive",
+        "Hue",
+        "JupyterHub",
+        "Livy",
+        "MXNet",
+        "Oozie",
+        "Phoenix",
+        "Presto",
+        "Spark",
+        "Tensorflow",
+        "Tez",
+        "Zeppelin",
+        "Zookeeper",
+    ]

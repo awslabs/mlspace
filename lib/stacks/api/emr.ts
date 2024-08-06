@@ -56,12 +56,33 @@ export class EmrApiStack extends Stack {
                 method: 'DELETE',
             },
             {
+                name: 'remove',
+                resource: 'emr',
+                description: 'Remove an EMR Cluster from the resource metadata table',
+                path: 'emr/{clusterId}/remove',
+                method: 'DELETE',
+            },
+            {
                 name: 'set_resource_termination',
                 resource: 'resource_scheduler',
                 description: 'Update the termination time of an EMR Cluster',
                 path: 'emr/{clusterId}/schedule',
                 method: 'PUT',
                 id: 'resource_scheduler-set-emr-termination',
+            },
+            {
+                name: 'list_applications',
+                resource: 'emr',
+                description: 'List all applications available to install and configure when launching a cluster',
+                path: 'emr/applications',
+                method: 'GET',
+            },
+            {
+                name: 'list_release_labels',
+                resource: 'emr',
+                description: 'List of available EMR release labels',
+                path: 'emr/release',
+                method: 'GET',
             },
         ];
 
@@ -71,6 +92,7 @@ export class EmrApiStack extends Stack {
                 restApi,
                 props.authorizer,
                 props.applicationRole,
+                props.applicationRole.roleName,
                 props.notebookInstanceRole.roleName,
                 props.lambdaSourcePath,
                 [commonLambdaLayer],

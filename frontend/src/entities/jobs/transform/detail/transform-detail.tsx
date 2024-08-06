@@ -22,7 +22,6 @@ import {
     Box,
     ColumnLayout,
     Button,
-    ContentLayout,
     Alert,
     StatusIndicator,
 } from '@cloudscape-design/components';
@@ -35,13 +34,13 @@ import { ITransform } from '../../../../shared/model/transform.model';
 import { formatDate } from '../../../../shared/util/date-utils';
 import { formatDisplayText } from '../../../../shared/util/form-utils';
 import { JobStatus } from '../../job.model';
-import NotificationService from '../../../../shared/layout/notification/notification.service';
 import { prettyStatus } from '../../../../shared/util/table-utils';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import DetailsContainer from '../../../../modules/details-container';
 import { LogsComponent } from '../../../../shared/util/log-utils';
-import { useBackgroundRefresh } from '../../../../shared/util/hooks';
+import { useBackgroundRefresh, useNotificationService } from '../../../../shared/util/hooks';
+import ContentLayout from '../../../../shared/layout/content-layout';
 
 function TransformDetail () {
     const { projectName, name } = useParams();
@@ -52,7 +51,7 @@ function TransformDetail () {
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const basePath = projectName ? `#/project/${projectName}` : '#/personal';
 
     scrollToPageHeader();

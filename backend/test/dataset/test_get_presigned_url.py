@@ -17,6 +17,7 @@
 import json
 from unittest import mock
 
+import pytest
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.enums import DatasetType
@@ -31,15 +32,39 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.dataset.lambda_functions import presigned_url as lambda_handler
 
 
+@pytest.mark.parametrize(
+    "dataset_type,scope",
+    [
+        (DatasetType.GLOBAL, DatasetType.GLOBAL),
+        (DatasetType.PROJECT, "project_name"),
+        (DatasetType.PRIVATE, "jdoe"),
+        (DatasetType.GROUP, DatasetType.GROUP),
+    ],
+    ids=[
+        "presigned_url_global_dataset",
+        "presigned_url_project_dataset",
+        "presigned_url_private_dataset",
+        "presigned_url_group_dataset",
+    ],
+)
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_get_presigned_url_get_success(mock_s3):
+def test_get_presigned_url_get_success(mock_s3, dataset_type: str, scope: str):
+    dataset_name = "example_dataset"
+    if dataset_type == DatasetType.GROUP:
+        scope = dataset_name
+    elif dataset_type == DatasetType.GLOBAL:
+        scope = "datasets"
+    if dataset_type == DatasetType.GROUP or dataset_type == DatasetType.GLOBAL:
+        key = f"{dataset_type}/datasets/{dataset_name}/file1.txt"
+    else:
+        key = f"{dataset_type}/{scope}/datasets/{dataset_name}/file1.txt"
     mock_event = {
-        "body": json.dumps({"key": "private/jdoe/datasets/example_dataset/file1.txt"}),
-        "headers": {"x-mlspace-dataset-type": "private", "x-mlspace-dataset-scope": "jdoe"},
+        "body": json.dumps({"key": key}),
+        "headers": {"x-mlspace-dataset-type": dataset_type, "x-mlspace-dataset-scope": scope},
     }
 
     expected_url = (
-        f"https://{TEST_ENV_CONFIG['DATA_BUCKET']}.s3.amazonaws.com/private/jdoe/datasets/example_dataset/"
+        f"https://{TEST_ENV_CONFIG['DATA_BUCKET']}.s3.amazonaws.com/{dataset_type}/{scope}/datasets/{dataset_name}/"
         "file1.txt?AWSAccessKeyId=mockaccesskey&Signature=mocksignature&Expires=1666388740"
     )
 
@@ -52,7 +77,7 @@ def test_get_presigned_url_get_success(mock_s3):
         ClientMethod="get_object",
         Params={
             "Bucket": TEST_ENV_CONFIG["DATA_BUCKET"],
-            "Key": "private/jdoe/datasets/example_dataset/file1.txt",
+            "Key": key,
         },
         ExpiresIn=3600,
     )
@@ -68,7 +93,7 @@ def test_get_presigned_url_post_success(mock_s3):
         "x-amz-meta-dataset-description": "example description",
         "x-amz-meta-user": "jdoe@amazon.com",
         "x-amz-meta-dataset-name": "example_dataset",
-        "x-amz-meta-dataset-scope": DatasetType.GLOBAL.value,
+        "x-amz-meta-dataset-scope": DatasetType.GLOBAL,
         "tagging": expected_s3_tags,
     }
     mock_conditions = [
@@ -89,7 +114,7 @@ def test_get_presigned_url_post_success(mock_s3):
             "x-amz-meta-dataset-name": "example_dataset",
         },
         {
-            "x-amz-meta-dataset-scope": DatasetType.GLOBAL.value,
+            "x-amz-meta-dataset-scope": DatasetType.GLOBAL,
         },
         {
             "tagging": expected_s3_tags,
@@ -207,11 +232,31 @@ def test_get_presigned_url_manipulated_type(mock_s3):
     mock_s3.generate_presigned_url.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "dataset_type,scope",
+    [
+        (DatasetType.GLOBAL, DatasetType.GLOBAL),
+        (DatasetType.PROJECT, "project_name"),
+        (DatasetType.PRIVATE, "jdoe"),
+        (DatasetType.GROUP, DatasetType.GROUP),
+    ],
+    ids=[
+        "presigned_url_global_dataset",
+        "presigned_url_project_dataset",
+        "presigned_url_private_dataset",
+        "presigned_url_group_dataset",
+    ],
+)
 @mock.patch("ml_space_lambda.dataset.lambda_functions.s3")
-def test_get_presigned_url_manipulated_scope(mock_s3):
+def test_get_presigned_url_manipulated_scope(mock_s3, dataset_type: str, scope: str):
+    dataset_name = "example_dataset"
+    if dataset_type == DatasetType.GROUP or dataset_type == DatasetType.GLOBAL:
+        key = f"{dataset_type}/datasets/{dataset_name}/file1.txt"
+    else:
+        key = f"{dataset_type}/wrong_{scope}/datasets/{dataset_name}/file1.txt"
     mock_event = {
-        "headers": {"x-mlspace-dataset-type": "private", "x-mlspace-dataset-scope": "jdoe"},
-        "body": json.dumps({"key": "private/admin/example_dataset/file1.txt"}),
+        "headers": {"x-mlspace-dataset-type": dataset_type, "x-mlspace-dataset-scope": scope},
+        "body": json.dumps({"key": key}),
     }
 
     expected_response = generate_html_response(400, "Bad Request: Dataset headers do not match expected type and scope.")

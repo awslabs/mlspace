@@ -73,6 +73,22 @@ class GroundTruthUtilsTest(unittest.TestCase):
             Body=json.dumps({"document-version": "2018-11-28", "labels": labels}),
         )
 
+    @mock.patch("ml_space_lambda.utils.groundtruth_utils.s3")
+    def test_generate_labels_configuration_file_with_trialing_slash(self, mock_s3):
+        bucket_name = "bucketName"
+        job_name = "JobName"
+        output_dir = "outputDir"
+        s3_key = f"{output_dir}/{job_name}/annotation-tool/data.json"
+        labels = [{"Key": "Value"}]
+        assert (
+            generate_labels_configuration_file(labels, job_name, bucket_name, "outputDir/") == f"s3://{bucket_name}/{s3_key}"
+        )
+        mock_s3.put_object.assert_called_with(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=json.dumps({"document-version": "2018-11-28", "labels": labels}),
+        )
+
     @mock.patch("ml_space_lambda.utils.groundtruth_utils.boto3")
     def test_get_groundtruth_assets_domain(self, mock_boto3):
         mock_session = mock_boto3.session.Session()

@@ -18,7 +18,6 @@ import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import React, { ReactNode, useEffect, useState } from 'react';
 import {
-    ContentLayout,
     SpaceBetween,
     Header,
     Button,
@@ -37,17 +36,17 @@ import {
     selectedBatchTranslateJob,
     stopBatchTranslateJob,
 } from '../batch-translate.reducer';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { getDownloadUrl } from '../../dataset/dataset.service';
-import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import { useBackgroundRefresh, useNotificationService } from '../../../shared/util/hooks';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function BatchTranslateDetail () {
     const { projectName, jobId } = useParams();
     const dispatch = useAppDispatch();
     const batchTranslateJob: IBatchTranslate = useAppSelector(selectedBatchTranslateJob);
     const jobLoading = useAppSelector(loadingBatchTranslateJob);
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
 
     const [initialLoaded, setInitialLoaded] = useState(false);
 

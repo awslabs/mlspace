@@ -100,17 +100,31 @@ export const createNotebookInstance = createAsyncThunk(
 
 export const startNotebookInstance = createAsyncThunk(
     'notebook/start',
-    async ({ notebookName, projectName }: NotebookNameAndProjectName) => {
-        const requestUrl = `/notebook/${notebookName}/start`;
-        return axios.post<INotebook>(requestUrl, undefined, setProjectHeader(projectName));
+    async ({ notebookName, projectName }: NotebookNameAndProjectName, { rejectWithValue }) => {
+        try {
+            await axios.post<INotebook>(
+                `/notebook/${notebookName}/start`,
+                undefined,
+                setProjectHeader(projectName)
+            );
+        } catch (err: any) {
+            return rejectWithValue(err.response.data);
+        }
     }
 );
 
 export const stopNotebookInstance = createAsyncThunk(
     'notebook/stop',
-    async ({ notebookName, projectName }: NotebookNameAndProjectName) => {
-        const requestUrl = `/notebook/${notebookName}/stop`;
-        return axios.post<INotebook>(requestUrl, undefined, setProjectHeader(projectName));
+    async ({ notebookName, projectName}: NotebookNameAndProjectName, { rejectWithValue }) => {
+        try {
+            await axios.post<INotebook>(
+                `/notebook/${notebookName}/stop`,
+                undefined,
+                setProjectHeader(projectName)
+            );
+        } catch (err: any) {
+            return rejectWithValue(err.response.data);
+        }
     }
 );
 
@@ -271,8 +285,6 @@ export const NotebookSlice = createSlice({
                         responseText: data,
                         loadingNotebookOptions: false,
                         loadingNotebookList: false,
-                        notebookList: [],
-                        notebook: defaultNotebook,
                     };
                 }
             );

@@ -19,6 +19,7 @@ from unittest import mock
 
 from botocore.exceptions import ClientError
 
+from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataModel
 from ml_space_lambda.enums import ResourceType
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -34,10 +35,20 @@ mock_event = {"pathParameters": {"clusterId": mock_cluster_id}}
 mock_context = mock.Mock()
 
 
+@mock.patch("ml_space_lambda.emr.lambda_functions.resource_metadata_dao")
 @mock.patch("ml_space_lambda.emr.lambda_functions.resource_scheduler_dao")
 @mock.patch("ml_space_lambda.emr.lambda_functions.emr")
-def test_terminate_emr_cluster_success(mock_emr, mock_scheduler_dao):
+def test_terminate_emr_cluster_success(mock_emr, mock_scheduler_dao, mock_resource_metadata_dao):
     mock_emr.terminate_emr_cluster.return_value = {}
+    username = "fake-user"
+    project_name = "fake-project"
+    mock_resource_metadata_dao.get.return_value = ResourceMetadataModel(
+        mock_cluster_id,
+        ResourceType.EMR_CLUSTER,
+        username,
+        project_name,
+        {},  # metadata
+    )
 
     expected_response = generate_html_response(200, "Successfully terminated " + mock_cluster_id)
 
@@ -46,6 +57,9 @@ def test_terminate_emr_cluster_success(mock_emr, mock_scheduler_dao):
     mock_emr.set_termination_protection.assert_called_with(JobFlowIds=[mock_cluster_id], TerminationProtected=False)
     mock_emr.terminate_job_flows(JobFlowIds=[mock_cluster_id])
     mock_scheduler_dao.delete.assert_called_with(resource_id=mock_cluster_id, resource_type=ResourceType.EMR_CLUSTER)
+    mock_resource_metadata_dao.upsert_record.assert_called_with(
+        mock_cluster_id, ResourceType.EMR_CLUSTER, username, project_name, {"Status": "TERMINATING"}
+    )
 
 
 @mock.patch("ml_space_lambda.emr.lambda_functions.emr")

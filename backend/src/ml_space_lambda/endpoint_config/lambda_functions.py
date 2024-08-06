@@ -21,7 +21,7 @@ import urllib.parse
 import boto3
 
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
-from ml_space_lambda.enums import ResourceType
+from ml_space_lambda.enums import EnvVariable, ResourceType
 from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, query_resource_metadata, retry_config
 from ml_space_lambda.utils.mlspace_config import get_environment_variables, pull_config_from_s3
 
@@ -50,7 +50,7 @@ def create(event, context):
     env_variables = get_environment_variables()
     param_file = pull_config_from_s3()
 
-    tags_list = generate_tags(user_name, project_name, env_variables["SYSTEM_TAG"])
+    tags_list = generate_tags(user_name, project_name, env_variables[EnvVariable.SYSTEM_TAG])
 
     content_type_headers = {}
     if isinstance(data_capture_config["CaptureContentTypeHeader"]["CsvContentTypes"], list):

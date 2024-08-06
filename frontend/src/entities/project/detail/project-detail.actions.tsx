@@ -26,8 +26,9 @@ import { deleteProject, getProject, listProjectsForUser, updateProject } from '.
 import { useAuth } from 'react-oidc-context';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import Modal, { ModalProps } from '../../../modules/modal';
+import { useNotificationService } from '../../../shared/util/hooks';
+import { INotificationService } from '../../../shared/layout/notification/notification.service';
 
 function ProjectDetailActions () {
     const dispatch = useAppDispatch();
@@ -57,6 +58,7 @@ function ProjectActionButton (
     const actionItems: Array<ButtonDropdownProps.ItemOrGroup> = [];
     const currentUser = useAppSelector(selectCurrentUser);
     const projectPermissions = useAppSelector((state) => state.project.permissions);
+    const notificationService = useNotificationService(dispatch);
 
     const [modalState, setModalState] = React.useState<Partial<ModalProps>>({
         visible: false,
@@ -64,20 +66,19 @@ function ProjectActionButton (
         dismissText: 'Cancel',
     });
 
+    const canManage = hasPermission(Permission.PROJECT_OWNER, projectPermissions) || hasPermission(Permission.ADMIN, currentUser.permissions);
+    const actionVerb = canManage ? 'Manage' : 'View';
+
     actionItems.push(
         ...[
-            { text: 'List members', id: 'list_members' },
+            { text: `${actionVerb} membership`, id: 'membership' },
             { text: 'Leave Project', id: 'leave_project' },
         ]
     );
 
-    if (
-        hasPermission(Permission.PROJECT_OWNER, projectPermissions) ||
-        hasPermission(Permission.ADMIN, currentUser.permissions)
-    ) {
+    if (canManage) {
         actionItems.push(
             ...[
-                { text: 'Manage members', id: 'manage_members' },
                 { text: 'Update', id: 'update' },
             ]
         );
@@ -104,7 +105,8 @@ function ProjectActionButton (
                     nav,
                     dispatch,
                     modalState as ModalProps,
-                    setModalState
+                    setModalState,
+                    notificationService
                 )
             }
         >
@@ -121,17 +123,16 @@ const ProjectActionHandler = (
     nav: (endpoint: string) => void,
     dispatch: ThunkDispatch<any, any, Action>,
     modalState: ModalProps,
-    setModalState: (state: Partial<ModalProps>) => void
+    setModalState: (state: Partial<ModalProps>) => void,
+    notificationService: INotificationService
 ) => {
-    const notificationService = NotificationService(dispatch);
 
     switch (e.detail.id) {
         case 'update':
             nav(`/project/${project.name}/edit`);
             break;
-        case 'list_members':
-        case 'manage_members':
-            nav(`/project/${project.name}/user`);
+        case 'membership':
+            nav(`/project/${project.name}/membership`);
             break;
         case 'leave_project':
             dispatch(removeUserFromProject({ user: username, project: project.name! })).then(() => {

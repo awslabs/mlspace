@@ -25,6 +25,8 @@ import jwt
 import urllib3
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
+from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
+from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -32,6 +34,7 @@ from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType
 from ml_space_lambda.utils.app_config_utils import get_app_config
 from ml_space_lambda.utils.common_functions import authorization_wrapper
+from ml_space_lambda.utils.project_utils import is_member_of_project, is_owner_of_project
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +43,8 @@ project_dao = ProjectDAO()
 user_dao = UserDAO()
 dataset_dao = DatasetDAO()
 resource_metadata_dao = ResourceMetadataDAO()
+group_user_dao = GroupUserDAO()
+group_dataset_dao = GroupDatasetDAO()
 
 oidc_keys: Dict[str, str] = {}
 # If using self signed certs on the OIDC endpoint we need to skip ssl verification
@@ -71,6 +76,11 @@ def lambda_handler(event, context):
     if requested_resource == "/app-config" and request_method == "GET":
         # Anyone can get the app config
         policy_statement["Effect"] = "Allow"
+        return {
+            "principalId": "Unknown",
+            "policyDocument": {"Version": "2012-10-17", "Statement": [policy_statement]},
+            "context": response_context,
+        }
 
     client_token = None
     token_failure = False
@@ -122,6 +132,7 @@ def lambda_handler(event, context):
     if token_info["exp"] > time.time():
         # Look up user record
         user = user_dao.get(username)
+        IS_ADMIN = Permission.ADMIN in user.permissions if user else False
 
         if requested_resource == "/user" and request_method == "POST":
             logger.info("Attempting to create new user account...")
@@ -142,11 +153,7 @@ def lambda_handler(event, context):
             response_context = {"user": json.dumps(user.to_dict())}
 
             # Create/Download/Delete/List Reports
-            if (
-                requested_resource.startswith("/report")
-                and Permission.ADMIN in user.permissions
-                and request_method in ["GET", "DELETE", "POST"]
-            ):
+            if requested_resource.startswith("/report") and IS_ADMIN and request_method in ["GET", "DELETE", "POST"]:
                 policy_statement["Effect"] = "Allow"
             # If the route has path params then we need to check project membership/resource ownership
             elif path_params:
@@ -155,9 +162,9 @@ def lambda_handler(event, context):
                 if (
                     requested_resource.startswith("/user/")
                     and "username" in path_params
-                    and request_method in ["PUT", "DELETE"]
+                    and request_method in ["GET", "PUT", "DELETE"]
                 ):
-                    if Permission.ADMIN in user.permissions:
+                    if IS_ADMIN:
                         policy_statement["Effect"] = "Allow"
                     elif path_params["username"] == user.username and request_method == "PUT":
                         # Users can update their own account preferences
@@ -167,20 +174,26 @@ def lambda_handler(event, context):
                 # Path params need to be checked individually
                 elif "projectName" in path_params:
                     project_name = path_params["projectName"]
-                    project_user = project_user_dao.get(project_name, username)
                     # User must belong to the project for any project specific resources
-                    if project_user or Permission.ADMIN in user.permissions:
+                    if IS_ADMIN or is_member_of_project(user.username, project_name):
+                        IS_OWNER = is_owner_of_project(user.username, project_name)
+                        project_user = project_user_dao.get(project_name, username)
                         # User must be an owner or admin to add/remove users or update the project config
                         if (
                             (
                                 request_method == "POST"
-                                and (requested_resource.endswith("/users") or requested_resource.endswith("/app-config"))
+                                and (
+                                    requested_resource.endswith("/users")
+                                    or requested_resource.endswith("/groups")
+                                    or requested_resource.endswith("/app-config")
+                                )
                             )
-                            or (request_method in ["PUT", "DELETE"] and len(path_params) == 2 and "username" in path_params)
-                        ) and (
-                            (project_user and Permission.PROJECT_OWNER not in project_user.permissions)
-                            and Permission.ADMIN not in user.permissions
-                        ):
+                            or (
+                                request_method in ["PUT", "DELETE"]
+                                and len(path_params) == 2
+                                and ("username" in path_params or "groupName" in path_params)
+                            )
+                        ) and (project_user and not IS_OWNER and not IS_ADMIN):
                             logging.info(
                                 f"Access Denied. User: '{username}' does not have project user management permissions."
                             )
@@ -188,10 +201,7 @@ def lambda_handler(event, context):
                         elif (
                             len(path_params) == 1
                             and request_method in ["PUT", "DELETE"]
-                            and (
-                                (project_user and Permission.PROJECT_OWNER not in project_user.permissions)
-                                and Permission.ADMIN not in user.permissions
-                            )
+                            and (project_user and not IS_OWNER and not IS_ADMIN)
                         ):
                             logging.info(f"Access Denied. User: '{username}' does not have project management permission.")
                         # Check if there is a second param here and we're updating users...
@@ -230,7 +240,7 @@ def lambda_handler(event, context):
                             logging.exception(e)
                             logging.info("Access Denied. Encountered error while determining dataset access policy.")
                 elif "jobId" in path_params:
-                    if Permission.ADMIN in user.permissions:
+                    if IS_ADMIN:
                         policy_statement["Effect"] = "Allow"
                     else:
                         job = resource_metadata_dao.get(path_params["jobId"], ResourceType.BATCH_TRANSLATE_JOB)
@@ -249,6 +259,11 @@ def lambda_handler(event, context):
                                 # if user is part of the project, they can view this translate job
                                 if project_user:
                                     policy_statement["Effect"] = "Allow"
+                elif "groupName" in path_params:
+                    if IS_ADMIN and request_method in ["POST", "PUT", "DELETE"]:
+                        policy_statement["Effect"] = "Allow"
+                    elif request_method == "GET":
+                        policy_statement["Effect"] = "Allow"
                 else:
                     # All other sagemaker resources have the same general handling, GET calls
                     # typically require ADMIN or project membership, PUT/POST/DELETE typically
@@ -275,17 +290,17 @@ def lambda_handler(event, context):
                     except Exception as e:
                         logging.exception(e)
                         logging.info("Access Denied. Encountered error while determining resource access policy.")
-            elif requested_resource == "/app-config" and request_method == "POST" and Permission.ADMIN in user.permissions:
+            elif requested_resource == "/app-config" and request_method == "POST" and IS_ADMIN:
                 # Operations for app-wide configuration can only be performed by admins
                 policy_statement["Effect"] = "Allow"
             elif requested_resource == "/login" and request_method == "PUT":
                 policy_statement["Effect"] = "Allow"
             elif (
                 (requested_resource == "/config" and request_method == "GET") or requested_resource.startswith("/admin/")
-            ) and Permission.ADMIN in user.permissions:
+            ) and IS_ADMIN:
                 policy_statement["Effect"] = "Allow"
             elif requested_resource == "/project" and request_method == "POST":
-                if Permission.ADMIN in user.permissions:
+                if IS_ADMIN:
                     policy_statement["Effect"] = "Allow"
                 else:
                     # Get the latest app config
@@ -293,6 +308,9 @@ def lambda_handler(event, context):
                     # Check if project creation is admin only; if not, anyone can create a project
                     if not app_config.configuration.project_creation.admin_only:
                         policy_statement["Effect"] = "Allow"
+            elif requested_resource == "/group" and request_method == "POST":
+                if IS_ADMIN:
+                    policy_statement["Effect"] = "Allow"
             elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
                 # If this is a request for a dataset related presigned url or for
                 # creating a new dataset, we need to determine the underlying dataset
@@ -300,17 +318,43 @@ def lambda_handler(event, context):
                 if "x-mlspace-dataset-type" in event["headers"] and "x-mlspace-dataset-scope" in event["headers"]:
                     target_type = event["headers"]["x-mlspace-dataset-type"]
                     target_scope = event["headers"]["x-mlspace-dataset-scope"]
-                    if target_type == DatasetType.GLOBAL.value:
+                    if IS_ADMIN:
                         policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.PROJECT.value:
-                        if Permission.ADMIN in user.permissions:
+                    elif target_type == DatasetType.GLOBAL:
+                        policy_statement["Effect"] = "Allow"
+                    elif target_type == DatasetType.PROJECT:
+                        project_user = project_user_dao.get(target_scope, username)
+                        if project_user:
                             policy_statement["Effect"] = "Allow"
                         else:
                             project_user = project_user_dao.get(target_scope, username)
                             if project_user:
                                 policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.PRIVATE.value and username == target_scope:
+                    elif target_type == DatasetType.PRIVATE and username == target_scope:
                         policy_statement["Effect"] = "Allow"
+                    elif target_type == DatasetType.GROUP:
+                        user_groups = group_user_dao.get_groups_for_user(username)
+                        user_group_names = set()
+                        for user_group in user_groups:
+                            user_group_names.add(user_group.group)
+
+                        if requested_resource == "/dataset/create":
+                            groups = target_scope.split(",")
+                            # check that this user is a member of every group they're adding to the group dataset
+                            is_valid_group_list = True
+                            for group_names in user_group_names:
+                                if group_names not in groups:
+                                    is_valid_group_list = False
+                            if is_valid_group_list:
+                                policy_statement["Effect"] = "Allow"
+                        elif requested_resource == "/dataset/presigned-url":
+                            groups = group_dataset_dao.get_groups_for_dataset(target_scope)
+                            for group in groups:
+                                # validate the user is a member of at least one group associated with this dataset
+                                if group.group in user_group_names:
+                                    policy_statement["Effect"] = "Allow"
+                                    break
+
                 else:
                     logger.info(
                         "Missing one or more required headers 'x-mlspace-dataset-type', "
@@ -356,7 +400,10 @@ def lambda_handler(event, context):
                     "/metadata/subnets",
                     "/translate/list-languages",
                     "/project",
+                    "/group",
                     "/emr",
+                    "/emr/applications",
+                    "/emr/release",
                     "/translate/custom-terminologies",
                 ]
             ) and request_method == "GET":
@@ -385,13 +432,28 @@ def _handle_dataset_request(request_method, path_params, user):
     dataset_name = path_params["datasetName"]
     dataset = dataset_dao.get(dataset_scope, dataset_name)
     if dataset:
-        # Owners can do whatever - this check also handles private datasets
-        if dataset.created_by == user.username:
+        # Owners and Admins can do whatever - this check also handles private datasets
+        if dataset.created_by == user.username or Permission.ADMIN in user.permissions:
             return True
         else:
+            # All admins can perform any action on any Group
+            if (
+                dataset.type == DatasetType.GROUP or dataset.type == DatasetType.GLOBAL or request_method == "GET"
+            ) and Permission.ADMIN in user.permissions:
+                return True
+            elif dataset.type == DatasetType.GROUP:
+                # If user isn't the creator of the dataset or an admin they can never PUT or DELETE
+                if request_method in ["PUT", "DELETE"]:
+                    return False
+                groups = group_user_dao.get_groups_for_user(user.username)
+                # Check if any groups this user is a member of contain this group dataset
+                for group in groups:
+                    group_dataset = group_dataset_dao.get(group.group, dataset_name)
+                    if group_dataset:
+                        return True
             # If it's a global or project dataset and they aren't the owner
             # they can't update or delete the dataset or any files
-            if request_method in ["PUT", "DELETE"]:
+            elif request_method in ["PUT", "DELETE"]:
                 logger.info(f"Access Denied. User: '{user.username}' does not own the specified dataset.")
             elif dataset.type == DatasetType.GLOBAL:
                 # If it's not a delete or update but it's a global dataset

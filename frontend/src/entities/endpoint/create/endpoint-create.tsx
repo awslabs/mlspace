@@ -25,7 +25,6 @@ import {
     Input,
     Container,
     Tiles,
-    ContentLayout,
     Alert,
 } from '@cloudscape-design/components';
 import { useAppDispatch } from '../../../config/store';
@@ -37,11 +36,12 @@ import EndpointConfigCreate from '../../endpoint-config/create';
 import { IEndpointConfig } from '../../../shared/model/endpoint-config.model';
 import { NewEndpointConfigDetails } from './new-config-details';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
-import NotificationService from '../../../shared/layout/notification/notification.service';
 import { scrollToInvalid, useValidationState } from '../../../shared/validation';
 import { z } from 'zod';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { generateNameConstraintText } from '../../../shared/util/form-utils';
+import ContentLayout from '../../../shared/layout/content-layout';
+import { useNotificationService } from '../../../shared/util/hooks';
 
 export function EndpointCreate () {
     const [endpoint, setEndpoint] = useState(defaultEndpoint as IEndpoint);
@@ -52,7 +52,7 @@ export function EndpointCreate () {
     const [endpointConfigType, setEndpointConfigType] = useState('existing');
     const { projectName } = useParams();
     const dispatch = useAppDispatch();
-    const notificationService = NotificationService(dispatch);
+    const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
 
     scrollToPageHeader();
@@ -62,13 +62,15 @@ export function EndpointCreate () {
     const formSchema = z.object({
         EndpointName: z
             .string({ required_error: 'Endpoint name is required' })
-            .min(3)
+            .min(3, {
+                message: 'Name cannot be less than 3 characters'
+            })
             .max(63, {
                 message: 'Name cannot be more than 63 characters',
             })
             .regex(/^[a-zA-Z0-9-]*$/, {
                 message:
-                    'Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region',
+                generateNameConstraintText(),
             }),
     });
 

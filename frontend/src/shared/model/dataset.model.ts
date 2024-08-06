@@ -17,6 +17,7 @@ export enum DatasetType {
     GLOBAL = 'global',
     PRIVATE = 'private',
     PROJECT = 'project',
+    GROUP = 'group',
 }
 
 export type IDataset = {
@@ -28,6 +29,7 @@ export type IDataset = {
     description?: string;
     location?: string;
     format?: string;
+    groups?: string[];
 };
 
 export const defaultDataset: IDataset = {

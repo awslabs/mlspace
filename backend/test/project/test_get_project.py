@@ -41,7 +41,7 @@ MOCK_PROJECT = ProjectModel(
 MOCK_PROJECT_USER = ProjectUserModel(
     username=MOCK_PROJECT.created_by,
     project_name=MOCK_PROJECT.name,
-    permissions=[Permission.PROJECT_OWNER],
+    permissions=[Permission.COLLABORATOR, Permission.PROJECT_OWNER],
 )
 
 MOCK_USER = UserModel(MOCK_PROJECT.created_by, MOCK_PROJECT.created_by, "John Doe", False)
@@ -63,11 +63,15 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
     from ml_space_lambda.project.lambda_functions import get as lambda_handler
 
 
+@mock.patch("ml_space_lambda.project.lambda_functions.is_owner_of_project")
+@mock.patch("ml_space_lambda.project.lambda_functions.is_member_of_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
-def test_get_project(mock_project_dao, mock_project_user_dao):
+def test_get_project(mock_project_dao, mock_project_user_dao, mock_is_member_of_project, mock_is_owner_of_project):
     mock_project_dao.get.return_value = MOCK_PROJECT
     mock_project_user_dao.get.return_value = MOCK_PROJECT_USER
+    mock_is_member_of_project.return_value = True
+    mock_is_owner_of_project.return_value = True
     expected_response = generate_html_response(
         200,
         {
@@ -82,11 +86,13 @@ def test_get_project(mock_project_dao, mock_project_user_dao):
     mock_project_user_dao.get.assert_called_with(MOCK_PROJECT.name, MOCK_PROJECT.created_by)
 
 
+@mock.patch("ml_space_lambda.project.lambda_functions.is_member_of_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
-def test_get_project_not_a_member(mock_project_dao, mock_project_user_dao):
+def test_get_project_not_a_member(mock_project_dao, mock_project_user_dao, mock_is_member_of_project):
     mock_project_dao.get.return_value = MOCK_PROJECT
     mock_project_user_dao.get.return_value = None
+    mock_is_member_of_project.return_value = False
     expected_response = generate_html_response(
         400,
         f"Bad Request: User is not a member of project {MOCK_PROJECT.name}.",
@@ -97,11 +103,15 @@ def test_get_project_not_a_member(mock_project_dao, mock_project_user_dao):
     mock_project_user_dao.get.assert_called_with(MOCK_PROJECT.name, MOCK_PROJECT.created_by)
 
 
+@mock.patch("ml_space_lambda.project.lambda_functions.is_owner_of_project")
+@mock.patch("ml_space_lambda.project.lambda_functions.is_member_of_project")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_user_dao")
 @mock.patch("ml_space_lambda.project.lambda_functions.project_dao")
-def test_get_project_admin(mock_project_dao, mock_project_user_dao):
+def test_get_project_admin(mock_project_dao, mock_project_user_dao, mock_is_member_of_project, mock_is_owner_of_project):
     mock_project_dao.get.return_value = MOCK_PROJECT
     mock_project_user_dao.get.return_value = None
+    mock_is_member_of_project.return_value = False
+    mock_is_owner_of_project.return_value = False
     expected_response = generate_html_response(
         200,
         {

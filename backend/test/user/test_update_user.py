@@ -18,18 +18,21 @@ from typing import Any, Dict, List
 from unittest import mock
 
 import pytest
-from botocore.exceptions import ClientError
-
-from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
-from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserModel
-from ml_space_lambda.enums import Permission, TimezonePreference
-from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
 }
 MOCK_USERNAME = "jdoe@amazon.com"
 MOCK_DISPLAY_NAME = "John Doe"
+
+with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
+    from botocore.exceptions import ClientError
+
+    from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
+    from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserModel
+    from ml_space_lambda.enums import Permission, TimezonePreference
+    from ml_space_lambda.user.lambda_functions import update as lambda_handler
+    from ml_space_lambda.utils.common_functions import generate_html_response
 
 mock_context = mock.Mock()
 
@@ -51,10 +54,6 @@ def mock_user():
 
 def mock_success(mock_event):
     return generate_html_response(200, json.loads(mock_event["body"]))
-
-
-with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.user.lambda_functions import update as lambda_handler
 
 
 def _mock_event(updates: Dict[str, Any] = {}, is_admin=True, user=base_user()) -> Dict:
@@ -99,7 +98,7 @@ def _assert_update_params(
 @mock.patch("ml_space_lambda.user.lambda_functions.user_dao")
 def test_update_user_modify_permissions(mock_user_dao, mock_project_user_dao, mock_user):
     mock_user_dao.get.return_value = mock_user
-    mock_event = _mock_event({"permissions": [Permission.PROJECT_OWNER.value]}, mock_user)
+    mock_event = _mock_event({"permissions": [Permission.PROJECT_OWNER]}, mock_user)
 
     assert lambda_handler(mock_event, mock_context) == mock_success(mock_event)
 
@@ -111,7 +110,7 @@ def test_update_user_modify_permissions(mock_user_dao, mock_project_user_dao, mo
     assert mock_user_dao.update.call_args.args[0] == MOCK_USERNAME
     _assert_update_params(
         mock_user_dao.update.call_args.args[1].to_dict(),
-        [Permission.PROJECT_OWNER.value],
+        [Permission.PROJECT_OWNER],
         False,
         {},
     )
@@ -123,8 +122,8 @@ def test_update_user_modify_preferences(mock_user_dao, mock_project_user_dao, mo
     mock_user_dao.get.return_value = mock_user
     mock_event = _mock_event(
         {
-            "preferences": {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC.value},
-            "permissions": [Permission.PROJECT_OWNER.value],
+            "preferences": {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC},
+            "permissions": [Permission.PROJECT_OWNER],
         }
     )
 
@@ -141,9 +140,9 @@ def test_update_user_modify_preferences(mock_user_dao, mock_project_user_dao, mo
     assert mock_user_dao.update.call_args.args[0] == MOCK_USERNAME
     _assert_update_params(
         mock_user_dao.update.call_args.args[1].to_dict(),
-        [Permission.PROJECT_OWNER.value],
+        [Permission.PROJECT_OWNER],
         False,
-        {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC.value},
+        {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC},
     )
 
 
@@ -154,8 +153,8 @@ def test_update_user_modify_preferences_non_admin(mock_user_dao, mock_project_us
     mock_user_dao.get.return_value = mock_user
     mock_event = _mock_event(
         {
-            "preferences": {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC.value},
-            "permissions": [Permission.PROJECT_OWNER.value],
+            "preferences": {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC},
+            "permissions": [Permission.PROJECT_OWNER],
             "suspended": True,
         },
         False,
@@ -176,7 +175,7 @@ def test_update_user_modify_preferences_non_admin(mock_user_dao, mock_project_us
         mock_user_dao.update.call_args.args[1].to_dict(),
         [],  # this should remain the same since the invoking user can't change permissions
         False,
-        {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC.value},
+        {TIMEZONE_PREFERENCE_KEY: TimezonePreference.UTC},
     )
 
 

@@ -17,7 +17,7 @@
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import React, { ReactNode, useEffect, useState } from 'react';
-import { ContentLayout, SpaceBetween, Header, Button } from '@cloudscape-design/components';
+import { SpaceBetween, Header, Button } from '@cloudscape-design/components';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
@@ -33,6 +33,7 @@ import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import { selectCurrentUser } from '../../user/user.reducer';
 import { useBackgroundRefresh } from '../../../shared/util/hooks';
+import ContentLayout from '../../../shared/layout/content-layout';
 
 function EMRDetail () {
     const { projectName, clusterId, clusterName } = useParams();
@@ -52,7 +53,6 @@ function EMRDetail () {
     useEffect(() => {
         if (clusterId) {
             dispatch(getEMRCluster(clusterId)).then(() => setInitialLoaded(true));
-
             dispatch(
                 setBreadcrumbs([
                     getBase(projectName),
@@ -66,13 +66,12 @@ function EMRDetail () {
         }
     }, [dispatch, basePath, projectName, clusterId, clusterName]);
 
-    // Refresh data in the background to keep state fresh
+    // Refresh data in the background to keep state fresh. While waiting for the EMR cluster to be ready, refresh every 3 seconds
     const isBackgroundRefreshing = useBackgroundRefresh(async () => {
         await dispatch(getEMRCluster(clusterId!));
-    }, [dispatch]);
+    }, [dispatch], true, clusterLoading ? 3 : window.env.BACKGROUND_REFRESH_INTERVAL);
 
     const clusterSummary = new Map<string, ReactNode>();
-
     clusterSummary.set('Cluster ID', cluster?.Id);
     clusterSummary.set('Master DNS name', cluster?.MasterPublicDnsName);
     clusterSummary.set('State', prettyStatus(isBackgroundRefreshing ? 'Loading' : cluster?.Status?.State));
@@ -100,7 +99,7 @@ function EMRDetail () {
                                 setResourceScheduleModal({
                                     timezone: currentUser.preferences?.timezone,
                                     resourceType: 'EMR Cluster',
-                                    resourceName: clusterName!,
+                                    resourceName: cluster.Name!,
                                     resourceTerminationTime: cluster.TerminationTime,
                                     onConfirm: (updatedTerminationTime?: Date) =>
                                         modifyResourceTerminationSchedule(
@@ -131,7 +130,7 @@ function EMRDetail () {
             >
                 <SpaceBetween size='xxl'>
                     <DetailsContainer
-                        loading={clusterLoading && !initialLoaded}
+                        loading={clusterLoading || !initialLoaded}
                         columns={4}
                         header='Summary'
                         info={clusterSummary}

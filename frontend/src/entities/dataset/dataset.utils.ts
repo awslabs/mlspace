@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { IDataset } from '../../shared/model/dataset.model';
+import { DatasetType, IDataset } from '../../shared/model/dataset.model';
 
 export const validateName = function (datasetName: string) {
     // Validate that the instance name follows the naming guidelines
@@ -23,10 +23,22 @@ export const validateName = function (datasetName: string) {
 };
 
 export const showAccessLevel = (dataset: IDataset) => {
-    if (dataset.type === 'project') {
-        return dataset.scope;
+    if (dataset.type === DatasetType.PROJECT) {
+        return `${dataset.type}: ${dataset.scope}`;
     } else {
         return dataset.type;
+    }
+};
+
+export const showDatasetOwnership = (dataset: IDataset) => {
+    if (dataset.type === DatasetType.GROUP) {
+        return `${dataset.groups?.length || 0} group${dataset.groups && dataset.groups.length === 1 ? '' : 's'} associated`;
+    } else if (dataset.type === DatasetType.PRIVATE) {
+        return dataset.createdBy;
+    } else if (dataset.type === DatasetType.PROJECT) {
+        return dataset.scope;
+    } else {
+        return '-';
     }
 };
 

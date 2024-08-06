@@ -20,10 +20,46 @@ import os
 
 import boto3
 
+from ml_space_lambda.enums import EnvVariable
 from ml_space_lambda.utils.common_functions import retry_config
 
 param_file = {}
 env_variables = {}
+
+ENV_DEFAULTS = {
+    EnvVariable.APP_CONFIGURATION_TABLE: "mlspace-app-configuration",
+    EnvVariable.APP_ROLE_NAME: "mlspace-app-role",
+    EnvVariable.AWS_DEFAULT_REGION: "us-iso-east-1",
+    EnvVariable.BUCKET: "mlspace-data-bucket",
+    EnvVariable.DATA_BUCKET: "mlspace-data-bucket",
+    EnvVariable.DATASETS_TABLE: "mlspace-datasets",
+    EnvVariable.DYNAMO_TABLE: "mlspace-project",
+    EnvVariable.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+    EnvVariable.EMR_CONFIG_BUCKET: "mlspace-emr-config-bucket",
+    EnvVariable.EMR_EC2_ROLE_NAME: "EMR_EC2_DefaultRole",
+    EnvVariable.EMR_EC2_SSH_KEY: "",
+    EnvVariable.EMR_SERVICE_ROLE_NAME: "EMR_DefaultRole",
+    EnvVariable.EMR_SECURITY_CONFIGURATION: "MLSpace-EMR-SecurityConfig",
+    EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN: "",
+    EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN: "",
+    EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
+    EnvVariable.MANAGE_IAM_ROLES: "",
+    EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
+    EnvVariable.NOTEBOOK_ROLE_NAME: "",
+    EnvVariable.RESOURCE_METADATA_TABLE: "mlspace-resource-metadata",
+    EnvVariable.RESOURCE_SCHEDULE_TABLE: "mlspace-resource-schedule",
+    EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
+    EnvVariable.PROJECTS_TABLE: "mlspace-projects",
+    EnvVariable.PROJECT_USERS_TABLE: "mlspace-project-users",
+    EnvVariable.PROJECT_GROUPS_TABLE: "mlspace-project-groups",
+    EnvVariable.S3_KEY: "notebook-params.json",
+    EnvVariable.SYSTEM_TAG: "MLSpace",
+    EnvVariable.TRANSLATE_DATE_ROLE_ARN: "",
+    EnvVariable.USERS_TABLE: "mlspace-users",
+    EnvVariable.GROUPS_TABLE: "mlspace-groups",
+    EnvVariable.GROUP_USERS_TABLE: "mlspace-group-users",
+    EnvVariable.GROUP_DATASETS_TABLE: "mlspace-group-datasets",
+}
 
 
 def pull_config_from_s3() -> dict:
@@ -42,29 +78,6 @@ def pull_config_from_s3() -> dict:
 def get_environment_variables() -> dict:
     global env_variables
     if not env_variables:
-        env_variables = {
-            "BUCKET": os.getenv("BUCKET", "mlspace-data-bucket"),
-            "S3_KEY": os.getenv("S3_KEY", "notebook-params.json"),
-            "SYSTEM_TAG": os.getenv("SYSTEM_TAG", "MLSpace"),
-            "CLUSTER_CONFIG_KEY": os.getenv("CLUSTER_CONFIG_KEY", "cluster-config.json"),
-            "DATASETS_TABLE": os.getenv("DATASETS_TABLE", "mlspace-datasets"),
-            "PROJECTS_TABLE": os.getenv("PROJECTS_TABLE", "mlspace-projects"),
-            "PROJECT_USERS_TABLE": os.getenv("PROJECT_USERS_TABLE", "mlspace-project-users"),
-            "USERS_TABLE": os.getenv("USERS_TABLE", "mlspace-users"),
-            "RESOURCE_SCHEDULE_TABLE": os.getenv("RESOURCE_SCHEDULE_TABLE", "mlspace-resource-schedule"),
-            "RESOURCE_METADATA_TABLE": os.getenv("RESOURCE_METADATA_TABLE", "mlspace-resource-metadata"),
-            "APP_CONFIGURATION_TABLE": os.getenv("APP_CONFIGURATION_TABLE", "mlspace-app-configuration"),
-            "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION", "us-iso-east-1"),
-            "DATA_BUCKET": os.getenv("DATA_BUCKET", "mlspace-data-bucket"),
-            "EMR_CONFIG_BUCKET": os.getenv("EMR_CONFIG_BUCKET", "mlspace-emr-config-bucket"),
-            "MANAGE_IAM_ROLES": os.getenv("MANAGE_IAM_ROLES", ""),
-            "LOG_BUCKET": os.getenv("LOG_BUCKET", "mlspace-log-bucket"),
-            "DYNAMO_TABLE": os.getenv("DYNAMO_TABLE", "mlspace-project"),
-            "EMR_EC2_ROLE_NAME": os.getenv("EMR_EC2_ROLE_NAME", "EMR_EC2_DefaultRole"),
-            "EMR_SERVICE_ROLE_NAME": os.getenv("EMR_SERVICE_ROLE_NAME", "EMR_DefaultRole"),
-            "EMR_SECURITY_CONFIGURATION": os.getenv("EMR_SECURITY_CONFIGURATION", "MLSpace-EMR-SecurityConfig"),
-            "NEW_USER_SUSPENSION_DEFAULT": os.getenv("NEW_USER_SUSPENSION_DEFAULT", "True"),
-            "TRANSLATE_DATE_ROLE_ARN": os.getenv("TRANSLATE_DATE_ROLE_ARN", ""),
-        }
+        env_variables = dict((env_var, os.getenv(env_var, ENV_DEFAULTS[env_var])) for env_var in ENV_DEFAULTS)
 
     return env_variables
