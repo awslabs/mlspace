@@ -55,7 +55,7 @@ mock_projects_for_user = [
     ProjectUserModel(
         username=mock_user.username,
         project_name=mock_project_1_name,
-        permissions=[Permission.COLLABORATOR],
+        permissions=[],
     ),
     ProjectUserModel(
         username=mock_user.username,
@@ -65,7 +65,7 @@ mock_projects_for_user = [
     ProjectUserModel(
         username=mock_user.username,
         project_name=mock_project_3_name,
-        permissions=[Permission.PROJECT_OWNER, Permission.COLLABORATOR],
+        permissions=[Permission.PROJECT_OWNER],
     ),
 ]
 
@@ -80,7 +80,7 @@ mock_projects_for_second_user = [
     ProjectUserModel(
         username=mock_user.username,
         project_name=mock_project_1_name,
-        permissions=[Permission.COLLABORATOR],
+        permissions=[],
     ),
     ProjectUserModel(
         username=mock_user.username,
@@ -90,7 +90,7 @@ mock_projects_for_second_user = [
     ProjectUserModel(
         username=mock_user.username,
         project_name=mock_project_3_name,
-        permissions=[Permission.COLLABORATOR],
+        permissions=[],
     ),
 ]
 

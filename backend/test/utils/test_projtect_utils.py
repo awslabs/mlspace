@@ -28,11 +28,11 @@ PROJECT_NAME = "MyFakeProject"
 GROUP_NAME = "MyFakeGroup"
 NORMAL_USERNAME = "memberuser"
 
-PROJECT_USER = ProjectUserModel(NORMAL_USERNAME, PROJECT_NAME, permissions=[Permission.COLLABORATOR])
+PROJECT_USER = ProjectUserModel(NORMAL_USERNAME, PROJECT_NAME, permissions=[])
 OWNER_PROJECT_USER = ProjectUserModel(NORMAL_USERNAME, PROJECT_NAME, permissions=[Permission.PROJECT_OWNER])
 
 GROUP_USER = GroupUserModel(NORMAL_USERNAME, GROUP_NAME)
-PROJECT_GROUP = ProjectGroupModel(GROUP_NAME, PROJECT_NAME, permissions=[Permission.COLLABORATOR])
+PROJECT_GROUP = ProjectGroupModel(GROUP_NAME, PROJECT_NAME, permissions=[])
 OWNER_PROJECT_GROUP = ProjectGroupModel(GROUP_NAME, PROJECT_NAME, permissions=[Permission.PROJECT_OWNER])
 
 

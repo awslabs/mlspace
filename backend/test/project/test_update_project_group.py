@@ -38,7 +38,7 @@ PROJECT_GROUP = ProjectGroupModel(GROUP_1.name, PROJECT_NAME)
 def test_project_groups(mock_project_group_dao, project_group):
     event = {
         "pathParameters": {"projectName": PROJECT_NAME, "groupName": GROUP_1.name},
-        "body": json.dumps({"permissions": [Permission.COLLABORATOR, Permission.PROJECT_OWNER]}),
+        "body": json.dumps({"permissions": [Permission.PROJECT_OWNER]}),
     }
     context = mock.MagicMock()
 

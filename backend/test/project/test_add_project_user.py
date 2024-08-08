@@ -21,7 +21,6 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -68,7 +67,7 @@ def test_add_users_to_project_with_iam(mock_user_dao, mock_project_user_dao, moc
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
             role=MOCK_IAM_ROLE,
         ).to_dict()
     )
@@ -94,7 +93,7 @@ def test_add_users_to_project(mock_user_dao, mock_project_user_dao, mock_iam_man
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         ).to_dict()
     )
 
@@ -134,7 +133,7 @@ def test_add_users_to_project_multiple(mock_user_dao, mock_project_user_dao, moc
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username="user1",
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         ).to_dict()
     )
     assert (
@@ -142,7 +141,7 @@ def test_add_users_to_project_multiple(mock_user_dao, mock_project_user_dao, moc
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username="user2",
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         ).to_dict()
     )
     assert (
@@ -150,7 +149,7 @@ def test_add_users_to_project_multiple(mock_user_dao, mock_project_user_dao, moc
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username="user3",
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         ).to_dict()
     )
 
@@ -183,7 +182,7 @@ def test_add_users_to_project_client_error(mock_user_dao, mock_project_user_dao,
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         ).to_dict()
     )
 
@@ -236,7 +235,7 @@ def test_add_users_to_project_client_error_with_iam(mock_user_dao, mock_project_
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
             role=MOCK_IAM_ROLE,
         ).to_dict()
     )

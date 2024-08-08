@@ -45,7 +45,7 @@ MOCK_MO_USER = ProjectUserModel(
 MOCK_CO_USER = ProjectUserModel(
     project_name=MOCK_PROJECT_NAME,
     username="jane-doe",
-    permissions=[Permission.COLLABORATOR],
+    permissions=[],
     role="co-role",
 )
 

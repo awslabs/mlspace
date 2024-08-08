@@ -162,7 +162,7 @@ class TestUserDAO(TestCase):
         updated.display_name = "Fake Name"
         updated.suspended = not self.UPDATE_USER.suspended
         # This is an unrealistic permissions value but we're just testing things
-        updated.permissions = [Permission.ACTING_PMO, Permission.ADMIN, Permission.COLLABORATOR]
+        updated.permissions = [Permission.ACTING_PMO, Permission.ADMIN]
         updated.created_at = 12345
         # Set last login to 3 days ago
         updated.last_login = time.time() - 60 * 60 * 72

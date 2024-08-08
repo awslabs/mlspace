@@ -52,6 +52,7 @@ mock.patch.TEST_PREFIX = (
 )
 
 MOCK_GROUP_NAME = "fake-group"
+MOCK_SECOND_GROUP = "secondGroup"
 
 
 @moto.mock_dynamodb
@@ -92,7 +93,7 @@ class TestGroupUserDAO(TestCase):
         self.UPDATE_RECORD = GroupUserModel(
             username="jdoe@example.com",
             group_name=MOCK_GROUP_NAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         )
 
         self.ddb.put_item(
@@ -104,7 +105,7 @@ class TestGroupUserDAO(TestCase):
             username="matt@example.com",
             group_name=MOCK_GROUP_NAME,
             role="fakeRoleName",
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         )
 
         self.ddb.put_item(
@@ -116,8 +117,8 @@ class TestGroupUserDAO(TestCase):
         for i in range(10):
             record = GroupUserModel(
                 username=f"test.user-{i}@example.com",
-                group_name=MOCK_GROUP_NAME if i % 2 == 0 else "secondGroup",
-                permissions=[Permission.COLLABORATOR],
+                group_name=MOCK_GROUP_NAME if i % 2 == 0 else MOCK_SECOND_GROUP,
+                permissions=[],
             )
             self.ddb.put_item(
                 TableName=self.TEST_TABLE,
@@ -144,7 +145,7 @@ class TestGroupUserDAO(TestCase):
             "add-unit-test@example.com",
             MOCK_GROUP_NAME,
             "newRoleName",
-            [Permission.COLLABORATOR],
+            [],
         )
         self.group_user_dao.create(new_record)
         dynamo_response = self.ddb.get_item(
@@ -231,3 +232,19 @@ class TestGroupUserDAO(TestCase):
     def test_get_groups_for_user_nonexistant(self):
         all_group_users = self.group_user_dao.get_groups_for_user("non-existant-user")
         assert len(all_group_users) == 0
+
+    def test_get_all(self):
+        all_group_users = self.group_user_dao.get_all()
+        # Make sure we see a mix of all users and all groups
+        user_set = set()  # we expect at least 10 unique usernames
+        found_group = False
+        found_second_group = False
+        for group_user in all_group_users:
+            if group_user.group == MOCK_GROUP_NAME:
+                found_group = True
+            elif group_user.group == MOCK_SECOND_GROUP:
+                found_second_group = True
+
+            user_set.add(group_user.user)
+
+        assert found_group and found_second_group and len(user_set) >= 10

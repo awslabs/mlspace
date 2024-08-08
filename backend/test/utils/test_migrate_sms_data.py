@@ -428,25 +428,20 @@ class TestProjectDAO(TestCase):
         for member in roughneck_members:
             if member.user == PROJECT_OWNER_USER:
                 assert Permission.PROJECT_OWNER in member.permissions
-                assert Permission.COLLABORATOR in member.permissions
             elif member.user == "CN=Jean Rasczak, OU=D004, OU=Division A, OU=Corp, O=Acme Corp, C=US":
                 assert Permission.PROJECT_OWNER in member.permissions
-                assert Permission.COLLABORATOR not in member.permissions
             else:
                 assert Permission.PROJECT_OWNER not in member.permissions
-                assert Permission.COLLABORATOR in member.permissions
 
         jenkins_projects = project_user_dao.get_projects_for_user(ADMIN_USER)
         assert len(jenkins_projects) == 2
 
         arachnid_membership = project_user_dao.get("Arachnid", ADMIN_USER)
         assert Permission.PROJECT_OWNER in arachnid_membership.permissions
-        assert Permission.COLLABORATOR in arachnid_membership.permissions
         assert "Arachnid-UnitTest" == arachnid_membership.role
 
         ticonderoga_membership = project_user_dao.get("Ticonderoga", ADMIN_USER)
         assert Permission.PROJECT_OWNER not in ticonderoga_membership.permissions
-        assert Permission.COLLABORATOR in ticonderoga_membership.permissions
         assert ticonderoga_membership.role == ""
 
         datasets_dao = DatasetDAO(DATASETS_TABLE_NAME, self.ddb)

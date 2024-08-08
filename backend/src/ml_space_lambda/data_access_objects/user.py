@@ -66,13 +66,12 @@ class UserModel:
 
     @staticmethod
     def from_dict(dict_object: dict) -> UserModel:
-        permissions = [Permission(entry) for entry in dict_object.get("permissions", [])]
         return UserModel(
             dict_object["username"],
             dict_object["email"],
             dict_object["displayName"],
             dict_object["suspended"],
-            permissions,
+            dict_object.get("permissions", []),
             dict_object.get("createdAt", None),
             dict_object.get("lastLogin", None),
             dict_object.get("preferences", {}),

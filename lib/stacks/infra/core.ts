@@ -250,6 +250,22 @@ export class CoreStack extends Stack {
             securityGroups: props.lambdaSecurityGroups,
         });
 
+        // Lambda for cleaning up permissions that have been deprecated from the application
+        const permissionCleanupLambda = new Function(this, 'permissionCleanupLambda', {
+            functionName: 'mls-lambda-permission-cleanup',
+            description:
+                'Clears out deprecated permissions from tables',
+            runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
+            architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
+            handler: 'ml_space_lambda.cleanup_deprecated_permissions.lambda_function.lambda_handler',
+            code: Code.fromAsset(props.lambdaSourcePath),
+            timeout: Duration.seconds(30),
+            role: props.mlSpaceAppRole,
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+        });
+
         const dynamicRolesAttachPoliciesOnDeployLambda = new Function(this, 'drAttachPoliciesOnDeployLambda', {
             functionName: 'mls-lambda-dr-attach-policies-on-deploy',
             description: 'Attaches policies from notebook role to all dynamic user roles.',
@@ -601,6 +617,19 @@ export class CoreStack extends Stack {
                 physicalResourceId: PhysicalResourceId.of('initAllowedInstanceTypes'),
                 parameters: {
                     FunctionName: appConfigLambda.functionName,
+                    Payload: '{}'
+                }, 
+            },
+            role: props.mlSpaceAppRole
+        });
+
+        new AwsCustomResource(this, 'cleanup-deprecated-permissions', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                physicalResourceId: PhysicalResourceId.of(`cleanupDeprecatedResources-${Date.now()}`),
+                parameters: {
+                    FunctionName: permissionCleanupLambda.functionName,
                     Payload: '{}'
                 }, 
             },

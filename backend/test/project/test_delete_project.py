@@ -302,7 +302,7 @@ def test_delete_project_external_iam(
         ProjectUserModel(
             username="matt@example.com",
             project_name=MOCK_PROJECT_NAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
             role="matt-role",
         ),
     ]
@@ -317,7 +317,7 @@ def test_delete_project_external_iam(
         ProjectGroupModel(
             group_name="TestGroup2",
             project_name=MOCK_PROJECT_NAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         ),
     ]
 
@@ -326,19 +326,19 @@ def test_delete_project_external_iam(
             GroupUserModel(
                 username="jdoe@example.com",
                 group_name="TestGroup1",
-                permissions=[Permission.COLLABORATOR],
+                permissions=[],
             ),
             GroupUserModel(
                 username="foo@example.com",
                 group_name="TestGroup1",
-                permissions=[Permission.COLLABORATOR],
+                permissions=[],
             ),
         ],
         [
             GroupUserModel(
                 username="bar@example.com",
                 group_name="TestGroup2",
-                permissions=[Permission.COLLABORATOR],
+                permissions=[],
             ),
         ],
     ]

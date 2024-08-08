@@ -39,7 +39,7 @@ def _migrate_primary_table(
     projects_created = users_created = project_users_created = 0
 
     existing_data = source_ddb._scan().records
-    print(f"Found {len(existing_data)} entries to migrated...")
+    print(f"Found {len(existing_data)} entries to migrate...")
     for record in existing_data:
         # If d_n and c_n are equal then this is either a user or a project
         if record["d_n"] == record["p_n"]:
@@ -68,8 +68,6 @@ def _migrate_primary_table(
             permissions = []
             if record["info"]["is_mo"] is True:
                 permissions.append(Permission.PROJECT_OWNER)
-            if record["info"]["is_co"] is True:
-                permissions.append(Permission.COLLABORATOR)
             # If d_n and p_n are different then we have a project user record
             project_user = ProjectUserModel(
                 record["d_n"],

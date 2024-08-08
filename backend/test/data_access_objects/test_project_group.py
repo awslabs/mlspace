@@ -92,7 +92,7 @@ class TestProjectUserDAO(TestCase):
         self.UPDATE_RECORD = ProjectGroupModel(
             group_name="my_group_1",
             project_name=MOCK_PROJECT_NAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         )
 
         self.ddb.put_item(
@@ -103,7 +103,7 @@ class TestProjectUserDAO(TestCase):
         self.DELETE_RECORD = ProjectGroupModel(
             group_name="my_group_2",
             project_name=MOCK_PROJECT_NAME,
-            permissions=[Permission.COLLABORATOR],
+            permissions=[],
         )
 
         self.ddb.put_item(
@@ -116,7 +116,7 @@ class TestProjectUserDAO(TestCase):
             record = ProjectGroupModel(
                 group_name=f"my_group_1_{i}",
                 project_name=MOCK_PROJECT_NAME if i % 2 == 0 else "secondProject",
-                permissions=[Permission.COLLABORATOR],
+                permissions=[],
             )
             self.ddb.put_item(
                 TableName=self.TEST_TABLE,
@@ -142,7 +142,7 @@ class TestProjectUserDAO(TestCase):
         new_record = ProjectGroupModel(
             "group_10",
             MOCK_PROJECT_NAME,
-            [Permission.COLLABORATOR, Permission.PROJECT_OWNER],
+            [Permission.PROJECT_OWNER],
         )
         self.project_group_dao.create(new_record)
         dynamo_response = self.ddb.get_item(
@@ -164,7 +164,7 @@ class TestProjectUserDAO(TestCase):
         updated = ProjectGroupModel.from_dict(self.UPDATE_RECORD.to_dict())
         updated.group_name = "group-that-will-get-dropped"
         updated.project = "project-name-that-will-get-dropped"
-        updated.permissions = [Permission.COLLABORATOR, Permission.PROJECT_OWNER]
+        updated.permissions = [Permission.PROJECT_OWNER]
         self.project_group_dao.update(self.UPDATE_RECORD.project, self.UPDATE_RECORD.group_name, updated)
 
         post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])

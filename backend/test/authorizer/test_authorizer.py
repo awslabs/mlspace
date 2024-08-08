@@ -69,8 +69,8 @@ MOCK_SUSPENDED_PROJECT = ProjectModel(
     MOCK_OWNER_USER.username,
 )
 MOCK_OWNER_PROJECT_USER = ProjectUserModel(MOCK_OWNER_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.PROJECT_OWNER])
-MOCK_REGULAR_PROJECT_USER = ProjectUserModel(MOCK_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.COLLABORATOR])
-MOCK_REGULAR_GROUP_USER = GroupUserModel(MOCK_USER.username, MOCK_GROUP_NAME, permissions=[Permission.COLLABORATOR])
+MOCK_REGULAR_PROJECT_USER = ProjectUserModel(MOCK_USER.username, MOCK_PROJECT_NAME, permissions=[])
+MOCK_REGULAR_GROUP_USER = GroupUserModel(MOCK_USER.username, MOCK_GROUP_NAME, permissions=[])
 
 MOCK_GROUP_NAME = "UnitTestGroup"
 MOCK_GROUP = GroupModel(MOCK_GROUP_NAME, "Group used for unit tests", MOCK_USER.username)

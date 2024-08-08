@@ -74,6 +74,7 @@ def group_projects(event, context):
         raise ResourceNotFound(f"Specified group {group_name} does not exist.")
     user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
     group_user = group_user_dao.get(group_name, user.username)
+    logger.info("Group user fetched, checking permissions")
     if Permission.ADMIN not in user.permissions and not group_user:
         raise ValueError(f"User is not a member of group {group_name}.")
 
@@ -140,7 +141,7 @@ def add_users(event, context):
                 GroupUserModel(
                     group_name=group_name,
                     username=username,
-                    permissions=[Permission.COLLABORATOR],
+                    permissions=[],
                 )
             )
 
