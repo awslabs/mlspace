@@ -47,6 +47,7 @@ export class AppConfigurationApiStack extends Stack {
                 description: 'Get the requested number of MLSpace application configurations, starting from the most recent',
                 path: 'app-config',
                 method: 'GET',
+                noAuthorizer: true
             },
             {
                 name: 'update_configuration',

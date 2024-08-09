@@ -1828,21 +1828,15 @@ def test_config_routes(mock_user_dao, user: UserModel, method: str, allow: bool)
     [
         (MOCK_USER, None, "POST", None, False),
         (MOCK_ADMIN_USER, None, "POST", None, True),
-        (MOCK_USER, None, "GET", None, True),
-        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "GET", {"projectName": MOCK_PROJECT_NAME}, True),
         (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, False),
         (MOCK_OWNER_USER, MOCK_OWNER_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, True),
-        (None, None, "GET", None, True),
         (None, None, "POST", None, False),
     ],
     ids=[
         "user_update_app_config",
         "admin_update_app_config",
-        "user_get_app_config",
-        "user_get_project_config",
         "user_update_project_config",
         "project_owner_update_project_config",
-        "non_user_get_app_config",
         "non_user_update_app_config",
     ],
 )
