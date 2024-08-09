@@ -23,7 +23,6 @@ from ml_space_lambda.data_access_objects.group import GroupModel
 from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.data_access_objects.project_group import ProjectGroupModel
-from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -99,7 +98,6 @@ def test_delete_group(
         GroupUserModel(
             username=mock_username,
             group_name=MOCK_GROUP_NAME,
-            permissions=[Permission.COLLABORATOR],
         )
     ]
     mock_group_user_dao.delete.return_value = None

@@ -148,7 +148,7 @@ def test_update_instance_kms_key_conditions_fail(
 
     abbreviated_instance_intersection.side_effect = [["g5.large"], ["g6.large"]]
 
-    assert "unable to update kms policy" == update_instance_kms_key_conditions(mock.Mock(), mock.Mock())
+    assert "Unable to update kms policy" == update_instance_kms_key_conditions(mock.Mock(), mock.Mock())
 
     kms_unsupported_instances.assert_called()
     mock_iam.create_policy_version.assert_called()

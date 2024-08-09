@@ -124,7 +124,6 @@ class Permission(str, Enum):
     def __str__(self):
         return str(self.value)
 
-    COLLABORATOR = "CO"
     PROJECT_OWNER = "MO"
     ADMIN = "PMO"
     ACTING_PMO = "actingPMO"
@@ -147,7 +146,6 @@ class TimezonePreference(str, Enum):
 
 
 permissions_list_enum = [
-    Permission.COLLABORATOR,
     Permission.PROJECT_OWNER,
     Permission.ADMIN,
     Permission.ACTING_PMO,

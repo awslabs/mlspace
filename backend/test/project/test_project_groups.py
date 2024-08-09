@@ -26,7 +26,7 @@ from ml_space_lambda.project.lambda_functions import project_groups as lambda_ha
 from ml_space_lambda.utils.common_functions import generate_html_response
 
 PROJECT_NAME = "MyFakeProject"
-NORMAL_USER = UserModel("woz", "woz@berkeley.edu", "Steve", False, permissions=[])
+NORMAL_USER = UserModel("woz", "woz@berkeley.edu", "Steve", False)
 ADMIN_USER = UserModel("sjobs", "steve@apple.com", "Steve", False, permissions=[Permission.ADMIN])
 PROJECT = ProjectModel(
     name=PROJECT_NAME,

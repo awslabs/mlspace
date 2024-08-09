@@ -21,13 +21,15 @@ from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.group import GroupModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
+from ml_space_lambda.data_access_objects.project_group import ProjectGroupModel
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import Permission
-from ml_space_lambda.utils.common_functions import generate_html_response, serialize_permissions
+from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
 }
+MOCK_PROJECT_NAME = "TestProject"
 
 MOCK_GROUP = GroupModel(
     name="test_group",
@@ -39,6 +41,13 @@ MOCK_GROUP_USER = GroupUserModel(
     username=MOCK_GROUP.created_by,
     group_name=MOCK_GROUP.name,
 )
+
+MOCK_PROJECT_GROUPS = [
+    ProjectGroupModel(
+        group_name="my_group_1",
+        project_name=MOCK_PROJECT_NAME,
+    )
+]
 
 MOCK_USER = UserModel(MOCK_GROUP.created_by, MOCK_GROUP.created_by, "John Doe", False)
 
@@ -56,20 +65,20 @@ mock_event = {
 mock_context = mock.Mock()
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
-    from ml_space_lambda.group.lambda_functions import get as lambda_handler
+    from ml_space_lambda.group.lambda_functions import group_projects as lambda_handler
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_get_group(mock_group_dao, mock_group_user_dao):
+def test_get_project_group(mock_group_dao, mock_group_user_dao, mock_project_group_dao):
     mock_group_dao.get.return_value = MOCK_GROUP
     mock_group_user_dao.get.return_value = MOCK_GROUP_USER
+    mock_project_group_dao.get_projects_for_group.return_value = MOCK_PROJECT_GROUPS
+
     expected_response = generate_html_response(
         200,
-        {
-            "group": MOCK_GROUP.to_dict(),
-            "permissions": serialize_permissions(MOCK_GROUP_USER.permissions),
-        },
+        [project_group.to_dict() for project_group in MOCK_PROJECT_GROUPS],
     )
 
     assert lambda_handler(mock_event, mock_context) == expected_response
@@ -77,9 +86,10 @@ def test_get_group(mock_group_dao, mock_group_user_dao):
     mock_group_user_dao.get.assert_called_with(MOCK_GROUP.name, MOCK_GROUP.created_by)
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_get_group_not_a_member(mock_group_dao, mock_group_user_dao):
+def test_get_group_not_a_member(mock_group_dao, mock_group_user_dao, mock_project_group_dao):
     mock_group_dao.get.return_value = MOCK_GROUP
     mock_group_user_dao.get.return_value = None
     expected_response = generate_html_response(
@@ -92,17 +102,16 @@ def test_get_group_not_a_member(mock_group_dao, mock_group_user_dao):
     mock_group_user_dao.get.assert_called_with(MOCK_GROUP.name, MOCK_GROUP.created_by)
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_get_group_admin(mock_group_dao, mock_group_user_dao):
+def test_get_group_admin(mock_group_dao, mock_group_user_dao, mock_project_group_dao):
     mock_group_dao.get.return_value = MOCK_GROUP
     mock_group_user_dao.get.return_value = None
+    mock_project_group_dao.get_projects_for_group.return_value = MOCK_PROJECT_GROUPS
     expected_response = generate_html_response(
         200,
-        {
-            "group": MOCK_GROUP.to_dict(),
-            "permissions": [],
-        },
+        [project_group.to_dict() for project_group in MOCK_PROJECT_GROUPS],
     )
     mock_admin = UserModel(MOCK_GROUP.created_by, MOCK_GROUP.created_by, "John Doe", False, [Permission.ADMIN])
     admin_event = {
@@ -119,9 +128,10 @@ def test_get_group_admin(mock_group_dao, mock_group_user_dao):
     mock_group_user_dao.get.assert_called_with(MOCK_GROUP.name, MOCK_GROUP.created_by)
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_get_nonexistent_group(mock_group_dao, mock_group_user_dao):
+def test_get_nonexistent_group(mock_group_dao, mock_group_user_dao, mock_project_group_dao):
     mock_group_dao.get.return_value = None
     expected_response = generate_html_response(
         404,
@@ -133,9 +143,10 @@ def test_get_nonexistent_group(mock_group_dao, mock_group_user_dao):
     mock_group_user_dao.get.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
-def test_list_all_groups_client_error(mock_group_dao, mock_group_user_dao):
+def test_list_all_groups_client_error(mock_group_dao, mock_group_user_dao, mock_project_group_dao):
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
         "ResponseMetadata": {"HTTPStatusCode": 400},

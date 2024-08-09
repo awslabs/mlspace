@@ -131,7 +131,7 @@ The project users table serves as a mapping table between projects and users. Ad
 |--|--|--|
 | project | String | Unique identifier of the project a particular record pertains to.|
 | user | String | Unique identifier of the user a particular record pertains to. |
-| permissions | List | Array of the project-level permissions a user has for the associated project. Currently, the only relevant project-level permission is “MO” which is “ownership” level permissions. “CO” or collaborator is also supported as a legacy permission but does not currently have any significance.|
+| permissions | List | Array of the project-level permissions a user has for the associated project. Currently, the only relevant project-level permission is “MO” which is “ownership” level permissions.
 | role | String | ARN of the dynamic project user role for a particular record. If dynamic roles are disabled, this attribute will be an empty string.|
 
 #### Datasets Table

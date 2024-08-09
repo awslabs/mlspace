@@ -22,7 +22,6 @@ from botocore.exceptions import ClientError
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -81,7 +80,6 @@ def test_add_users_to_group_with_iam(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
 
@@ -113,7 +111,6 @@ def test_add_users_to_group(mock_user_dao, mock_group_user_dao, mock_iam_manager
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
 
@@ -162,7 +159,6 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user1",
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
     assert (
@@ -170,7 +166,6 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user2",
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
     assert (
@@ -178,7 +173,6 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user3",
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
 

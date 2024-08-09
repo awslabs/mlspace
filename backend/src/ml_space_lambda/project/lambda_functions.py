@@ -134,8 +134,7 @@ def get(event, context):
         raise ValueError(f"User is not a member of project {project_name}.")
 
     permissions = set(serialize_permissions(project_user.permissions) if project_user else [])
-    if is_member:
-        permissions.add(Permission.COLLABORATOR)
+
     if is_owner_of_project(user.username, project_name):
         permissions.add(Permission.PROJECT_OWNER)
 
@@ -175,7 +174,6 @@ def add_groups(event, context):
                 ProjectGroupModel(
                     project_name=project_name,
                     group_name=group_name,
-                    permissions=[Permission.COLLABORATOR],
                 )
             )
 
@@ -248,7 +246,7 @@ def create(event, context):
         project_created = True
 
         ensure_users_exist([username], user_dao)
-        _add_project_user(project_name, username, [Permission.PROJECT_OWNER, Permission.COLLABORATOR])
+        _add_project_user(project_name, username, [Permission.PROJECT_OWNER])
 
         return f"Successfully created project '{project_name}'"
     except Exception as e:
@@ -276,7 +274,7 @@ def add_users(event, context):
 
     ensure_users_exist(usernames, user_dao)
     for username in usernames:
-        _add_project_user(project_name, username, [Permission.COLLABORATOR])
+        _add_project_user(project_name, username, [])
 
     return f"Successfully added {len(usernames)} user(s) to {project_name}"
 

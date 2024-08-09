@@ -52,6 +52,7 @@ mock.patch.TEST_PREFIX = (
 )
 
 MOCK_PROJECT_NAME = "fake-project"
+MOCK_SECOND_PROJECT_NAME = "secondProject"
 
 
 @moto.mock_dynamodb
@@ -92,7 +93,6 @@ class TestProjectUserDAO(TestCase):
         self.UPDATE_RECORD = ProjectUserModel(
             username="jdoe@example.com",
             project_name=MOCK_PROJECT_NAME,
-            permissions=[Permission.COLLABORATOR],
         )
 
         self.ddb.put_item(
@@ -104,7 +104,6 @@ class TestProjectUserDAO(TestCase):
             username="matt@example.com",
             project_name=MOCK_PROJECT_NAME,
             role="fakeRoleName",
-            permissions=[Permission.COLLABORATOR],
         )
 
         self.ddb.put_item(
@@ -116,8 +115,7 @@ class TestProjectUserDAO(TestCase):
         for i in range(10):
             record = ProjectUserModel(
                 username=f"test.user-{i}@example.com",
-                project_name=MOCK_PROJECT_NAME if i % 2 == 0 else "secondProject",
-                permissions=[Permission.COLLABORATOR],
+                project_name=MOCK_PROJECT_NAME if i % 2 == 0 else MOCK_SECOND_PROJECT_NAME,
             )
             self.ddb.put_item(
                 TableName=self.TEST_TABLE,
@@ -144,7 +142,7 @@ class TestProjectUserDAO(TestCase):
             "add-unit-test@example.com",
             MOCK_PROJECT_NAME,
             "newRoleName",
-            [Permission.COLLABORATOR, Permission.PROJECT_OWNER],
+            [Permission.PROJECT_OWNER],
         )
         self.project_user_dao.create(new_record)
         dynamo_response = self.ddb.get_item(
@@ -166,7 +164,7 @@ class TestProjectUserDAO(TestCase):
         updated = ProjectUserModel.from_dict(self.UPDATE_RECORD.to_dict())
         updated.user = "username-that-will-get-dropped"
         updated.project = "project-name-that-will-get-dropped"
-        updated.permissions = [Permission.COLLABORATOR, Permission.PROJECT_OWNER]
+        updated.permissions = [Permission.PROJECT_OWNER]
         self.project_user_dao.update(self.UPDATE_RECORD.project, self.UPDATE_RECORD.user, updated)
 
         post_update = dynamodb_json.loads(self.ddb.get_item(TableName=self.TEST_TABLE, Key=update_item_key)["Item"])
@@ -231,3 +229,26 @@ class TestProjectUserDAO(TestCase):
     def test_get_projects_for_user_nonexistant(self):
         all_project_users = self.project_user_dao.get_projects_for_user("non-existant-user")
         assert len(all_project_users) == 0
+
+    def test_get_all_project_users(self):
+        third_project = "thirdProject"
+        new_record = ProjectUserModel(
+            username=f"madeup.user@example.com",
+            project_name=third_project,
+        )
+        self.ddb.put_item(
+            TableName=self.TEST_TABLE,
+            Item=json.loads(dynamodb_json.dumps(new_record.to_dict())),
+        )
+        all_users = self.project_user_dao.get_all()
+        found_project = False
+        found_second_project = False
+        found_third_project = False
+        for user in all_users:
+            if user.project == MOCK_PROJECT_NAME:
+                found_project = True
+            elif user.project == MOCK_SECOND_PROJECT_NAME:
+                found_second_project = True
+            elif user.project == third_project:
+                found_third_project = True
+        assert found_project and found_second_project and found_third_project

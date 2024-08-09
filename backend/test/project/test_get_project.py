@@ -41,7 +41,7 @@ MOCK_PROJECT = ProjectModel(
 MOCK_PROJECT_USER = ProjectUserModel(
     username=MOCK_PROJECT.created_by,
     project_name=MOCK_PROJECT.name,
-    permissions=[Permission.COLLABORATOR, Permission.PROJECT_OWNER],
+    permissions=[Permission.PROJECT_OWNER],
 )
 
 MOCK_USER = UserModel(MOCK_PROJECT.created_by, MOCK_PROJECT.created_by, "John Doe", False)

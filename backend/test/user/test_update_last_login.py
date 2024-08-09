@@ -40,7 +40,6 @@ def mock_user():
         email=MOCK_USERNAME,
         display_name="John Doe",
         suspended=False,
-        permissions=[],
     )
 
 

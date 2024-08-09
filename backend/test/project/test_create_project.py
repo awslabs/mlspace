@@ -72,7 +72,7 @@ def test_create_project(mock_user_dao, mock_project_dao, mock_project_user_dao, 
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.PROJECT_OWNER, Permission.COLLABORATOR],
+            permissions=[Permission.PROJECT_OWNER],
         ).to_dict()
     )
     mock_project_dao.create.assert_called_once()
@@ -178,7 +178,7 @@ def test_create_project_client_error_adding_user(mock_user_dao, mock_project_dao
         == ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.PROJECT_OWNER, Permission.COLLABORATOR],
+            permissions=[Permission.PROJECT_OWNER],
         ).to_dict()
     )
     mock_project_dao.create.assert_called_once()

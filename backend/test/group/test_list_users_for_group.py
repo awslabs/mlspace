@@ -19,7 +19,6 @@ from unittest import mock
 from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
-from ml_space_lambda.enums import Permission
 from ml_space_lambda.utils.common_functions import generate_html_response
 
 TEST_ENV_CONFIG = {
@@ -44,17 +43,14 @@ def test_list_users_for_group_success(mock_group_user_dao):
         GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="jdoe@amazon.com",
-            permissions=[Permission.COLLABORATOR],
         ),
         GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="jane@amazon.com",
-            permissions=[Permission.COLLABORATOR],
         ),
         GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="bobf",
-            permissions=[Permission.COLLABORATOR],
         ),
     ]
     expected_response = generate_html_response(
