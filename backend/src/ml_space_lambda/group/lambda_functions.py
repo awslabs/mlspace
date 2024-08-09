@@ -141,7 +141,6 @@ def add_users(event, context):
                 GroupUserModel(
                     group_name=group_name,
                     username=username,
-                    permissions=[],
                 )
             )
 

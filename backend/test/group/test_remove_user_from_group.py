@@ -37,9 +37,8 @@ MOCK_GROUP_NAME = "example_group"
 MOCK_GO_USER = GroupUserModel(
     group_name=MOCK_GROUP_NAME,
     username=MOCK_USERNAME,
-    permissions=[],
 )
-MOCK_CO_USER = GroupUserModel(group_name=MOCK_GROUP_NAME, username="jane-doe", permissions=[])
+MOCK_CO_USER = GroupUserModel(group_name=MOCK_GROUP_NAME, username="jane-doe")
 
 mock_event = {"pathParameters": {"groupName": MOCK_GROUP_NAME, "username": MOCK_USERNAME}}
 mock_context = mock.Mock()

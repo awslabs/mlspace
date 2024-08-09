@@ -174,7 +174,6 @@ def add_groups(event, context):
                 ProjectGroupModel(
                     project_name=project_name,
                     group_name=group_name,
-                    permissions=[],
                 )
             )
 

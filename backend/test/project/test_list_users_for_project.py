@@ -49,12 +49,10 @@ def test_list_users_for_project_success(mock_project_user_dao):
         ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username="jane@amazon.com",
-            permissions=[],
         ),
         ProjectUserModel(
             project_name=MOCK_PROJECT_NAME,
             username="bobf",
-            permissions=[],
         ),
     ]
     expected_response = generate_html_response(

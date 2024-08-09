@@ -98,7 +98,6 @@ def test_delete_group(
         GroupUserModel(
             username=mock_username,
             group_name=MOCK_GROUP_NAME,
-            permissions=[],
         )
     ]
     mock_group_user_dao.delete.return_value = None

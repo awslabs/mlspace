@@ -93,7 +93,6 @@ class TestGroupUserDAO(TestCase):
         self.UPDATE_RECORD = GroupUserModel(
             username="jdoe@example.com",
             group_name=MOCK_GROUP_NAME,
-            permissions=[],
         )
 
         self.ddb.put_item(
@@ -105,7 +104,6 @@ class TestGroupUserDAO(TestCase):
             username="matt@example.com",
             group_name=MOCK_GROUP_NAME,
             role="fakeRoleName",
-            permissions=[],
         )
 
         self.ddb.put_item(
@@ -118,7 +116,6 @@ class TestGroupUserDAO(TestCase):
             record = GroupUserModel(
                 username=f"test.user-{i}@example.com",
                 group_name=MOCK_GROUP_NAME if i % 2 == 0 else MOCK_SECOND_GROUP,
-                permissions=[],
             )
             self.ddb.put_item(
                 TableName=self.TEST_TABLE,

@@ -93,7 +93,6 @@ class TestProjectUserDAO(TestCase):
         self.UPDATE_RECORD = ProjectUserModel(
             username="jdoe@example.com",
             project_name=MOCK_PROJECT_NAME,
-            permissions=[],
         )
 
         self.ddb.put_item(
@@ -105,7 +104,6 @@ class TestProjectUserDAO(TestCase):
             username="matt@example.com",
             project_name=MOCK_PROJECT_NAME,
             role="fakeRoleName",
-            permissions=[],
         )
 
         self.ddb.put_item(
@@ -118,7 +116,6 @@ class TestProjectUserDAO(TestCase):
             record = ProjectUserModel(
                 username=f"test.user-{i}@example.com",
                 project_name=MOCK_PROJECT_NAME if i % 2 == 0 else MOCK_SECOND_PROJECT_NAME,
-                permissions=[],
             )
             self.ddb.put_item(
                 TableName=self.TEST_TABLE,
@@ -238,7 +235,6 @@ class TestProjectUserDAO(TestCase):
         new_record = ProjectUserModel(
             username=f"madeup.user@example.com",
             project_name=third_project,
-            permissions=[],
         )
         self.ddb.put_item(
             TableName=self.TEST_TABLE,

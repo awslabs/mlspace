@@ -80,7 +80,6 @@ def test_add_users_to_group_with_iam(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username=MOCK_USERNAME,
-            permissions=[],
         ).to_dict()
     )
 
@@ -112,7 +111,6 @@ def test_add_users_to_group(mock_user_dao, mock_group_user_dao, mock_iam_manager
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username=MOCK_USERNAME,
-            permissions=[],
         ).to_dict()
     )
 
@@ -161,7 +159,6 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user1",
-            permissions=[],
         ).to_dict()
     )
     assert (
@@ -169,7 +166,6 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user2",
-            permissions=[],
         ).to_dict()
     )
     assert (
@@ -177,7 +173,6 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user3",
-            permissions=[],
         ).to_dict()
     )
 

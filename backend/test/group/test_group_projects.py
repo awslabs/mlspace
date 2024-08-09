@@ -40,14 +40,12 @@ MOCK_GROUP = GroupModel(
 MOCK_GROUP_USER = GroupUserModel(
     username=MOCK_GROUP.created_by,
     group_name=MOCK_GROUP.name,
-    permissions=[],
 )
 
 MOCK_PROJECT_GROUPS = [
     ProjectGroupModel(
         group_name="my_group_1",
         project_name=MOCK_PROJECT_NAME,
-        permissions=[],
     )
 ]
 

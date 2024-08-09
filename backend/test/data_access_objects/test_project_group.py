@@ -92,7 +92,6 @@ class TestProjectUserDAO(TestCase):
         self.UPDATE_RECORD = ProjectGroupModel(
             group_name="my_group_1",
             project_name=MOCK_PROJECT_NAME,
-            permissions=[],
         )
 
         self.ddb.put_item(
@@ -103,7 +102,6 @@ class TestProjectUserDAO(TestCase):
         self.DELETE_RECORD = ProjectGroupModel(
             group_name="my_group_2",
             project_name=MOCK_PROJECT_NAME,
-            permissions=[],
         )
 
         self.ddb.put_item(
@@ -116,7 +114,6 @@ class TestProjectUserDAO(TestCase):
             record = ProjectGroupModel(
                 group_name=f"my_group_1_{i}",
                 project_name=MOCK_PROJECT_NAME if i % 2 == 0 else "secondProject",
-                permissions=[],
             )
             self.ddb.put_item(
                 TableName=self.TEST_TABLE,
