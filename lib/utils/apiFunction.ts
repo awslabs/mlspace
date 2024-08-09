@@ -38,6 +38,7 @@ export type MLSpacePythonLambdaFunction = {
     environment?: {
         [key: string]: string;
     };
+    noAuthorizer?: boolean
 };
 
 export function registerAPIEndpoint (
@@ -91,10 +92,13 @@ export function registerAPIEndpoint (
         securityGroups,
     });
     const functionResource = getOrCreateResource(stack, api.root, funcDef.path.split('/'));
-    functionResource.addMethod(funcDef.method, new LambdaIntegration(handler), {
+    const methodOptions = funcDef.noAuthorizer ? {
+        authorizationType: AuthorizationType.NONE
+    } : {
         authorizer,
         authorizationType: AuthorizationType.CUSTOM,
-    });
+    };
+    functionResource.addMethod(funcDef.method, new LambdaIntegration(handler), methodOptions);
 }
 
 function getOrCreateResource (stack: Stack, parentResource: IResource, path: string[]): IResource {
