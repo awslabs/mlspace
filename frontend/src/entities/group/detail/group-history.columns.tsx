@@ -44,4 +44,4 @@ export const groupHistoryColumns: TableProps.ColumnDefinition<IGroupMembershipHi
     cell: (item) => new Date(item.actionedAt * 1000).toLocaleString(),
 }];
 
-export const visibleGroupHistoryColumns: string[] = ['user', 'group', 'action', 'actionedBy', 'actionedAt'];
+export const visibleGroupHistoryColumns: string[] = ['user', 'action', 'actionedBy', 'actionedAt'];
