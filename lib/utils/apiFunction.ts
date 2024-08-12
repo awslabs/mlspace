@@ -65,6 +65,7 @@ export function registerAPIEndpoint (
         code: Code.fromAsset(lambdaSourcePath),
         description: funcDef.description,
         environment: {
+            GROUPS_MEMBERSHIP_HISTORY_TABLE_NAME: mlspaceConfig.GROUPS_MEMBERSHIP_HISTORY_TABLE_NAME,
             DATASETS_TABLE: mlspaceConfig.DATASETS_TABLE_NAME,
             PROJECTS_TABLE: mlspaceConfig.PROJECTS_TABLE_NAME,
             PROJECT_USERS_TABLE: mlspaceConfig.PROJECT_USERS_TABLE_NAME,

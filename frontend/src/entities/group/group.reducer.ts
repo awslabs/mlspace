@@ -20,15 +20,18 @@ import { IGroup, IGroupWithPermissions } from '../../shared/model/group.model';
 import { IGroupUser } from '../../shared/model/groupUser.model';
 import { IDataset } from '../../shared/model';
 import { IProjectGroup } from '../../shared/model/projectGroup.model';
+import { IGroupMembershipHistory } from '../../shared/model/groupMembershipHistory.model';
 
 const initialState = {
     allGroups: [] as IGroup[],
     currentGroupUsers: [] as IGroupUser[],
     currentGroupProjects: [] as IProjectGroup[],
     currentGroupDatasets: [] as IDataset[],
+    currentGroupMembershipHistory: [] as IGroupMembershipHistory[],
     loading: false,
     datasetsLoading: false,
-    projectsLoading: false
+    projectsLoading: false,
+    groupMembershipHistoryLoading: false,
 };
 
 export type AddGroupUserRequest = {
@@ -87,6 +90,11 @@ export const addGroupUsers = createAsyncThunk('group/add_users', async (data: Ad
     return axios.post(requestUrl, JSON.stringify(data));
 });
 
+export const getGroupMembershipHistory = createAsyncThunk('group/group_membership_history', async (groupName: string) => {
+    const requestUrl = `/group_membership_history/${groupName}`;
+    return axios.get<IGroupMembershipHistory[]>(requestUrl).catch(axiosCatch);
+});
+
 export const GroupSlice = createSlice({
     name: 'group',
     initialState,
@@ -121,6 +129,13 @@ export const GroupSlice = createSlice({
                     projectsLoading: false
                 };
             })
+            .addMatcher(isFulfilled(getGroupMembershipHistory), (state, action) => {
+                return {
+                    ...state,
+                    currentGroupMembershipHistory: action.payload.data,
+                    groupMembershipHistoryLoading: false,
+                };
+            })
             .addMatcher(isPending(getGroupDatasets), (state) => {
                 return {
                     ...state,
@@ -144,6 +159,12 @@ export const GroupSlice = createSlice({
                     ...state,
                     projectsLoading: true      
                 };
+            })
+            .addMatcher(isPending(getGroupMembershipHistory), (state) => {
+                return {
+                    ...state,
+                    groupMembershipHistoryLoading: true
+                };
             });
     }
 });
@@ -154,3 +175,4 @@ export const selectCurrentGroupProjects = (state: any): IProjectGroup[] => state
 export const selectLoadingGroupProjects = (state: any): boolean => state.group.projectsLoading;
 export const currentGroupDatasets = (state: any): IDataset[] => state.group.currentGroupDatasets;
 export const selectAllGroups = (state: any): IGroup[] => state.group.allGroups;
+export const selectCurrentGroupMembershipHistory = (state: any): IGroupMembershipHistory[] => state.group.currentGroupMembershipHistory;

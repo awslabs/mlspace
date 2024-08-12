@@ -46,8 +46,8 @@ def test_cleanup(mock_user_dao, mock_project_user_dao, mock_group_user_dao):
 
     # Update the model objects and ensure they removed the 'CO' permissions
     mock_user.permissions = [Permission.ADMIN]
-    assert mock_user_dao.update.called_with(mock_user.username, mock_user)
+    mock_user_dao.update.assert_called_with(mock_user.username, mock_user)
     mock_project_user.permissions = [Permission.ADMIN]
-    assert mock_project_user_dao.update.called_with(mock_project_user.project, mock_project_user.user, mock_project_user)
+    mock_project_user_dao.update.assert_called_with(mock_project_user.project, mock_project_user.user, mock_project_user)
     mock_group_user.permissions = [Permission.ADMIN]
-    assert mock_group_user_dao.update.called_with(mock_group_user.group, mock_group_user.user, mock_group_user)
+    mock_group_user_dao.update.assert_called_with(mock_group_user.group, mock_group_user.user, mock_group_user)

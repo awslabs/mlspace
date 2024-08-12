@@ -302,6 +302,8 @@ def lambda_handler(event, context):
             elif requested_resource == "/group" and request_method == "POST":
                 if IS_ADMIN:
                     policy_statement["Effect"] = "Allow"
+            elif requested_resource == "/group_membership_history" and request_method == "GET":
+                policy_statement["Effect"] = "Allow"
             elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
                 # If this is a request for a dataset related presigned url or for
                 # creating a new dataset, we need to determine the underlying dataset

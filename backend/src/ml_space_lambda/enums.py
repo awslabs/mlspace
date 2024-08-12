@@ -99,6 +99,7 @@ class EnvVariable(str, Enum):
     APP_CONFIGURATION_TABLE = "APP_CONFIGURATION_TABLE"
     GROUPS_TABLE = "GROUPS_TABLE"
     GROUP_DATASETS_TABLE = "GROUP_DATASETS_TABLE"
+    GROUPS_MEMBERSHIP_HISTORY_TABLE = "GROUPS_MEMBERSHIP_HISTORY_TABLE"
     GROUP_USERS_TABLE = "GROUP_USERS_TABLE"
     AWS_DEFAULT_REGION = "AWS_DEFAULT_REGION"
     DATA_BUCKET = "DATA_BUCKET"
@@ -127,6 +128,14 @@ class Permission(str, Enum):
     PROJECT_OWNER = "MO"
     ADMIN = "PMO"
     ACTING_PMO = "actingPMO"
+
+
+class GroupUserAction(str, Enum):
+    def __str__(self):
+        return str(self.value)
+
+    ADDED = "ADDED"
+    REMOVED = "REMOVED"
 
 
 class IAMResourceType(str, Enum):

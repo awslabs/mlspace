@@ -441,6 +441,32 @@ def test_create_group(mock_user_dao, user: UserModel, allow: bool):
 
 
 @pytest.mark.parametrize(
+    "resource,user,allow",
+    [
+        (f"/group_membership_history/{MOCK_GROUP_NAME}", MOCK_USER, True),
+        (f"/group_membership_history/{MOCK_GROUP_NAME}", MOCK_ADMIN_USER, True),
+    ],
+    ids=[
+        "non_admin_list_group_history",
+        "admin_list_group_history",
+    ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_list_group_resources(mock_user_dao, resource: str, user: UserModel, allow: bool):
+    mock_user_dao.get.return_value = user
+    assert lambda_handler(
+        mock_event(
+            user=user,
+            resource=resource,
+            method="GET",
+            path_params={"groupName": MOCK_GROUP_NAME},
+        ),
+        {},
+    ) == policy_response(allow=allow, user=user)
+
+
+@pytest.mark.parametrize(
     "user,method,allow",
     [
         (MOCK_ADMIN_USER, "DELETE", True),

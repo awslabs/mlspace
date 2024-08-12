@@ -531,6 +531,17 @@ export class CoreStack extends Stack {
             projectionType: ProjectionType.KEYS_ONLY,
         });
 
+        // Group Membership History Table
+        const groupMembershipHistoryAttribute = { name: 'group', type: AttributeType.STRING };
+        const groupMembershipHistorySortAttribute = { name: 'actionedAt', type: AttributeType.NUMBER };
+        new Table(this, 'mlspace-ddb-group-membership-history', {
+            tableName: props.mlspaceConfig.GROUPS_MEMBERSHIP_HISTORY_TABLE_NAME,
+            partitionKey: groupMembershipHistoryAttribute,
+            sortKey: groupMembershipHistorySortAttribute,
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            encryption: TableEncryption.AWS_MANAGED,
+        });
+
         // Users Table
         new Table(this, 'mlspace-ddb-users', {
             tableName: props.mlspaceConfig.USERS_TABLE_NAME,

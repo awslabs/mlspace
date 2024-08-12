@@ -22,11 +22,12 @@ import urllib
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
 from ml_space_lambda.data_access_objects.group import GroupDAO, GroupModel
 from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
+from ml_space_lambda.data_access_objects.group_membership_history import GroupMembershipHistoryDAO, GroupMembershipHistoryModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO, GroupUserModel
 from ml_space_lambda.data_access_objects.project import ProjectDAO
 from ml_space_lambda.data_access_objects.project_group import ProjectGroupDAO
 from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
-from ml_space_lambda.enums import EnvVariable, Permission
+from ml_space_lambda.enums import EnvVariable, GroupUserAction, Permission
 from ml_space_lambda.utils.admin_utils import is_admin_get_all
 from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permissions, validate_input
 from ml_space_lambda.utils.exceptions import ResourceNotFound
@@ -44,6 +45,7 @@ group_dataset_dao = GroupDatasetDAO()
 dataset_dao = DatasetDAO()
 project_dao = ProjectDAO()
 project_group_dao = ProjectGroupDAO()
+group_membership_history_dao = GroupMembershipHistoryDAO()
 
 group_name_regex = re.compile(r"[^a-zA-Z0-9]")
 group_desc_regex = re.compile(r"[^ -~]")
@@ -131,6 +133,7 @@ def add_users(event, context):
     group_name = event["pathParameters"]["groupName"]
     request = json.loads(event["body"])
     usernames = request["usernames"]
+    acting_user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
     if group_dao.get(group_name):
         project_groups = project_group_dao.get_projects_for_group(group_name)
 
@@ -144,11 +147,20 @@ def add_users(event, context):
                 )
             )
 
+            group_membership_history_dao.create(
+                GroupMembershipHistoryModel(
+                    group_name=group_name,
+                    username=username,
+                    action=GroupUserAction.ADDED,
+                    actioned_by=acting_user.username,
+                )
+            )
+
             if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
                 for project_group in project_groups:
                     iam_role_arn = iam_manager.get_iam_role_arn(project_group.project, username)
                     if iam_role_arn is None:
-                        iam_role_arn = iam_manager.add_iam_role(project_group.project, username)
+                        iam_manager.add_iam_role(project_group.project, username)
 
             iam_manager.update_user_policy(username)
 
@@ -160,12 +172,22 @@ def remove_user(event, context):
     group_name = event["pathParameters"]["groupName"]
     username = urllib.parse.unquote(event["pathParameters"]["username"])
 
+    acting_user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
     group_member = group_user_dao.get(group_name, username)
 
     if not group_member:
         raise Exception(f"{username} is not a member of {group_name}")
 
     group_user_dao.delete(group_name, username)
+
+    group_membership_history_dao.create(
+        GroupMembershipHistoryModel(
+            group_name=group_name,
+            username=username,
+            action=GroupUserAction.REMOVED,
+            actioned_by=acting_user.username,
+        )
+    )
 
     env_variables = get_environment_variables()
     if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
@@ -214,6 +236,7 @@ def update(event, context):
 def delete(event, context):
     env_variables = get_environment_variables()
     group_name = event["pathParameters"]["groupName"]
+    acting_user = UserModel.from_dict(json.loads(event["requestContext"]["authorizer"]["user"]))
 
     # Verify group exists
     existing_group = group_dao.get(group_name)
@@ -242,6 +265,15 @@ def delete(event, context):
     # Remove all group related entries from the user/group table
     for group_user in to_delete_group_users:
         group_user_dao.delete(group_name, group_user.user)
+
+        group_membership_history_dao.create(
+            GroupMembershipHistoryModel(
+                group_name=group_name,
+                username=group_user.user,
+                action=GroupUserAction.REMOVED,
+                actioned_by=acting_user.username,
+            )
+        )
 
         # Removes the group permissions for this user
         if env_variables[EnvVariable.MANAGE_IAM_ROLES]:
