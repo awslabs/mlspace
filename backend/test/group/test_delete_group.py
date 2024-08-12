@@ -126,7 +126,7 @@ def test_delete_group(
         == GroupMembershipHistoryModel(
             group_name=MOCK_GROUP_NAME,
             username=mock_username,
-            action=GroupUserAction.REMOVED,
+            action=GroupUserAction.GROUP_DELETED,
             actioned_by=MOCK_USERNAME,
         ).to_dict()
     )

@@ -25,4 +25,5 @@ export type IGroupMembershipHistory = {
 export enum GroupUserAction {
     ADDED = 'ADDED',
     REMOVED = 'REMOVED',
+    GROUP_DELETED = 'GROUP_DELETED'
 }

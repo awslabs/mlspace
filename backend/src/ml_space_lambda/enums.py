@@ -136,6 +136,7 @@ class GroupUserAction(str, Enum):
 
     ADDED = "ADDED"
     REMOVED = "REMOVED"
+    GROUP_DELETED = "GROUP_DELETED"
 
 
 class IAMResourceType(str, Enum):

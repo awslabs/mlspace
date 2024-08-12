@@ -270,7 +270,7 @@ def delete(event, context):
             GroupMembershipHistoryModel(
                 group_name=group_name,
                 username=group_user.user,
-                action=GroupUserAction.REMOVED,
+                action=GroupUserAction.GROUP_DELETED,
                 actioned_by=acting_user.username,
             )
         )
