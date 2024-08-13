@@ -45,7 +45,6 @@ export const getAllGroups = createAsyncThunk('group/fetch_all_groups', async (ad
     if (adminGetAll) {
         params.append('adminGetAll', 'true');
     }
-    //TOOD: get the number of members too
     return axios.get<IGroup[]>(`/group${params.size > 0 ? '?' + params.toString() : ''}`);
 });
 
