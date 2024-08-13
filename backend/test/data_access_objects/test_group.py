@@ -48,6 +48,8 @@ mock.patch.TEST_PREFIX = (
     "tearDown",
 )
 
+# TODO: numMembers
+
 
 @moto.mock_dynamodb
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)

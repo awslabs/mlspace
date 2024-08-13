@@ -35,21 +35,25 @@ MOCK_GROUPS = [
         name="example_group_1",
         description="example description 1",
         created_by="polly@example.com",
+        num_members=1,
     ),
     GroupModel(
         name="example_group_2",
         description="example description 2",
         created_by="finn@example.com",
+        num_members=1,
     ),
     GroupModel(
         name="example_group_3",
         description="example description 3",
         created_by="finn@example.com",
+        num_members=1,
     ),
     GroupModel(
         name="example_group_4",
         description="example description 4",
         created_by="gina@example.com",
+        num_members=1,
     ),
 ]
 
@@ -86,11 +90,15 @@ def mock_event(is_admin: bool = False, query_params: Optional[Dict[str, str]] = 
     }
 
 
+# TODO: numMembers should match
+
+
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 def test_list_all_groups_admin_is_in(mock_group_dao, mock_group_user_dao):
     mock_group_dao.get_all.return_value = MOCK_GROUPS
     mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+    mock_group_user_dao.get_users_for_group.return_value = [GroupUserModel(group_name="some-group", username=MOCK_USERNAME)]
 
     expected_response = generate_html_response(
         200,
@@ -106,6 +114,7 @@ def test_list_all_groups_admin_is_in(mock_group_dao, mock_group_user_dao):
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 def test_list_all_groups_admin(mock_group_dao, mock_group_user_dao):
     mock_group_dao.get_all.return_value = MOCK_GROUPS
+    mock_group_user_dao.get_users_for_group.return_value = [GroupUserModel(group_name="some-group", username=MOCK_USERNAME)]
 
     expected_response = generate_html_response(
         200,
@@ -122,6 +131,7 @@ def test_list_all_groups_admin(mock_group_dao, mock_group_user_dao):
 def test_list_all_groups_user(mock_group_dao, mock_group_user_dao):
     mock_group_dao.get_all.return_value = [MOCK_GROUPS[1]]
     mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+    mock_group_user_dao.get_users_for_group.return_value = [GroupUserModel(group_name="some-group", username=MOCK_USERNAME)]
     expected_response = generate_html_response(
         200,
         [MOCK_GROUPS[1].to_dict()],

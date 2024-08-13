@@ -190,6 +190,9 @@ def list_all(event, context):
     else:
         group_names = [group.group for group in group_user_dao.get_groups_for_user(user.username)]
         groups = group_dao.get_all(group_names=group_names)
+    for group in groups:
+        group_users = group_user_dao.get_users_for_group(group.name)
+        group.num_members = len(group_users)
     return [group.to_dict() for group in groups]
 
 

@@ -19,6 +19,7 @@ export type IGroup = {
     name: string;
     description: string;
     isOwner?: boolean;
+    numMembers?: number;
 };
 
 export type IGroupWithPermissions = {
