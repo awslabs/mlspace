@@ -74,6 +74,7 @@ def test_environment_variables():
             EnvVariable.PROJECT_GROUPS_TABLE: "mlspace-project-groups",
             EnvVariable.GROUPS_TABLE: "mlspace-groups",
             EnvVariable.GROUP_DATASETS_TABLE: "mlspace-group-datasets",
+            EnvVariable.GROUPS_MEMBERSHIP_HISTORY_TABLE: "mlspace-group-membership-history",
             EnvVariable.GROUP_USERS_TABLE: "mlspace-group-users",
             EnvVariable.RESOURCE_METADATA_TABLE: "mlspace-resource-metadata",
             EnvVariable.RESOURCE_SCHEDULE_TABLE: "mlspace-resource-schedule",

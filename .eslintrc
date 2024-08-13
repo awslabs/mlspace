@@ -78,6 +78,7 @@
                     "tls",
                     "workteams",
                     "acl",
+                    "actioned",
                     "adadelta",
                     "adagrad",
                     "adam",

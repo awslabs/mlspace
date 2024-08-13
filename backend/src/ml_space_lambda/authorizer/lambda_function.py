@@ -251,9 +251,10 @@ def lambda_handler(event, context):
                                 if project_user:
                                     policy_statement["Effect"] = "Allow"
                 elif "groupName" in path_params:
-                    if IS_ADMIN and request_method in ["POST", "PUT", "DELETE"]:
+                    is_group_member = _is_group_member(path_params["groupName"], username)
+                    if IS_ADMIN:
                         policy_statement["Effect"] = "Allow"
-                    elif request_method == "GET":
+                    elif request_method == "GET" and is_group_member:
                         policy_statement["Effect"] = "Allow"
                 else:
                     # All other sagemaker resources have the same general handling, GET calls
@@ -661,3 +662,10 @@ def _get_oidc_props(key_id: str) -> Tuple[Optional[str], Optional[str]]:
         raise ValueError("Missing OIDC configuration parameters.")
 
     return (oidc_keys[key_id], oidc_client_name)
+
+
+def _is_group_member(group_name: str, username: str) -> bool:
+    group = group_user_dao.get(group_name, username)
+    if group:
+        return True
+    return False

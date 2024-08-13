@@ -218,23 +218,23 @@ export const hoursToDays = (hours: number | undefined): number | undefined => {
 };
 
 /**
- * Converts a terminationTime in the form of seconds since epoch to a UI friendly date time string
+ * Converts an epochTime in the form of seconds since epoch to a UI friendly date time string
  * in the users preferred timezone.
  *
- * @param terminationTime datetime in the form of seconds since epoch
+ * @param epochTime datetime in the form of seconds since epoch
  * @param timeOnly whether or not the display string should be only include the time (notebooks)
  * @returns display friendly string of date time in the users preferred timezone
  */
-export const formatTerminationTimestamp = (terminationTime: number, timeOnly = false) => {
-    const terminationDate = new Date(terminationTime * 1000);
+export const formatEpochTimestamp = (epochTime: number, timeOnly = false) => {
+    const dateTime = new Date(epochTime * 1000);
     if (timeOnly) {
-        return terminationDate.toLocaleTimeString('en-US', {
+        return dateTime.toLocaleTimeString('en-US', {
             timeZone: 'UTC',
             hour12: false,
             timeZoneName: 'short',
         });
     } else {
-        return dateToDisplayString(terminationDate);
+        return dateToDisplayString(dateTime);
     }
 };
 

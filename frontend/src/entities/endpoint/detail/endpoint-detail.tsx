@@ -35,7 +35,7 @@ import {
     EndpointConfigDetailsView,
 } from '../../endpoint-config/common-components';
 import { IEndpointConfig } from '../../../shared/model/endpoint-config.model';
-import { formatDate, formatTerminationTimestamp } from '../../../shared/util/date-utils';
+import { formatDate, formatEpochTimestamp } from '../../../shared/util/date-utils';
 import { prettyStatus } from '../../../shared/util/table-utils';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
@@ -108,7 +108,7 @@ function EndpointDetail () {
             'Auto-termination time',
             <>
                 {endpoint.TerminationTime
-                    ? formatTerminationTimestamp(endpoint.TerminationTime)
+                    ? formatEpochTimestamp(endpoint.TerminationTime)
                     : 'Disabled'}
                 {(hasPermission(Permission.PROJECT_OWNER, projectPermissions) ||
                     hasPermission(Permission.ADMIN, currentUser.permissions) ||

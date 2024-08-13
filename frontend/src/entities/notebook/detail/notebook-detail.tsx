@@ -30,7 +30,7 @@ import {
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { prettyStatus } from '../../../shared/util/table-utils';
 import DetailsContainer from '../../../modules/details-container';
-import { formatDate, formatTerminationTimestamp } from '../../../shared/util/date-utils';
+import { formatDate, formatEpochTimestamp } from '../../../shared/util/date-utils';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { setDeleteModal, setResourceScheduleModal } from '../../../modules/modal/modal.reducer';
 import { getNotebookInstanceUrl, notebookCluster } from '../notebook.service';
@@ -119,7 +119,7 @@ function NotebookDetail () {
             'Auto stop time',
             <>
                 {notebook.NotebookDailyStopTime
-                    ? formatTerminationTimestamp(notebook.NotebookDailyStopTime)
+                    ? formatEpochTimestamp(notebook.NotebookDailyStopTime)
                     : 'Disabled'}
                 {(hasPermission(Permission.PROJECT_OWNER, projectPermissions) ||
                     hasPermission(Permission.ADMIN, currentUser.permissions) ||

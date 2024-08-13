@@ -65,6 +65,7 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
             EnvVariable.PROJECT_GROUPS_TABLE: "mlspace-project-groups",
             EnvVariable.PROJECTS_TABLE: "mlspace-projects",
             EnvVariable.GROUP_DATASETS_TABLE: "mlspace-group-datasets",
+            EnvVariable.GROUPS_MEMBERSHIP_HISTORY_TABLE: "mlspace-group-membership-history",
             EnvVariable.GROUP_USERS_TABLE: "mlspace-group-users",
             EnvVariable.GROUPS_TABLE: "mlspace-groups",
             EnvVariable.RESOURCE_METADATA_TABLE: "mlspace-resource-metadata",

@@ -13,13 +13,16 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-
+import json
 from unittest import mock
 
 from botocore.exceptions import ClientError
 
+from ml_space_lambda.data_access_objects.group_membership_history import GroupMembershipHistoryModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.data_access_objects.project_group import ProjectGroupModel
+from ml_space_lambda.data_access_objects.user import UserModel
+from ml_space_lambda.enums import GroupUserAction
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -34,22 +37,28 @@ with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):
 MOCK_USERNAME = "jdoe@amazon.com"
 MOCK_GROUP_NAME = "example_group"
 
+MOCK_USER = UserModel(MOCK_USERNAME, "dsmith@amazon.com", "Dog Smith", False, [])
 MOCK_GO_USER = GroupUserModel(
     group_name=MOCK_GROUP_NAME,
     username=MOCK_USERNAME,
 )
 MOCK_CO_USER = GroupUserModel(group_name=MOCK_GROUP_NAME, username="jane-doe")
 
-mock_event = {"pathParameters": {"groupName": MOCK_GROUP_NAME, "username": MOCK_USERNAME}}
+mock_event = {
+    "requestContext": {"authorizer": {"principalId": MOCK_USERNAME, "user": json.dumps(MOCK_USER.to_dict())}},
+    "pathParameters": {"groupName": MOCK_GROUP_NAME, "username": MOCK_USERNAME},
+}
+
 mock_context = mock.Mock()
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.is_member_of_project")
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 def test_remove_user_from_group_success(
-    mock_group_user_dao, mock_iam_manager, mock_project_group_dao, mock_is_member_of_project
+    mock_group_user_dao, mock_iam_manager, mock_project_group_dao, mock_group_membership_history_dao, mock_is_member_of_project
 ):
     fake_role_arn = "arn:aws::012345678901:iam:role/some-fake-rolw"
     mlspace_config.env_variables = {}
@@ -64,10 +73,11 @@ def test_remove_user_from_group_success(
         assert (
             lambda_handler(
                 {
+                    "requestContext": {"authorizer": {"principalId": MOCK_USERNAME, "user": json.dumps(MOCK_USER.to_dict())}},
                     "pathParameters": {
                         "groupName": MOCK_GROUP_NAME,
                         "username": MOCK_CO_USER.user,
-                    }
+                    },
                 },
                 mock_context,
             )
@@ -80,11 +90,22 @@ def test_remove_user_from_group_success(
     mock_iam_manager.update_user_policy.assert_called_with(MOCK_CO_USER.user)
     mock_iam_manager.get_iam_role_arn.assert_called_once()
     mock_iam_manager.remove_project_user_roles.assert_called_with([fake_role_arn])
+    mock_group_membership_history_dao.create.assert_called_once()
+    assert (
+        mock_group_membership_history_dao.create.call_args_list[0].args[0].to_dict()
+        == GroupMembershipHistoryModel(
+            group_name=MOCK_GROUP_NAME,
+            username=MOCK_CO_USER.user,
+            action=GroupUserAction.REMOVED,
+            actioned_by=MOCK_USERNAME,
+        ).to_dict()
+    )
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_failure_not_in_group(mock_group_user_dao, mock_iam_manager):
+def test_remove_user_from_group_failure_not_in_group(mock_group_user_dao, mock_iam_manager, mock_group_membership_history_dao):
     expected_response = generate_html_response(400, f"Bad Request: {MOCK_USERNAME} is not a member of {MOCK_GROUP_NAME}")
     mock_group_user_dao.get.return_value = None
 
@@ -94,11 +115,13 @@ def test_remove_user_from_group_failure_not_in_group(mock_group_user_dao, mock_i
     mock_group_user_dao.get_users_for_group.assert_not_called()
     mock_group_user_dao.delete.assert_not_called()
     mock_iam_manager.update_user_policy.assert_not_called()
+    mock_group_membership_history_dao.create.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_client_error(mock_group_user_dao, mock_iam_manager):
+def test_remove_user_from_group_client_error(mock_group_user_dao, mock_iam_manager, mock_group_membership_history_dao):
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
         "ResponseMetadata": {"HTTPStatusCode": 400},
@@ -115,14 +138,17 @@ def test_remove_user_from_group_client_error(mock_group_user_dao, mock_iam_manag
     mock_group_user_dao.get_users_for_group.assert_not_called()
     mock_group_user_dao.delete.assert_not_called()
     mock_iam_manager.update_user_policy.assert_not_called()
+    mock_group_membership_history_dao.create.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
-def test_remove_user_from_group_missing_parameters(mock_group_user_dao, mock_iam_manager):
+def test_remove_user_from_group_missing_parameters(mock_group_user_dao, mock_iam_manager, mock_group_membership_history_dao):
     expected_response = generate_html_response(400, "Missing event parameter: 'pathParameters'")
     assert lambda_handler({}, mock_context) == expected_response
     mock_group_user_dao.get.assert_not_called()
     mock_group_user_dao.get_users_for_group.assert_not_called()
     mock_group_user_dao.delete.assert_not_called()
     mock_iam_manager.update_user_policy.assert_not_called()
+    mock_group_membership_history_dao.create.assert_not_called()
