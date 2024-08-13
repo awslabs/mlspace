@@ -38,6 +38,7 @@ import { ApiDeploymentStack } from '../lib/stacks/api/apiDeployment';
 import { MLSpaceConfig, generateConfig } from '../lib/utils/configTypes';
 import { AppConfigurationApiStack } from '../lib/stacks/api/appConfiguration';
 import { GroupsApiStack } from '../lib/stacks/api/groups';
+import { GroupMembershipHistoryApiStack } from '../lib/stacks/api/groupMembershipHistory';
 
 
 const config: MLSpaceConfig = generateConfig();
@@ -195,6 +196,7 @@ const apiStacks = [
     new EmrApiStack(app, 'mlspace-emr-apis', apiStackProperties),
     new AppConfigurationApiStack(app, 'mlspace-app-config-apis', apiStackProperties),
     new GroupsApiStack(app, 'mlspace-group-apis', apiStackProperties),
+    new GroupMembershipHistoryApiStack(app, 'mlspace-group-membership-history-apis', apiStackProperties),
 ];
 
 if (enableTranslate) {
