@@ -252,9 +252,9 @@ def lambda_handler(event, context):
                                     policy_statement["Effect"] = "Allow"
                 elif "groupName" in path_params:
                     is_group_member = _is_group_member(path_params["groupName"], username)
-                    if IS_ADMIN and request_method in ["POST", "PUT", "DELETE"]:
+                    if IS_ADMIN:
                         policy_statement["Effect"] = "Allow"
-                    elif request_method == "GET" and (IS_ADMIN or is_group_member):
+                    elif request_method == "GET" and is_group_member:
                         policy_statement["Effect"] = "Allow"
                 else:
                     # All other sagemaker resources have the same general handling, GET calls
