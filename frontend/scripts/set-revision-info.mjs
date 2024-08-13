@@ -15,7 +15,7 @@
 */
 import getRepoInfo from 'git-repo-info';
 import fs from 'fs';  
-import packageFile from '../package.json' assert { type: 'json' };
+import packageFile from '../package.json' with { type: 'json' };
 
 
 const info = getRepoInfo();
