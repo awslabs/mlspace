@@ -441,20 +441,27 @@ def test_create_group(mock_user_dao, user: UserModel, allow: bool):
 
 
 @pytest.mark.parametrize(
-    "resource,user,allow",
+    "resource,user,group_user,allow",
     [
-        (f"/group_membership_history/{MOCK_GROUP_NAME}", MOCK_USER, True),
-        (f"/group_membership_history/{MOCK_GROUP_NAME}", MOCK_ADMIN_USER, True),
+        (f"/group-membership-history/{MOCK_GROUP_NAME}", MOCK_USER, None, False),
+        (f"/group-membership-history/{MOCK_GROUP_NAME}", MOCK_USER, MOCK_REGULAR_GROUP_USER, True),
+        (f"/group-membership-history/{MOCK_GROUP_NAME}", MOCK_ADMIN_USER, None, True),
     ],
     ids=[
-        "non_admin_list_group_history",
+        "non_admin_non_group_user_list_group_history",
+        "non_admin_group_user_list_group_history",
         "admin_list_group_history",
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_list_group_resources(mock_user_dao, resource: str, user: UserModel, allow: bool):
+def test_list_group_resources(
+    mock_user_dao, mock_group_user_dao, resource: str, user: UserModel, group_user: GroupUserModel, allow: bool
+):
     mock_user_dao.get.return_value = user
+    mock_user_dao.get.return_value = user
+    mock_group_user_dao.get.return_value = group_user
     assert lambda_handler(
         mock_event(
             user=user,
@@ -467,14 +474,17 @@ def test_list_group_resources(mock_user_dao, resource: str, user: UserModel, all
 
 
 @pytest.mark.parametrize(
-    "user,method,allow",
+    "user,group_user,method,allow",
     [
-        (MOCK_ADMIN_USER, "DELETE", True),
-        (MOCK_ADMIN_USER, "PUT", True),
-        (MOCK_ADMIN_USER, "GET", True),
-        (MOCK_USER, "DELETE", False),
-        (MOCK_USER, "PUT", False),
-        (MOCK_USER, "GET", True),
+        (MOCK_ADMIN_USER, None, "DELETE", True),
+        (MOCK_ADMIN_USER, None, "PUT", True),
+        (MOCK_ADMIN_USER, None, "GET", True),
+        (MOCK_USER, MOCK_REGULAR_GROUP_USER, "DELETE", False),
+        (MOCK_USER, MOCK_REGULAR_GROUP_USER, "PUT", False),
+        (MOCK_USER, MOCK_REGULAR_GROUP_USER, "GET", True),
+        (MOCK_USER, None, "DELETE", False),
+        (MOCK_USER, None, "PUT", False),
+        (MOCK_USER, None, "GET", False),
     ],
     ids=[
         "admin_delete_project",
@@ -483,17 +493,24 @@ def test_list_group_resources(mock_user_dao, resource: str, user: UserModel, all
         "non_admin_delete_project",
         "non_admin_update_project",
         "non_admin_get_project",
+        "non_admin_non_group_user_delete_project",
+        "non_admin_non_group_user_update_project",
+        "non_admin_non_group_user_get_project",
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_group_management(
     mock_user_dao,
+    mock_group_user_dao,
     user: UserModel,
+    group_user: GroupUserModel,
     method: str,
     allow: bool,
 ):
     mock_user_dao.get.return_value = user
+    mock_group_user_dao.get.return_value = group_user
 
     assert lambda_handler(
         mock_event(

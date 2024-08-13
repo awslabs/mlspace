@@ -16,6 +16,7 @@
 
 import { TableProps } from '@cloudscape-design/components';
 import { IGroupMembershipHistory } from '../../../shared/model/groupMembershipHistory.model';
+import { formatEpochTimestamp } from '../../../shared/util/date-utils';
 
 export const groupHistoryColumns: TableProps.ColumnDefinition<IGroupMembershipHistory>[] = [{
     id: 'user',
@@ -41,7 +42,7 @@ export const groupHistoryColumns: TableProps.ColumnDefinition<IGroupMembershipHi
     id: 'actionedAt',
     header: 'Actioned At',
     sortingField: 'actionedAt',
-    cell: (item) => new Date(item.actionedAt * 1000).toLocaleString(),
+    cell: (item) => formatEpochTimestamp(item.actionedAt),
 }];
 
 export const visibleGroupHistoryColumns: string[] = ['user', 'action', 'actionedBy', 'actionedAt'];

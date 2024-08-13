@@ -91,7 +91,7 @@ export const addGroupUsers = createAsyncThunk('group/add_users', async (data: Ad
 });
 
 export const getGroupMembershipHistory = createAsyncThunk('group/group_membership_history', async (groupName: string) => {
-    const requestUrl = `/group_membership_history/${groupName}`;
+    const requestUrl = `/group-membership-history/${groupName}`;
     return axios.get<IGroupMembershipHistory[]>(requestUrl).catch(axiosCatch);
 });
 

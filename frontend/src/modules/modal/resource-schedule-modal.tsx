@@ -29,7 +29,7 @@ import { AxiosResponse } from 'axios';
 import React, { useState } from 'react';
 import { useAppDispatch } from '../../config/store';
 import { dismissModal } from './modal.reducer';
-import { formatTerminationTimestamp, timezoneDisplayString } from '../../shared/util/date-utils';
+import { formatEpochTimestamp, timezoneDisplayString } from '../../shared/util/date-utils';
 import { CallbackFunction } from '../../types';
 import { initCap } from '../../shared/util/enum-utils';
 import { getTerminationHourDate } from '../../shared/util/resource-schedule.service';
@@ -180,7 +180,7 @@ function ResourceScheduleModal ({
                 <div>
                     This {resourceType} is currently configured{' '}
                     {resourceTerminationTime
-                        ? `to ${terminateLabel} at ${formatTerminationTimestamp(
+                        ? `to ${terminateLabel} at ${formatEpochTimestamp(
                             resourceTerminationTime,
                             isNotebook
                         )}`

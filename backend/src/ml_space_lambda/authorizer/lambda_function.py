@@ -251,9 +251,10 @@ def lambda_handler(event, context):
                                 if project_user:
                                     policy_statement["Effect"] = "Allow"
                 elif "groupName" in path_params:
+                    is_group_member = _is_group_member(path_params["groupName"], username)
                     if IS_ADMIN and request_method in ["POST", "PUT", "DELETE"]:
                         policy_statement["Effect"] = "Allow"
-                    elif request_method == "GET":
+                    elif request_method == "GET" and (IS_ADMIN or is_group_member):
                         policy_statement["Effect"] = "Allow"
                 else:
                     # All other sagemaker resources have the same general handling, GET calls
@@ -302,8 +303,6 @@ def lambda_handler(event, context):
             elif requested_resource == "/group" and request_method == "POST":
                 if IS_ADMIN:
                     policy_statement["Effect"] = "Allow"
-            elif requested_resource == "/group_membership_history" and request_method == "GET":
-                policy_statement["Effect"] = "Allow"
             elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
                 # If this is a request for a dataset related presigned url or for
                 # creating a new dataset, we need to determine the underlying dataset
@@ -663,3 +662,10 @@ def _get_oidc_props(key_id: str) -> Tuple[Optional[str], Optional[str]]:
         raise ValueError("Missing OIDC configuration parameters.")
 
     return (oidc_keys[key_id], oidc_client_name)
+
+
+def _is_group_member(group_name: str, username: str) -> bool:
+    group = group_user_dao.get(group_name, username)
+    if group:
+        return True
+    return False

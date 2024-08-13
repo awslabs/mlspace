@@ -22,7 +22,7 @@ import { DocTitle, scrollToPageHeader } from '../../../../src/shared/doc';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import DetailsContainer from '../../../modules/details-container';
-import { formatDate, formatTerminationTimestamp } from '../../../shared/util/date-utils';
+import { formatDate, formatEpochTimestamp } from '../../../shared/util/date-utils';
 import { getEMRCluster, loadingCluster, selectedEMRCluster } from '../emr.reducer';
 import { EMRCluster } from '../emr.model';
 import { prettyStatus } from '../../../shared/util/table-utils';
@@ -85,7 +85,7 @@ function EMRDetail () {
             'Auto termination time',
             <>
                 {cluster.TerminationTime
-                    ? formatTerminationTimestamp(cluster.TerminationTime)
+                    ? formatEpochTimestamp(cluster.TerminationTime)
                     : 'Disabled'}
                 {(hasPermission(Permission.PROJECT_OWNER, projectPermissions) ||
                     hasPermission(Permission.ADMIN, currentUser.permissions) ||
