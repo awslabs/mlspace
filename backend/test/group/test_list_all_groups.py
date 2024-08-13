@@ -90,9 +90,6 @@ def mock_event(is_admin: bool = False, query_params: Optional[Dict[str, str]] = 
     }
 
 
-# TODO: numMembers should match
-
-
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 def test_list_all_groups_admin_is_in(mock_group_dao, mock_group_user_dao):
