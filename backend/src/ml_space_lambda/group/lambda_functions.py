@@ -213,8 +213,8 @@ def list_all(event, context):
         group_names = [group.group for group in group_user_dao.get_groups_for_user(user.username)]
         groups = group_dao.get_all(group_names=group_names)
     enhanced_groups = [group.to_dict() for group in groups]
-    for group in enhanced_groups
-        group["num_members"] = len(group_user_dao.get_users_for_group(group.name))
+    for group in enhanced_groups:
+        group["numMembers"] = len(group_user_dao.get_users_for_group(group["name"]))
     return enhanced_groups
 
 

@@ -35,7 +35,6 @@ class GroupModel:
         created_by: str,
         created_at: Optional[float] = None,
         last_updated_at: Optional[float] = None,
-        num_members: Optional[int] = None,
     ):
         now = int(time.time())
         self.name = name
@@ -43,7 +42,6 @@ class GroupModel:
         self.created_by = created_by
         self.created_at = created_at if created_at else now
         self.last_updated_at = last_updated_at if last_updated_at else now
-        self.num_members = num_members
 
     def to_dict(self) -> dict:
         return {
@@ -52,7 +50,6 @@ class GroupModel:
             "createdBy": self.created_by,
             "createdAt": self.created_at,
             "lastUpdatedAt": self.last_updated_at,
-            "numMembers": self.num_members,
         }
 
     @staticmethod
@@ -63,7 +60,6 @@ class GroupModel:
             dict_object["createdBy"],
             dict_object.get("createdAt", None),
             dict_object.get("lastUpdatedAt", None),
-            dict_object.get("numMembers", None),
         )
 
 
