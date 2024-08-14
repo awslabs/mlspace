@@ -120,7 +120,6 @@ mock_context = mock.Mock()
 mock_project_user = ProjectUserModel(
     username="jdoe@amazon.com",
     project_name=MOCK_PROJECT_NAME,
-    permissions=[],
     role="mock_iam_role_from_dynamo",
 )
 

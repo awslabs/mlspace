@@ -38,6 +38,7 @@ export type MLSpacePythonLambdaFunction = {
     environment?: {
         [key: string]: string;
     };
+    noAuthorizer?: boolean
 };
 
 export function registerAPIEndpoint (
@@ -64,6 +65,7 @@ export function registerAPIEndpoint (
         code: Code.fromAsset(lambdaSourcePath),
         description: funcDef.description,
         environment: {
+            GROUPS_MEMBERSHIP_HISTORY_TABLE_NAME: mlspaceConfig.GROUPS_MEMBERSHIP_HISTORY_TABLE_NAME,
             DATASETS_TABLE: mlspaceConfig.DATASETS_TABLE_NAME,
             PROJECTS_TABLE: mlspaceConfig.PROJECTS_TABLE_NAME,
             PROJECT_USERS_TABLE: mlspaceConfig.PROJECT_USERS_TABLE_NAME,
@@ -91,10 +93,13 @@ export function registerAPIEndpoint (
         securityGroups,
     });
     const functionResource = getOrCreateResource(stack, api.root, funcDef.path.split('/'));
-    functionResource.addMethod(funcDef.method, new LambdaIntegration(handler), {
+    const methodOptions = funcDef.noAuthorizer ? {
+        authorizationType: AuthorizationType.NONE
+    } : {
         authorizer,
         authorizationType: AuthorizationType.CUSTOM,
-    });
+    };
+    functionResource.addMethod(funcDef.method, new LambdaIntegration(handler), methodOptions);
 }
 
 function getOrCreateResource (stack: Stack, parentResource: IResource, path: string[]): IResource {

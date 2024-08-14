@@ -43,7 +43,6 @@ def base_user():
         email=MOCK_USERNAME,
         display_name=MOCK_DISPLAY_NAME,
         suspended=False,
-        permissions=[],
     )
 
 

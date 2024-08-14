@@ -51,11 +51,10 @@ class GroupUserModel:
 
     @staticmethod
     def from_dict(dict_object: dict) -> GroupUserModel:
-        permissions = [Permission(entry) for entry in dict_object.get("permissions", [])]
         return GroupUserModel(
             username=dict_object["user"],
             group_name=dict_object["group"],
-            permissions=permissions,
+            permissions=dict_object.get("permissions", []),
             role=dict_object.get("role", ""),
         )
 
@@ -91,13 +90,17 @@ class GroupUserDAO(DynamoDBObjectStore):
 
     # NOTE: This is a keys only projection. If you need the permissions that a user
     #       has on a group you will need to query that record individually.
-    def get_groups_for_user(self, username: str):
+    def get_groups_for_user(self, username: str) -> List[GroupUserModel]:
         json_response = self._query(
             index_name="ReverseLookup",
             key_condition_expression="#u = :user",
             expression_names={"#u": "user"},
             expression_values=json.loads(dynamodb_json.dumps({":user": username})),
         ).records
+        return [GroupUserModel.from_dict(entry) for entry in json_response]
+
+    def get_all(self) -> List[GroupUserModel]:
+        json_response = self._scan().records
         return [GroupUserModel.from_dict(entry) for entry in json_response]
 
     def delete(self, group_name: str, username: str) -> None:

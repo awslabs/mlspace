@@ -48,11 +48,10 @@ class ProjectGroupModel:
 
     @staticmethod
     def from_dict(dict_object: dict) -> ProjectGroupModel:
-        permissions = [Permission(entry) for entry in dict_object.get("permissions", [])]
         return ProjectGroupModel(
             group_name=dict_object["group"],
             project_name=dict_object["project"],
-            permissions=permissions,
+            permissions=dict_object.get("permissions", []),
         )
 
 

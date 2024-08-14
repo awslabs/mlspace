@@ -53,6 +53,8 @@ mock.patch.TEST_PREFIX = (
 )
 
 SAMPLE_DATASET_PROJECT = "fake-project"
+SAMPLE_DATASET_GLOBAL = "global"
+SAMPLE_DATASET_GROUP = "group"
 
 
 @moto.mock_dynamodb
@@ -101,10 +103,46 @@ class TestDatasetDAO(TestCase):
             "s3://mlspace-datasets-123456789/private/testUser3/bad-dataset",
             "testUser3@amazon.com",
         )
-
         self.ddb.put_item(
             TableName=self.TEST_TABLE,
             Item=json.loads(dynamodb_json.dumps(self.DELETE_DS.to_dict())),
+        )
+        # Seed more datasets for testing GET calls
+        self.GLOBAL_DS = DatasetModel(
+            SAMPLE_DATASET_GLOBAL,
+            DatasetType.GLOBAL,
+            "sample-dataset",
+            "Dataset for testing GET.",
+            "s3://mlspace-datasets-123456789/global/datasets/sample-dataset",
+            "testUser4@amazon.com",
+        )
+        self.ddb.put_item(
+            TableName=self.TEST_TABLE,
+            Item=json.loads(dynamodb_json.dumps(self.GLOBAL_DS.to_dict())),
+        )
+        self.GROUP_DS = DatasetModel(
+            SAMPLE_DATASET_GROUP,
+            DatasetType.GROUP,
+            "sample-dataset",
+            "Dataset for testing GET.",
+            "s3://mlspace-datasets-123456789/group/datasets/sample-dataset",
+            "testUser5@amazon.com",
+        )
+        self.ddb.put_item(
+            TableName=self.TEST_TABLE,
+            Item=json.loads(dynamodb_json.dumps(self.GROUP_DS.to_dict())),
+        )
+        self.PRIVATE_DS = DatasetModel(
+            "testUser6@amazon.com",
+            DatasetType.PRIVATE,
+            "bad-dataset",
+            "Dataset for testing GET.",
+            "s3://mlspace-datasets-123456789/private/testUser6/sample-dataset",
+            "testUser6@amazon.com",
+        )
+        self.ddb.put_item(
+            TableName=self.TEST_TABLE,
+            Item=json.loads(dynamodb_json.dumps(self.PRIVATE_DS.to_dict())),
         )
 
     def tearDown(self):
@@ -217,3 +255,21 @@ class TestDatasetDAO(TestCase):
     def test_get_all_for_scope_no_hits(self):
         matching_datasets = self.dataset_dao.get_all_for_scope(DatasetType.PRIVATE, SAMPLE_DATASET_PROJECT)
         assert len(matching_datasets) == 0
+
+    def test_get_all(self):
+        datasets = self.dataset_dao.get_all()
+        found_private = False
+        found_global = False
+        found_group = False
+        found_project = False
+
+        for ds in datasets:
+            if ds.type == DatasetType.GLOBAL:
+                found_global = True
+            if ds.type == DatasetType.GROUP:
+                found_group = True
+            if ds.type == DatasetType.PRIVATE:
+                found_private = True
+            if ds.type == DatasetType.PROJECT:
+                found_project = True
+        assert found_global and found_group and found_private and found_project

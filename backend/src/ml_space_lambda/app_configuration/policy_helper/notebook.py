@@ -77,7 +77,6 @@ def update_instance_constraint_policies(new_configuration, context) -> None:
 
 
 def create_instance_constraint_policy_version(policy_arn: str, statements: list) -> None:
-    log.info("Creating new version %s", policy_arn)
     iam.create_policy_version(
         PolicyArn=policy_arn,
         PolicyDocument=json.dumps(

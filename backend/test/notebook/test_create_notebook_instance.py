@@ -54,7 +54,6 @@ mock_full_notebook_name = "example-notebook-instance"
 mock_project_user = ProjectUserModel(
     username=user_name,
     project_name=project_name,
-    permissions=[],
     role="dynamoRole",
 )
 

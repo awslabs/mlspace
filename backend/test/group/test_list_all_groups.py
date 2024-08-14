@@ -91,10 +91,15 @@ def mock_event(is_admin: bool = False, query_params: Optional[Dict[str, str]] = 
 def test_list_all_groups_admin_is_in(mock_group_dao, mock_group_user_dao):
     mock_group_dao.get_all.return_value = MOCK_GROUPS
     mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+    mock_group_user_dao.get_users_for_group.return_value = [GroupUserModel(group_name="some-group", username=MOCK_USERNAME)]
+
+    group_dicts = [group.to_dict() for group in MOCK_GROUPS]
+    for group in group_dicts:
+        group["numMembers"] = 1
 
     expected_response = generate_html_response(
         200,
-        [group.to_dict() for group in MOCK_GROUPS],
+        group_dicts,
     )
 
     assert lambda_handler(mock_event(True), mock_context) == expected_response
@@ -106,10 +111,14 @@ def test_list_all_groups_admin_is_in(mock_group_dao, mock_group_user_dao):
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 def test_list_all_groups_admin(mock_group_dao, mock_group_user_dao):
     mock_group_dao.get_all.return_value = MOCK_GROUPS
+    mock_group_user_dao.get_users_for_group.return_value = [GroupUserModel(group_name="some-group", username=MOCK_USERNAME)]
+    group_dicts = [group.to_dict() for group in MOCK_GROUPS]
+    for group in group_dicts:
+        group["numMembers"] = 1
 
     expected_response = generate_html_response(
         200,
-        [group.to_dict() for group in MOCK_GROUPS],
+        group_dicts,
     )
 
     assert lambda_handler(mock_event(True, {"adminGetAll": "true"}), mock_context) == expected_response
@@ -122,9 +131,12 @@ def test_list_all_groups_admin(mock_group_dao, mock_group_user_dao):
 def test_list_all_groups_user(mock_group_dao, mock_group_user_dao):
     mock_group_dao.get_all.return_value = [MOCK_GROUPS[1]]
     mock_group_user_dao.get_groups_for_user.return_value = MOCK_GROUP_USERS
+    mock_group_user_dao.get_users_for_group.return_value = [GroupUserModel(group_name="some-group", username=MOCK_USERNAME)]
+    group_dict = MOCK_GROUPS[1].to_dict()
+    group_dict["numMembers"] = 1
     expected_response = generate_html_response(
         200,
-        [MOCK_GROUPS[1].to_dict()],
+        [group_dict],
     )
 
     assert lambda_handler(mock_event(False), mock_context) == expected_response

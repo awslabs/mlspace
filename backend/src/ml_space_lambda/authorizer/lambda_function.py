@@ -73,15 +73,6 @@ def lambda_handler(event, context):
         f"- Method: {request_method}"
     )
 
-    if requested_resource == "/app-config" and request_method == "GET":
-        # Anyone can get the app config
-        policy_statement["Effect"] = "Allow"
-        return {
-            "principalId": "Unknown",
-            "policyDocument": {"Version": "2012-10-17", "Statement": [policy_statement]},
-            "context": response_context,
-        }
-
     client_token = None
     token_failure = False
     auth_header = None
@@ -260,9 +251,10 @@ def lambda_handler(event, context):
                                 if project_user:
                                     policy_statement["Effect"] = "Allow"
                 elif "groupName" in path_params:
-                    if IS_ADMIN and request_method in ["POST", "PUT", "DELETE"]:
+                    is_group_member = _is_group_member(path_params["groupName"], username)
+                    if IS_ADMIN:
                         policy_statement["Effect"] = "Allow"
-                    elif request_method == "GET":
+                    elif request_method == "GET" and is_group_member:
                         policy_statement["Effect"] = "Allow"
                 else:
                     # All other sagemaker resources have the same general handling, GET calls
@@ -342,8 +334,8 @@ def lambda_handler(event, context):
                             groups = target_scope.split(",")
                             # check that this user is a member of every group they're adding to the group dataset
                             is_valid_group_list = True
-                            for group in groups:
-                                if group not in user_group_names:
+                            for group_names in user_group_names:
+                                if group_names not in groups:
                                     is_valid_group_list = False
                             if is_valid_group_list:
                                 policy_statement["Effect"] = "Allow"
@@ -670,3 +662,10 @@ def _get_oidc_props(key_id: str) -> Tuple[Optional[str], Optional[str]]:
         raise ValueError("Missing OIDC configuration parameters.")
 
     return (oidc_keys[key_id], oidc_client_name)
+
+
+def _is_group_member(group_name: str, username: str) -> bool:
+    group = group_user_dao.get(group_name, username)
+    if group:
+        return True
+    return False

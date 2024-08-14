@@ -43,7 +43,6 @@ MOCK_USERNAME = "jdoe@amazon.com"
 MOCK_CO_USER = ProjectUserModel(
     project_name=MOCK_PROJECT_NAME,
     username=MOCK_USERNAME,
-    permissions=[Permission.COLLABORATOR],
 )
 
 MOCK_PROJECT_OWNER = ProjectUserModel(
@@ -221,7 +220,6 @@ def test_list_notebook_instances_success_user_multiple_projects(mock_project_use
         ProjectUserModel(
             username=MOCK_USERNAME,
             project_name=MOCK_PROJECT_NAME,
-            permissions=[Permission.COLLABORATOR],
         ),
         ProjectUserModel(
             username=MOCK_USERNAME,

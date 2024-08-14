@@ -69,8 +69,8 @@ MOCK_SUSPENDED_PROJECT = ProjectModel(
     MOCK_OWNER_USER.username,
 )
 MOCK_OWNER_PROJECT_USER = ProjectUserModel(MOCK_OWNER_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.PROJECT_OWNER])
-MOCK_REGULAR_PROJECT_USER = ProjectUserModel(MOCK_USER.username, MOCK_PROJECT_NAME, permissions=[Permission.COLLABORATOR])
-MOCK_REGULAR_GROUP_USER = GroupUserModel(MOCK_USER.username, MOCK_GROUP_NAME, permissions=[Permission.COLLABORATOR])
+MOCK_REGULAR_PROJECT_USER = ProjectUserModel(MOCK_USER.username, MOCK_PROJECT_NAME)
+MOCK_REGULAR_GROUP_USER = GroupUserModel(MOCK_USER.username, MOCK_GROUP_NAME)
 
 MOCK_GROUP_NAME = "UnitTestGroup"
 MOCK_GROUP = GroupModel(MOCK_GROUP_NAME, "Group used for unit tests", MOCK_USER.username)
@@ -441,14 +441,50 @@ def test_create_group(mock_user_dao, user: UserModel, allow: bool):
 
 
 @pytest.mark.parametrize(
-    "user,method,allow",
+    "resource,user,group_user,allow",
     [
-        (MOCK_ADMIN_USER, "DELETE", True),
-        (MOCK_ADMIN_USER, "PUT", True),
-        (MOCK_ADMIN_USER, "GET", True),
-        (MOCK_USER, "DELETE", False),
-        (MOCK_USER, "PUT", False),
-        (MOCK_USER, "GET", True),
+        (f"/group-membership-history/{MOCK_GROUP_NAME}", MOCK_USER, None, False),
+        (f"/group-membership-history/{MOCK_GROUP_NAME}", MOCK_USER, MOCK_REGULAR_GROUP_USER, True),
+        (f"/group-membership-history/{MOCK_GROUP_NAME}", MOCK_ADMIN_USER, None, True),
+    ],
+    ids=[
+        "non_admin_non_group_user_list_group_history",
+        "non_admin_group_user_list_group_history",
+        "admin_list_group_history",
+    ],
+)
+@mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
+@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
+def test_list_group_resources(
+    mock_user_dao, mock_group_user_dao, resource: str, user: UserModel, group_user: GroupUserModel, allow: bool
+):
+    mock_user_dao.get.return_value = user
+    mock_user_dao.get.return_value = user
+    mock_group_user_dao.get.return_value = group_user
+    assert lambda_handler(
+        mock_event(
+            user=user,
+            resource=resource,
+            method="GET",
+            path_params={"groupName": MOCK_GROUP_NAME},
+        ),
+        {},
+    ) == policy_response(allow=allow, user=user)
+
+
+@pytest.mark.parametrize(
+    "user,group_user,method,allow",
+    [
+        (MOCK_ADMIN_USER, None, "DELETE", True),
+        (MOCK_ADMIN_USER, None, "PUT", True),
+        (MOCK_ADMIN_USER, None, "GET", True),
+        (MOCK_USER, MOCK_REGULAR_GROUP_USER, "DELETE", False),
+        (MOCK_USER, MOCK_REGULAR_GROUP_USER, "PUT", False),
+        (MOCK_USER, MOCK_REGULAR_GROUP_USER, "GET", True),
+        (MOCK_USER, None, "DELETE", False),
+        (MOCK_USER, None, "PUT", False),
+        (MOCK_USER, None, "GET", False),
     ],
     ids=[
         "admin_delete_project",
@@ -457,17 +493,24 @@ def test_create_group(mock_user_dao, user: UserModel, allow: bool):
         "non_admin_delete_project",
         "non_admin_update_project",
         "non_admin_get_project",
+        "non_admin_non_group_user_delete_project",
+        "non_admin_non_group_user_update_project",
+        "non_admin_non_group_user_get_project",
     ],
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
+@mock.patch("ml_space_lambda.authorizer.lambda_function.group_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_group_management(
     mock_user_dao,
+    mock_group_user_dao,
     user: UserModel,
+    group_user: GroupUserModel,
     method: str,
     allow: bool,
 ):
     mock_user_dao.get.return_value = user
+    mock_group_user_dao.get.return_value = group_user
 
     assert lambda_handler(
         mock_event(
@@ -1828,21 +1871,15 @@ def test_config_routes(mock_user_dao, user: UserModel, method: str, allow: bool)
     [
         (MOCK_USER, None, "POST", None, False),
         (MOCK_ADMIN_USER, None, "POST", None, True),
-        (MOCK_USER, None, "GET", None, True),
-        (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "GET", {"projectName": MOCK_PROJECT_NAME}, True),
         (MOCK_USER, MOCK_REGULAR_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, False),
         (MOCK_OWNER_USER, MOCK_OWNER_PROJECT_USER, "POST", {"projectName": MOCK_PROJECT_NAME}, True),
-        (None, None, "GET", None, True),
         (None, None, "POST", None, False),
     ],
     ids=[
         "user_update_app_config",
         "admin_update_app_config",
-        "user_get_app_config",
-        "user_get_project_config",
         "user_update_project_config",
         "project_owner_update_project_config",
-        "non_user_get_app_config",
         "non_user_update_app_config",
     ],
 )

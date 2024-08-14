@@ -19,10 +19,11 @@ from unittest import mock
 
 from botocore.exceptions import ClientError
 
+from ml_space_lambda.data_access_objects.group_membership_history import GroupMembershipHistoryModel
 from ml_space_lambda.data_access_objects.group_user import GroupUserModel
 from ml_space_lambda.data_access_objects.project_user import ProjectUserModel
 from ml_space_lambda.data_access_objects.user import UserModel
-from ml_space_lambda.enums import Permission
+from ml_space_lambda.enums import GroupUserAction
 from ml_space_lambda.utils import mlspace_config
 from ml_space_lambda.utils.common_functions import generate_html_response
 
@@ -38,6 +39,12 @@ MOCK_GROUP_NAME = "example_group"
 MOCK_USER = UserModel(MOCK_USERNAME, "dsmith@amazon.com", "Dog Smith", False, [])
 
 mock_event = {
+    "requestContext": {
+        "authorizer": {
+            "principalId": MOCK_USERNAME,
+            "user": json.dumps(MOCK_USER.to_dict()),
+        }
+    },
     "pathParameters": {
         "groupName": MOCK_GROUP_NAME,
     },
@@ -46,6 +53,7 @@ mock_event = {
 mock_context = mock.Mock()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
@@ -53,7 +61,12 @@ mock_context = mock.Mock()
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
 # @mock.patch.dict("os.environ", {"MANAGE_IAM_ROLES": "True"}, clear=True)
 def test_add_users_to_group_with_iam(
-    mock_user_dao, mock_group_user_dao, mock_iam_manager, mock_group_dao, mock_project_group_dao
+    mock_user_dao,
+    mock_group_user_dao,
+    mock_iam_manager,
+    mock_group_dao,
+    mock_project_group_dao,
+    mock_group_membership_history_dao,
 ):
     project_name = "MyMockProject"
     mlspace_config.env_variables = {}
@@ -76,22 +89,40 @@ def test_add_users_to_group_with_iam(
     # because the arg is a class so the comparison will fail due to pointer issues
     mock_group_user_dao.create.assert_called_once()
     mock_project_group_dao.get_projects_for_group.assert_called_once()
+    mock_group_membership_history_dao.create.assert_called_once()
+    assert (
+        mock_group_membership_history_dao.create.call_args.args[0].to_dict()
+        == GroupMembershipHistoryModel(
+            group_name=MOCK_GROUP_NAME,
+            username=MOCK_USERNAME,
+            action=GroupUserAction.ADDED,
+            actioned_by=MOCK_USERNAME,
+        ).to_dict()
+    )
+
     assert (
         mock_group_user_dao.create.call_args.args[0].to_dict()
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_add_users_to_group(mock_user_dao, mock_group_user_dao, mock_iam_manager, mock_group_dao, mock_project_group_dao):
+def test_add_users_to_group(
+    mock_user_dao,
+    mock_group_user_dao,
+    mock_iam_manager,
+    mock_group_dao,
+    mock_project_group_dao,
+    mock_group_membership_history_dao,
+):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully added 1 user(s) to {MOCK_GROUP_NAME}")
     mock_user_dao.get.return_value = MOCK_USER
@@ -108,23 +139,39 @@ def test_add_users_to_group(mock_user_dao, mock_group_user_dao, mock_iam_manager
     # The create arg is the GroupUserModel, we can't do a normal assert_called_with
     # because the arg is a class so the comparison will fail due to pointer issues
     mock_group_user_dao.create.assert_called_once()
+    mock_group_membership_history_dao.create.assert_called_once()
+    assert (
+        mock_group_membership_history_dao.create.call_args.args[0].to_dict()
+        == GroupMembershipHistoryModel(
+            group_name=MOCK_GROUP_NAME,
+            username=MOCK_USERNAME,
+            action=GroupUserAction.ADDED,
+            actioned_by=MOCK_USERNAME,
+        ).to_dict()
+    )
+
     assert (
         mock_group_user_dao.create.call_args.args[0].to_dict()
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username=MOCK_USERNAME,
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
 def test_add_users_to_group_multiple(
-    mock_user_dao, mock_group_user_dao, mock_iam_manager, mock_group_dao, mock_project_group_dao
+    mock_user_dao,
+    mock_group_user_dao,
+    mock_iam_manager,
+    mock_group_dao,
+    mock_project_group_dao,
+    mock_group_membership_history_dao,
 ):
     mlspace_config.env_variables = {}
     expected_response = generate_html_response(200, f"Successfully added 3 user(s) to {MOCK_GROUP_NAME}")
@@ -142,6 +189,12 @@ def test_add_users_to_group_multiple(
     assert (
         lambda_handler(
             {
+                "requestContext": {
+                    "authorizer": {
+                        "principalId": MOCK_USERNAME,
+                        "user": json.dumps(MOCK_USER.to_dict()),
+                    }
+                },
                 "pathParameters": {
                     "groupName": MOCK_GROUP_NAME,
                 },
@@ -162,7 +215,6 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user1",
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
     assert (
@@ -170,7 +222,6 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user2",
-            permissions=[Permission.COLLABORATOR],
         ).to_dict()
     )
     assert (
@@ -178,16 +229,47 @@ def test_add_users_to_group_multiple(
         == GroupUserModel(
             group_name=MOCK_GROUP_NAME,
             username="user3",
-            permissions=[Permission.COLLABORATOR],
+        ).to_dict()
+    )
+
+    assert mock_group_membership_history_dao.create.call_count == 3
+    assert (
+        mock_group_membership_history_dao.create.call_args_list[0].args[0].to_dict()
+        == GroupMembershipHistoryModel(
+            group_name=MOCK_GROUP_NAME,
+            username="user1",
+            action=GroupUserAction.ADDED,
+            actioned_by=MOCK_USERNAME,
+        ).to_dict()
+    )
+    assert (
+        mock_group_membership_history_dao.create.call_args_list[1].args[0].to_dict()
+        == GroupMembershipHistoryModel(
+            group_name=MOCK_GROUP_NAME,
+            username="user2",
+            action=GroupUserAction.ADDED,
+            actioned_by=MOCK_USERNAME,
+        ).to_dict()
+    )
+    assert (
+        mock_group_membership_history_dao.create.call_args_list[2].args[0].to_dict()
+        == GroupMembershipHistoryModel(
+            group_name=MOCK_GROUP_NAME,
+            username="user3",
+            action=GroupUserAction.ADDED,
+            actioned_by=MOCK_USERNAME,
         ).to_dict()
     )
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
-def test_add_users_to_group_client_error(mock_user_dao, mock_group_user_dao, mock_iam_manager, mock_group_dao):
+def test_add_users_to_group_client_error(
+    mock_user_dao, mock_group_user_dao, mock_iam_manager, mock_group_dao, mock_group_membership_history_dao
+):
     mlspace_config.env_variables = {}
     error_msg = {
         "Error": {"Code": "ThrottlingException", "Message": "Dummy error message."},
@@ -205,15 +287,22 @@ def test_add_users_to_group_client_error(mock_user_dao, mock_group_user_dao, moc
     # because the arg is a class so the comparison will fail due to pointer issues
     mock_group_user_dao.create.assert_not_called()
     mock_iam_manager.update_user_policy.assert_not_called()
+    mock_group_membership_history_dao.assert_not_called()
 
 
+@mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.iam_manager")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.user_dao")
 def test_add_nonexistent_user_to_group_error(
-    mock_user_dao, mock_group_user_dao, mock_iam_manager, mock_group_dao, mock_project_group_dao
+    mock_user_dao,
+    mock_group_user_dao,
+    mock_iam_manager,
+    mock_group_dao,
+    mock_project_group_dao,
+    mock_group_membership_history_dao,
 ):
     mlspace_config.env_variables = {}
     mock_group_dao.get.return_value = {"name": "MyMockGroup"}
@@ -230,6 +319,7 @@ def test_add_nonexistent_user_to_group_error(
     mock_user_dao.get.assert_called_with(MOCK_USERNAME)
     mock_group_user_dao.create.assert_not_called()
     mock_iam_manager.update_user_policy.assert_not_called()
+    mock_group_membership_history_dao.assert_not_called()
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.group_user_dao")

@@ -44,7 +44,7 @@ group_dataset_name = "example_group_dataset1"
 
 # TODO: generate a user model so we can invoke to_dict on it for the event
 def generate_user_model(is_admin=False):
-    return UserModel(user_name, user_name, user_name, False, [Permission.ADMIN] if is_admin else [Permission.COLLABORATOR])
+    return UserModel(user_name, user_name, user_name, False, [Permission.ADMIN] if is_admin else [])
 
 
 def generate_mock_event(is_admin=False):

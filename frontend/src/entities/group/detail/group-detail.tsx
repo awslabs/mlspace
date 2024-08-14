@@ -17,8 +17,18 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../config/store';
-import { currentGroupDatasets, selectCurrentGroupProjects, currentGroupUsers, getGroup, getGroupDatasets, getGroupProjects, getGroupUsers, selectLoadingGroupProjects } from '../group.reducer';
-
+import {
+    currentGroupDatasets,
+    selectCurrentGroupProjects,
+    currentGroupUsers,
+    getGroup,
+    getGroupDatasets,
+    getGroupProjects,
+    getGroupUsers,
+    selectLoadingGroupProjects,
+    selectCurrentGroupMembershipHistory,
+    getGroupMembershipHistory
+} from '../group.reducer';
 import { Header, SpaceBetween, Tabs } from '@cloudscape-design/components';
 import DetailsContainer from '../../../modules/details-container';
 import { IGroup } from '../../../shared/model/group.model';
@@ -40,6 +50,8 @@ import GroupDetailProjectActions from './group-detail-project.actions';
 import { projectGroupColumns } from '../group.columns';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
+import GroupDetailMembershipHistoryActions from './group-detail-membership-history.actions';
+import { groupHistoryColumns, visibleGroupHistoryColumns } from './group-history.columns';
 
 export function GroupDetail () {
     const dispatch = useAppDispatch();
@@ -50,6 +62,8 @@ export function GroupDetail () {
     const groupDatasets: IDataset[] = useAppSelector(currentGroupDatasets);
     const groupProjects = useAppSelector(selectCurrentGroupProjects);
     const loadingGroupProjects = useAppSelector(selectLoadingGroupProjects);
+    const groupMembershipHistory = useAppSelector(selectCurrentGroupMembershipHistory);
+    const loadingGroupMembershipHistory = useAppSelector((state) => state.group.groupMembershipHistoryLoading);
     const loadingGroupData = useAppSelector((state) => state.group.loading);
     const loadingDatasetData = useAppSelector((state) => state.group.datasetsLoading);
     const currentUser = useAppSelector(selectCurrentUser);
@@ -81,6 +95,7 @@ export function GroupDetail () {
                     dispatch(getGroupUsers(groupName));
                     dispatch(getGroupDatasets(groupName));
                     dispatch(getGroupProjects(groupName));
+                    dispatch(getGroupMembershipHistory(groupName));
                     setInitialLoaded(true);
                 } else {
                     navigate('/404');
@@ -155,6 +170,23 @@ export function GroupDetail () {
                             visibleColumns={projectGroupColumns.map((item) => item.id).filter((item): item is string => Boolean(item))}
                             loadingItems={loadingGroupProjects || !initialLoaded}
                             loadingText='Loading Group projects'
+                            variant='borderless'
+                        />
+                    )
+                }, {
+                    id: 'history',
+                    label: 'History',
+                    content: (
+                        <Table
+                            tableName='Item'
+                            actions={GroupDetailMembershipHistoryActions}
+                            itemNameProperty='group'
+                            trackBy='group'
+                            allItems={groupMembershipHistory}
+                            columnDefinitions={groupHistoryColumns}
+                            visibleColumns={visibleGroupHistoryColumns}
+                            loadingItems={loadingGroupMembershipHistory || !initialLoaded}
+                            loadingText='Loading Group membership history'
                             variant='borderless'
                         />
                     )

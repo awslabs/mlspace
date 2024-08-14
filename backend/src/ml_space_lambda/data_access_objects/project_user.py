@@ -52,11 +52,10 @@ class ProjectUserModel:
 
     @staticmethod
     def from_dict(dict_object: dict) -> ProjectUserModel:
-        permissions = [Permission(entry) for entry in dict_object.get("permissions", [])]
         return ProjectUserModel(
             username=dict_object["user"],
             project_name=dict_object["project"],
-            permissions=permissions,
+            permissions=dict_object.get("permissions", []),
             role=dict_object.get("role", ""),
         )
 
@@ -99,6 +98,10 @@ class ProjectUserDAO(DynamoDBObjectStore):
             expression_names={"#u": "user"},
             expression_values=json.loads(dynamodb_json.dumps({":user": username})),
         ).records
+        return [ProjectUserModel.from_dict(entry) for entry in json_response]
+
+    def get_all(self) -> List[ProjectUserModel]:
+        json_response = self._scan().records
         return [ProjectUserModel.from_dict(entry) for entry in json_response]
 
     def delete(self, project_name: str, user_name: str) -> None:

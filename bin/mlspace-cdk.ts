@@ -38,6 +38,7 @@ import { ApiDeploymentStack } from '../lib/stacks/api/apiDeployment';
 import { MLSpaceConfig, generateConfig } from '../lib/utils/configTypes';
 import { AppConfigurationApiStack } from '../lib/stacks/api/appConfiguration';
 import { GroupsApiStack } from '../lib/stacks/api/groups';
+import { GroupMembershipHistoryApiStack } from '../lib/stacks/api/groupMembershipHistory';
 
 
 const config: MLSpaceConfig = generateConfig();
@@ -77,12 +78,15 @@ const websiteBucketName = `${config.WEBSITE_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 const cwlBucketName = `${config.LOGS_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 const accessLogsBucketName = `${config.ACCESS_LOGS_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 
+//Translate is not currently available in us-isob-east1
+const enableTranslate = !['us-isob-east-1'].includes(config.AWS_REGION);
+
 const iamStack = new IAMStack(app, 'mlspace-iam', {
     env: envProperties,
     dataBucketName,
     configBucketName,
     websiteBucketName,
-    enableTranslate: config.ENABLE_TRANSLATE,
+    enableTranslate: enableTranslate,
     encryptionKey: kmsStack.masterKey,
     mlSpaceVPC: vpcStack.vpc,
     mlSpaceDefaultSecurityGroupId: vpcStack.vpcSecurityGroupId,
@@ -147,7 +151,7 @@ const restStack = new RestApiStack(app, 'mlspace-web-tier', {
     mlSpaceVPC,
     lambdaSecurityGroups: [vpcStack.vpcSecurityGroup],
     isIso,
-    enableTranslate: config.ENABLE_TRANSLATE,
+    enableTranslate: enableTranslate,
     mlspaceConfig: config
 });
 
@@ -192,9 +196,10 @@ const apiStacks = [
     new EmrApiStack(app, 'mlspace-emr-apis', apiStackProperties),
     new AppConfigurationApiStack(app, 'mlspace-app-config-apis', apiStackProperties),
     new GroupsApiStack(app, 'mlspace-group-apis', apiStackProperties),
+    new GroupMembershipHistoryApiStack(app, 'mlspace-group-membership-history-apis', apiStackProperties),
 ];
 
-if (config.ENABLE_TRANSLATE) {
+if (enableTranslate) {
     apiStacks.push(new TranslateApiStack(app, 'mlspace-translate-apis', apiStackProperties));
 }
 const apiDeploymentStack = new ApiDeploymentStack(app, 'mlspace-api-deployment', {
