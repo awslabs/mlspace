@@ -34,9 +34,15 @@ export const groupColumns: TableProps.ColumnDefinition<IGroup>[] = [{
     header: 'Description',
     sortingField: 'description',
     cell: (item) => item.description,
+},
+{
+    id: 'members',
+    header: 'Members',
+    sortingField: 'members',
+    cell: (item) => item.numMembers || '-',
 }];
 
-const visibleColumns: string[] = ['name', 'description'];
+const visibleColumns: string[] = ['name', 'description', 'members'];
 
 const visibleContentPreference = {
     title: 'Select visible group content',
@@ -46,6 +52,7 @@ const visibleContentPreference = {
             options: [
                 {id: 'name', label: 'Name'},
                 {id: 'description', label: 'Description'},
+                {id: 'members', label: 'Members'}
             ],
         },
     ],
