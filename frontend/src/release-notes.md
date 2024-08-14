@@ -1,26 +1,23 @@
-# Release 1.6.1
+# Release 1.6.2
 ## Key Features
-### Datasets
-- Multiple Groups can now be assigned to a Dataset
-- All of the Datasets that a Group has access to are listed on the Group’s details page
-- Admins now have the ability to easily monitor Datasets access in MLSpace. Orphaned Datasets are flagged for Admins attention to prevent loss of data and ownership.
-
-### Group/Project Association
-- Groups can now be added to Projects as Project collaborators or owners. The associated role will be inherited by every member of the Group
-- All of the Projects that a Group has access to are listed on the Group’s details page
+### Group Membership Auditing
+- In the group details page users will now be able to see when users are added and removed from a group
+- This information will contain who was added, when they were added, who conducted the action, and when the action happened
+- The data will persist in Dynamo even if the group is deleted so if an Admin has to do user access research the data will still be available
 
 ## Enhancements
-- The latest release notes are now displayed on the login page as another example custom component
+- Remove deprecated constants from CDK
+- Removed un-used CO permission scheme from all Back-End code
+- MLSpace will now display the number of group members in a group in the table display
+- Updated the AppConfig confirmation screen to show user-friendly field names 
 
 ## Bug Fixes
-- System Banner text is now bold
-- System version is now shown without scrolling if banner is enabled
-- Group breadcrumbs weren't updating correctly
-- Dynamic Role user polices now use correct s3 group resources
+- Fixed bug where AppConfig would potentially error out when getting pulled into the UI
+- Merged in a CVE fix by a 3rd Party `Axios`
 
 ## Acknowledgements
 * @douglas1850
 * @dustins
 * @estohlmann
 
-**Full Changelog**: https://github.com/awslabs/mlspace/compare/v1.6.0...v1.6.1
+**Full Changelog**: https://github.com/awslabs/mlspace/compare/v1.6.1...v1.6.2
