@@ -121,15 +121,18 @@ def test_delete_group(
     mock_group_user_dao.delete.assert_called_with(MOCK_GROUP_NAME, mock_username)
 
     mock_group_membership_history_dao.create.assert_called_once()
-    assert (
-        mock_group_membership_history_dao.create.call_args_list[0].args[0].to_dict()
-        == GroupMembershipHistoryModel(
-            group_name=MOCK_GROUP_NAME,
-            username=mock_username,
-            action=GroupUserAction.GROUP_DELETED,
-            actioned_by=MOCK_USERNAME,
-        ).to_dict()
-    )
+
+    actual_history_arg = mock_group_membership_history_dao.create.call_args_list[0].args[0].to_dict()
+    actual_history_arg.pop("actionedAt")
+    expected_history_arg = GroupMembershipHistoryModel(
+        group_name=MOCK_GROUP_NAME,
+        username=mock_username,
+        action=GroupUserAction.GROUP_DELETED,
+        actioned_by=MOCK_USERNAME,
+    ).to_dict()
+    expected_history_arg.pop("actionedAt")
+
+    assert actual_history_arg == expected_history_arg
 
     if dynamic_roles:
         mock_iam_manager.update_user_policy.assert_called_with(mock_username)

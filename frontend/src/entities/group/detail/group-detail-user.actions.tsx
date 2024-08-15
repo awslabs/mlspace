@@ -16,7 +16,7 @@
 
 import { useAppDispatch, useAppSelector } from '../../../config/store';
 import { Button, ButtonDropdown, ButtonDropdownProps, Icon, SpaceBetween } from '@cloudscape-design/components';
-import { currentGroupUsers, getGroupUsers, removeGroupUser } from '../group.reducer';
+import { currentGroupUsers, getGroupMembershipHistory, getGroupUsers, removeGroupUser } from '../group.reducer';
 import React, { useEffect, useState } from 'react';
 import { Action, Dispatch, ThunkDispatch } from '@reduxjs/toolkit';
 import { NavigateFunction, useNavigate, useParams } from 'react-router-dom';
@@ -127,6 +127,7 @@ const GroupDetailUserActionHandler = async (
                             );
                         }).finally(() => {
                             dispatch(getGroupUsers(selectedUser.group));
+                            dispatch(getGroupMembershipHistory(selectedUser.group));
                         });
                     },
                     description: `This will remove user: ${selectedUser.user} from the following group: ${selectedUser.group}.`
