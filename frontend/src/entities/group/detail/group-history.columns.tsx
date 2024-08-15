@@ -42,7 +42,7 @@ export const groupHistoryColumns: TableProps.ColumnDefinition<IGroupMembershipHi
     id: 'actionedAt',
     header: 'Actioned At',
     sortingField: 'actionedAt',
-    cell: (item) => formatEpochTimestamp(item.actionedAt),
+    cell: (item) => formatEpochTimestamp(item.actionedAt, false, false),
 }];
 
 export const visibleGroupHistoryColumns: string[] = ['user', 'action', 'actionedBy', 'actionedAt'];

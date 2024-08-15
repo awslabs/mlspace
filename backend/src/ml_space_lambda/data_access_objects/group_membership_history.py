@@ -36,7 +36,7 @@ class GroupMembershipHistoryModel:
         actioned_by: str,
         actioned_at: Optional[float] = None,
     ):
-        now = int(time.time())
+        now = int(time.time() * 1000)
         self.user = username
         self.group = group_name
         self.action = action

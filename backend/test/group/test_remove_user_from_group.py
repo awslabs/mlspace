@@ -91,15 +91,18 @@ def test_remove_user_from_group_success(
     mock_iam_manager.get_iam_role_arn.assert_called_once()
     mock_iam_manager.remove_project_user_roles.assert_called_with([fake_role_arn])
     mock_group_membership_history_dao.create.assert_called_once()
-    assert (
-        mock_group_membership_history_dao.create.call_args_list[0].args[0].to_dict()
-        == GroupMembershipHistoryModel(
-            group_name=MOCK_GROUP_NAME,
-            username=MOCK_CO_USER.user,
-            action=GroupUserAction.REMOVED,
-            actioned_by=MOCK_USERNAME,
-        ).to_dict()
-    )
+
+    actual_history_arg = mock_group_membership_history_dao.create.call_args_list[0].args[0].to_dict()
+    actual_history_arg.pop("actionedAt")
+    expected_history_arg = GroupMembershipHistoryModel(
+        group_name=MOCK_GROUP_NAME,
+        username=MOCK_CO_USER.user,
+        action=GroupUserAction.REMOVED,
+        actioned_by=MOCK_USERNAME,
+    ).to_dict()
+    expected_history_arg.pop("actionedAt")
+
+    assert actual_history_arg == expected_history_arg
 
 
 @mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")

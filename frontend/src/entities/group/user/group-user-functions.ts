@@ -14,7 +14,7 @@
  limitations under the License.
  */
 import { Action, ThunkDispatch } from '@reduxjs/toolkit';
-import { AddGroupUserRequest, addGroupUsers, getGroupUsers } from '../group.reducer';
+import { AddGroupUserRequest, addGroupUsers, getGroupMembershipHistory, getGroupUsers } from '../group.reducer';
 import NotificationService from '../../../shared/layout/notification/notification.service';
 import { IUser } from '../../../shared/model/user.model';
 
@@ -42,5 +42,6 @@ export async function addUsersToGroup (
         );
     }).finally(() => {
         dispatch(getGroupUsers(groupName));
+        dispatch(getGroupMembershipHistory(groupName));
     });
 }

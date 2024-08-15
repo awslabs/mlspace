@@ -53,6 +53,12 @@ mock_event = {
 mock_context = mock.Mock()
 
 
+def _remove_actioned_at_attr(group_membership_hist: GroupMembershipHistoryModel) -> dict:
+    dictionary = group_membership_hist.to_dict()
+    dictionary.pop("actionedAt")
+    return dictionary
+
+
 @mock.patch("ml_space_lambda.group.lambda_functions.group_membership_history_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.project_group_dao")
 @mock.patch("ml_space_lambda.group.lambda_functions.group_dao")
@@ -90,14 +96,13 @@ def test_add_users_to_group_with_iam(
     mock_group_user_dao.create.assert_called_once()
     mock_project_group_dao.get_projects_for_group.assert_called_once()
     mock_group_membership_history_dao.create.assert_called_once()
-    assert (
-        mock_group_membership_history_dao.create.call_args.args[0].to_dict()
-        == GroupMembershipHistoryModel(
+    assert _remove_actioned_at_attr(mock_group_membership_history_dao.create.call_args.args[0]) == _remove_actioned_at_attr(
+        GroupMembershipHistoryModel(
             group_name=MOCK_GROUP_NAME,
             username=MOCK_USERNAME,
             action=GroupUserAction.ADDED,
             actioned_by=MOCK_USERNAME,
-        ).to_dict()
+        )
     )
 
     assert (
@@ -140,14 +145,13 @@ def test_add_users_to_group(
     # because the arg is a class so the comparison will fail due to pointer issues
     mock_group_user_dao.create.assert_called_once()
     mock_group_membership_history_dao.create.assert_called_once()
-    assert (
-        mock_group_membership_history_dao.create.call_args.args[0].to_dict()
-        == GroupMembershipHistoryModel(
+    assert _remove_actioned_at_attr(mock_group_membership_history_dao.create.call_args.args[0]) == _remove_actioned_at_attr(
+        GroupMembershipHistoryModel(
             group_name=MOCK_GROUP_NAME,
             username=MOCK_USERNAME,
             action=GroupUserAction.ADDED,
             actioned_by=MOCK_USERNAME,
-        ).to_dict()
+        )
     )
 
     assert (
@@ -233,32 +237,35 @@ def test_add_users_to_group_multiple(
     )
 
     assert mock_group_membership_history_dao.create.call_count == 3
-    assert (
-        mock_group_membership_history_dao.create.call_args_list[0].args[0].to_dict()
-        == GroupMembershipHistoryModel(
+    assert _remove_actioned_at_attr(
+        mock_group_membership_history_dao.create.call_args_list[0].args[0]
+    ) == _remove_actioned_at_attr(
+        GroupMembershipHistoryModel(
             group_name=MOCK_GROUP_NAME,
             username="user1",
             action=GroupUserAction.ADDED,
             actioned_by=MOCK_USERNAME,
-        ).to_dict()
+        )
     )
-    assert (
-        mock_group_membership_history_dao.create.call_args_list[1].args[0].to_dict()
-        == GroupMembershipHistoryModel(
+    assert _remove_actioned_at_attr(
+        mock_group_membership_history_dao.create.call_args_list[1].args[0]
+    ) == _remove_actioned_at_attr(
+        GroupMembershipHistoryModel(
             group_name=MOCK_GROUP_NAME,
             username="user2",
             action=GroupUserAction.ADDED,
             actioned_by=MOCK_USERNAME,
-        ).to_dict()
+        )
     )
-    assert (
-        mock_group_membership_history_dao.create.call_args_list[2].args[0].to_dict()
-        == GroupMembershipHistoryModel(
+    assert _remove_actioned_at_attr(
+        mock_group_membership_history_dao.create.call_args_list[2].args[0]
+    ) == _remove_actioned_at_attr(
+        GroupMembershipHistoryModel(
             group_name=MOCK_GROUP_NAME,
             username="user3",
             action=GroupUserAction.ADDED,
             actioned_by=MOCK_USERNAME,
-        ).to_dict()
+        )
     )
 
 
