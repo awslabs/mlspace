@@ -226,7 +226,7 @@ export const hoursToDays = (hours: number | undefined): number | undefined => {
  * @param seconds whether or not the epoch time is in seconds (true) or milliseconds (false)
  * @returns display friendly string of date time in the users preferred timezone
  */
-export const formatEpochTimestamp = (epochTime: number, timeOnly: boolean = false, seconds: boolean = true) => {
+export const formatEpochTimestamp = (epochTime: number, timeOnly = false, seconds = true) => {
     const dateTime = seconds ? new Date(epochTime * 1000) : new Date(epochTime);
     if (timeOnly) {
         return dateTime.toLocaleTimeString('en-US', {
