@@ -56,7 +56,6 @@ const deleteDataset = (datasetName: string) => {
     cy.url().should('include', '#/personal/dataset');
     // Filter for the item so it is the only one in the list
     const datasetsTableWrapper = createWrapper().findTable('[data-cy="Dataset-table"]');
-    //cy.setValueCloudscapeTextFilter('Filter-Dataset', datasetName);
     cy.setValueCloudscapeInput('Filter Dataset', datasetName);
     cy.contains('1 match');
     // Arbitrary wait for DOM to stabilize
