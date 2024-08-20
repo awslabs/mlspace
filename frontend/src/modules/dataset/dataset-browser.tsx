@@ -240,6 +240,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     filter={
                         <MLSTextFilter
                             filteringText={state.filteringText}
+                            filteringAriaLabel='Filter files'
                             requireEnter={true}
                             countText={getMatchesCountText(filteredItems.length)}
                             onChange={({detail: {filteringText}}) => {
@@ -281,6 +282,7 @@ export function DatasetBrowser (props: DatasetBrowserProps) {
                     items={filteredItems.slice((state.pagination.currentPageIndex - 1) * pageSize, (state.pagination.currentPageIndex) * pageSize)}
                     loading={state.isLoading}
                     loadingText={`Loading ${displayMode}s`}
+                    data-cy='Dataset Browser'
                     onSelectionChange={(event) => {
                         setState({
                             type: DatasetActionType.State,

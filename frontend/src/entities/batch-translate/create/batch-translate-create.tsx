@@ -362,6 +362,7 @@ export function BatchTranslateCreate () {
                                 touchFields(['OutputDataConfig.S3Uri']);
                             }}
                             inputInvalid={!!formErrors?.OutputDataConfig?.S3Uri}
+                            inputData-cy='s3-output-location-output'
                             fieldErrorText={formErrors?.OutputDataConfig?.S3Uri}
                             resource={state.form?.OutputDataConfig?.S3Uri || ''}
                         />

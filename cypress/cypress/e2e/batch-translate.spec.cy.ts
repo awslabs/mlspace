@@ -14,16 +14,18 @@
   limitations under the License.
 */
 
-import { BASE_URL } from '../support/commands';
+import { ACCOUNT_ID, BASE_URL } from '../support/commands';
 import { TestProps } from '../support/test-initializer/types';
 
 describe('Batch Translate Tests', () => {
     const now = (new Date()).getTime();
     const testProjectPrefix = 'e2eTest';
     const testProjectName = `${testProjectPrefix}${now}`;
-    const testProjectDescription = 'This is an example project for E2E tests.';
+    const testProjectDescription = 'This is an example project for E2E batch translate tests.';
     const testDatasetNameIn = `e2eBatchTranslateTestDatasetIn${now}`;
+    const testDatasetInputURI = `s3://mlspace-data-${ACCOUNT_ID}/global/datasets/${testDatasetNameIn}/`;
     const testDatasetNameOut = `e2eBatchTranslateTestDatasetOut${now}`;
+    const testDatasetOutputURI = `s3://mlspace-data-${ACCOUNT_ID}/global/datasets/${testDatasetNameOut}/`;
     const testDatasetDescription = 'This is an example dataset for E2E batch translate tests.';
     const testBatchTranslateName = `e2eTestBatchTranslateJob${now}`;
     const targetLanguages = ['fr', 'de'];
@@ -75,14 +77,14 @@ describe('Batch Translate Tests', () => {
         cy.setValueCloudscapeInput('name-input', testBatchTranslateName);
         cy.setValueCloudscapeSelect('source-language-select', 'en');
         cy.setValueCloudscapeMultiselect('target-language-multiselect', targetLanguages);
-        cy.setValueCloudscapeSelect('s3-input-location-select', testDatasetNameIn);
-        cy.setValueCloudscapeAutoSuggest('s3-output-location-input', testDatasetNameOut);
+        cy.setValueCloudscapeInput('s3-output-location-input', testDatasetInputURI);
+        cy.setValueCloudscapeInput('s3-output-location-output', testDatasetOutputURI);
         // Verify that the values have been updated
         cy.verifyCloudscapeInput('name-input', testBatchTranslateName);
         cy.verifyCloudscapeSelect('source-language-select', 'en');
         cy.verifyCloudscapeMultiselect('target-language-multiselect', targetLanguageTokens);
-        cy.verifyCloudscapeSelect('s3-input-location-select', testDatasetNameIn);
-        cy.verifyCloudscapeAutoSuggest('s3-output-location-input', testDatasetNameOut);
+        cy.verifyCloudscapeInput('s3-output-location-input', testDatasetInputURI);
+        cy.verifyCloudscapeInput('s3-output-location-output', testDatasetOutputURI);
         cy.get('[data-cy="batch-translate-submit"]').click();
         cy.contains(`Successfully created translation job ${testBatchTranslateName}`, { timeout: 10000 });
     });
