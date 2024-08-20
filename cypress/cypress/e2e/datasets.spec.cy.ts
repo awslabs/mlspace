@@ -47,7 +47,7 @@ describe('Dataset Tests', () => {
         Cypress.session.clearAllSavedSessions();
         // Call login routine
         login();
-        // Navigate to notebook instances page
+        // Navigate to dataset page
         cy.visit(`${BASE_URL}#/project/${testProjectName}/dataset`);
         cy.url().should('include', `#/project/${testProjectName}/dataset`);
     });
@@ -64,7 +64,7 @@ describe('Dataset Tests', () => {
         cy.setValueCloudscapeInput('dataset-name-input', datasetName);
         cy.setValueCloudscapeTextArea('dataset-description-textarea', testDataset.DatasetDescription);
         cy.setValueCloudscapeSelect('dataset-type-select', testDataset.DatasetType.toLocaleLowerCase());
-        cy.get('[data-cy="dataset-file-upload-input"]').as('fileInput');
+        cy.get('[data-cy="dataset-file-upload-input-Upload Files"]').as('fileInput');
         cy.fixture('test_upload_file.txt').then((fileContent) => {
             cy.get('@fileInput').attachFile({
                 fileContent: fileContent.toString(),
@@ -91,15 +91,17 @@ describe('Dataset Tests', () => {
 
         // Verify dataset was created
         // Filter for the item so that it is the only one in the list
-        const datasetsTableWrapper = createWrapper().findTable('[data-cy="Dataset-table"]');
-        cy.get(datasetsTableWrapper.findFilterSlot().toSelector()).type(testDataset.DatasetName);
-        cy.get(`[data-cy="${datasetName}"]`);
+        cy.setValueCloudscapeInput('Filter Dataset', datasetName);
+        cy.contains('1 match');
     });
 
     it('Dataset Details', () => {
         // Filter for the item so it is the only one in the list
         const datasetsTableWrapper = createWrapper().findTable('[data-cy="Dataset-table"]');
-        cy.get(datasetsTableWrapper.findFilterSlot().toSelector()).type(testDataset.DatasetName);
+        cy.setValueCloudscapeInput('Filter Dataset', datasetName);
+        cy.contains('1 match');
+        // Arbitrary wait for DOM to stabilize
+        cy.wait(1000);
         // Click on the first item's selection box
         cy.get(datasetsTableWrapper.findRowSelectionArea(1).toSelector()).click();
 
@@ -118,29 +120,31 @@ describe('Dataset Tests', () => {
     it('Delete Dataset File', () => {
         // Filter for the item so it is the only one in the list
         const datasetsTableWrapper = createWrapper().findTable('[data-cy="Dataset-table"]');
-        cy.get(datasetsTableWrapper.findFilterSlot().toSelector()).type(testDataset.DatasetName);
+        cy.setValueCloudscapeInput('Filter Dataset', datasetName);
+        cy.contains('1 match');
         // Click on the first item's selection box
         cy.get(datasetsTableWrapper.findRowSelectionArea(1).toSelector()).scrollIntoView().click();
 
         // Click the actions dropdown and click edit
         const actionsDropdownWrapper = createWrapper().findButtonDropdown('[data-cy="dataset-actions-dropdown"]');
         cy.get(actionsDropdownWrapper.toSelector()).scrollIntoView().click();
-        cy.get(actionsDropdownWrapper.findItemById('edit').toSelector()).scrollIntoView().click();
+        cy.get(actionsDropdownWrapper.findItemById('details').toSelector()).scrollIntoView().click();
+        cy.wait(2000);
 
-        // Open the files tab and select the one and only uploaded file
-        cy.get(createWrapper().findExpandableSection('[data-cy="dataset-manage-files-expand"]').toSelector()).scrollIntoView().click();
-        const tableItem = `${testDataset.DatasetType.toLowerCase()}/datasets/${testDataset.DatasetName}/test_upload_file.txt`;
-        cy.selectCloudscapeTableRow(tableItem);
-        cy.verifySelectCloudscapeTableRow(tableItem);
+        // Filter for the uploaded file
+        const datasetBrowserTableWrapper = createWrapper().findTable('[data-cy="Dataset Browser"]');
+        cy.setValueCloudscapeInput('Filter files', 'test_upload_file.txt');
+        cy.get(datasetBrowserTableWrapper.findRowSelectionArea(1).toSelector()).scrollIntoView().click();
         cy.contains('Delete').click();
         cy.get('[data-cy="modal-delete"]').click();
-        cy.contains('No Files exist');
+        cy.contains('No Entries exist');
     });
 
     it('Update Dataset', () => {
         // Filter for the item so it is the only one in the list
         const datasetsTableWrapper = createWrapper().findTable('[data-cy="Dataset-table"]');
-        cy.get(datasetsTableWrapper.findFilterSlot().toSelector()).type(testDataset.DatasetName);
+        cy.setValueCloudscapeInput('Filter Dataset', datasetName);
+        cy.contains('1 match');
         // Click on the first item's selection box
         cy.get(datasetsTableWrapper.findRowSelectionArea(1).toSelector()).scrollIntoView().click();
 
@@ -157,10 +161,20 @@ describe('Dataset Tests', () => {
         // Update description
         cy.get(createWrapper().findTextarea('[data-cy="dataset-description"]').findNativeTextarea().toSelector()).type(' Updated');
 
-        // Open the Manage Files expandable section
-        cy.get(createWrapper().findExpandableSection('[data-cy="dataset-manage-files-expand"]').toSelector()).scrollIntoView().click();
+        // Save description change
+        cy.contains('Update dataset').scrollIntoView().click();
 
-        cy.get('[data-cy="dataset-file-upload-input"]').as('fileInput');
+        // Saving the change redirects back to the dataset table
+        // Verify the description is updated in the table
+        cy.setValueCloudscapeInput('Filter Dataset', datasetName);
+        cy.contains('1 match');
+        cy.get(datasetsTableWrapper.findRowSelectionArea(1).toSelector()).scrollIntoView().click();
+        cy.get(actionsDropdownWrapper.toSelector()).click();
+        cy.get(actionsDropdownWrapper.findItemById('details').toSelector()).click();
+        cy.get('[data-cy="Description-value"]').should('have.text', `${testDataset.DatasetDescription} Updated`);
+
+        // Upload a new file
+        cy.get('[data-cy="dataset-file-upload-input-Upload Files"]').as('fileInput');
         cy.fixture('test_upload_file.txt').then((fileContent) => {
             cy.get('@fileInput').attachFile({
                 fileContent: fileContent.toString(),
@@ -168,24 +182,15 @@ describe('Dataset Tests', () => {
                 mimeType: testDataset.DatasetFormat
             });
         });
-
         // Verify file was added
         cy.contains('test_second_upload_file.txt');
-
-        cy.contains('Update dataset').scrollIntoView().click();
-
-        // Check that the description was actually updated on the details page
-        cy.get(datasetsTableWrapper.findFilterSlot().toSelector()).type(testDataset.DatasetName);
-        cy.get(datasetsTableWrapper.findRowSelectionArea(1).toSelector()).scrollIntoView().click();
-        cy.get(actionsDropdownWrapper.toSelector()).click();
-        cy.get(actionsDropdownWrapper.findItemById('details').toSelector()).click();
-        cy.get('[data-cy="Description-value"]').should('have.text', `${testDataset.DatasetDescription} Updated`);
     });
 
     it('Delete Dataset', () => {
         // Filter for the item so it is the only one in the list
         const datasetsTableWrapper = createWrapper().findTable('[data-cy="Dataset-table"]');
-        cy.get(datasetsTableWrapper.findFilterSlot().toSelector()).type(testDataset.DatasetName);
+        cy.setValueCloudscapeInput('Filter Dataset', datasetName);
+        cy.contains('1 match');
         // Click on the first item's selection box
         cy.get(datasetsTableWrapper.findRowSelectionArea(1).toSelector()).scrollIntoView().click();
 
