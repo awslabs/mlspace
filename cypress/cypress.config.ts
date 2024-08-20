@@ -30,11 +30,9 @@ module.exports = defineConfig({
         auth_type: AuthType.Cognito,
         base_url: 'http://localhost:3000/Prod',
         // lambda_endpoint is only needed if base_url targets a localhost implementation
-        lambda_endpoint: 'https://014tnqj9sg.execute-api.us-east-1.amazonaws.com/Prod/',
-        // eslint-disable-next-line spellcheck/spell-checker
-        username: 'pmo',
-        // eslint-disable-next-line spellcheck/spell-checker
-        password: 'N@w<7Aab+Ae!',
-        account_id: '905418056524',
+        lambda_endpoint: '',
+        username: '',
+        password: '',
+        account_id: '',
     },
 });

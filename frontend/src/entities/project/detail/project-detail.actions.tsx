@@ -37,11 +37,9 @@ function ProjectDetailActions () {
     const nav = (endpoint: string) => navigate(endpoint);
     const { projectName } = useParams();
     let project: IProject = useAppSelector((state) => state.project.project);
-    console.log(`Project object: ${JSON.stringify(project)} and projectName: ${projectName}`);
     if (!project) {
         project = { name: projectName };
     }
-    console.log(`Project is now ${JSON.stringify(project)}`);
     const username = auth.user!.profile.preferred_username!;
 
     return (
@@ -58,7 +56,6 @@ function ProjectActionButton (
     projectName: string,
     username: string
 ) {
-    console.log(`Project: ${JSON.stringify(project)}`);
     const actionItems: Array<ButtonDropdownProps.ItemOrGroup> = [];
     const currentUser = useAppSelector(selectCurrentUser);
     const projectPermissions = useAppSelector((state) => state.project.permissions);
