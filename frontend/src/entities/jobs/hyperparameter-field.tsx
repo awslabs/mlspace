@@ -38,6 +38,7 @@ export function HyperparameterField (props: HyperparameterFieldProps) {
                         setFields(toUpdate);
                     }}
                     onBlur={() => touchFields([item.key])}
+                    data-cy='hpo-field-multiselect'
                 />
             );
         } else {

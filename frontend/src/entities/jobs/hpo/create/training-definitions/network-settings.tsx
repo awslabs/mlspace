@@ -82,6 +82,7 @@ export function NetworkSettings (props: FormProps<ITrainingJobDefinition>) {
                         };
                     })}
                     placeholder='Choose options'
+                    data-cy='network-settings-multiselect'
                 />
             </FormField>
         </ExpandableSection>

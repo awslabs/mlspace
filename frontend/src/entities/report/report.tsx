@@ -233,6 +233,7 @@ export function Report () {
                                     filteringType='auto'
                                     placeholder='Choose options'
                                     selectedAriaLabel='Selected'
+                                    data-cy='report-multiselect'
                                 />
                             </FormField>
                         </SpaceBetween>

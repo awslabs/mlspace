@@ -32,12 +32,17 @@ type DatasetProps = {
     files: string[];
 };
 
+type GroupProps = {
+    name: string;
+    description: string;
+};
 
 type TestProps = {
     projectPrefix?: string;
     login?: boolean;
     projects?: ProjectProps[];
     datasets?: DatasetProps[];
+    groups?: GroupProps[];
 };
 
-export { ProjectProps, DatasetProps, TestProps, AuthType };
+export { ProjectProps, DatasetProps, GroupProps, TestProps, AuthType };
