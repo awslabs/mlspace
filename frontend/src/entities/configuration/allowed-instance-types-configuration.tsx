@@ -87,7 +87,7 @@ export function AllowedInstanceTypesConfiguration (props: AllowedInstanceTypesCo
                     and will have no affect on resources created in notebooks
                 </Alert>
             }
-            <ExpandableSection headerText='Notebook instances' variant='default' expanded={props.expandedSections.notebookInstances} onChange={({ detail }) =>
+            <ExpandableSection data-cy='Notebook-Expandable-Section' headerText='Notebook instances' variant='default' expanded={props.expandedSections.notebookInstances} onChange={({ detail }) =>
                 props.setExpandedSections({...props.expandedSections, notebookInstances: detail.expanded})
             }>
                 <InstanceTypeMultiSelector
