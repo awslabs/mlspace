@@ -551,6 +551,7 @@ export function HyperParameterFieldValue (props: HyperParameterFieldValueProps) 
                             touchFields([`hyperparameters.${item.key}`]);
                         }}
                         onBlur={() => touchFields([item.key])}
+                        data-cy='hpo-value-multiselect'
                     />
                 );
             } else {
@@ -664,6 +665,7 @@ export function HyperParameterFieldValue (props: HyperParameterFieldValueProps) 
                         updateParameter(item);
                         touchFields([`hyperparameters.${item.key}`]);
                     }}
+                    data-cy='hpo-categorical-multiselect'
                 />
             );
         }

@@ -22,18 +22,23 @@ import {
 import createWrapper from '@cloudscape-design/components/test-utils/selectors';
 import { TestProps } from '../support/test-initializer/types';
 
+const testPrefix = 'Datasets';
 const testTime = new Date().getTime();
+const testProjectName = `${testPrefix}${testTime}`;
 
 describe('Dataset Tests', () => {
-    const testProjectPrefix = 'Datasets';
-    const testProjectName = `${testProjectPrefix}${testTime}`;
+    const testGroupName = `Group${testTime}`;
 
     const testProps: TestProps = {
         login: true,
-        projectPrefix: testProjectPrefix,
+        projectPrefix: testPrefix,
         projects: [{
-            name: `${testProjectPrefix}${testTime}`,
-            description: `Test project used for testing ${testProjectPrefix}`
+            name: testProjectName,
+            description: `Test project used for testing ${testPrefix}`
+        }],
+        groups: [{
+            name: testGroupName,
+            description: `Test group used for testing ${testPrefix}`
         }],
     };
 
@@ -119,10 +124,32 @@ describe('Dataset Tests', () => {
     it('Delete Project Dataset', () => {
         deleteDataset('Project');
     });
+
+    // === Group ===
+
+    it('Create Group Dataset', () => {
+        createDataset('Group', testGroupName);
+    });
+
+    it('Group Dataset Details', () => {
+        getDatasetDetails('Group', testGroupName);
+    });
+
+    it('Delete Group Dataset File', () => {
+        deleteDatasetFile('Group');
+    });
+
+    it('Update Group Dataset', () => {
+        updateDataset('Group');
+    });
+
+    it('Delete Group Dataset', () => {
+        deleteDataset('Group');
+    });
 });
 
 // === Driver Functions ===
-function createDataset (datasetType: string, testProjectName: string) {
+function createDataset (datasetType: string, testName: string) {
     const datasetName = generateDatasetName(datasetType);
     const datasetDescription = generateDatasetDescription(datasetType);
     cy.contains('Create dataset').click();
@@ -139,8 +166,13 @@ function createDataset (datasetType: string, testProjectName: string) {
     cy.verifyCloudscapeInput('dataset-name-input', datasetName);
     cy.verifyCloudscapeTextArea('dataset-description-textarea', datasetDescription);
     cy.verifyCloudscapeSelect('dataset-type-select', datasetType);
+
+    if (datasetType === 'Group') {
+        cy.setValueCloudscapeMultiselect('group-name-multiselect', [testName]);
+    }
+
     cy.get('[data-cy="dataset-submit-button"]').click();
-    cy.wait(2000);
+    cy.wait(3000);
     
     // Verify dataset creation redirected to main dataset page
     cy.url().should('include', `#/project/${testProjectName}/dataset`).should('include', datasetName);
@@ -154,7 +186,7 @@ function createDataset (datasetType: string, testProjectName: string) {
     filterDatasets(datasetName);
 }
 
-function getDatasetDetails (datasetType: string, testProjectName?: string) {
+function getDatasetDetails (datasetType: string, testName?: string) {
     const datasetName = generateDatasetName(datasetType);
     const datasetDescription = generateDatasetDescription(datasetType);
     // Filter for the item so it is the only one in the list
@@ -167,7 +199,7 @@ function getDatasetDetails (datasetType: string, testProjectName?: string) {
 
     cy.get('[data-cy="Name-value"]').should('have.text', datasetName);
     cy.get('[data-cy="Description-value"]').should('have.text',datasetDescription);
-    cy.get('[data-cy="Access level-value"]').should('have.text', `${datasetType.toLowerCase()}${datasetType === 'Project' ? `: ${testProjectName}` : ''}`);
+    cy.get('[data-cy="Access level-value"]').should('have.text', `${datasetType.toLowerCase()}${datasetType === 'Project' ? `: ${testName}` : ''}`);
     // Should not have the default empty text
     cy.get('[data-cy="Location-value"]').should('not.have.text', '-');
 }
@@ -235,6 +267,8 @@ function deleteDataset (datasetType: string) {
     // Click the actions dropdown and click delete
     clickAndAction('delete');
     cy.get('[data-cy="modal-delete"]').click();
+    cy.intercept('GET', '**/datasets').as('getDatasets');
+    cy.wait('@getDatasets', { timeout: 10000 });
 
     // Check that the dataset is deleted
     cy.contains('0 matches');

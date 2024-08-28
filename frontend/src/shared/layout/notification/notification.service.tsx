@@ -34,7 +34,7 @@ function NotificationService (dispatch: ThunkDispatch<any, any, Action>) {
         return {
             ...props,
             onDismiss: () => dispatch(clearNotification(props.id)),
-            dismissLabel: 'Dismiss notification',
+            dismissLabel: `Dismiss notification ${props.header}`,
         } as FlashbarProps.MessageDefinition;
     }
 

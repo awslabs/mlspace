@@ -37,7 +37,7 @@ import { addUserVisibleColumns, userColumns } from '../../user/user.columns';
 import Table from '../../../modules/table';
 import { IUser } from '../../../shared/model/user.model';
 import { addUsersToGroup } from '../user/group-user-functions';
-import { getAllUsers } from '../../user/user.reducer';
+import { getAllUsers, selectCurrentUser } from '../../user/user.reducer';
 import { setBreadcrumbs } from '../../../shared/layout/navigation/navigation.reducer';
 import { getBase } from '../../../shared/util/breadcrumb-utils';
 import { scrollToPageHeader } from '../../../shared/doc';
@@ -53,7 +53,9 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
     const {groupName} = useParams();
     const [initialLoaded, setInitialLoaded] = useState(false);
     const allUsers: IUser[] = useAppSelector((state) => state.user.allUsers);
-    const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
+    const currentUser = useAppSelector(selectCurrentUser);
+    const [selectedUsers, setSelectedUsers] = useState<IUser[]>([currentUser]);
+    
     const baseUrl = window.location.href.includes('#/admin') ? '#/admin/groups' : '#/personal/group';
 
     useEffect(() => {
@@ -187,6 +189,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                             selectItemsCallback={(e) => {
                                 setSelectedUsers(e);
                             }}
+                            defaultSelectedItems={[currentUser]}
                             trackBy='username'
                             allItems={allUsers}
                             columnDefinitions={userColumns}
