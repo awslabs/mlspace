@@ -22,6 +22,7 @@ import './cloudscape-utils/test-utils';
 import './test-initializer/init';
 import './project-commands/project';
 import './dataset-commands/dataset';
+import './group-commands/group';
 import './table-commands/table';
 import 'cypress-file-upload';
 import { AuthType } from './test-initializer/types';
