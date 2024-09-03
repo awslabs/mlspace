@@ -1,6 +1,6 @@
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Build and Test
+name: E2E Tests
 
 on:
   schedule:
@@ -18,7 +18,7 @@ jobs:
     name: Send Starting Slack Notification
     runs-on: ubuntu-latest
     steps:
-      - name: Send PR Created Notification
+      - name: Send E2E Starting Notification
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -52,7 +52,7 @@ jobs:
         run: |
           npm run cypress:run
   send_final_slack_notification:
-    name: Send Final Slack Notification
+    name: Send E2E Finished Notification
     needs: [cypress_tests]
     runs-on: ubuntu-latest
     if: always()
