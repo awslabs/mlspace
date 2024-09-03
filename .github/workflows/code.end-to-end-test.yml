@@ -50,7 +50,7 @@ jobs:
           sed -i -e "s/account_id: \'.*\'/account_id: \'${{vars.AWS_ACCOUNT}}\'/g" cypress.config.ts
       - name: echo config output
         working-directory: ./cypress
-        run: echo "config=$(cat cypress.config.ts)" >> $GITHUB_OUTPUT
+        run: echo "config=$(cat cypress.config.ts| tr -d '\n' )" >> $GITHUB_OUTPUT
       - name: Run E2E tests
         working-directory: ./cypress
         run: |
