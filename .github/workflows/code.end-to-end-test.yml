@@ -41,13 +41,19 @@ jobs:
         working-directory: ./cypress
         run: |
           npm install
-      - name: Update Config file and Run Tests
+      - name: Update Config file to run as Non-Admin
         working-directory: ./cypress
         run: |
           sed -i -e "s/base_url: \'.*\'/base_url: \'${{vars.BASE_URL}}\'/g" cypress.config.ts
           sed -i -e "s/username: \'.*\'/username: \'${{vars.NON_ADMIN_USER}}\'/g" cypress.config.ts
           sed -i -e "s/password: \'.*\'/password: \'${{secrets.NON_ADMIN_PASS}}\'/g" cypress.config.ts
           sed -i -e "s/account_id: \'.*\'/account_id: \'${{vars.AWS_ACCOUNT}}\'/g" cypress.config.ts
+      - name: echo config output
+        working-directory: ./cypress
+        run: echo "config=$(cat cypress.config.ts)" >> $GITHUB_OUTPUT
+      - name: Run E2E tests
+        working-directory: ./cypress
+        run: |
           npm run cypress:run
   send_final_slack_notification:
     name: Send E2E Finished Notification
