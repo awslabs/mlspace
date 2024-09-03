@@ -44,10 +44,10 @@ jobs:
       - name: Update Config file to run as Non-Admin
         working-directory: ./cypress
         run: |
-          sed -i -e "s/base_url: \'.*\'/base_url: \'${{vars.BASE_URL}}\'/g" cypress.config.ts
-          sed -i -e "s/username: \'.*\'/username: \'${{vars.NON_ADMIN_USER}}\'/g" cypress.config.ts
-          sed -i -e "s/password: \'.*\'/password: \'${{secrets.NON_ADMIN_PASS}}\'/g" cypress.config.ts
-          sed -i -e "s/account_id: \'.*\'/account_id: \'${{vars.AWS_ACCOUNT}}\'/g" cypress.config.ts
+          sed -i -e "s/base_url: '.*'/base_url: '${{vars.BASE_URL}}'/g" cypress.config.ts
+          sed -i -e "s/username: '.*'/username: '${{vars.NON_ADMIN_USER}}'/g" cypress.config.ts
+          sed -i -e "s/password: '.*'/password: '${{secrets.NON_ADMIN_PASS}}'/g" cypress.config.ts
+          sed -i -e "s/account_id: '.*'/account_id: '${{vars.AWS_ACCOUNT}}'/g" cypress.config.ts
       - name: echo config output
         working-directory: ./cypress
         run: echo "config=$(cat cypress.config.ts| tr -d '\n' )" >> $GITHUB_OUTPUT
