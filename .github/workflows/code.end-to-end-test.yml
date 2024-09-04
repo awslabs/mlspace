@@ -37,8 +37,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-      - name: Install Cypress dependencies
+      - name: Install Base dependencies
         working-directory: ./cypress
+        run: |
+          npm install
+      - name: Install FE dependencies
+        working-directory: ./frontend
         run: |
           npm install
       - name: Update Config file to run as Non-Admin
@@ -48,15 +52,13 @@ jobs:
           sed -i -e "s/username: '.*'/username: '${{vars.NON_ADMIN_USER}}'/g" cypress.config.ts
           sed -i -e "s/password: '.*'/password: '${{secrets.NON_ADMIN_PASS}}'/g" cypress.config.ts
           sed -i -e "s/account_id: '.*'/account_id: '${{vars.AWS_ACCOUNT}}'/g" cypress.config.ts
-      - name: echo config output
-        working-directory: ./cypress
-        run: echo "config=$(cat cypress.config.ts| tr -d '\n' )" >> $GITHUB_OUTPUT
-      - name: Run E2E tests
+      - name: Install Cypress Deps and Run E2E tests
         uses: cypress-io/github-action@v6
         env:
-          DEBUG: '@cypress/github-action'
+          DEBUG: '@cypress/github-action, cypress:*'
         with:
           working-directory: ./cypress
+          browser: chrome
         timeout-minutes: 30
   send_final_slack_notification:
     name: Send E2E Finished Notification
