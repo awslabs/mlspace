@@ -7,8 +7,8 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
-      release_tag:
-        description: 'New Release Name'
+      execution_reason:
+        description: 'Why are you running this action manually'
 
 permissions:
   contents: read
@@ -55,7 +55,7 @@ jobs:
       - name: Install Cypress Deps and Run E2E tests
         uses: cypress-io/github-action@v6
         env:
-          DEBUG: '@cypress/github-action, cypress:*'
+          DEBUG: '@cypress/github-action'
         with:
           working-directory: ./cypress
           browser: chrome

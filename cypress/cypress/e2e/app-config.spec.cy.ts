@@ -24,7 +24,7 @@ const testPrefix = 'AppConfig';
 const testTime = new Date().getTime();
 const testProjectName = `${testPrefix}${testTime}`;
 
-describe('Dataset Tests', () => {
+describe('App Config Tests', () => {
 
     const testProps: TestProps = {
         login: true,
