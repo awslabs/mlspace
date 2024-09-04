@@ -52,9 +52,12 @@ jobs:
         working-directory: ./cypress
         run: echo "config=$(cat cypress.config.ts| tr -d '\n' )" >> $GITHUB_OUTPUT
       - name: Run E2E tests
-        working-directory: ./cypress
-        run: |
-          npm run cypress:run
+        uses: cypress-io/github-action@v6
+        env:
+          DEBUG: '@cypress/github-action'
+        with:
+          working-directory: ./cypress
+        timeout-minutes: 30
   send_final_slack_notification:
     name: Send E2E Finished Notification
     needs: [cypress_tests]
