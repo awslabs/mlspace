@@ -17,8 +17,6 @@
 import { AUTH_TYPE, BASE_URL, DEFAULT_USERNAME, DEFAULT_PASSWORD } from '../commands';
 import { AuthType, TestProps } from './types';
 
-let resizerErrorIframeClosed = false;
-
 const initializeTest = (props: TestProps) => {
     Cypress.session.clearAllSavedSessions();
     const { login, projects, datasets, projectPrefix, groups } = props;
@@ -56,10 +54,6 @@ const initializeTest = (props: TestProps) => {
     Cypress.on('uncaught:exception', (err) => {
         /* returning false here prevents Cypress from failing the test */
         if (resizeObserverLoopErrRe.test(err.message)) {
-            if (!resizerErrorIframeClosed) {
-                cy.get('iframe').invoke('remove');
-                resizerErrorIframeClosed = true;
-            }
             return false;
         }
     });
