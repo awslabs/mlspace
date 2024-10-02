@@ -136,7 +136,7 @@ export function DatasetUpdate ({isAdmin}: DatasetProperties) {
     const disabled = dataset.createdBy !== currentUser.username || state.formSubmitting;
 
     return (
-        <ContentLayout header={<Header variant='h1'>Update Dataset {dataset.name}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>Update Dataset {dataset.name}</Header>}>
             <SpaceBetween direction='vertical' size='xxl'>
                 <Container>
                     {loadingDatasetEditPage ? (

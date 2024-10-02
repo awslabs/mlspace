@@ -124,7 +124,7 @@ export function HPOJobDetail () {
     }, [dispatch, state.hpoTrainingJob?.HyperParameterTuningJobStatus], (state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Failed && state.hpoTrainingJob?.HyperParameterTuningJobStatus !== JobStatus.Completed));
 
     return (
-        <ContentLayout header={<Header variant='h1'>{jobName}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{jobName}</Header>}>
             {HPOJobDetailsLoading && !initialLoaded ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>

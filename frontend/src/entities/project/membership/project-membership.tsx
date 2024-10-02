@@ -41,7 +41,7 @@ export function ProjectMembership () {
     }, [dispatch, projectName]);
 
     return (
-        <ContentLayout header={<Header
+        <ContentLayout headerVariant='high-contrast' header={<Header
             variant='h1'
             description={'Administer group and user memberships for this project, including designating who can serve as owners.'}>
             Project membership

@@ -60,7 +60,7 @@ function EndpointConfigDetail () {
     }, [dispatch, navigate, name, projectName]);
 
     return (
-        <ContentLayout header={<Header variant='h1'>{name}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{name}</Header>}>
             {endpointConfigDetailsLoading ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>

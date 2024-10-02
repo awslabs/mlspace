@@ -111,7 +111,7 @@ export function GroupDetail () {
     }
 
     return (
-        <ContentLayout header={<Header variant='h1'>{groupName}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{groupName}</Header>}>
             <SpaceBetween direction='vertical' size='xxl'>
                 <DetailsContainer
                     columns={1}
