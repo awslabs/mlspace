@@ -104,7 +104,7 @@ export function LabelingJobDetail () {
     labelingJobSettings.set('Task type', getLabelingJobType(labelingJob));
 
     return (
-        <ContentLayout header={<Header variant='h1'>{jobName}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{jobName}</Header>}>
             {loadingJobDetails && !initialLoaded ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>
