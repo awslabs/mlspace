@@ -128,6 +128,7 @@ export function ConfirmConfigurationChangesModal (props: ConfirmConfigurationCha
                             variant='primary'
                             loading={props.isSubmitting}
                             disabled={_.isEmpty(changesDiff)}
+                            data-cy='config-submit-button'
                             onClick={async () => {
                                 await props.submit();
                                 props.setVisible(false);

@@ -183,6 +183,7 @@ export function DatasetCreate () {
 
     return (
         <ContentLayout
+            headerVariant='high-contrast'
             header={
                 <Header
                     variant='h1'

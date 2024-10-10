@@ -33,7 +33,7 @@ export function Project (props: ProjectTableProps) {
     return (
         <Table
             header={<></>}
-            tableName='Project'
+            tableName='Projects'
             trackBy='name'
             tableType='multi'
             variant='embedded'

@@ -20,6 +20,7 @@ import logging
 from typing import List, Optional
 
 import boto3
+from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
 from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
@@ -173,14 +174,22 @@ class IAMManager:
                 PolicyDocument=self._generate_project_policy(project_name),
                 SetAsDefault=True,
             )
-            self.iam_client.tag_policy(
-                PolicyArn=project_policy_arn,
-                Tags=[
-                    {"Key": "project", "Value": project_name},
-                    {"Key": "policyVersion", "Value": str(PROJECT_POLICY_VERSION)},
-                    {"Key": "system", "Value": self.system_tag},
-                ],
-            )
+
+            try:
+                self.iam_client.tag_policy(
+                    PolicyArn=project_policy_arn,
+                    Tags=[
+                        {"Key": "project", "Value": project_name},
+                        {"Key": "policyVersion", "Value": str(PROJECT_POLICY_VERSION)},
+                        {"Key": "system", "Value": self.system_tag},
+                    ],
+                )
+            except ClientError as error:
+                # Check for unsupported operation error
+                if error.response["Error"]["Code"] == "UnsupportedOperation":
+                    logger.info(f"Tagging policies is unsupported in this region.")
+                else:
+                    raise error
         user_policy_arn = self.update_user_policy(username)
 
         # The notebook policy and pass role policies don't support/need dynamic
@@ -260,14 +269,21 @@ class IAMManager:
                 PolicyDocument=self._generate_user_policy(username),
                 SetAsDefault=True,
             )
-            self.iam_client.tag_policy(
-                PolicyArn=user_policy_arn,
-                Tags=[
-                    {"Key": "user", "Value": username},
-                    {"Key": "policyVersion", "Value": str(USER_POLICY_VERSION)},
-                    {"Key": "system", "Value": self.system_tag},
-                ],
-            )
+            try:
+                self.iam_client.tag_policy(
+                    PolicyArn=user_policy_arn,
+                    Tags=[
+                        {"Key": "user", "Value": username},
+                        {"Key": "policyVersion", "Value": str(USER_POLICY_VERSION)},
+                        {"Key": "system", "Value": self.system_tag},
+                    ],
+                )
+            except ClientError as error:
+                # Check for unsupported operation error
+                if error.response["Error"]["Code"] == "UnsupportedOperation":
+                    logger.info(f"Tagging policies is unsupported in this region.")
+                else:
+                    raise error
         return user_policy_arn
 
     # Removes the passed in roles and deletes any detached user specific policies. If a
@@ -364,9 +380,12 @@ class IAMManager:
             existing_policy = self.iam_client.get_policy(PolicyArn=resource_identifier)
             # Grab policy version from tags otherwise return a version of -1 if the policy exists
             # but version cannot be determined
-            for tag in existing_policy["Policy"]["Tags"]:
-                if tag["Key"] == "policyVersion":
-                    return int(tag["Value"])
+            if "Tags" in existing_policy["Policy"]:
+                for tag in existing_policy["Policy"]["Tags"]:
+                    if tag["Key"] == "policyVersion":
+                        return int(tag["Value"])
+            elif "DefaultVersionId" in existing_policy["Policy"]:
+                return int("".join(c for c in existing_policy["Policy"]["DefaultVersionId"] if c.isdigit()))
             return -1
         except self.iam_client.exceptions.NoSuchEntityException:
             return None
@@ -529,19 +548,26 @@ class IAMManager:
                 PolicyDocument=policy,
                 SetAsDefault=True,
             )
-            self.iam_client.tag_policy(
-                PolicyArn=policy_arn,
-                Tags=[
-                    {"Key": policy_type, "Value": policy_type_identifier},
-                    {
-                        "Key": "policyVersion",
-                        "Value": str(
-                            (existing_policy_version + 1) if expected_policy_version is None else expected_policy_version
-                        ),
-                    },
-                    {"Key": "system", "Value": self.system_tag},
-                ],
-            )
+            try:
+                self.iam_client.tag_policy(
+                    PolicyArn=policy_arn,
+                    Tags=[
+                        {"Key": policy_type, "Value": policy_type_identifier},
+                        {
+                            "Key": "policyVersion",
+                            "Value": str(
+                                (existing_policy_version + 1) if expected_policy_version is None else expected_policy_version
+                            ),
+                        },
+                        {"Key": "system", "Value": self.system_tag},
+                    ],
+                )
+            except ClientError as error:
+                # Check for unsupported operation error
+                if error.response["Error"]["Code"] == "UnsupportedOperation":
+                    logger.info(f"Tagging policies is unsupported in this region.")
+                else:
+                    raise error
         else:
             logger.info(f"Provided inputs didn't meet criteria for updating or creating a new policy")
 

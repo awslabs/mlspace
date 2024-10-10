@@ -130,7 +130,11 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
             <FormField {...fieldProps}>
                 <Grid gridDefinition={[{colspan: 6}, {colspan: 6}]}>
                     <SpaceBetween direction='vertical' size='xs'>
-                        <Input placeholder={s3UriPlaceholder} {...inputProps} type='search'></Input>
+                        <Input 
+                            placeholder={s3UriPlaceholder} 
+                            {...inputProps} 
+                            type='search'
+                        ></Input>
                         <Condition condition={!!props.alertOnEmpty && state.isEmpty}>
                             <Alert statusIconAriaLabel='Warning' type='warning'>
                                 <Condition condition={notFoundTypes.length > 0}>

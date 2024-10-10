@@ -284,6 +284,7 @@ export function NotebookCreate ({ update }: NotebookCreateProps) {
 
     return (
         <ContentLayout
+            headerVariant='high-contrast' 
             header={
                 <div>
                     <Header

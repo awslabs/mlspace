@@ -79,7 +79,7 @@ export function UserDetail () {
     }, [dispatch, username, navigate, initialLoaded]);
 
     return (
-        <ContentLayout header={<Header variant='h1'>{username}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{username}</Header>}>
             <SpaceBetween direction='vertical' size='xxl'>
                 <DetailsContainer
                     columns={2}
