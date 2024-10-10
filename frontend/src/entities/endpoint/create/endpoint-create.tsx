@@ -170,6 +170,7 @@ export function EndpointCreate () {
 
     return (
         <ContentLayout
+            headerVariant='high-contrast' 
             header={
                 <Header
                     variant='h1'

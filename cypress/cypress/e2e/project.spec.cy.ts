@@ -44,6 +44,9 @@ describe('Project Tests', () => {
 
 
         cy.get('[data-cy="submit"]').click();
+        cy.intercept('GET', `**/project/${name}**`).as('getProject');
+        cy.wait('@getProject', { timeout: 10000 });
+
         cy.url().should('include', `/project/${testProjectName}`);
         cy.contains(testProjectName);
     });

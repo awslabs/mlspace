@@ -44,7 +44,7 @@ function ProjectDetailActions () {
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
-            {ProjectActionButton(nav, dispatch, { ...project }, username)}
+            {ProjectActionButton(nav, dispatch, { ...project }, projectName!, username)}
         </SpaceBetween>
     );
 }
@@ -53,6 +53,7 @@ function ProjectActionButton (
     nav: (endpoint: string) => void,
     dispatch: Dispatch,
     project: IProject,
+    projectName: string,
     username: string
 ) {
     const actionItems: Array<ButtonDropdownProps.ItemOrGroup> = [];
@@ -101,6 +102,7 @@ function ProjectActionButton (
                 ProjectActionHandler(
                     e,
                     project,
+                    projectName,
                     username,
                     nav,
                     dispatch,
@@ -119,6 +121,7 @@ function ProjectActionButton (
 const ProjectActionHandler = (
     e: any,
     project: IProject,
+    projectName: string, 
     username: string,
     nav: (endpoint: string) => void,
     dispatch: ThunkDispatch<any, any, Action>,
@@ -126,16 +129,15 @@ const ProjectActionHandler = (
     setModalState: (state: Partial<ModalProps>) => void,
     notificationService: INotificationService
 ) => {
-
     switch (e.detail.id) {
         case 'update':
-            nav(`/project/${project.name}/edit`);
+            nav(`/project/${projectName}/edit`);
             break;
         case 'membership':
-            nav(`/project/${project.name}/membership`);
+            nav(`/project/${projectName}/membership`);
             break;
         case 'leave_project':
-            dispatch(removeUserFromProject({ user: username, project: project.name! })).then(() => {
+            dispatch(removeUserFromProject({ user: username, project: projectName })).then(() => {
                 dispatch(selectProject());
                 dispatch(listProjectsForUser());
                 nav('/');
@@ -145,10 +147,10 @@ const ProjectActionHandler = (
             setModalState({
                 ...modalState,
                 visible: true,
-                title: `Suspend ${project.name}?`,
+                title: `Suspend ${projectName}?`,
                 confirmText: 'Suspend',
                 onConfirm: async () =>
-                    dispatch(updateProject({ name: project.name!, suspended: true })).then(
+                    dispatch(updateProject({ name: projectName, suspended: true })).then(
                         (result) => {
                             setModalState({
                                 ...modalState,
@@ -156,12 +158,12 @@ const ProjectActionHandler = (
                             });
                             notificationService.showActionNotification(
                                 'suspend project',
-                                `Project ${project.name} suspended.`,
+                                `Project ${projectName} suspended.`,
                                 result
                             );
                             if (result.type.endsWith('/fulfilled')) {
                                 project.suspended = true;
-                                dispatch(getProject({projectName: project.name!}));
+                                dispatch(getProject({projectName: projectName}));
                             }
                         }
                     ),
@@ -169,15 +171,15 @@ const ProjectActionHandler = (
             });
             break;
         case 'reinstate_project':
-            dispatch(updateProject({ name: project.name!, suspended: false })).then((result) => {
+            dispatch(updateProject({ name: projectName, suspended: false })).then((result) => {
                 notificationService.showActionNotification(
                     'reinstate project',
-                    `Project ${project.name} reinstated.`,
+                    `Project ${projectName} reinstated.`,
                     result
                 );
                 if (result.type.endsWith('/fulfilled')) {
                     project.suspended = false;
-                    dispatch(getProject({projectName: project.name!}));
+                    dispatch(getProject({projectName: projectName}));
                 }
             });
             break;
@@ -185,17 +187,17 @@ const ProjectActionHandler = (
             setModalState({
                 ...modalState,
                 visible: true,
-                title: `Delete ${project.name}?`,
+                title: `Delete ${projectName}?`,
                 confirmText: 'Delete',
                 onConfirm: async () =>
-                    dispatch(deleteProject(project.name!)).then((result) => {
+                    dispatch(deleteProject(projectName)).then((result) => {
                         setModalState({
                             ...modalState,
                             visible: false,
                         });
                         notificationService.showActionNotification(
                             'delete project',
-                            `Project ${project.name} deleted.`,
+                            `Project ${projectName} deleted.`,
                             result
                         );
                         if (result.type.endsWith('/fulfilled')) {

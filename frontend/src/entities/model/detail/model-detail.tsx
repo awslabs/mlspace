@@ -75,7 +75,7 @@ function ModelDetail () {
 
     return (
         model && (
-            <ContentLayout header={<Header variant='h1'>{modelName}</Header>}>
+            <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{modelName}</Header>}>
                 {modelLoading ? (
                     <Container>
                         <StatusIndicator type='loading'>Loading details</StatusIndicator>

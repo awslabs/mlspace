@@ -143,6 +143,7 @@ export function Report () {
 
     return (
         <ContentLayout
+            headerVariant='high-contrast' 
             header={
                 <Header
                     variant='h1'
@@ -233,6 +234,7 @@ export function Report () {
                                     filteringType='auto'
                                     placeholder='Choose options'
                                     selectedAriaLabel='Selected'
+                                    data-cy='report-multiselect'
                                 />
                             </FormField>
                         </SpaceBetween>

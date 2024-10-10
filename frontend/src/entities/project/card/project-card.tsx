@@ -83,6 +83,7 @@ export function ProjectCards () {
 
     return (
         <Cards
+            variant='container'
             data-cy='project-cards'
             {...collectionProps}
             selectionType='single'

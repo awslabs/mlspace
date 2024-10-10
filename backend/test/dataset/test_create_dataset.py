@@ -62,6 +62,7 @@ def generate_dataset_model(event: dict, scope: str, dataset_location: str, type:
         description=body.get("datasetDescription", ""),
         location=dataset_location,
         created_by=event["requestContext"]["authorizer"]["principalId"],
+        groups=body.get("datasetGroups") if type == DatasetType.GROUP else [],
     )
 
 

@@ -144,7 +144,7 @@ function EndpointDetail () {
 
     return (
         <Condition condition={endpoint !== undefined}>
-            <ContentLayout header={<Header variant='h1'>{name}</Header>}>
+            <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{name}</Header>}>
                 {endpointDetailsLoading && !initialLoaded ? (
                     <Container>
                         <StatusIndicator type='loading'>Loading details</StatusIndicator>

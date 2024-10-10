@@ -1,0 +1,40 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sagemaker:CreateTrainingJob",
+                "sagemaker:CreateHyperParameterTuningJob"
+            ],
+            "Resource": [
+                "arn:aws:sagemaker:us-east-1:012345678910:training-job/*",
+                "arn:aws:sagemaker:us-east-1:012345678910:hyper-parameter-tuning-job/*"
+            ],
+            "Condition": {
+                "ForAnyValue:StringEquals": {
+                    "sagemaker:InstanceTypes": [
+                        "ml.m4.10xlarge"
+                    ]
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sagemaker:CreateTransformJob"
+            ],
+            "Resource": [
+                "arn:aws:sagemaker:us-east-1:012345678910:transform-job/*"
+            ],
+            "Condition": {
+                "ForAnyValue:StringEquals": {
+                    "sagemaker:InstanceTypes": [
+                        "ml.m4.xlarge",
+                        //...
+                    ]
+                }
+            }
+        }
+    ]
+}

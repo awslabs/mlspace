@@ -90,7 +90,7 @@ function DatasetDetail ({isAdmin}: DatasetProperties) {
     }, [dispatch, navigate, basePath, name, projectName, scope, type, isAdmin]);
 
     return (
-        <ContentLayout header={<Header variant='h1'>{dataset.name}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{dataset.name}</Header>}>
             <SpaceBetween direction='vertical' size='xxl'>
                 <DetailsContainer
                     header='Dataset details'

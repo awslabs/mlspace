@@ -22,6 +22,7 @@ import './cloudscape-utils/test-utils';
 import './test-initializer/init';
 import './project-commands/project';
 import './dataset-commands/dataset';
+import './group-commands/group';
 import './table-commands/table';
 import 'cypress-file-upload';
 import { AuthType } from './test-initializer/types';
@@ -32,6 +33,7 @@ export const BASE_URL = Cypress.env('base_url');
 export const LAMBDA_ENDPOINT = Cypress.env('lambda_endpoint');
 export const DEFAULT_USERNAME = Cypress.env('username');
 export const DEFAULT_PASSWORD = Cypress.env('password');
+export const ACCOUNT_ID = Cypress.env('account_id');
 
 export function login (baseUrl: string = BASE_URL, username: string = DEFAULT_USERNAME, password: string = DEFAULT_PASSWORD) {
     if (AUTH_TYPE === AuthType.Cognito) {

@@ -1,0 +1,288 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "s3:DeleteObject",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:PutObjectTagging"
+      ],
+      "Resource": [
+        "arn:*:s3:::mlspace-data-012345678910/global/*",
+        "arn:*:s3:::mlspace-data-012345678910/group/*",
+        "arn:*:s3:::mlspace-data-012345678910/private/*",
+        "arn:*:s3:::mlspace-data-012345678910/project/*"
+      ],
+      "Effect": "Allow"
+    },
+    {
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:PutObjectTagging"
+      ],
+      "Resource": "arn:*:s3:::mlspace-data-012345678910/index/*",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "global/*",
+            "index/*",
+            "private/*",
+            "project/*",
+            "group/*"
+          ]
+        }
+      },
+      "Action": "s3:ListBucket",
+      "Resource": "arn:*:s3:::mlspace-data-012345678910",
+      "Effect": "Allow"
+    },
+    {
+      "Action": "s3:GetBucketLocation",
+      "Resource": "arn:*:s3:::mlspace-data-012345678910",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": [
+            "sagemaker.amazonaws.com",
+            "translate.amazonaws.com"
+          ]
+        }
+      },
+      "Action": "iam:PassRole",
+      "Resource": "arn:*:iam::012345678910:role/MLSpace*",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "Bool": {
+          "kms:GrantIsForAWSResource": "true"
+        }
+      },
+      "Action": "kms:CreateGrant",
+      "Resource": "arn:aws:kms:us-east-1:012345678910:key/012345678910",
+      "Effect": "Allow"
+    },
+    {
+      "Action": [
+        "ec2:CreateNetworkInterface",
+        "ec2:CreateNetworkInterfacePermission",
+        "ec2:DeleteNetworkInterface",
+        "ec2:DeleteNetworkInterfacePermission",
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:GenerateDataKey"
+      ],
+      "Resource": [
+        "arn:aws:kms:us-east-1:012345678910:key/012345678910",
+        "arn:aws:ec2:us-east-1:012345678910:network-interface/*",
+        "arn:aws:ec2:us-east-1:012345678910:security-group/sg-012345678910",
+        "arn:aws:ec2:us-east-1:012345678910:subnet/subnet-012345678910",
+        "arn:aws:ec2:us-east-1:012345678910:subnet/subnet-012345678910",
+        "arn:aws:ec2:us-east-1:012345678910:subnet/subnet-012345678910"
+      ],
+      "Effect": "Allow"
+    },
+    {
+      "Action": "sagemaker:AddTags",
+      "Resource": "arn:*:sagemaker:*:012345678910:*",
+      "Effect": "Allow"
+    },
+    {
+      "Action": [
+        "cloudwatch:PutMetricData",
+        "comprehend:BatchDetect*",
+        "comprehend:Detect*",
+        "ec2:DescribeDhcpOptions",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVpcs",
+        "iam:GetRole",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:DescribeLogStreams",
+        "logs:PutLogEvents",
+        "sagemaker:DescribeWorkteam",
+        "sagemaker:ListEndpointConfigs",
+        "sagemaker:ListEndpoints",
+        "sagemaker:ListHyperParameterTuningJobs",
+        "sagemaker:ListLabelingJobs",
+        "sagemaker:ListModels",
+        "sagemaker:ListTags",
+        "sagemaker:ListTrainingJobs",
+        "sagemaker:ListTrainingJobsForHyperParameterTuningJob",
+        "sagemaker:ListTransformJobs",
+        "sagemaker:ListWorkteams",
+        "translate:DescribeTextTranslationJob",
+        "translate:ListLanguages",
+        "translate:ListTerminologies",
+        "translate:ListTextTranslationJobs",
+        "translate:StartTextTranslationJob",
+        "translate:StopTextTranslationJob",
+        "translate:TranslateDocument",
+        "translate:TranslateText"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "Null": {
+          "aws:RequestTag/user": "false",
+          "aws:RequestTag/system": "false",
+          "aws:RequestTag/project": "false"
+        }
+      },
+      "Action": "sagemaker:CreateEndpoint",
+      "Resource": "arn:*:sagemaker:*:012345678910:endpoint/*",
+      "Effect": "Allow"
+    },
+    {
+      "Action": "sagemaker:CreateEndpoint",
+      "Resource": "arn:*:sagemaker:*:012345678910:endpoint-config/*",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "Null": {
+          "sagemaker:VpcSubnets": "false",
+          "aws:RequestTag/user": "false",
+          "aws:RequestTag/system": "false",
+          "aws:RequestTag/project": "false",
+          "sagemaker:VpcSecurityGroupIds": "false"
+        }
+      },
+      "Action": "sagemaker:CreateModel",
+      "Resource": "arn:*:sagemaker:*:012345678910:model/*",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "Null": {
+          "aws:RequestTag/user": "false",
+          "aws:RequestTag/system": "false",
+          "aws:RequestTag/project": "false"
+        }
+      },
+      "Action": "sagemaker:CreateLabelingJob",
+      "Resource": "arn:*:sagemaker:*:012345678910:labeling-job/*",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "Null": {
+          "aws:ResourceTag/project": "false",
+          "aws:ResourceTag/system": "false",
+          "aws:ResourceTag/user": "false"
+        }
+      },
+      "Action": [
+        "sagemaker:DeleteEndpoint",
+        "sagemaker:DeleteEndpointConfig",
+        "sagemaker:DeleteModel",
+        "sagemaker:DescribeEndpoint",
+        "sagemaker:DescribeEndpointConfig",
+        "sagemaker:DescribeHyperParameterTuningJob",
+        "sagemaker:DescribeLabelingJob",
+        "sagemaker:DescribeModel",
+        "sagemaker:DescribeTrainingJob",
+        "sagemaker:DescribeTransformJob",
+        "sagemaker:InvokeEndpoint",
+        "sagemaker:StopHyperParameterTuningJob",
+        "sagemaker:StopLabelingJob",
+        "sagemaker:StopTrainingJob",
+        "sagemaker:StopTransformJob",
+        "sagemaker:UpdateEndpoint",
+        "sagemaker:UpdateEndpointWeightsAndCapacities"
+      ],
+      "Resource": "arn:*:sagemaker:*:012345678910:*",
+      "Effect": "Allow"
+    },
+    {
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:*:s3:::mlspace-config-012345678910",
+        "arn:*:s3:::mlspace-config-012345678910/*",
+        "arn:*:s3:::mlspace-data-012345678910/global-read-only/*",
+        "arn:*:s3:::sagemaker-sample-files",
+        "arn:*:s3:::sagemaker-sample-files/*"
+      ],
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": "global-read-only/*"
+        }
+      },
+      "Action": "s3:ListBucket",
+      "Resource": "arn:*:s3:::mlspace-data-012345678910",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "translate.amazonaws.com"
+        }
+      },
+      "Action": "iam:PassRole",
+      "Resource": "arn:*:iam::012345678910:role/MLSpace*",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "Null": {
+          "aws:RequestTag/user": "false",
+          "aws:RequestTag/system": "false",
+          "aws:RequestTag/project": "false"
+        }
+      },
+      "Action": "sagemaker:CreateEndpointConfig",
+      "Resource": "arn:*:sagemaker:*:012345678910:endpoint-config/*",
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "Null": {
+          "sagemaker:VpcSubnets": "false",
+          "aws:RequestTag/user": "false",
+          "aws:RequestTag/system": "false",
+          "aws:RequestTag/project": "false",
+          "sagemaker:VpcSecurityGroupIds": "false"
+        }
+      },
+      "Action": [
+        "sagemaker:CreateHyperParameterTuningJob",
+        "sagemaker:CreateTrainingJob"
+      ],
+      "Resource": [
+        "arn:*:sagemaker:*:012345678910:hyper-parameter-tuning-job/*",
+        "arn:*:sagemaker:*:012345678910:training-job/*"
+      ],
+      "Effect": "Allow"
+    },
+    {
+      "Condition": {
+        "Null": {
+          "aws:RequestTag/user": "false",
+          "aws:RequestTag/system": "false",
+          "aws:RequestTag/project": "false"
+        }
+      },
+      "Action": "sagemaker:CreateTransformJob",
+      "Resource": "arn:*:sagemaker:*:012345678910:transform-job/*",
+      "Effect": "Allow"
+    }
+  ]
+}

@@ -29,7 +29,7 @@ const createDataset = ({ name, description, type, format, files }: DatasetProps)
     cy.setValueCloudscapeInput('dataset-name-input', name);
     cy.setValueCloudscapeTextArea('dataset-description-textarea', description);
     cy.setValueCloudscapeSelect('dataset-type-select', type);
-    cy.get('[data-cy="dataset-file-upload-input"]').as('fileInput');
+    cy.get('[data-cy="dataset-file-upload-input-Upload Files"]').as('fileInput');
     files.forEach((file) => {
         cy.fixture(file).then((fileContent) => {
             cy.get('@fileInput').attachFile({
@@ -56,7 +56,7 @@ const deleteDataset = (datasetName: string) => {
     cy.url().should('include', '#/personal/dataset');
     // Filter for the item so it is the only one in the list
     const datasetsTableWrapper = createWrapper().findTable('[data-cy="Dataset-table"]');
-    cy.setValueCloudscapeTextFilter('Dataset-table', datasetName);
+    cy.setValueCloudscapeInput('Filter Dataset', datasetName);
     cy.contains('1 match');
     // Arbitrary wait for DOM to stabilize
     cy.wait(1000);

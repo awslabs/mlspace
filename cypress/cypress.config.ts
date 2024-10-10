@@ -33,5 +33,6 @@ module.exports = defineConfig({
         lambda_endpoint: '',
         username: '',
         password: '',
+        account_id: '',
     },
 });

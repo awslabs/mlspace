@@ -173,7 +173,7 @@ export default function EMRClusterCreate () {
 
 
     return (
-        <ContentLayout header={<Header variant='h1'>Create EMR Cluster</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>Create EMR Cluster</Header>}>
             <Form
                 actions={
                     <SpaceBetween direction='horizontal' size='xl'>

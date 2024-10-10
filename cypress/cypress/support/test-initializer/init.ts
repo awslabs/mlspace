@@ -21,7 +21,7 @@ let resizerErrorIframeClosed = false;
 
 const initializeTest = (props: TestProps) => {
     Cypress.session.clearAllSavedSessions();
-    const { login, projects, datasets, projectPrefix } = props;
+    const { login, projects, datasets, projectPrefix, groups } = props;
     if (login) {
         if (AUTH_TYPE === AuthType.Cognito) {
             cy.loginByCognito(
@@ -48,6 +48,9 @@ const initializeTest = (props: TestProps) => {
     datasets?.forEach((dataset) => {
         cy.createDataset(dataset);
     });
+    groups?.forEach((group) => {
+        cy.createGroup(group);
+    });
 
     const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/;
     Cypress.on('uncaught:exception', (err) => {
@@ -63,12 +66,15 @@ const initializeTest = (props: TestProps) => {
 };
 
 const teardownTest = (props: TestProps) => {
-    const { projects, datasets } = props;
+    const { projects, datasets, groups } = props;
     datasets?.forEach((dataset) => {
         cy.deleteDataset(dataset.name);
     });
     projects?.forEach((project) => {
         cy.deleteProject(project.name);
+    });
+    groups?.forEach((group) => {
+        cy.deleteGroup(group.name);
     });
 };
 

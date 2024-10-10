@@ -164,6 +164,7 @@ export function DeploymentConfiguration () {
                                     filteringType='auto'
                                     placeholder='Choose options'
                                     selectedAriaLabel='Selected'
+                                    data-cy='deployment-config-multiselect'
                                 />
                             </FormField>
                             <Button

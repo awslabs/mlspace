@@ -29,7 +29,7 @@ const createProject = ({ name, description }: ProjectProps) => {
     cy.verifyCloudscapeInput('name-input', name);
     cy.verifyCloudscapeTextArea('description-input', description);
     cy.get('[data-cy="submit"]').click();
-    cy.wait('@getProject');
+    cy.wait('@getProject', { timeout: 10000 });
     cy.url().should('include', `/project/${name}`);
     dismissNotification(`Successfully created project ${name}`);
 };
@@ -77,7 +77,7 @@ const deleteProjectsWithPrefix = (projectNamePrefix: string, maxNumberOfDeletes 
 
                 for (let i = 0; i < allProjects.length; i++) {
                     const project = allProjects[i];
-                    if (project.name.startsWith(projectNamePrefix)) {
+                    if (project.name && project.name.startsWith(projectNamePrefix)) {
                         deleteProject(project.name);
 
                         if (++numberDeleted >= maxNumberOfDeletes) {

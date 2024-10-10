@@ -104,7 +104,7 @@ const GroupActionHandler = (
         case 'delete_group':
             dispatch(
                 setDeleteModal({
-                    resourceName: 'Group',
+                    resourceName: groupName,
                     resourceType: 'group',
                     postConfirm: () => dispatch(getAllGroups(window.location.href.includes('#/admin'))),
                     onConfirm: async () =>

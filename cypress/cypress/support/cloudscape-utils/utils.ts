@@ -58,7 +58,7 @@ export const setValueCloudscapeTile = (dataSelector: string, value: string): voi
 };
 
 export const dismissNotification = (notificationText: string): void => {
-    cy.contains(notificationText).get('[aria-label="Dismiss notification"]').click();
+    cy.contains(notificationText).get(`[aria-label="Dismiss notification ${notificationText}"]`).click();
 };
 
 Cypress.Commands.add('setValueCloudscapeInput', (dataSelector: string, value: string) => {

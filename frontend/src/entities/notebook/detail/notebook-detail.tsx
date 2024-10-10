@@ -171,6 +171,7 @@ function NotebookDetail () {
         isAdminOrOwner(currentUser, projectPermissions);
     return (
         <ContentLayout
+            headerVariant='high-contrast' 
             header={
                 <Header
                     variant='h1'

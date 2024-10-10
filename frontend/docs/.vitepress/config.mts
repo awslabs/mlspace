@@ -11,6 +11,12 @@ const docItems = [
             { text: 'Setting Initial Admin', link: '/admin-guide/initial-admin' },
             { text: `Configure AWS Cognito for ${APPLICATION_NAME}`, link: '/admin-guide/configure-cognito' },
             { text: `Create a Ground Truth Workforce using Keycloak`, link: '/admin-guide/gt-workforce-keycloak' },
+            { text: `Security`, link: '/admin-guide/security/intro', items: [
+                { text: `Intro`, link: '/admin-guide/security/intro' },
+                { text: `Role Descriptions`, link: '/admin-guide/security/intro#role-descriptions' },
+                { text: `Policy Descriptions`, link: '/admin-guide/security/intro#policy-descriptions' },
+                { text: `Basic IAM`, link: '/admin-guide/security/basic-iam' },
+            ]}
         ]
       },
       {

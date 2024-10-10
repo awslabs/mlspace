@@ -56,6 +56,7 @@ export default function App () {
             <ErrorBoundary>
                 { applicationConfig.configuration.SystemBanner.isEnabled && <SystemBanner position='TOP' /> }
                 <AppLayout
+                    headerVariant='high-contrast'
                     ariaLabels={{
                         navigation: 'Console',
                         navigationClose: 'Close console',

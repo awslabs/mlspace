@@ -45,6 +45,7 @@ export default function Table ({
     tableType,
     actions,
     selectItemsCallback,
+    defaultSelectedItems,
     allItems,
     setItemsOverride,
     columnDefinitions,
@@ -92,7 +93,11 @@ export default function Table ({
             },
             pagination: { pageSize: preferences.pageSize },
             sorting: {},
-            selection: {keepSelection},
+            selection: {
+                defaultSelectedItems: defaultSelectedItems,
+                keepSelection,
+                
+            },
         });
 
     const { selectedItems } = collectionProps;
@@ -174,6 +179,7 @@ export default function Table ({
 
     return (
         <CloudscapeTable
+            selectedItems={selectedItems}
             data-cy={`${tableName}-table`}
             {...collectionProps}
             onSelectionChange={(event) => {

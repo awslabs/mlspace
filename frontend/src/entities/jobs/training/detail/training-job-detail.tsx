@@ -89,7 +89,7 @@ export function TrainingJobDetail () {
     }, [dispatch, trainingJob.TrainingJobStatus], (trainingJob.TrainingJobStatus !== JobStatus.Failed && trainingJob.TrainingJobStatus !== JobStatus.Completed));
 
     return (
-        <ContentLayout header={<Header variant='h1'>{trainingJobName}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{trainingJobName}</Header>}>
             {loadingJobDetails && !initialLoaded ? (
                 <Container>
                     <StatusIndicator type='loading'>Loading details</StatusIndicator>

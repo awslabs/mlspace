@@ -15,7 +15,7 @@
 */
 
 import React, { useEffect } from 'react';
-import { Button, Wizard } from '@cloudscape-design/components';
+import { Button, ContentLayout, Wizard } from '@cloudscape-design/components';
 import { Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch } from '../../../../config/store';
 import {
@@ -47,6 +47,7 @@ import { getImageName } from './training-definitions/algorithm-options';
 import { tryCreateDataset } from '../../../dataset/dataset.service';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 import { useNotificationService } from '../../../../shared/util/hooks';
+import '../../../../wizard.css';
 
 export type HPOJobCreateState = {
     editingJobDefinition: any;
@@ -374,42 +375,25 @@ export function HPOJobCreate () {
             <Route
                 index
                 element={
-                    <Wizard
-                        activeStepIndex={state.activeStepIndex}
-                        isLoadingNextStep={state.formSubmitting}
-                        onNavigate={(event) => {
-                            switch (event.detail.reason) {
-                                case 'step':
-                                case 'previous':
-                                    setState({
-                                        type: 'updateState',
-                                        payload: {
-                                            activeStepIndex: event.detail.requestedStepIndex,
-                                        },
-                                    });
-                                    break;
-                                case 'next':
-                                    {
-                                        const parseResult = formSchema.safeParse(state.form);
-                                        if (parseResult.success) {
-                                            setState({
-                                                type: 'updateState',
-                                                payload: {
-                                                    activeStepIndex:
-                                                        event.detail.requestedStepIndex,
-                                                    validateAll: false,
-                                                },
-                                            });
-                                        } else {
-                                            const formErrors = issuesToErrors(
-                                                parseResult.error.issues
-                                            );
-                                            if (
-                                                isStepValid(
-                                                    stepValidator[state.activeStepIndex],
-                                                    formErrors
-                                                )
-                                            ) {
+                    <ContentLayout headerVariant='high-contrast'>
+                        <Wizard
+                            activeStepIndex={state.activeStepIndex}
+                            isLoadingNextStep={state.formSubmitting}
+                            onNavigate={(event) => {
+                                switch (event.detail.reason) {
+                                    case 'step':
+                                    case 'previous':
+                                        setState({
+                                            type: 'updateState',
+                                            payload: {
+                                                activeStepIndex: event.detail.requestedStepIndex,
+                                            },
+                                        });
+                                        break;
+                                    case 'next':
+                                        {
+                                            const parseResult = formSchema.safeParse(state.form);
+                                            if (parseResult.success) {
                                                 setState({
                                                     type: 'updateState',
                                                     payload: {
@@ -419,118 +403,137 @@ export function HPOJobCreate () {
                                                     },
                                                 });
                                             } else {
+                                                const formErrors = issuesToErrors(
+                                                    parseResult.error.issues
+                                                );
+                                                if (
+                                                    isStepValid(
+                                                        stepValidator[state.activeStepIndex],
+                                                        formErrors
+                                                    )
+                                                ) {
+                                                    setState({
+                                                        type: 'updateState',
+                                                        payload: {
+                                                            activeStepIndex:
+                                                                event.detail.requestedStepIndex,
+                                                            validateAll: false,
+                                                        },
+                                                    });
+                                                } else {
+                                                    setState({
+                                                        type: 'updateState',
+                                                        payload: { validateAll: true },
+                                                    });
+                                                }
+
+                                                scrollToInvalid();
+                                            }
+                                        }
+                                        break;
+                                }
+                            }}
+                            onCancel={() => {
+                                navigate(`/project/${projectName}/jobs/hpo`, {
+                                    state: { prevPath: window.location.hash },
+                                });
+                            }}
+                            onSubmit={() => {
+                                const parseResult = formSchema.safeParse(state.form);
+                                if (parseResult.success) {
+                                    handleSubmit();
+                                } else {
+                                    setState({
+                                        type: 'updateState',
+                                        payload: { validateAll: true },
+                                    });
+                                    scrollToInvalid();
+                                }
+                            }}
+                            i18nStrings={{
+                                stepNumberLabel (stepNumber: number) {
+                                    return `Step ${stepNumber}`;
+                                },
+                                collapsedStepsLabel (stepNumber: number, stepsCount: number) {
+                                    return `Step ${stepNumber} of ${stepsCount}`;
+                                },
+                                cancelButton: 'Cancel',
+                                previousButton: 'Previous',
+                                nextButton: 'Next',
+                                submitButton: 'Submit',
+                                navigationAriaLabel: 'Job creation steps',
+                            }}
+                            steps={[
+                                {
+                                    title: 'Define job settings',
+                                    content: (
+                                        <HPOJobSettings
+                                            {...{
+                                                item: state.form,
+                                                setFields,
+                                                touchFields,
+                                                formErrors,
+                                            }}
+                                        />
+                                    ),
+                                },
+                                {
+                                    title: 'Create training job definition',
+                                    content: (
+                                        <JobDefinitions
+                                            {...{
+                                                item: state.form,
+                                                setFields,
+                                                touchFields,
+                                                formErrors,
+                                            }}
+                                            actions={
+                                                <Button
+                                                    onClick={() => {
+                                                        navigate('definition/new');
+                                                    }}
+                                                >
+                                                    Add training job definition
+                                                </Button>
+                                            }
+                                        />
+                                    ),
+                                },
+                                {
+                                    title: 'Configure tuning job resources',
+                                    content: (
+                                        <ConfigureTuningJobResources
+                                            {...{
+                                                item: state.form,
+                                                setFields,
+                                                touchFields,
+                                                formErrors,
+                                            }}
+                                        />
+                                    ),
+                                },
+                                {
+                                    title: 'Review and create',
+                                    content: (
+                                        <ReviewAndCreate
+                                            {...{
+                                                item: state.form,
+                                                setFields,
+                                                touchFields,
+                                                formErrors,
+                                            }}
+                                            setStep={(stepNumber: number) => {
                                                 setState({
                                                     type: 'updateState',
-                                                    payload: { validateAll: true },
+                                                    payload: { activeStepIndex: stepNumber },
                                                 });
-                                            }
-
-                                            scrollToInvalid();
-                                        }
-                                    }
-                                    break;
-                            }
-                        }}
-                        onCancel={() => {
-                            navigate(`/project/${projectName}/jobs/hpo`, {
-                                state: { prevPath: window.location.hash },
-                            });
-                        }}
-                        onSubmit={() => {
-                            const parseResult = formSchema.safeParse(state.form);
-                            if (parseResult.success) {
-                                handleSubmit();
-                            } else {
-                                setState({
-                                    type: 'updateState',
-                                    payload: { validateAll: true },
-                                });
-                                scrollToInvalid();
-                            }
-                        }}
-                        i18nStrings={{
-                            stepNumberLabel (stepNumber: number) {
-                                return `Step ${stepNumber}`;
-                            },
-                            collapsedStepsLabel (stepNumber: number, stepsCount: number) {
-                                return `Step ${stepNumber} of ${stepsCount}`;
-                            },
-                            cancelButton: 'Cancel',
-                            previousButton: 'Previous',
-                            nextButton: 'Next',
-                            submitButton: 'Submit',
-                            navigationAriaLabel: 'Job creation steps',
-                        }}
-                        steps={[
-                            {
-                                title: 'Define job settings',
-                                content: (
-                                    <HPOJobSettings
-                                        {...{
-                                            item: state.form,
-                                            setFields,
-                                            touchFields,
-                                            formErrors,
-                                        }}
-                                    />
-                                ),
-                            },
-                            {
-                                title: 'Create training job definition',
-                                content: (
-                                    <JobDefinitions
-                                        {...{
-                                            item: state.form,
-                                            setFields,
-                                            touchFields,
-                                            formErrors,
-                                        }}
-                                        actions={
-                                            <Button
-                                                onClick={() => {
-                                                    navigate('definition/new');
-                                                }}
-                                            >
-                                                Add training job definition
-                                            </Button>
-                                        }
-                                    />
-                                ),
-                            },
-                            {
-                                title: 'Configure tuning job resources',
-                                content: (
-                                    <ConfigureTuningJobResources
-                                        {...{
-                                            item: state.form,
-                                            setFields,
-                                            touchFields,
-                                            formErrors,
-                                        }}
-                                    />
-                                ),
-                            },
-                            {
-                                title: 'Review and create',
-                                content: (
-                                    <ReviewAndCreate
-                                        {...{
-                                            item: state.form,
-                                            setFields,
-                                            touchFields,
-                                            formErrors,
-                                        }}
-                                        setStep={(stepNumber: number) => {
-                                            setState({
-                                                type: 'updateState',
-                                                payload: { activeStepIndex: stepNumber },
-                                            });
-                                        }}
-                                    />
-                                ),
-                            },
-                        ]}
-                    />
+                                            }}
+                                        />
+                                    ),
+                                },
+                            ]}
+                        />
+                    </ContentLayout>
                 }
             />
             <Route

@@ -30,6 +30,7 @@ type TableProps<Entry = TableEntry> = {
     tableType?: CloudscapeTableProps.SelectionType;
     actions?: CallbackFunction<TableActionProps<Entry>, ReactNode | undefined>;
     selectItemsCallback?: CallbackFunction<Entry[]>;
+    defaultSelectedItems?: any[],
     allItems: Entry[];
     setItemsOverride?: CallbackFunction;
     columnDefinitions: CloudscapeTableProps.ColumnDefinition<Entry>[];

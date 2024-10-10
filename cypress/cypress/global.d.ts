@@ -41,5 +41,7 @@ declare namespace Cypress {
         deleteProjectsWithPrefix(projectPrefix: string): Chainable<Response>;
         createDataset(props: DatasetProps): Chainable<Response>;
         deleteDataset(datasetName: string): Chainable<Response>;
+        createGroup(props: GroupProps): Chainable<Response>;
+        deleteGroup(groupName: string): Chainable<Response>;
     };
 }

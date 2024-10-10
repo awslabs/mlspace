@@ -64,6 +64,7 @@ export function MLSTextFilter (props: MLSTextFilterProps) {
                 <FormField constraintText={constraintText} stretch={true}>
                     <Input
                         type='search'
+                        data-cy={props.filteringAriaLabel}
                         value={state.filteringText}
                         placeholder={props.filteringPlaceholder}
                         clearAriaLabel={props.filteringClearAriaLabel}

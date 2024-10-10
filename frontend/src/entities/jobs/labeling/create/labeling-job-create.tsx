@@ -38,6 +38,7 @@ import { TASK_TYPE_CONFIG } from './labeling-job-task-config';
 import { LabelingJobTypes } from '../labeling-job.common';
 import '../../../../shared/validation/helpers/uri';
 import { useNotificationService } from '../../../../shared/util/hooks';
+import '../../../../wizard.css';
 
 export type ILabelingJobLabel = {
     label: string;

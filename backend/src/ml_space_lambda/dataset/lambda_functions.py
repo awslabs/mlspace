@@ -247,7 +247,7 @@ def create_dataset(event, context):
         body = json.loads(event["body"])
         dataset_type = body.get("datasetType")
         dataset_name = body.get("datasetName")
-        groups = body.get("datasetGroups", [])
+        groups = []
         env_variables = get_environment_variables()
 
         if dataset_type == DatasetType.GLOBAL:
@@ -255,6 +255,7 @@ def create_dataset(event, context):
             dataset_scope = scope
             directory_name = f"global/datasets/{dataset_name}/"
         elif dataset_type == DatasetType.GROUP:
+            groups = body.get("datasetGroups", [])
             scope = ",".join(groups)
             dataset_scope = DatasetType.GROUP
             directory_name = f"group/datasets/{dataset_name}/"
@@ -275,6 +276,7 @@ def create_dataset(event, context):
                 description=body.get("datasetDescription", ""),
                 location=dataset_location,
                 created_by=event["requestContext"]["authorizer"]["principalId"],
+                groups=groups,
             )
             # For groups, create one entry per group that shares this dataset
             if dataset_type == DatasetType.GROUP:

@@ -50,6 +50,7 @@ export function Configuration () {
 
     return (
         <ContentLayout
+            headerVariant='high-contrast'
             header={
                 <Header
                     variant='h1'

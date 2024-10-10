@@ -77,6 +77,7 @@ export function ActivatedServicesConfiguration (props: ActivatedServicesConfigur
                                             props.setFields(updatedField);
                                         }}
                                         checked={props.enabledServices[service]}
+                                        data-cy={`Toggle-${service}`}
                                     >
                                     </Toggle>
                                 </SpaceBetween>

@@ -108,6 +108,7 @@ export function EmrConfiguration (props: EmrConfigurationProps) {
                     }
                     options={applicationOptions}
                     placeholder='Select applications'
+                    data-cy='emr-config-multiselect'
                 />
             </ExpandableSection>
             <ExpandableSection

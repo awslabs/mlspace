@@ -239,6 +239,7 @@ export function ProjectCreate ({ isEdit }: ResourceCreateProperties) {
 
     return (
         <ContentLayout
+            headerVariant='high-contrast' 
             header={
                 <Header
                     variant='h1'

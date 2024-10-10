@@ -1,0 +1,229 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "kms:RetireGrant",
+            "Resource": "arn:aws:kms:us-east-1:012345678910:key/80b28a33-4686-4d87-9dda-4a87e889875a",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "ec2:DescribeInstanceTypeOfferings",
+                "ec2:DescribeInstanceTypes",
+                "ec2:DescribeInstances",
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeVpcEndpoints",
+                "elasticmapreduce:ListClusters",
+                "elasticmapreduce:ListReleaseLabels",
+                "elasticmapreduce:RunJobFlow",  
+                "iam:GetPolicy",
+                "iam:GetRole",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListEntitiesForPolicy",
+                "iam:ListPolicyVersions",
+                "iam:ListRoleTags",
+                "iam:ListRoles",
+                "logs:FilterLogEvents",
+                "sagemaker:ListNotebookInstanceLifecycleConfigs",
+                "sagemaker:ListNotebookInstances"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "iam:ListRoleTags",
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::012345678910:role/EMR_DefaultRole",
+                "arn:aws:iam::012345678910:role/EMR_EC2_DefaultRole",
+                "arn:aws:iam::012345678910:role/mlspace-app-role"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "dynamodb:DeleteItem",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:UpdateItem"
+            ],
+            "Resource": "arn:aws:dynamodb:us-east-1:012345678910:table/mlspace-*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": "ec2:AuthorizeSecurityGroupIngress",
+            "Resource": "arn:aws:ec2:us-east-1:012345678910:security-group/*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "s3:DeleteObject",
+                "s3:Get*",
+                "s3:List*",
+                "s3:PutBucketNotification",
+                "s3:PutObject",
+                "s3:PutObjectTagging"
+            ],
+            "Resource": "arn:aws:s3:::*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "sagemaker:DirectInternetAccess": "Disabled",
+                    "sagemaker:RootAccess": "Disabled"
+                },
+                "Null": {
+                    "sagemaker:VpcSubnets": "false",
+                    "aws:RequestTag/user": "false",
+                    "aws:RequestTag/system": "false",
+                    "aws:RequestTag/project": "false",
+                    "sagemaker:VpcSecurityGroupIds": "false"
+                }
+            },
+            "Action": "sagemaker:CreateNotebookInstance",
+            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:notebook-instance/*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "sagemaker:CreateNotebookInstanceLifecycleConfig",
+                "sagemaker:DeleteNotebookInstanceLifecycleConfig",
+                "sagemaker:DescribeNotebookInstanceLifecycleConfig",
+                "sagemaker:UpdateNotebookInstanceLifecycleConfig"
+            ],
+            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:notebook-instance-lifecycle-config/*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "Null": {
+                    "aws:ResourceTag/project": "false",
+                    "aws:ResourceTag/system": "false",
+                    "aws:ResourceTag/user": "false"
+                }
+            },
+            "Action": [
+                "sagemaker:DeleteNotebookInstance",
+                "sagemaker:DescribeNotebookInstance",
+                "sagemaker:StartNotebookInstance",
+                "sagemaker:StopNotebookInstance",
+                "sagemaker:UpdateNotebookInstance"
+            ],
+            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:notebook-instance/*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": "sagemaker:CreatePresignedNotebookInstanceUrl",
+            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:notebook-instance/*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": "lambda:InvokeFunction",
+            "Resource": "arn:aws:lambda:us-east-1:012345678910:function:mls-lambda-*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "elasticmapreduce:AddTags",
+                "elasticmapreduce:DescribeCluster",
+                "elasticmapreduce:ListInstances",
+                "elasticmapreduce:SetTerminationProtection",
+                "elasticmapreduce:TerminateJobFlows"
+            ],
+            "Resource": "arn:aws:elasticmapreduce:us-east-1:012345678910:cluster/*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "iam:PermissionsBoundary": "arn:aws:iam::012345678910:policy/mlspace-project-user-permission-boundary"
+                },
+                "StringEqualsIgnoreCase": {
+                    "iam:ResourceTag/system": "MLSpace"
+                }
+            },
+            "Action": "iam:CreateRole",
+            "Resource": "arn:aws:iam::012345678910:role/MLSpace*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEqualsIgnoreCase": {
+                    "iam:ResourceTag/system": "MLSpace"
+                }
+            },
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:DeleteRole",
+                "iam:DeleteRolePolicy",
+                "iam:DetachRolePolicy",
+                "iam:PutRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::012345678910:role/MLSpace*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEqualsIgnoreCase": {
+                    "iam:PolicyARN": "arn:aws:iam::012345678910:policy/MLSpace-app-denied-services",
+                    "iam:ResourceTag/system": "MLSpace"
+                }
+            },
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy"
+            ],
+            "Resource": [
+                "arn:aws:iam::012345678910:role/MLSpace*",
+                "arn:aws:iam::012345678910:role/mlspace-app-role",
+                "arn:aws:iam::012345678910:role/mlspace-notebook-role"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "iam:CreatePolicy",
+                "iam:CreatePolicyVersion",
+                "iam:DeletePolicy",
+                "iam:DeletePolicyVersion",
+                "iam:TagPolicy"
+            ],
+            "Resource": "arn:aws:iam::012345678910:policy/MLSpace*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:SimulatePrincipalPolicy",
+                "iam:TagRole"
+            ],
+            "Resource": "arn:aws:iam::012345678910:role/MLSpace*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": "sagemaker.amazonaws.com"
+                }
+            },
+            "Action": "iam:PassRole",
+            "Resource": "arn:aws:iam::012345678910:role/MLSpace*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": "translate.amazonaws.com"
+                }
+            },
+            "Action": "iam:PassRole",
+            "Resource": "arn:aws:iam::012345678910:role/mlspace-app-role",
+            "Effect": "Allow"
+        }
+    ]
+}

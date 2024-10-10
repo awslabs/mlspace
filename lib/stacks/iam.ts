@@ -362,7 +362,7 @@ export class IAMStack extends Stack {
                     effect: Effect.ALLOW,
                     actions: ['iam:PassRole'],
                     resources: [
-                        `arn:${this.partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
+                        `arn:${partition}:iam::${this.account}:role/${props.mlspaceConfig.IAM_RESOURCE_PREFIX}*`,
                     ],
                     conditions: {
                         StringEquals: {

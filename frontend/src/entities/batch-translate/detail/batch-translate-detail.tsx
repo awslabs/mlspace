@@ -142,7 +142,7 @@ function BatchTranslateDetail () {
 
     return (
         batchTranslateJob && (
-            <ContentLayout header={<Header variant='h1'>{batchTranslateJob.JobName}</Header>}>
+            <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{batchTranslateJob.JobName}</Header>}>
                 <SpaceBetween size='xxl'>
                     <DetailsContainer
                         loading={jobLoading && !initialLoaded}
