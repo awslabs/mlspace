@@ -2,7 +2,7 @@
 
 ---
 
-The project user permission boundary policy showcases the maximum permission set a user can have in an MLSpace project. With secure user specific roles enabled this boundary is scoped down even further to only allow users to have access to the resources their Project and Groups enable.
+The project user permission boundary policy defines the maximum set of permissions a user can possess within an MLSpace project. When secure user-specific roles are enabled, this boundary is further restricted, allowing users access only to resources authorized by their assigned Project and Group permissions. This granular approach ensures a robust and tailored security model for each user within the MLSpace ecosystem.
 
 > [!IMPORTANT]
 > The policy example provided below is based on a default installation in the US East 1 region. It is broken down statement by statement for clarity. If you intend to use these statements or the full policy at the end of the page, please ensure that you adjust the partition, region, account ID, and resource names to match your specific installation. This example is intended for informational purposes only and should not be implemented without proper customization.
@@ -11,7 +11,7 @@ The project user permission boundary policy showcases the maximum permission set
 
 ## Statement 1
 
-These actions grant users to have access to manage Global, Group, Private, and Project datasets that are in the application dataset S3 Bucket.
+These actions authorize users to manage Global, Group, Private, and Project datasets stored within the application's designated S3 bucket. This comprehensive access enables efficient data handling across various levels of organizational hierarchy, facilitating seamless collaboration and resource utilization within the platform.
 
 ```json:line-numbers
     {
@@ -33,7 +33,7 @@ These actions grant users to have access to manage Global, Group, Private, and P
 
 ## Statement 2
 
-These actions grant a role the ability to manage S3 objects within a specific prefix reserved for future use. This ensures proper access control and organization of project resources. 
+These permissions grant the designated role the capability to manage Amazon S3 objects within a specified prefix, which is reserved for future utilization. This approach ensures appropriate access control and facilitates the efficient organization of project resources.
 
 ```json:line-numbers
     {
@@ -49,7 +49,7 @@ These actions grant a role the ability to manage S3 objects within a specific pr
 
 ## Statement 3
 
-These actions grant users the ability to list the contents in the Global, Group, Private, and Project datasets that are in the application dataset S3 Bucket.
+These permissions enable users to view and enumerate the contents within the Global, Group, Private, and Project datasets stored in the application's designated S3 bucket. Users can access and list items across these various dataset categories, facilitating efficient data management and retrieval within the application's storage infrastructure.
 
 ```json:line-numbers
     {
@@ -72,7 +72,7 @@ These actions grant users the ability to list the contents in the Global, Group,
 
 ### Statement 4
 
-These actions grant users the ability to get the bucket location for the application dataset s3 bucket.
+This set of permissions allows users to retrieve the location information for the S3 bucket containing the application's dataset.
 
 ```json:line-numbers
     {
@@ -84,7 +84,7 @@ These actions grant users the ability to get the bucket location for the applica
 
 ### Statement 5
 
-These actions grant the ability to pass MLSpace prefixed roles to Sagemaker and Translate when executing and running jobs.
+These actions enable the assignment of MLSpace-prefixed roles to Amazon SageMaker and Amazon Translate services when initiating and executing jobs. This capability ensures proper role-based access control and permissions management within the MLSpace environment for these AWS services.
 
 ```json:line-numbers
     {
@@ -104,7 +104,7 @@ These actions grant the ability to pass MLSpace prefixed roles to Sagemaker and 
 
 ### Statement 6
 
-These actions grant AWSResources the ability to use the KMS key that MLSpace creates or is provided during deploy time.
+These permissions allow AWSResources to utilize the KMS key that MLSpace either generates or receives during deployment.
 
 ```json:line-numbers
     {
@@ -121,7 +121,7 @@ These actions grant AWSResources the ability to use the KMS key that MLSpace cre
 
 ### Statement 7
 
-These actions grant the ability to interact with the networking and KMS resources within MLSpace required for various Sagemaker jobs.
+These actions provide the necessary permissions to interact with networking and Key Management Service (KMS) resources within MLSpace, which are essential for executing various Amazon SageMaker jobs.
 
 ```json:line-numbers
     {
@@ -149,7 +149,7 @@ These actions grant the ability to interact with the networking and KMS resource
 
 ### Statement 8
 
-These actions grant the ability for Sagemaker tags to be added. This follows our best security guidelines so that we know which user is spinning up resources or running jobs.
+This set of actions enables the addition of SageMaker tags, aligning with our best security practices. These tags allow us to identify which users are initiating resources or executing jobs, thereby enhancing our tracking and accountability measures.
 
 ```json:line-numbers
     {
@@ -161,7 +161,7 @@ These actions grant the ability for Sagemaker tags to be added. This follows our
 
 ### Statement 9
 
-These actions grant users the ability to interact with various Cloudwatch, Comprehend, Ec2, IAM, Sagemaker, and Translate operations.
+This set of permissions enables users to perform specific operations within Amazon CloudWatch, Amazon Comprehend, Amazon EC2, AWS Identity and Access Management (IAM), Amazon SageMaker, and Amazon Translate services.
 
 ```json:line-numbers
     {
@@ -206,7 +206,7 @@ These actions grant users the ability to interact with various Cloudwatch, Compr
 
 ### Statement 10
 
-These actions grant users the ability to create Sagemaker endpoints but only if the User, System, and Project tags are included in the request.
+The specified actions authorize users to create Amazon SageMaker Endpoints, provided that the request includes the mandatory User, System, and Project tags. This tagging requirement ensures proper resource management, auditing, and access control.
 
 ```json:line-numbers
     {
@@ -225,7 +225,7 @@ These actions grant users the ability to create Sagemaker endpoints but only if 
 
 ### Statement 11
 
-These actions grant users the ability to create Sagemaker endpoint configurations.
+This set of permissions allows authorized users to create Amazon SageMaker Endpoint configurations.
 
 ```json:line-numbers
     {
@@ -237,7 +237,7 @@ These actions grant users the ability to create Sagemaker endpoint configuration
 
 ### Statement 12
 
-These actions grant users the ability to create Sagemaker models but only if the Sagemaker VPC info, User, System, and Project tags are included in the request.
+These permissions authorize users to create Amazon SageMaker Models, provided that the request includes the following required elements: SageMaker VPC information, user tags, system tags, and project tags. This tagging requirement ensures proper resource management, auditing, and access control.
 
 ```json:line-numbers
     {
@@ -258,7 +258,7 @@ These actions grant users the ability to create Sagemaker models but only if the
 
 ### Statement 13
 
-These actions grant users the ability to create labeling jobs but only if the User, System, and Project tags are included in the request.
+These actions authorize users to initiate labeling jobs, contingent upon the inclusion of User, System, and Project tags within the request. This tagging requirement ensures proper resource management, auditing, and access control.
 
 ```json:line-numbers
     {
@@ -277,7 +277,7 @@ These actions grant users the ability to create labeling jobs but only if the Us
 
 ### Statement 14
 
-These actions grant users the ability to delete, describe, invoke, stop, and update Sagemaker resources but only if the User, System, and Project tags are included in the request.
+These actions grant users the authority to delete, describe, invoke, stop, and update Amazon SageMaker resources. However, this access is contingent upon the inclusion of User, System, and Project tags in the request. This tagging requirement ensures proper resource management, auditing, and access control.
 
 ```json:line-numbers
     {
@@ -314,7 +314,7 @@ These actions grant users the ability to delete, describe, invoke, stop, and upd
 
 ### Statement 15
 
-These actions grant users the ability to read and list the s3 contents for MLSpace configuration files, MLSpace Readonly files, and Sagemaker sample files.
+These actions authorize users to read and list the contents of Amazon S3 buckets specifically for MLSpace configuration files, MLSpace read-only files, and Amazon SageMaker sample files. This access enables users to retrieve essential configuration data, view read-only resources, and access sample files provided by SageMaker, facilitating efficient use of the MLSpace environment and SageMaker services.
 
 ```json:line-numbers
     {
@@ -335,7 +335,7 @@ These actions grant users the ability to read and list the s3 contents for MLSpa
 
 ### Statement 16
 
-These actions grant users the ability to list the content of the global read only data in the MLSpace data bucket.
+This set of permissions allows users to view and list the contents of the global read-only data stored in the MLSpace data bucket.
 
 ```json:line-numbers
     {
@@ -352,7 +352,7 @@ These actions grant users the ability to list the content of the global read onl
 
 ### Statement 17
 
-These actions grant the ability to pass MLSpace prefixed roles to Translate when executing and running jobs.
+These actions provide the capability to assign MLSpace-prefixed roles to Translate when executing and managing jobs.
 
 ```json:line-numbers
     {
@@ -369,7 +369,7 @@ These actions grant the ability to pass MLSpace prefixed roles to Translate when
 
 ### Statement 18    
 
-These actions grant users the ability to create Sagemaker endpoint configurations but only if the User, System, and Project tags are included in the request.
+These actions authorize users to create Amazon SageMaker Endpoint Configurations, contingent upon the inclusion of User, System, and Project tags in the request.  This tagging requirement ensures proper resource management, auditing, and access control.
 
 ```json:line-numbers
     {
@@ -388,7 +388,7 @@ These actions grant users the ability to create Sagemaker endpoint configuration
 
 ### Statement 19
 
-These actions grant users the ability to create HPO and Training jobs but only if the Sagemaker VPC info, User, System, and Project tags are included in the request.
+These actions authorize users to initiate Hyperparameter Optimization (HPO) and Training jobs in Amazon SageMaker, subject to specific conditions. The request must include SageMaker VPC information, as well as User, System, and Project tags. This tagging requirement ensures proper resource management, auditing, and access control.
 
 ```json:line-numbers
     {
@@ -415,7 +415,7 @@ These actions grant users the ability to create HPO and Training jobs but only i
 
 ### Statement 20
 
-These actions grant users the ability to create Transform jobs but only if the User, System, and Project tags are included in the request.
+These actions authorize users to create Transform jobs in Amazon SageMaker, subject to a specific condition. The request must include User, System, and Project tags. This requirement ensures proper resource attribution, facilitates effective management, and maintains compliance with organizational tagging policies. This tagging requirement ensures proper resource management, auditing, and access control.
 
 ```json:line-numbers
     {
