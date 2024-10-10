@@ -237,7 +237,7 @@
         }
       },
       "Action": "iam:PassRole",
-      "Resource": "arn:aws:iam::012345678910:role/MLSpace*",
+      "Resource": "arn:*:iam::012345678910:role/MLSpace*",
       "Effect": "Allow"
     },
     {
