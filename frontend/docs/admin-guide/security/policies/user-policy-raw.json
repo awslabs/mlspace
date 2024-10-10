@@ -1,0 +1,82 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:PutObject",
+                "s3:PutObjectTagging"
+            ],
+            "Resource": [
+                "arn:aws:s3:::mlspace-data-012345678910/private/jdoe/*",
+                "arn:aws:s3:::mlspace-data-012345678910/global/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:PutObjectTagging"
+            ],
+            "Resource": "arn:aws:s3:::mlspace-data-012345678910/index/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::mlspace-data-012345678910",
+            "Condition": {
+                "StringLike": {
+                    "s3:prefix": [
+                        "private/jdoe/*",
+                        "global/*",
+                        "index/*"
+                    ]
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": "s3:GetBucketLocation",
+            "Resource": "arn:aws:s3:::mlspace-data-012345678910"
+        },
+        {
+            "Effect": "Deny",
+            "Action": [
+                "sagemaker:CreateEndpoint"
+            ],
+            "Resource": "arn:aws:sagemaker:*:*:endpoint/*",
+            "Condition": {
+                "StringNotEqualsIgnoreCase": {
+                    "aws:RequestTag/user": "jdoe"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sagemaker:CreateEndpoint"
+            ],
+            "Resource": "arn:aws:sagemaker:*:*:endpoint-config/*"
+        },
+        {
+            "Effect": "Deny",
+            "Action": [
+                "sagemaker:CreateModel",
+                "sagemaker:CreateEndpointConfig",
+                "sagemaker:CreateTrainingJob",
+                "sagemaker:CreateProcessingJob",
+                "sagemaker:CreateHyperParameterTuningJob",
+                "sagemaker:CreateTransformJob"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringNotEqualsIgnoreCase": {
+                    "aws:RequestTag/user": "jdoe"
+                }
+            }
+        }
+    ]
+}
