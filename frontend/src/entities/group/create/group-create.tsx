@@ -204,6 +204,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
 
     return (
         <ContentLayout
+            headerVariant='high-contrast' 
             header={
                 <Header
                     variant='h1'

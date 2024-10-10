@@ -120,6 +120,7 @@ function TransformDetail () {
 
     return (
         <ContentLayout
+            headerVariant='high-contrast' 
             header={
                 <Header
                     variant='h1'

@@ -169,7 +169,7 @@ function ProjectDetail () {
     }
 
     return (
-        <ContentLayout header={<Header variant='h1'>{projectName}</Header>}>
+        <ContentLayout headerVariant='high-contrast' header={<Header variant='h1'>{projectName}</Header>}>
             <SpaceBetween direction='vertical' size='xxl'>
                 <DetailsContainer
                     columns={1}
