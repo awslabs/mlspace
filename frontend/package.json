@@ -80,7 +80,7 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-spellcheck": "0.0.19",
-    "lint-staged": "^13.3.0",
+    "lint-staged": "^15.2.10",
     "react-scripts": "5.0.1",
     "redux-mock-store": "^1.5.4",
     "typescript": "^4.9.5",
