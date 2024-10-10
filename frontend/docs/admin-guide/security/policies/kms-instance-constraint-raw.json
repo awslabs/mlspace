@@ -1,0 +1,27 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "sagemaker:CreateEndpointConfig",
+                "sagemaker:CreateHyperParameterTuningJob",
+                "sagemaker:CreateNotebookInstance",
+                "sagemaker:CreateTrainingJob",
+                "sagemaker:CreateTransformJob"
+            ],
+            "Resource": "*",
+            "Effect": "Deny",
+            "Condition": {
+                "Null": {
+                    "sagemaker:VolumeKmsKey": "true"
+                },
+                "ForAllValues:StringNotLike": {
+                    "sagemaker:InstanceTypes": [
+                        "m5.*",
+                        // ...
+                    ]
+                }
+            }
+        }
+    ]
+}
