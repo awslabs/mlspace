@@ -186,7 +186,7 @@ class IAMManager:
                 )
             except ClientError as error:
                 # Check for unsupported operation error
-                if error.response["Error"]["Code"] == "UnsupportedOperation":
+                if error.response["Error"]["Code"] == "InvalidAction":
                     logger.info(f"Tagging policies is unsupported in this region.")
                 else:
                     raise error
@@ -280,7 +280,7 @@ class IAMManager:
                 )
             except ClientError as error:
                 # Check for unsupported operation error
-                if error.response["Error"]["Code"] == "UnsupportedOperation":
+                if error.response["Error"]["Code"] == "InvalidAction":
                     logger.info(f"Tagging policies is unsupported in this region.")
                 else:
                     raise error
@@ -564,7 +564,7 @@ class IAMManager:
                 )
             except ClientError as error:
                 # Check for unsupported operation error
-                if error.response["Error"]["Code"] == "UnsupportedOperation":
+                if error.response["Error"]["Code"] == "InvalidAction":
                     logger.info(f"Tagging policies is unsupported in this region.")
                 else:
                     raise error
