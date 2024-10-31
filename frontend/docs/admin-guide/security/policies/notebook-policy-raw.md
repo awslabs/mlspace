@@ -179,6 +179,39 @@
         },
         {
             "Condition": {
+                "Null": {
+                    "aws:RequestTag/user": "true",
+                    "aws:RequestTag/system": "true",
+                    "aws:RequestTag/project": "true",
+                    "aws:ResourceTag/user": "true",
+                    "aws:ResourceTag/system": "true",
+                    "aws:ResourceTag/project": "true",
+                }
+            },
+            "Action": [
+                // mutating
+                "bedrock:Associate*",
+                "bedrock:Create*",
+                "bedrock:BatchDelete*",
+                "bedrock:Delete*",
+                "bedrock:Put*",
+                "bedrock:Retrieve*",
+                "bedrock:Start*",
+                "bedrock:Update*",
+                
+                // non-mutating
+                "bedrock:Apply*",
+                "bedrock:Detect*",
+                "bedrock:List*",
+                "bedrock:Get*",
+                "bedrock:Invoke*",
+                "bedrock:Retrieve*",
+            ],
+            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:*",
+            "Effect": "Allow"
+        },
+        {
+            "Condition": {
                 "StringEquals": {
                     "iam:PassedToService": "translate.amazonaws.com"
                 }
@@ -195,8 +228,8 @@
                     "aws:RequestTag/project": "true"
                 }
             },
-            "Action": "sagemaker:CreateEndpointConfig",
-            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:endpoint-config/*",
+            "Action": ["sagemaker:CreateEndpointConfig", "sagemaker:CreateTransformJob"],
+            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:*",
             "Effect": "Deny"
         },
         {
@@ -217,18 +250,6 @@
                 "arn:aws:sagemaker:us-east-1:012345678910:hyper-parameter-tuning-job/*",
                 "arn:aws:sagemaker:us-east-1:012345678910:training-job/*"
             ],
-            "Effect": "Deny"
-        },
-        {
-            "Condition": {
-                "Null": {
-                    "aws:RequestTag/user": "true",
-                    "aws:RequestTag/system": "true",
-                    "aws:RequestTag/project": "true"
-                }
-            },
-            "Action": "sagemaker:CreateTransformJob",
-            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:transform-job/*",
             "Effect": "Deny"
         }
     ]
