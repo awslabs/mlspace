@@ -91,7 +91,6 @@ class IAMManager:
                         "sagemaker:CreateProcessingJob",
                         "sagemaker:CreateHyperParameterTuningJob",
                         "sagemaker:CreateTransformJob",
-
                         "bedrock:Associate*",
                         "bedrock:Create*",
                         "bedrock:BatchDelete*",
@@ -100,7 +99,6 @@ class IAMManager:
                         "bedrock:Retrieve*",
                         "bedrock:Start*",
                         "bedrock:Update*",
-                        
                         "bedrock:Apply*",
                         "bedrock:Detect*",
                         "bedrock:List*",
