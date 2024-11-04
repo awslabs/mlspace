@@ -211,11 +211,11 @@ export class IAMStack extends Stack {
                     ],
                     resources: ['*'],
                 }),
-                // Endpoint Permissions
+                // Endpoint and LabelingJob Permissions
                 new PolicyStatement({
                     effect: Effect.ALLOW,
-                    actions: ['sagemaker:CreateEndpoint'],
-                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:endpoint/*`],
+                    actions: ['sagemaker:CreateEndpoint', 'sagemaker:CreateLabelingJob'],
+                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
                     conditions: {
                         Null: requestTagsConditions,
                     },
@@ -241,19 +241,6 @@ export class IAMStack extends Stack {
                         Null: {
                             'sagemaker:VpcSecurityGroupIds': 'false',
                             'sagemaker:VpcSubnets': 'false',
-                            ...requestTagsConditions,
-                        },
-                    },
-                }),
-                // Labeling Permissions
-                new PolicyStatement({
-                    effect: Effect.ALLOW,
-                    actions: ['sagemaker:CreateLabelingJob'],
-                    resources: [
-                        `arn:${partition}:sagemaker:${region}:${this.account}:labeling-job/*`,
-                    ],
-                    conditions: {
-                        Null: {
                             ...requestTagsConditions,
                         },
                     },
@@ -339,6 +326,38 @@ export class IAMStack extends Stack {
                         },
                     },
                 }),
+                /**
+                 * Bedrock Permissions
+                 */
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        // mutating
+                        'bedrock:Associate*',
+                        'bedrock:Create*',
+                        'bedrock:BatchDelete*',
+                        'bedrock:Delete*',
+                        'bedrock:Put*',
+                        'bedrock:Retrieve*',
+                        'bedrock:Start*',
+                        'bedrock:Update*',
+                        
+                        // non-mutating
+                        'bedrock:Apply*',
+                        'bedrock:Detect*',
+                        'bedrock:List*',
+                        'bedrock:Get*',
+                        'bedrock:Invoke*',
+                        'bedrock:Retrieve*',
+                    ],
+                    resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
+                    conditions: {
+                        Null: {
+                            ...requestTagsConditions,
+                            ...resourceTagsConditions,
+                        }
+                    },
+                }),
             ];
             
             if (props.enableTranslate) {
@@ -395,12 +414,12 @@ export class IAMStack extends Stack {
              */
             if (!props.mlspaceConfig.MANAGE_IAM_ROLES || allow_all_instances) {
                 statements.push(
-                    // Endpoint Configuration Permissions
+                    // Endpoint Configuration and TransformJob Permissions
                     new PolicyStatement({
                         effect: Effect.ALLOW,
-                        actions: ['sagemaker:CreateEndpointConfig'],
+                        actions: ['sagemaker:CreateEndpointConfig', 'sagemaker:CreateTransformJob'],
                         resources: [
-                            `arn:${partition}:sagemaker:${region}:${this.account}:endpoint-config/*`,
+                            `arn:${partition}:sagemaker:${region}:${this.account}:*`,
                         ],
                         conditions: {
                             Null: {
@@ -428,28 +447,14 @@ export class IAMStack extends Stack {
                             },
                         },
                     }));
-                statements.push(
-                    // Transform Permissions
-                    new PolicyStatement({
-                        effect: Effect.ALLOW,
-                        actions: ['sagemaker:CreateTransformJob'],
-                        resources: [
-                            `arn:${partition}:sagemaker:${region}:${this.account}:transform-job/*`,
-                        ],
-                        conditions: {
-                            Null: {
-                                ...requestTagsConditions,
-                            },
-                        },
-                    }));
             } else {
                 statements.push(
-                    // Endpoint Configuration Permissions
+                    // Endpoint Configuration and TransformJob Permissions
                     new PolicyStatement({
                         effect: Effect.DENY,
-                        actions: ['sagemaker:CreateEndpointConfig'],
+                        actions: ['sagemaker:CreateEndpointConfig', 'sagemaker:CreateTransformJob'],
                         resources: [
-                            `arn:${partition}:sagemaker:${region}:${this.account}:endpoint-config/*`,
+                            `arn:${partition}:sagemaker:${region}:${this.account}:*`,
                         ],
                         conditions: {
                             Null: {
@@ -473,20 +478,6 @@ export class IAMStack extends Stack {
                             Null: {
                                 'sagemaker:VpcSecurityGroupIds': 'true',
                                 'sagemaker:VpcSubnets': 'true',
-                                ...invertedBooleanConditions(requestTagsConditions),
-                            },
-                        },
-                    }));
-                statements.push(
-                    // Transform Permissions
-                    new PolicyStatement({
-                        effect: Effect.DENY,
-                        actions: ['sagemaker:CreateTransformJob'],
-                        resources: [
-                            `arn:${partition}:sagemaker:${region}:${this.account}:transform-job/*`,
-                        ],
-                        conditions: {
-                            Null: {
                                 ...invertedBooleanConditions(requestTagsConditions),
                             },
                         },

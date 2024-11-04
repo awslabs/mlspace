@@ -313,10 +313,9 @@ This statement permits the listing of contents within the MLSpace example data b
 
 ## Statement 12
 
-This statement denies the necessary permissions for creating a SageMaker Endpoint Config if the resource isn't tagged appropriately. The policy ensures that all Endpoint Configs are properly tagged with user, system, and project information, maintaining consistent resource management and adhering to organizational tagging standards within the MLSpace environment.
+This statement denies the necessary permissions for creating a SageMaker Endpoint Config and Transform Jobs if the resource isn't tagged appropriately. The policy ensures that all Endpoint Configs and Transform Jobs are properly tagged with user, system, and project information, maintaining consistent resource management and adhering to organizational tagging standards within the MLSpace environment.
 
 The statement includes conditions that enforce additional constraints, ensuring adherence to security requirements, networking configurations, and appropriate tagging for assured attribution. These measures help maintain consistent access control and adhere to the principle of least privilege within the MLSpace environment.
-
 
 ```json:line-numbers
     {
@@ -327,8 +326,8 @@ The statement includes conditions that enforce additional constraints, ensuring 
                 "aws:RequestTag/project": "true"
             }
         },
-        "Action": "sagemaker:CreateEndpointConfig",
-        "Resource": "arn:aws:sagemaker:us-east-1:012345678910:endpoint-config/*",
+        "Action": ["sagemaker:CreateEndpointConfig", "sagemaker:CreateTransformJob"],
+        "Resource": "arn:aws:sagemaker:us-east-1:012345678910:*",
         "Effect": "Deny"
     },
 ```
@@ -365,22 +364,43 @@ The statement includes conditions that enforce additional constraints, ensuring 
 
 ## Statement 14
 
-This statement denies the necessary permissions for creating a SageMaker Transform Job if the resource isn't tagged appropriately. The policy ensures that all Endpoint Configs are properly tagged with user, system, and project information, maintaining consistent resource management and adhering to organizational tagging standards within the MLSpace environment.
+This statement allows the necessary permissions for interacting with Amazon Bedrock if it is tagged appropriately. The policy ensures that all Bedrock resources are properly tagged with user, system, and project information, maintaining consistent resource management and adhering to organizational tagging standards within the MLSpace environment.
 
 The statement includes conditions that enforce additional constraints, ensuring adherence to security requirements, networking configurations, and appropriate tagging for assured attribution. These measures help maintain consistent access control and adhere to the principle of least privilege within the MLSpace environment.
 
 ```json:line-numbers
-    // Transform Permissions
+    // HPO Permissions
     {
         "Condition": {
             "Null": {
                 "aws:RequestTag/user": "true",
                 "aws:RequestTag/system": "true",
-                "aws:RequestTag/project": "true"
+                "aws:RequestTag/project": "true",
+                "aws:ResourceTag/user": "true",
+                "aws:ResourceTag/system": "true",
+                "aws:ResourceTag/project": "true",
             }
         },
-        "Action": "sagemaker:CreateTransformJob",
-        "Resource": "arn:aws:sagemaker:us-east-1:012345678910:transform-job/*",
-        "Effect": "Deny"
-    }
+        "Action": [
+            // mutating
+            "bedrock:Associate*",
+            "bedrock:Create*",
+            "bedrock:BatchDelete*",
+            "bedrock:Delete*",
+            "bedrock:Put*",
+            "bedrock:Retrieve*",
+            "bedrock:Start*",
+            "bedrock:Update*",
+            
+            // non-mutating
+            "bedrock:Apply*",
+            "bedrock:Detect*",
+            "bedrock:List*",
+            "bedrock:Get*",
+            "bedrock:Invoke*",
+            "bedrock:Retrieve*",
+        ],
+        "Resource": "arn:aws:sagemaker:us-east-1:012345678910:*",
+        "Effect": "Allow"
+    },
 ```
