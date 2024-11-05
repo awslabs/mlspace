@@ -69,6 +69,31 @@ export function BatchTranslateCreate () {
     const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
     const auth = useAuth();
+    const plainTextOption: OptionDefinition = {
+        label: 'Plain text (.txt)',
+        value: 'text/plain',
+    };
+    const docTypeOptions: OptionDefinition[] = [
+        plainTextOption,
+        { label: 'HTML (.html)', value: 'text/html' },
+        {
+            label: 'Word document (.docx)',
+            value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        },
+        {
+            label: 'Excel workbook (.xlsx)',
+            value: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        },
+        {
+            label: 'PowerPoint presentation (.pptx)',
+            value: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        },
+        {
+            label: 'XLIFF 1.2 (.xlf)',
+            value: 'application/x-xliff+xml'
+        }
+    ];
+    const [docType, setDocType] = useState<OptionDefinition>(plainTextOption);
     const userName = auth.user!.profile.preferred_username;
     const nameConstraintText =
         'Maximum of 255 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.';
@@ -332,22 +357,39 @@ export function BatchTranslateCreate () {
                         </SpaceBetween>
                     </Container>
                     <Container header={<Header variant='h2'>Input data</Header>}>
-                        <DatasetResourceSelector
-                            fieldLabel={'S3 Location'}
-                            selectableItemsTypes={['prefixes']}
-                            onChange={({detail}) => {
-                                setFields({
-                                    'InputDataConfig.S3Uri': detail.resource,
-                                });
-                            }}
-                            inputOnBlur={() => {
-                                touchFields(['InputDataConfig.S3Uri']);
-                            }}
-                            inputInvalid={!!formErrors?.InputDataConfig?.S3Uri}
-                            inputData-cy='s3-output-location-input'
-                            fieldErrorText={formErrors?.InputDataConfig?.S3Uri}
-                            resource={state.form?.InputDataConfig?.S3Uri || ''}
-                        />
+                        <SpaceBetween direction='vertical' size='m'>
+                            <DatasetResourceSelector
+                                fieldLabel={'S3 Location'}
+                                selectableItemsTypes={['prefixes']}
+                                onChange={({detail}) => {
+                                    setFields({
+                                        'InputDataConfig.S3Uri': detail.resource,
+                                    });
+                                }}
+                                inputOnBlur={() => {
+                                    touchFields(['InputDataConfig.S3Uri']);
+                                }}
+                                inputInvalid={!!formErrors?.InputDataConfig?.S3Uri}
+                                inputData-cy='s3-output-location-input'
+                                fieldErrorText={formErrors?.InputDataConfig?.S3Uri}
+                                resource={state.form?.InputDataConfig?.S3Uri || ''}
+                            />
+                            <FormField
+                                description='The document type of the document(s) for batch translation.'
+                                label='Document Type'
+                            >
+                                <Select
+                                    selectedOption={docType}
+                                    onChange={({ detail }) => {
+                                        setDocType(detail.selectedOption);
+                                        setFields({
+                                            'InputDataConfig.ContentType': detail.selectedOption.value,
+                                        });
+                                    }}
+                                    options={docTypeOptions}
+                                />
+                            </FormField>
+                        </SpaceBetween>
                     </Container>
                     <Container header={<Header variant='h2'>Output data</Header>}>
                         <DatasetResourceSelector
