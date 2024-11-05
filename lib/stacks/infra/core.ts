@@ -95,7 +95,7 @@ export class CoreStack extends Stack {
         // Config Bucket (holds emr config/notebook parameters)
         const configBucket = new Bucket(this, 'mlspace-config-bucket', {
             bucketName: props.configBucketName,
-            encryptionKey: props.encryptionKey,
+            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: BucketEncryption.S3_MANAGED},
             removalPolicy: RemovalPolicy.DESTROY,
             versioned: true,
             enforceSSL: true,
@@ -183,7 +183,7 @@ export class CoreStack extends Stack {
         // Data Bucket
         const dataBucket = new Bucket(this, 'mlspace-data-bucket', {
             bucketName: props.dataBucketName,
-            encryptionKey: props.encryptionKey,
+            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: BucketEncryption.S3_MANAGED},
             removalPolicy: RemovalPolicy.DESTROY,
             versioned: true,
             enforceSSL: true,
@@ -407,7 +407,7 @@ export class CoreStack extends Stack {
         const cwlBucket = new Bucket(this, 'mlspace-logs-bucket', {
             bucketName: props.cwlBucketName,
             removalPolicy: RemovalPolicy.DESTROY,
-            encryptionKey: props.encryptionKey,
+            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: BucketEncryption.S3_MANAGED},
             enforceSSL: true,
             cors: [
                 {
