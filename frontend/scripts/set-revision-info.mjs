@@ -14,10 +14,9 @@
   limitations under the License.
 */
 import getRepoInfo from 'git-repo-info';
-import fs from 'fs';  
-import packageFile from '../package.json' with { type: 'json' };
+import fs from 'fs';
 
-
+const packageFile = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 const info = getRepoInfo();
 console.log('Git Revision Info:');
 console.log('Version:', packageFile.version);

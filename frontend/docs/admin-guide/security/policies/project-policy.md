@@ -61,7 +61,7 @@ This action grants a role the ability to create a SageMaker Endpoint Configurati
 
 ## Statement 4
 
-These actions grants a role the ability to create the specified SageMaker resources, with the condition that they must be tagged with the appropriate Project name. This ensures proper resource attribution and management within the project scope.
+These actions grants a role the ability to create the specified SageMaker and Bedrock resources, with the condition that they must be tagged with the appropriate Project name. This ensures proper resource attribution and management within the project scope.
 
 ```json:line-numbers
     {
@@ -72,7 +72,22 @@ These actions grants a role the ability to create the specified SageMaker resour
             "sagemaker:CreateTrainingJob",
             "sagemaker:CreateProcessingJob",
             "sagemaker:CreateHyperParameterTuningJob",
-            "sagemaker:CreateTransformJob"
+            "sagemaker:CreateTransformJob",
+
+            "bedrock:Associate*",
+            "bedrock:Create*",
+            "bedrock:BatchDelete*",
+            "bedrock:Delete*",
+            "bedrock:Put*",
+            "bedrock:Start*",
+            "bedrock:Update*",  
+
+            "bedrock:Apply*",
+            "bedrock:Detect*",
+            "bedrock:List*",
+            "bedrock:Get*",
+            "bedrock:Invoke*",
+            "bedrock:Retrieve*"
         ],
         "Resource": "*",
         "Condition": {

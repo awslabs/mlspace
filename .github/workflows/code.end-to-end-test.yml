@@ -42,6 +42,7 @@ jobs:
         run: |
           npm install
       - name: Update Config file and Run Tests
+        if: ${{!always()}}
         working-directory: ./cypress
         run: |
           sed -i -e "s/base_url: \'.*\'/base_url: \'${{vars.BASE_URL}}\'/g" cypress.config.ts

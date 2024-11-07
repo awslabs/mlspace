@@ -373,7 +373,9 @@
                     "xxl",
                     "xxs",
                     "zod",
-                    "zoneout"
+                    "zoneout",
+                    "xlsx",
+                    "xlf"
                 ],
                 "skipIfMatch": [
                     "http://[^s]*",

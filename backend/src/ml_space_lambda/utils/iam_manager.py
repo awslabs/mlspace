@@ -90,7 +90,21 @@ class IAMManager:
                         "sagemaker:CreateTrainingJob",
                         "sagemaker:CreateProcessingJob",
                         "sagemaker:CreateHyperParameterTuningJob",
-                        "sagemaker:CreateTransformJob"
+                        "sagemaker:CreateTransformJob",
+                        "bedrock:Associate*",
+                        "bedrock:Create*",
+                        "bedrock:BatchDelete*",
+                        "bedrock:Delete*",
+                        "bedrock:Put*",
+                        "bedrock:Retrieve*",
+                        "bedrock:Start*",
+                        "bedrock:Update*",
+                        "bedrock:Apply*",
+                        "bedrock:Detect*",
+                        "bedrock:List*",
+                        "bedrock:Get*",
+                        "bedrock:Invoke*",
+                        "bedrock:Retrieve*"
                     ],
                     "Resource": "*",
                     "Condition": {
@@ -223,6 +237,7 @@ class IAMManager:
                     "Condition": {
                         "StringEqualsIgnoreCase": {
                             "iam:PassedToService": [
+                                "bedrock.amazonaws.com",
                                 "sagemaker.amazonaws.com",
                                 "translate.amazonaws.com"
                             ]
@@ -476,6 +491,20 @@ class IAMManager:
                         "sagemaker:CreateProcessingJob",
                         "sagemaker:CreateHyperParameterTuningJob",
                         "sagemaker:CreateTransformJob",
+                        "bedrock:Associate*",
+                        "bedrock:Create*",
+                        "bedrock:BatchDelete*",
+                        "bedrock:Delete*",
+                        "bedrock:Put*",
+                        "bedrock:Retrieve*",
+                        "bedrock:Start*",
+                        "bedrock:Update*",
+                        "bedrock:Apply*",
+                        "bedrock:Detect*",
+                        "bedrock:List*",
+                        "bedrock:Get*",
+                        "bedrock:Invoke*",
+                        "bedrock:Retrieve*",
                     ],
                     "Resource": "*",
                     "Condition": {"StringNotEqualsIgnoreCase": {"aws:RequestTag/user": user}},
