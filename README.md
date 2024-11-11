@@ -2,7 +2,22 @@
 
 [![Full Documentation](https://img.shields.io/badge/Full%20Documentation-blue?style=for-the-badge&logo=Vite&logoColor=white)](https://awslabs.github.io/mlspace/)
 
+## What is MLSpace?
+
+MLSpace enables data scientists to leverage the power of Amazon SageMaker through a secure, PKI-enabled portal so they can collaboratively build, train, and deploy machine learning models for mission use cases. MLSpace provides frictionless access to machine learning resources and is especially targeted at individuals and teams without direct access to the AWS platform. In short, MLSpace is an accessible, open source, data science environment for data science teams or communities of any size. It is a serverless application, significantly reducing administrative and application hosting costs.
+
+MLSpace provides users access to selected resources within the Amazon SageMaker service (e.g., Jupyter notebooks, training jobs, endpoints) through a user interface (UI) that mirrors the AWS Management Console. If available in region, MLSpace customers can also access Amazon Ground Truth, Amazon Translate, and Amazon Bedrock. MLSpace also provides project management, data management, and portfolio management features that are not explicitly offered by Amazon SageMaker. These features support the governance and resource management & control of the customer’s data science environment. MLSpace can be installed and used in any region where SageMaker is available.
+
 ## Deployment Prerequisites
+
+### Pre-Deployment Steps
+
+- Set up and have access to an AWS account
+- Have your Identity Provider (IdP) information and access
+- *Optional*: Create Notebook & App Policies & Roles in advance if your organization requires pre-approvals
+- *Optional*: Have your VPC information available, if you are using an existing one for your deployment
+- *Optional*: Have your Proxy information available if required
+- *Note*: CDK briefly leverages SSM. Confirm it is approved for use by your organization before beginning
 
 ### Software
 
