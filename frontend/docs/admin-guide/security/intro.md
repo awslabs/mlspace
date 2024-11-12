@@ -25,7 +25,7 @@ For instance, MLSpace frequently utilizes conditions to restrict users' interact
 
 While this approach requires the `iam:CreateRole` action, MLSpace employs conditional permissions to constrain the application to only creating and modifying roles with a specified prefix. This ensures a very limited scope of operation, further enhancing security measures.
 
-By implementing these conditional permissions, MLSpace achieves a balance between flexibility and security, allowing for dynamic role creation while maintaining strict control over the extent of these roles' capabilities.
+By implementing these conditional permissions, MLSpace achieves a balance between flexibility and security, allowing for [Secure User Scoped Roles](../getting-started.md#secure-user-scoped-roles) creation while maintaining strict control over the extent of these roles' capabilities.
 
 ### Permissions Boundaries
 

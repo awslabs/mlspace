@@ -66,7 +66,7 @@ These actions grant the Application role various essential read-only permissions
             "elasticmapreduce:RunJobFlow",
 
             /**
-            * General Permissions - IAM Permissions for Dynamic Roles
+            * General Permissions - IAM Permissions for Secure User Scoped Roles
             * The following actions are essential when implementing managed IAM roles
             */
             "iam:GetPolicy",
