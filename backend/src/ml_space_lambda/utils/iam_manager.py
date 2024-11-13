@@ -91,6 +91,27 @@ class IAMManager:
                         "sagemaker:CreateProcessingJob",
                         "sagemaker:CreateHyperParameterTuningJob",
                         "sagemaker:CreateTransformJob",
+
+                        "sagemaker:DeleteModel",
+                        "sagemaker:DescribeModel",
+                        "sagemaker:DeleteEndpoint",
+                        "sagemaker:DescribeEndpoint",
+                        "sagemaker:InvokeEndpoint",
+                        "sagemaker:DeleteEndpointConfig",
+                        "sageamker:DescribeEndpointConfig",
+                        "sagemaker:DescribeLabelingJob",
+                        "sagemaker:StopLabelingJob",
+                        "sagemaker:DescribeTrainingJob",
+                        "sagemaker:StopTrainingJob",
+                        "sagemaker:DescribeProcessingJob",
+                        "sageamker:StopProcessingJob",
+                        "sagemaker:DescribeHyperParameterTuningJob",
+                        "sagemaker:StopHyperParameterTuningJob",
+                        "sagemaker:DescribeTransformJob",
+                        "sagemaker:StopTransformJob",
+                        "sagemaker:UpdateEndpoint",
+                        "sagemaker:UpdateEndpointWeightsAndCapacities"
+
                         "bedrock:Associate*",
                         "bedrock:Create*",
                         "bedrock:BatchDelete*",
@@ -109,7 +130,8 @@ class IAMManager:
                     "Resource": "*",
                     "Condition": {
                         "StringNotEqualsIgnoreCase": {
-                            "aws:RequestTag/project": "$PROJECT_NAME"
+                            "aws:RequestTag/project": "$PROJECT_NAME",
+                            "aws:ResourceTag/project": "$PROJECT_NAME"
                         }
                     }
                 },
@@ -491,7 +513,25 @@ class IAMManager:
                         "sagemaker:CreateProcessingJob",
                         "sagemaker:CreateHyperParameterTuningJob",
                         "sagemaker:CreateTransformJob",
-                        "bedrock:Associate*",
+                        "sagemaker:DeleteModel",
+                        "sagemaker:DescribeModel",
+                        "sagemaker:DeleteEndpoint",
+                        "sagemaker:DescribeEndpoint",
+                        "sagemaker:InvokeEndpoint",
+                        "sagemaker:DeleteEndpointConfig",
+                        "sageamker:DescribeEndpointConfig",
+                        "sagemaker:DescribeLabelingJob",
+                        "sagemaker:StopLabelingJob",
+                        "sagemaker:DescribeTrainingJob",
+                        "sagemaker:StopTrainingJob",
+                        "sagemaker:DescribeProcessingJob",
+                        "sageamker:StopProcessingJob",
+                        "sagemaker:DescribeHyperParameterTuningJob",
+                        "sagemaker:StopHyperParameterTuningJob",
+                        "sagemaker:DescribeTransformJob",
+                        "sagemaker:StopTransformJob",
+                        "sagemaker:UpdateEndpoint",
+                        "sagemaker:UpdateEndpointWeightsAndCapacities" "bedrock:Associate*",
                         "bedrock:Create*",
                         "bedrock:BatchDelete*",
                         "bedrock:Delete*",
@@ -507,7 +547,7 @@ class IAMManager:
                         "bedrock:Retrieve*",
                     ],
                     "Resource": "*",
-                    "Condition": {"StringNotEqualsIgnoreCase": {"aws:RequestTag/user": user}},
+                    "Condition": {"StringNotEqualsIgnoreCase": {"aws:RequestTag/user": user, "aws:ResourceTag/user": user}},
                 },
             ],
         }
