@@ -91,7 +91,6 @@ class IAMManager:
                         "sagemaker:CreateProcessingJob",
                         "sagemaker:CreateHyperParameterTuningJob",
                         "sagemaker:CreateTransformJob",
-
                         "sagemaker:DeleteModel",
                         "sagemaker:DescribeModel",
                         "sagemaker:DeleteEndpoint",
@@ -110,8 +109,7 @@ class IAMManager:
                         "sagemaker:DescribeTransformJob",
                         "sagemaker:StopTransformJob",
                         "sagemaker:UpdateEndpoint",
-                        "sagemaker:UpdateEndpointWeightsAndCapacities"
-
+                        "sagemaker:UpdateEndpointWeightsAndCapacities",
                         "bedrock:Associate*",
                         "bedrock:Create*",
                         "bedrock:BatchDelete*",
