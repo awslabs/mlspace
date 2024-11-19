@@ -39,7 +39,25 @@
                 "sagemaker:CreateProcessingJob",
                 "sagemaker:CreateHyperParameterTuningJob",
                 "sagemaker:CreateTransformJob",
-
+                "sagemaker:DeleteModel",
+                "sagemaker:DescribeModel",
+                "sagemaker:DeleteEndpoint",
+                "sagemaker:DescribeEndpoint",
+                "sagemaker:InvokeEndpoint",
+                "sagemaker:DeleteEndpointConfig",
+                "sageamker:DescribeEndpointConfig",
+                "sagemaker:DescribeLabelingJob",
+                "sagemaker:StopLabelingJob",
+                "sagemaker:DescribeTrainingJob",
+                "sagemaker:StopTrainingJob",
+                "sagemaker:DescribeProcessingJob",
+                "sageamker:StopProcessingJob",
+                "sagemaker:DescribeHyperParameterTuningJob",
+                "sagemaker:StopHyperParameterTuningJob",
+                "sagemaker:DescribeTransformJob",
+                "sagemaker:StopTransformJob",
+                "sagemaker:UpdateEndpoint",
+                "sagemaker:UpdateEndpointWeightsAndCapacities",
                 "bedrock:Associate*",
                 "bedrock:Create*",
                 "bedrock:BatchDelete*",
@@ -48,7 +66,6 @@
                 "bedrock:Retrieve*",
                 "bedrock:Start*",
                 "bedrock:Update*",  
-
                 "bedrock:Apply*",
                 "bedrock:Detect*",
                 "bedrock:List*",
@@ -59,7 +76,8 @@
             "Resource": "*",
             "Condition": {
                 "StringNotEqualsIgnoreCase": {
-                    "aws:RequestTag/project": "Project001v20241002"
+                    "aws:RequestTag/project": "Project001v20241002",
+                    "aws:ResourceTag/project": "Project001v20241002"
                 }
             }
         },

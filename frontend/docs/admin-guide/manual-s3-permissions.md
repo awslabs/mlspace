@@ -106,11 +106,11 @@ Follow these steps to update the permissions boundary to allow access to the buc
 - At the bottom of the edit page, click "Next".
 - On the confirmation page, click the "Save changes" button.
 
-### Examples For Allowing Permissions Configured With Dynamic Roles
+### Examples For Allowing Permissions Configured With Secure User Scoped Roles
 
 #### Make Bucket Available To All New Users
 
-To make the bucket available to all users, modify the code used for dynamic policies for all users. This can be found in the backend code in the `ml_space_lambda/utils/iam_manager.py` file.
+To make the bucket available to all users, modify the code used for secure user scoped policies for all users. This can be found in the backend code in the `ml_space_lambda/utils/iam_manager.py` file.
 
 Go to where `self.user_policy` is defined and find the section where S3 permissions are added.
 
@@ -160,7 +160,7 @@ After this step is completed, the designated user will now have the assigned per
 
 This can be applied to all users that need access to the bucket.
 
-### Examples For Allowing Permissions Configured With Dynamic Roles
+### Examples For Allowing Permissions Configured With Secure User Scoped Roles
 
 Permissions for this {{ $params.APPLICATION_NAME }} configuration are controlled by the notebook and application policy configured in the [installation of {{ $params.APPLICATION_NAME }}](./install.md#default-app-policy-and-role).
 

@@ -73,7 +73,25 @@ These actions grants a role the ability to create the specified SageMaker and Be
             "sagemaker:CreateProcessingJob",
             "sagemaker:CreateHyperParameterTuningJob",
             "sagemaker:CreateTransformJob",
-
+            "sagemaker:DeleteModel",
+            "sagemaker:DescribeModel",
+            "sagemaker:DeleteEndpoint",
+            "sagemaker:DescribeEndpoint",
+            "sagemaker:InvokeEndpoint",
+            "sagemaker:DeleteEndpointConfig",
+            "sageamker:DescribeEndpointConfig",
+            "sagemaker:DescribeLabelingJob",
+            "sagemaker:StopLabelingJob",
+            "sagemaker:DescribeTrainingJob",
+            "sagemaker:StopTrainingJob",
+            "sagemaker:DescribeProcessingJob",
+            "sageamker:StopProcessingJob",
+            "sagemaker:DescribeHyperParameterTuningJob",
+            "sagemaker:StopHyperParameterTuningJob",
+            "sagemaker:DescribeTransformJob",
+            "sagemaker:StopTransformJob",
+            "sagemaker:UpdateEndpoint",
+            "sagemaker:UpdateEndpointWeightsAndCapacities",
             "bedrock:Associate*",
             "bedrock:Create*",
             "bedrock:BatchDelete*",
@@ -81,7 +99,6 @@ These actions grants a role the ability to create the specified SageMaker and Be
             "bedrock:Put*",
             "bedrock:Start*",
             "bedrock:Update*",  
-
             "bedrock:Apply*",
             "bedrock:Detect*",
             "bedrock:List*",
@@ -92,7 +109,8 @@ These actions grants a role the ability to create the specified SageMaker and Be
         "Resource": "*",
         "Condition": {
             "StringNotEqualsIgnoreCase": {
-                "aws:RequestTag/project": "Project001"
+                "aws:RequestTag/project": "Project001",
+                "aws:ResourceTag/project": "Project001v20241002"
             }
         }
     },
