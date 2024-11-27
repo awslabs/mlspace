@@ -190,7 +190,7 @@ export function breadcrumbFromDataset (datasetContext?: Partial<DatasetContext>,
         if (datasetContext.name) {
             breadcrumbs.push({
                 text: datasetContext.name,
-                href: JSON.stringify({ type: datasetContext.type, name: datasetContext.name })
+                href: JSON.stringify({ type: datasetContext.type, name: datasetContext.name, scope: datasetContext.scope })
             });
 
             prefixForPath(datasetContext.location).split('/').reduce<string | undefined>((previous, current) => {
@@ -198,7 +198,7 @@ export function breadcrumbFromDataset (datasetContext?: Partial<DatasetContext>,
                 if (current) {
                     breadcrumbs.push({
                         text: `${current}/`,
-                        href: JSON.stringify({ type: datasetContext.type, name: datasetContext.name, location: location })
+                        href: JSON.stringify({ type: datasetContext.type, name: datasetContext.name, scope: datasetContext.scope, location: location })
                     });
                 }
                 return location;
