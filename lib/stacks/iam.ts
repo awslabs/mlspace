@@ -73,8 +73,27 @@ export class IAMStack extends Stack {
         // Required tags that force the request to be specific to an MLSpace managed resource
         const requestTagsConditions = {
             'aws:RequestTag/project': 'false',
-            'aws:RequestTag/system': 'false',
+            // this is excluded because it is covered by requestSystemTagEqualsConditions below
+            // 'aws:RequestTag/system': 'false',
             'aws:RequestTag/user': 'false',
+        };
+
+        const enum SystemTagCondition {
+            Equals,
+            NotEquals
+        }
+
+        const requestSystemTagEqualsConditions = {
+            [SystemTagCondition.Equals]: {
+                'StringEqualsIgnoreCase': {
+                    'aws:RequestTag/system': props.mlspaceConfig.SYSTEM_TAG,
+                }
+            },
+            [SystemTagCondition.NotEquals]: {
+                'StringNotEqualsIgnoreCase': {
+                    'aws:RequestTag/system': props.mlspaceConfig.SYSTEM_TAG,
+                }
+            }
         };
         // Required tags that ensure a created or accessed resource are properly managed by MLSpace
         const resourceTagsConditions = {
@@ -218,6 +237,7 @@ export class IAMStack extends Stack {
                     resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
                     conditions: {
                         Null: requestTagsConditions,
+                        ...requestSystemTagEqualsConditions[SystemTagCondition.Equals]
                     },
                 }),
                 /**
@@ -243,6 +263,7 @@ export class IAMStack extends Stack {
                             'sagemaker:VpcSubnets': 'false',
                             ...requestTagsConditions,
                         },
+                        ...requestSystemTagEqualsConditions[SystemTagCondition.Equals]
                     },
                 }),
                 /**
@@ -284,6 +305,7 @@ export class IAMStack extends Stack {
                     resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
                     conditions: {
                         Null: resourceTagsConditions,
+                        ...requestSystemTagEqualsConditions[SystemTagCondition.Equals]
                     },
                 }),
                 /**
@@ -355,7 +377,8 @@ export class IAMStack extends Stack {
                         Null: {
                             ...requestTagsConditions,
                             ...resourceTagsConditions,
-                        }
+                        },
+                        ...requestSystemTagEqualsConditions[SystemTagCondition.Equals]
                     },
                 }),
             ];
@@ -425,6 +448,7 @@ export class IAMStack extends Stack {
                             Null: {
                                 ...requestTagsConditions,
                             },
+                            ...requestSystemTagEqualsConditions[SystemTagCondition.Equals]
                         },
                     }));
                 statements.push(
@@ -445,6 +469,7 @@ export class IAMStack extends Stack {
                                 'sagemaker:VpcSubnets': 'false',
                                 ...requestTagsConditions,
                             },
+                            ...requestSystemTagEqualsConditions[SystemTagCondition.Equals]
                         },
                     }));
             } else {
@@ -460,6 +485,7 @@ export class IAMStack extends Stack {
                             Null: {
                                 ...invertedBooleanConditions(requestTagsConditions),
                             },
+                            ...requestSystemTagEqualsConditions[SystemTagCondition.NotEquals]
                         },
                     }));
                 statements.push(
@@ -480,6 +506,7 @@ export class IAMStack extends Stack {
                                 'sagemaker:VpcSubnets': 'true',
                                 ...invertedBooleanConditions(requestTagsConditions),
                             },
+                            ...requestSystemTagEqualsConditions[SystemTagCondition.NotEquals]
                         },
                     }));
             }
