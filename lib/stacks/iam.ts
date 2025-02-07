@@ -101,6 +101,25 @@ export class IAMStack extends Stack {
             'aws:ResourceTag/system': 'false',
             'aws:ResourceTag/user': 'false',
         };
+
+        const enum ResourceTagCondition {
+            Equals,
+            NotEquals
+        }
+
+        const resourceSystemTagEqualsConditions = {
+            [ResourceTagCondition.Equals]: {
+                'StringEqualsIgnoreCase': {
+                    'aws:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
+                }
+            },
+            [ResourceTagCondition.NotEquals]: {
+                'StringNotEqualsIgnoreCase': {
+                    'aws:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
+                }
+            }
+        };
+
         const ec2ArnBase = `arn:${this.partition}:ec2:${Aws.REGION}:${this.account}`;
         const privateSubnetArnList = props.mlSpaceVPC.privateSubnets.map(
             (s) => `${ec2ArnBase}:subnet/${s.subnetId}`
@@ -305,7 +324,7 @@ export class IAMStack extends Stack {
                     resources: [`arn:${partition}:sagemaker:${region}:${this.account}:*`],
                     conditions: {
                         Null: resourceTagsConditions,
-                        ...requestSystemTagEqualsConditions[SystemTagCondition.Equals]
+                        ...resourceSystemTagEqualsConditions[SystemTagCondition.Equals]
                     },
                 }),
                 /**
