@@ -139,4 +139,4 @@ export const NEW_USERS_SUSPENDED = false;
 export const LAMBDA_ARCHITECTURE = Architecture.X86_64;
 export const LAMBDA_RUNTIME = Runtime.PYTHON_3_11;
 
-export const SHOW_MIGRATION_OPTIONS = true;
+export const SHOW_MIGRATION_OPTIONS = false;
