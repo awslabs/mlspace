@@ -75,7 +75,6 @@ export type RestApiStackProperties = {
     readonly mlSpaceVPC: IVpc;
     readonly lambdaSecurityGroups: ISecurityGroup[];
     readonly isIso?: boolean;
-    readonly enableMigrationUI?: boolean;
     readonly enableTranslate: boolean;
     readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
