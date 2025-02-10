@@ -1,11 +1,17 @@
-# Release v1.6.7
+# Release v1.6.8
 
 ## Enhancements
-- Updated 3rd party dependencies
-- Fixed an issue with breadcrumb navigation in datasets
+- Updated third-party dependencies.
+- Enabled configurable display of migration options.
+- Updated documentation for deployment to an existing VPC.
+- Enhanced enforcement of proper resource tagging.
+
+## Bugs
+- Corrected a typo in IAM policies.
 
 ## Acknowledgements
+* @bedanley
 * @dustins
 * @estohlmann
 
-**Full Changelog**: https://github.com/awslabs/mlspace/compare/v1.6.6...v1.6.7
+**Full Changelog**: https://github.com/awslabs/mlspace/compare/v1.6.7...v1.6.8

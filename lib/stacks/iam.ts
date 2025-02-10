@@ -102,18 +102,13 @@ export class IAMStack extends Stack {
             'aws:ResourceTag/user': 'false',
         };
 
-        const enum ResourceTagCondition {
-            Equals,
-            NotEquals
-        }
-
         const resourceSystemTagEqualsConditions = {
-            [ResourceTagCondition.Equals]: {
+            [SystemTagCondition.Equals]: {
                 'StringEqualsIgnoreCase': {
                     'aws:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
                 }
             },
-            [ResourceTagCondition.NotEquals]: {
+            [SystemTagCondition.NotEquals]: {
                 'StringNotEqualsIgnoreCase': {
                     'aws:ResourceTag/system': props.mlspaceConfig.SYSTEM_TAG,
                 }
