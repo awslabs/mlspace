@@ -2,10 +2,12 @@
 
 ## Enhancements
 - Updated third-party dependencies.
-- Corrected a typo in IAM policies.
-- Enhanced enforcement of proper resource tagging.
 - Enabled configurable display of migration options.
 - Updated documentation for deployment to an existing VPC.
+- Enhanced enforcement of proper resource tagging.
+
+## Bugs
+- Corrected a typo in IAM policies.
 
 ## Acknowledgements
 * @bedanley
