@@ -150,8 +150,10 @@ The statement includes conditions that enforce additional constraints, ensuring 
         "Condition": {
             "Null": {
                 "aws:RequestTag/user": "false",
-                "aws:RequestTag/system": "false",
                 "aws:RequestTag/project": "false"
+            },
+            "StringEqualsIgnoreCase": {
+                "aws:RequestTag/system": "MLSpace"
             }
         },
         "Action": "sagemaker:CreateEndpoint",
@@ -187,9 +189,11 @@ The statement includes conditions that enforce additional constraints, ensuring 
             "Null": {
                 "sagemaker:VpcSubnets": "false",
                 "aws:RequestTag/user": "false",
-                "aws:RequestTag/system": "false",
                 "aws:RequestTag/project": "false",
                 "sagemaker:VpcSecurityGroupIds": "false"
+            },
+            "StringEqualsIgnoreCase": {
+                "aws:RequestTag/system": "MLSpace"
             }
         },
         "Action": "sagemaker:CreateModel",
@@ -209,8 +213,10 @@ The statement includes conditions that enforce additional constraints, ensuring 
         "Condition": {
             "Null": {
                 "aws:RequestTag/user": "false",
-                "aws:RequestTag/system": "false",
                 "aws:RequestTag/project": "false"
+            },
+            "StringEqualsIgnoreCase": {
+                "aws:RequestTag/system": "MLSpace"
             }
         },
         "Action": "sagemaker:CreateLabelingJob",
@@ -229,9 +235,11 @@ The statement includes conditions that restrict access to appropriately tagged r
     {
         "Condition": {
             "Null": {
-                "aws:ResourceTag/project": "false",
-                "aws:ResourceTag/system": "false",
-                "aws:ResourceTag/user": "false"
+                "aws:RequestTag/user": "false",
+                "aws:RequestTag/project": "false"
+            },
+            "StringEqualsIgnoreCase": {
+                "aws:RequestTag/system": "MLSpace"
             }
         },
         "Action": [
@@ -322,8 +330,10 @@ The statement includes conditions that enforce additional constraints, ensuring 
         "Condition": {
             "Null": {
                 "aws:RequestTag/user": "true",
-                "aws:RequestTag/system": "true",
                 "aws:RequestTag/project": "true"
+            },
+            "StringNotEqualsIgnoreCase": {
+                "aws:RequestTag/system": "MLSpace"
             }
         },
         "Action": ["sagemaker:CreateEndpointConfig", "sagemaker:CreateTransformJob"],
@@ -345,9 +355,11 @@ The statement includes conditions that enforce additional constraints, ensuring 
             "Null": {
                 "sagemaker:VpcSubnets": "true",
                 "aws:RequestTag/user": "true",
-                "aws:RequestTag/system": "true",
                 "aws:RequestTag/project": "true",
                 "sagemaker:VpcSecurityGroupIds": "true"
+            },
+            "StringNotEqualsIgnoreCase": {
+                "aws:RequestTag/system": "MLSpace"
             }
         },
         "Action": [
@@ -374,11 +386,13 @@ The statement includes conditions that enforce additional constraints, ensuring 
         "Condition": {
             "Null": {
                 "aws:RequestTag/user": "true",
-                "aws:RequestTag/system": "true",
                 "aws:RequestTag/project": "true",
                 "aws:ResourceTag/user": "true",
                 "aws:ResourceTag/system": "true",
                 "aws:ResourceTag/project": "true",
+            },
+            "StringNotEqualsIgnoreCase": {
+                "aws:RequestTag/system": "MLSpace"
             }
         },
         "Action": [

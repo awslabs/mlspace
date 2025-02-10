@@ -76,6 +76,7 @@ import {
     USERS_TABLE_NAME,
     WEBSITE_BUCKET_NAME,
     SYSTEM_ROLE_ARN,
+    SHOW_MIGRATION_OPTIONS,
 } from '../constants';
 import * as fs from 'fs';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -150,6 +151,8 @@ export type MLSpaceConfig = {
     EMR_DEFAULT_ROLE_ARN: string,
     EMR_EC2_INSTANCE_ROLE_ARN: string,
     BACKGROUND_REFRESH_INTERVAL: number,
+
+    SHOW_MIGRATION_OPTIONS?: boolean
 };
 
 const validateRequiredProperty = (val: string, name: string) => {
@@ -233,7 +236,9 @@ export function generateConfig () {
         EMR_DEFAULT_ROLE_ARN: EMR_DEFAULT_ROLE_ARN,
         EMR_EC2_INSTANCE_ROLE_ARN: EMR_EC2_INSTANCE_ROLE_ARN,
         NEW_USERS_SUSPENDED: NEW_USERS_SUSPENDED,
-        BACKGROUND_REFRESH_INTERVAL: BACKGROUND_REFRESH_INTERVAL
+        BACKGROUND_REFRESH_INTERVAL: BACKGROUND_REFRESH_INTERVAL,
+
+        SHOW_MIGRATION_OPTIONS: SHOW_MIGRATION_OPTIONS
     };
 
 
