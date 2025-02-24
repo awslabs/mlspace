@@ -31,7 +31,6 @@ from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 logger = logging.getLogger(__name__)
 
-IAM_RESOURCE_PREFIX = "MLSpace"
 IAM_ROLE_NAME_MAX_LENGTH = 64
 IAM_POLICY_NAME_MAX_LENGTH = 128
 USER_POLICY_VERSION = 1
@@ -154,6 +153,7 @@ class IAMManager:
         self.notebook_role_name = env_variables[EnvVariable.NOTEBOOK_ROLE_NAME]
         self.default_notebook_role_policy_arns = []
         self.permissions_boundary_arn = env_variables[EnvVariable.PERMISSIONS_BOUNDARY_ARN]
+        self.iam_resource_prefix = env_variables[EnvVariable.IAM_RESOURCE_PREFIX]
 
     def get_iam_role_arn(self, project_name: str, username: str) -> Optional[str]:
         """
@@ -181,7 +181,7 @@ class IAMManager:
             iam_role_arn = self._create_iam_role(iam_role_name, project_name, username)
 
         # Build additional resource name variables
-        project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{project_name}"
+        project_policy_name = f"{self.iam_resource_prefix}-project-{project_name}"
 
         aws_account = self.sts_client.get_caller_identity()["Account"]
         project_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
@@ -282,7 +282,7 @@ class IAMManager:
         self,
         username: str,
     ) -> str:
-        user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
+        user_policy_name = f"{self.iam_resource_prefix}-user-{username}"
         aws_account = self.sts_client.get_caller_identity()["Account"]
         user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
         self._check_name_length(IAMResourceType.POLICY, user_policy_name)
@@ -336,7 +336,7 @@ class IAMManager:
             self.iam_client.delete_role(RoleName=iam_role)
 
         if project:
-            project_policy_name = f"{IAM_RESOURCE_PREFIX}-project-{project}"
+            project_policy_name = f"{self.iam_resource_prefix}-project-{project}"
             self.iam_client.delete_policy(
                 PolicyArn=f"arn:{self.aws_partition}:iam::{aws_account}:policy/{project_policy_name}"
             )
@@ -351,7 +351,7 @@ class IAMManager:
         self.remove_project_user_roles(roles_to_delete)
         # Delete user policy
         aws_account = self.sts_client.get_caller_identity()["Account"]
-        user_policy_name = f"{IAM_RESOURCE_PREFIX}-user-{username}"
+        user_policy_name = f"{self.iam_resource_prefix}-user-{username}"
         user_policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{user_policy_name}"
         self.iam_client.delete_policy(PolicyArn=user_policy_arn)
 
@@ -579,7 +579,7 @@ class IAMManager:
         expected_policy_version: int = None,
     ):
         aws_account = self.sts_client.get_caller_identity()["Account"]
-        prefixed_policy_name = f"{IAM_RESOURCE_PREFIX}-{policy_name}"
+        prefixed_policy_name = f"{self.iam_resource_prefix}-{policy_name}"
         self._check_name_length(IAMResourceType.POLICY, prefixed_policy_name)
         policy_arn = f"arn:{self.aws_partition}:iam::{aws_account}:policy/{prefixed_policy_name}"
         logger.info(f"Attempting to update {policy_name} with the provided policy {policy}")
@@ -686,7 +686,7 @@ class IAMManager:
     def _generate_iam_role_name(self, username: str, project_name: str) -> str:
         user_hash = self._generate_user_hash(username)
 
-        iam_role_name_prefix = f"{IAM_RESOURCE_PREFIX}-{project_name}-"
+        iam_role_name_prefix = f"{self.iam_resource_prefix}-{project_name}-"
         hash_split = IAM_ROLE_NAME_MAX_LENGTH - len(iam_role_name_prefix)
         iam_role_name = f"{iam_role_name_prefix}{user_hash[: hash_split - 1]}"
 
