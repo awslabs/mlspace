@@ -78,6 +78,7 @@ def test_describe_config_success(mock_sagemaker, mock_pull_config, mock_s3_param
             EnvVariable.JOB_INSTANCE_CONSTRAINT_POLICY_ARN: "",
             EnvVariable.NOTEBOOK_ROLE_NAME: "",
             EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
+            EnvVariable.IAM_RESOURCE_PREFIX: "MLSpace",
         },
         "s3ParamFile": {
             "pSMSKMSKeyId": "example_key_id",

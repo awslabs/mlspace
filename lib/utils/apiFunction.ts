@@ -82,6 +82,7 @@ export function registerAPIEndpoint (
             NOTEBOOK_ROLE_NAME: notebookRoleName,
             APP_ROLE_NAME: appRoleName,
             PERMISSIONS_BOUNDARY_ARN: permissionsBoundaryArn || '',
+            IAM_RESOURCE_PREFIX: mlspaceConfig.IAM_RESOURCE_PREFIX,
             ...funcDef.environment,
             ...mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
         },
