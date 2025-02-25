@@ -14,6 +14,7 @@ In order to build and deploy {{ $params.APPLICATION_NAME }} to your AWS account,
 - [awscli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [nodejs](https://nodejs.org/en/download/)
 - cdk (`npm install -g cdk`)
+- Linux based deployment platform - *If your local environment does not meet this requirement, we recommend provisioning an Amazon EC2 instance running Linux to serve as your deployment platform.*
 
 
 ### Information
