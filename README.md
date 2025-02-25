@@ -18,6 +18,7 @@ MLSpace provides users access to selected resources within the Amazon SageMaker 
 - *Optional*: Have your VPC information available, if you are using an existing one for your deployment
 - *Optional*: Have your Proxy information available if required
 - *Note*: CDK briefly leverages SSM. Confirm it is approved for use by your organization before beginning
+- *Note*: The MLSpace deployment is optimized for Linux-based environments. If your local environment does not meet this requirement, we recommend provisioning an Amazon EC2 instance running Linux to serve as your deployment platform.
 
 ### Software
 
