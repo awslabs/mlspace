@@ -403,13 +403,11 @@ export class IAMStack extends Stack {
                     effect: Effect.ALLOW,
                     actions: [
                         'translate:StopTextTranslationJob',
-                        'translate:ListTextTranslationJobs',
+                        'translate:List*',
                         'translate:StartTextTranslationJob',
                         'translate:DescribeTextTranslationJob',
                         'translate:TranslateDocument',
                         'translate:TranslateText',
-                        'translate:ListTerminologies',
-                        'translate:ListLanguages',
                     ],
                     resources: ['*'],
                 }));
