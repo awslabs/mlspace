@@ -17,7 +17,7 @@
 from ml_space_lambda.data_access_objects.app_configuration import AppConfigurationModel
 from ml_space_lambda.enums import EnvVariable, IAMEffect, IAMStatementProperty, ResourceType, ServiceType
 from ml_space_lambda.utils.account_utils import account_arn_from_context
-from ml_space_lambda.utils.iam_manager import IAM_RESOURCE_PREFIX, IAMManager
+from ml_space_lambda.utils.iam_manager import IAMManager
 from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 env_variables = get_environment_variables()
@@ -44,7 +44,7 @@ class ActiveServicePolicyManager:
                         IAMStatementProperty.EFFECT: IAMEffect.DENY,
                         IAMStatementProperty.ACTION: "iam:PassRole",
                         IAMStatementProperty.RESOURCE: account_arn_from_context(
-                            context, "iam", f"role/{IAM_RESOURCE_PREFIX}*", omit_region=True
+                            context, "iam", f"role/{env_variables[EnvVariable.IAM_RESOURCE_PREFIX]}*", omit_region=True
                         ),
                         IAMStatementProperty.CONDITION: {"StringEquals": {"iam:PassedToReception": "translate.amazonaws.com"}},
                     },

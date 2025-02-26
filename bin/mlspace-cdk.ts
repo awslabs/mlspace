@@ -39,6 +39,7 @@ import { MLSpaceConfig, generateConfig } from '../lib/utils/configTypes';
 import { AppConfigurationApiStack } from '../lib/stacks/api/appConfiguration';
 import { GroupsApiStack } from '../lib/stacks/api/groups';
 import { GroupMembershipHistoryApiStack } from '../lib/stacks/api/groupMembershipHistory';
+import { AddPermissionBoundary } from '@cdklabs/cdk-enterprise-iac';
 
 
 const config: MLSpaceConfig = generateConfig();
@@ -222,6 +223,15 @@ stacks.push(...apiStacks);
 
 // Apply infrastructure tags to all stack resources for cost reporting
 stacks.forEach((resource) => {
+    // Apply permissions boundary aspect to all stacks if the boundary is defined
+    if (config.PERMISSIONS_BOUNDARY_POLICY_NAME !== '' && config.IAM_RESOURCE_PREFIX !== '') {
+        Aspects.of(resource).add(new AddPermissionBoundary({
+            permissionsBoundaryPolicyName: config.PERMISSIONS_BOUNDARY_POLICY_NAME,
+            rolePrefix: config.IAM_RESOURCE_PREFIX,
+            policyPrefix: config.IAM_RESOURCE_PREFIX,
+            instanceProfilePrefix: config.IAM_RESOURCE_PREFIX,
+        }));
+    }
     // Tags are not supported on log groups in ADC regions
     if (!isIso || resource instanceof LogGroup) {
         Tags.of(resource).add('system', config.SYSTEM_TAG);
