@@ -11,6 +11,7 @@ on:
 permissions:
   contents: read
 
+
 jobs:
   send_starting_slack_notification:
     name: Send Starting Slack Notification
