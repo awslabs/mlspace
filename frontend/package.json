@@ -74,7 +74,7 @@
     "@types/redux-persist": "^4.3.1",
     "@types/sinon": "^10.0.20",
     "@types/uuid": "^9.0.8",
-    "aws-cdk-lib": "^2.177.0",
+    "aws-cdk-lib": "^2.189.1",
     "eslint": "^8.57.1",
     "eslint-import-resolver-typescript": "^3.7.0",
     "eslint-plugin-import": "^2.31.0",
