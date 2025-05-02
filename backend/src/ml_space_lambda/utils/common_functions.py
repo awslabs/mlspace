@@ -21,7 +21,7 @@ import logging
 import time
 from contextvars import ContextVar
 from re import Pattern
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Mapping
 
 from botocore.config import Config
 
@@ -49,6 +49,23 @@ class LambdaContextFilter(logging.Filter):
             record.functionname = "FN-MISSING"
         return True
 
+class ApiResponse:
+    """
+    A canonical return‐type for lambdas decorated with @api_wrapper.
+    You can return an ApiResult from your handler to control
+    status code, headers and the exact body payload.
+    """
+    def __init__(
+            self,
+            body: Any,
+            status_code: int = 200,
+            headers: Optional[Mapping[str, str]] = None
+    ):
+        # automatically serialize non‐string bodies to JSON
+        self.body = body if isinstance(body, str) else json.dumps(body)
+        self.status_code = status_code
+        # default to application/json but overrideable
+        self.headers = dict(headers or {"Content-Type": "application/json"})
 
 def setup_root_logging():
     global logging_configured
@@ -119,6 +136,12 @@ def api_wrapper(f):
         logger.info(f"Lambda {lambda_func_name}({code_func_name}) invoked with {_sanitize_event(event)}")
         try:
             result = f(event, context)
+            if isinstance(result, ApiResponse):
+                return {
+                    "statusCode": result.status_code,
+                    "headers": result.headers,
+                    "body": result.body
+                }
             return generate_html_response(200, result)
         except Exception as e:
             return generate_exception_response(e)

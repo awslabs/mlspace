@@ -31,6 +31,7 @@ export const GROUPS_TABLE_NAME = 'mlspace-groups';
 export const GROUPS_MEMBERSHIP_HISTORY_TABLE_NAME = 'mlspace-group-membership-history';
 export const GROUP_DATASETS_TABLE_NAME = 'mlspace-group-datasets';
 export const GROUP_USERS_TABLE_NAME = 'mlspace-group-users';
+export const CONFIGURATION_PROFILES_TABLE_NAME = 'mlspace-configuration-profiles';
 export const CONFIG_BUCKET_NAME = 'mlspace-config';
 export const DATA_BUCKET_NAME = 'mlspace-data';
 export const LOGS_BUCKET_NAME = 'mlspace-logs';

@@ -24,3 +24,14 @@ class ServiceException(Exception):
 class ResourceNotFound(ServiceException):
     def __init__(self, message):
         super().__init__(message, 404)
+
+class ResourceInUseError(ServiceException):
+    """
+    Thrown when attempting to delete or modify a resource that is currently in use.
+
+    Attributes:
+        message: error description
+    """
+    def __init__(self, message: str = None):
+        default = "Resource is currently in use and cannot be deleted."
+        super().__init__(message or default, 409)
