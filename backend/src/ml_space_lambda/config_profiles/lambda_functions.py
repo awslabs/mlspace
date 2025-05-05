@@ -1,17 +1,14 @@
 import json
 import logging
-import time
 
 from ml_space_lambda.data_access_objects.config_profiles import ConfigProfilesDAO, ConfigProfileModel
-from ml_space_lambda.utils.common_functions import api_wrapper, generate_exception_response, ApiResponse
-from ml_space_lambda.utils.mlspace_config import get_environment_variables
+from ml_space_lambda.utils.common_functions import api_wrapper, ApiResponse
+from ml_space_lambda.utils.exceptions import ResourceInUseError
 
 log = logging.getLogger(__name__)
 
 # DAO for DynamoDB operations
 config_profiles_dao = ConfigProfilesDAO()
-# Environment flags
-env_vars = get_environment_variables()
 
 @api_wrapper
 def list_profiles(event, context):
@@ -19,15 +16,8 @@ def list_profiles(event, context):
     GET /config-profiles
     Returns list of all profiles (metadata only).
     """
-    try:
-        items = config_profiles_dao.list()
-        return ApiResponse(
-            body=items,
-            status_code=200
-        )
-    except Exception as e:
-        log.exception("Failed to list config profiles")
-        raise e
+    profile_list = config_profiles_dao.list()
+    return ApiResponse.ok(profile_list)
 
 @api_wrapper
 def get_profile(event, context):
@@ -36,20 +26,10 @@ def get_profile(event, context):
     Returns full profile record.
     """
     profile_id = event["pathParameters"]["profileId"]
-    try:
-        item = config_profiles_dao.get(profile_id)
-        if not item:
-            return ApiResponse(
-                body={"message": "Profile not found"},
-                status_code=404
-            )
-        return ApiResponse(
-            body=item.to_dict(),
-            status_code=200
-        )
-    except Exception as e:
-        log.exception(f"Failed to retrieve profile {profile_id}")
-        raise e
+    profile = config_profiles_dao.get(profile_id)
+    if not profile:
+        return ApiResponse.not_found({"message": "Profile not found"})
+    return ApiResponse.ok(profile)
 
 @api_wrapper
 def create_profile(event, context):
@@ -57,24 +37,14 @@ def create_profile(event, context):
     POST /config-profiles
     Creates a new configuration profile.
     """
-    try:
-        payload = json.loads(event["body"])
-        # Build model and add audit fields
-        principal_id = event["requestContext"]["authorizer"]["principalId"]
-        payload["created_by"] = principal_id
-        payload["updated_by"] = principal_id
-        now = int(time.time())
-        payload["created_at"] = now
-        payload["updated_at"] = now
-        profile = ConfigProfileModel(**payload)
-        result = config_profiles_dao.create(profile)
-        return ApiResponse(
-            body=result.to_dict(),
-            status_code=201
-        )
-    except Exception as e:
-        log.exception("Failed to create config profile")
-        raise e
+    payload = json.loads(event["body"])
+    # Build model and add audit fields
+    principal_id = event["requestContext"]["authorizer"]["principalId"]
+    payload["createdBy"] = principal_id
+    payload["updatedBy"] = principal_id
+    profile = ConfigProfileModel(**payload)
+    created_profile = config_profiles_dao.create(profile)
+    return ApiResponse.created(created_profile)
 
 @api_wrapper
 def update_profile(event, context):
@@ -83,29 +53,10 @@ def update_profile(event, context):
     Updates an existing profile.
     """
     profile_id = event["pathParameters"]["profileId"]
-    try:
-        payload = json.loads(event["body"])
-        now = int(time.time())
-        profile = ConfigProfileModel(
-            name=payload.get("name"),
-            description=payload.get("description"),
-            notebook_instance_types=payload.get("notebookInstanceTypes"),
-            training_job_instance_types=payload.get("trainingJobInstanceTypes"),
-            hpo_job_instance_types=payload.get("hpoJobInstanceTypes"),
-            transform_job_instance_types=payload.get("transformJobInstanceTypes"),
-            endpoint_instance_types=payload.get("endpointInstanceTypes"),
-            profile_id=profile_id,
-            updated_by=event["requestContext"]["authorizer"]["principalId"],
-            updated_at=now,
-        )
-        updated = config_profiles_dao.update(profile)
-        return ApiResponse(
-            body=updated.to_dict(),
-            status_code=200
-        )
-    except Exception as e:
-        log.exception(f"Failed to update profile {profile_id}")
-        raise e
+    principal_id = event["requestContext"]["authorizer"]["principalId"]
+    profile = ConfigProfileModel(**json.loads(event["body"]), profileId=profile_id, updatedBy=principal_id)
+    updated_profile = config_profiles_dao.update(profile)
+    return ApiResponse.ok(updated_profile)
 
 @api_wrapper
 def delete_profile(event, context):
@@ -117,10 +68,6 @@ def delete_profile(event, context):
     try:
         # Pre-delete validation: DAO should raise if in use
         config_profiles_dao.delete(profile_id)
-        return ApiResponse(
-            body=None,
-            status_code=204
-        )
-    except Exception as e:
-        log.exception(f"Failed to delete profile {profile_id}")
-        raise e
+        return ApiResponse.no_content()
+    except ResourceInUseError as e:
+        return ApiResponse.conflict({"message": str(e)})

@@ -10,3 +10,4 @@ python3 -m pip install --no-deps simplejson -t .
 python3 -m pip install --no-deps cachetools -t .
 python3 -m pip install --no-cache-dir pyseto -t .
 python3 -m pip install boto3 -t .
+python3 -m pip install pydantic -t .

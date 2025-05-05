@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 import boto3
 from dynamodb_json import json_util as dynamodb_json
 from boto3.dynamodb.conditions import Key
+from pydantic.v1 import BaseModel, Field, root_validator
 
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
 from ml_space_lambda.enums import EnvVariable
@@ -16,72 +17,33 @@ from ml_space_lambda.utils.mlspace_config import get_environment_variables
 log = logging.getLogger(__name__)
 
 
-class ConfigProfileModel:
+class ConfigProfileModel(BaseModel):
     """
-    Model for Dynamic Configuration Profile.
-    Encapsulates the data schema and provides conversion to/from dict.
+    Model for Dynamic Configuration Profile
     """
-    def __init__(
-            self,
-            profile_id: Optional[str],
-            name: str,
-            description: Optional[str],
-            notebook_instance_types: List[str],
-            training_job_instance_types: List[str],
-            hpo_job_instance_types: List[str],
-            transform_job_instance_types: List[str],
-            endpoint_instance_types: List[str],
-            created_by: Optional[str] = None,
-            created_at: Optional[int] = None,
-            updated_by: Optional[str] = None,
-            updated_at: Optional[int] = None
-    ):
-        self.profile_id = profile_id or str(uuid.uuid4())
-        self.name = name
-        self.description = description
-        self.notebook_instance_types = notebook_instance_types
-        self.training_job_instance_types = training_job_instance_types
-        self.hpo_job_instance_types = hpo_job_instance_types
-        self.transform_job_instance_types = transform_job_instance_types
-        self.endpoint_instance_types = endpoint_instance_types
-        self.created_by = created_by
-        self.created_at = created_at or int(time.time())
-        self.updated_by = updated_by
-        self.updated_at = updated_at or int(time.time())
+    profileId: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: Optional[str] = None
+    notebookInstanceTypes: List[str]
+    trainingJobInstanceTypes: List[str]
+    hpoJobInstanceTypes: List[str]
+    transformJobInstanceTypes: List[str]
+    endpointInstanceTypes: List[str]
+    createdBy: Optional[str] = None
+    createdAt: int = Field(default_factory=lambda: int(time.time()))
+    updatedBy: Optional[str] = None
+    updatedAt: int = Field(default_factory=lambda: int(time.time()))
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "profileId": self.profile_id,
-            "name": self.name,
-            "description": self.description,
-            "notebookInstanceTypes": self.notebook_instance_types,
-            "trainingJobInstanceTypes": self.training_job_instance_types,
-            "hpoJobInstanceTypes": self.hpo_job_instance_types,
-            "transformJobInstanceTypes": self.transform_job_instance_types,
-            "endpointInstanceTypes": self.endpoint_instance_types,
-            "createdBy": self.created_by,
-            "createdAt": self.created_at,
-            "updatedBy": self.updated_by,
-            "updatedAt": self.updated_at,
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ConfigProfileModel':
-        return cls(
-            profile_id=data.get("profileId"),
-            name=data["name"],
-            description=data.get("description"),
-            notebook_instance_types=data.get("notebookInstanceTypes", []),
-            training_job_instance_types=data.get("trainingJobInstanceTypes", []),
-            hpo_job_instance_types=data.get("hpoJobInstanceTypes", []),
-            transform_job_instance_types=data.get("transformJobInstanceTypes", []),
-            endpoint_instance_types=data.get("endpointInstanceTypes", []),
-            created_by=data.get("createdBy"),
-            created_at=data.get("createdAt"),
-            updated_by=data.get("updatedBy"),
-            updated_at=data.get("updatedAt"),
-        )
-
+    @root_validator(pre=True)
+    def inject_defaults(cls, values):
+        now = int(time.time())
+        if values.get("profileId") is None:
+            values["profileId"] = str(uuid.uuid4())
+        if values.get("createdAt") is None:
+            values["createdAt"] = now
+        if values.get("updatedAt") is None:
+            values["updatedAt"] = now
+        return values
 
 class ConfigProfilesDAO(DynamoDBObjectStore):
     """
@@ -108,60 +70,54 @@ class ConfigProfilesDAO(DynamoDBObjectStore):
     def get(self, profile_id: str) -> Optional[ConfigProfileModel]:
         """Retrieve a full DCP record by profileId."""
         try:
-            item = self._retrieve({"profileId": profile_id})
-            return ConfigProfileModel.from_dict(item)
+            return self._retrieve({"profileId": profile_id})
         except KeyError:
             return None
 
     def create(self, model: ConfigProfileModel) -> ConfigProfileModel:
-        """Create a new DCP. Assigns UUID and timestamps."""
+        """Create a new DCP. Assigns timestamps."""
         now = int(time.time())
-        model.created_at = now
-        model.updated_at = now
-        item = model.to_dict()
+        model.createdAt = now
+        model.updatedAt = now
+        item = model.dict(by_alias=True, exclude_none=True)
         self._create(item)
         return model
 
     def update(self, model: ConfigProfileModel) -> ConfigProfileModel:
-        now = int(time.time())
-        model.updated_at = now
+        # bump timestamp, then extract the JSON‑friendly dict
+        model.updatedAt = int(time.time())
+        data = model.dict(by_alias=True, exclude_none=True)
 
-        # Turn into a flat dict, then pop off immutable fields
-        updates = model.to_dict()
-        updates.pop("profileId", None)
-        updates.pop("createdBy", None)
-        updates.pop("createdAt",  None)
+        # drop the keys you don't want to SET
+        for k in ("profileId", "createdBy", "createdAt"):
+            data.pop(k, None)
 
-        # Build placeholders
+        # build the DynamoDB SET expression
         expr_names = {}
         expr_values = {}
         set_clauses = []
-        for attr_name, attr_val in updates.items():
-            # e.g. #name = :name
-            name_placeholder = f"#{attr_name}"
-            value_placeholder = f":{attr_name}"
-            expr_names[name_placeholder] = attr_name
-            expr_values[value_placeholder] = attr_val
-            set_clauses.append(f"{name_placeholder} = {value_placeholder}")
+        for field, val in data.items():
+            placeholder_name = f"#{field}"
+            placeholder_val  = f":{field}"
+            expr_names   [placeholder_name] = field
+            expr_values  [placeholder_val ] = val
+            set_clauses.append(f"{placeholder_name} = {placeholder_val}")
 
-        update_expression = "SET " + ", ".join(set_clauses)
+        update_expr = "SET " + ", ".join(set_clauses)
+        dynamo_vals = json.loads(dynamodb_json.dumps(expr_values))
 
-        # Marshal the DynamoDB‐compatible JSON for the values
-        dynamo_values = json.loads(dynamodb_json.dumps(expr_values))
-
-        # Perform the update, asking for ALL_NEW back
         resp = self.client.update_item(
             TableName=self.table_name,
-            Key=json.loads(dynamodb_json.dumps({"profileId": model.profile_id})),
-            UpdateExpression=update_expression,
-            ExpressionAttributeNames=expr_names,
-            ExpressionAttributeValues=dynamo_values,
+            Key={"profileId": {"S": model.profileId}},
+            UpdateExpression=update_expr,
+            ExpressionAttributeNames = expr_names,
+            ExpressionAttributeValues= dynamo_vals,
             ReturnValues="ALL_NEW",
         )
 
-        # Unmarshal the returned Attributes into a Python dict
         new_item = dynamodb_json.loads(resp["Attributes"])
-        return ConfigProfileModel.from_dict(new_item)
+        # return a fresh Pydantic model
+        return ConfigProfileModel(**new_item)
 
     def delete(self, profile_id: str) -> None:
         """Delete a DCP if not applied to any project; raise if in use."""
