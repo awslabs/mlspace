@@ -60,22 +60,13 @@ def create_profile(event, context):
     try:
         payload = json.loads(event["body"])
         # Build model and add audit fields
-        now = int(time.time())
         principal_id = event["requestContext"]["authorizer"]["principalId"]
-        profile = ConfigProfileModel(
-            name=payload["name"],
-            description=payload.get("description"),
-            notebook_instance_types=payload["notebookInstanceTypes"],
-            training_job_instance_types=payload["trainingJobInstanceTypes"],
-            hpo_job_instance_types=payload["hpoJobInstanceTypes"],
-            transform_job_instance_types=payload["transformJobInstanceTypes"],
-            endpoint_instance_types=payload["endpointInstanceTypes"],
-            profile_id=None,  # DAO will assign
-            created_by=principal_id,
-            created_at=now,
-            updated_by=principal_id,
-            updated_at=now,
-        )
+        payload["created_by"] = principal_id
+        payload["updated_by"] = principal_id
+        now = int(time.time())
+        payload["created_at"] = now
+        payload["updated_at"] = now
+        profile = ConfigProfileModel(**payload)
         result = config_profiles_dao.create(profile)
         return ApiResponse(
             body=result.to_dict(),
