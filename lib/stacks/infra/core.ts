@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { App, Aspects, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import {App, Aspects, Duration, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib';
 import { Trail } from 'aws-cdk-lib/aws-cloudtrail';
 import { AttributeType, BillingMode, ProjectionType, Table, TableEncryption } from 'aws-cdk-lib/aws-dynamodb';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
@@ -463,11 +463,18 @@ export class CoreStack extends Stack {
         });
 
         // Projects Table
-        new Table(this, 'mlspace-ddb-projects', {
+        const projectsTable = new Table(this, 'mlspace-ddb-projects', {
             tableName: props.mlspaceConfig.PROJECTS_TABLE_NAME,
             partitionKey: { name: 'name', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
             encryption: TableEncryption.AWS_MANAGED,
+        });
+        // Add GSI for DCPs, we don't delete DCPs with an associated Project
+        projectsTable.addGlobalSecondaryIndex({
+            indexName: 'configProfileId-index',
+            partitionKey: { name: 'configProfileId', type: AttributeType.STRING },
+            projectionType: ProjectionType.INCLUDE,
+            nonKeyAttributes: [ 'projectId' ],
         });
 
         // Project Users Table
@@ -605,6 +612,14 @@ export class CoreStack extends Stack {
             sortKey: { name: 'versionId', type: AttributeType.NUMBER },
             billingMode: BillingMode.PAY_PER_REQUEST,
             encryption: TableEncryption.AWS_MANAGED,
+        });
+
+        // ─── Dynamic Configuration Profiles ───────────────────────────────────────────
+        const configProfilesTable = new Table(this, 'mlspace-ddb-configuration-profiles', {
+            tableName: props.mlspaceConfig.CONFIGURATION_PROFILES_TABLE_NAME,
+            partitionKey: { name: 'profileId', type: AttributeType.STRING },
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            removalPolicy: RemovalPolicy.DESTROY,
         });
 
         // Populate the App Config table with default config

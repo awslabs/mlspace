@@ -108,6 +108,7 @@ class DynamoDBObjectStore:
         filter_expression: Optional[str] = None,
         expression_names: Optional[dict] = None,
         expression_values: Optional[dict] = None,
+        projection_expression: Optional[str] = None,
         limit: Optional[int] = None,
         page_response: bool = False,
         next_token: str = None,
@@ -115,11 +116,12 @@ class DynamoDBObjectStore:
         kwargs = {"TableName": self.table_name}
         if filter_expression:
             kwargs["FilterExpression"] = filter_expression
-            # Expression names and values is only valid if filter expression is set
-            if expression_names:
-                kwargs["ExpressionAttributeNames"] = expression_names
-            if expression_values:
-                kwargs["ExpressionAttributeValues"] = expression_values
+        if projection_expression:
+            kwargs["ProjectionExpression"] = projection_expression
+        if expression_names:
+            kwargs["ExpressionAttributeNames"] = expression_names
+        if expression_values:
+            kwargs["ExpressionAttributeValues"] = expression_values
         if limit:
             kwargs["Limit"] = limit
         if next_token:

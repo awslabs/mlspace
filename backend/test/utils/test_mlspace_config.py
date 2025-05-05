@@ -53,6 +53,7 @@ def test_environment_variables():
             EnvVariable.APP_CONFIGURATION_TABLE: "mlspace-app-configuration",
             EnvVariable.AWS_DEFAULT_REGION: "us-iso-east-1",
             EnvVariable.BUCKET: "mlspace-data-bucket",
+            EnvVariable.CONFIGURATION_PROFILES_TABLE: "mlspace-configuration-profiles",
             EnvVariable.DATA_BUCKET: "mlspace-data-bucket",
             EnvVariable.DATASETS_TABLE: "mlspace-datasets",
             EnvVariable.DYNAMO_TABLE: "mlspace-project",

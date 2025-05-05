@@ -21,9 +21,10 @@ import logging
 import time
 from contextvars import ContextVar
 from re import Pattern
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Mapping
 
 from botocore.config import Config
+from pydantic.v1 import BaseModel
 
 from ml_space_lambda.enums import Permission, ResourceType
 
@@ -49,6 +50,61 @@ class LambdaContextFilter(logging.Filter):
             record.functionname = "FN-MISSING"
         return True
 
+class ApiResponse:
+    """
+    A simple wrapper for building API Gateway–compatible HTTP responses.
+    - Exposes .render() to emit the final dict shape expected by API Gateway.
+    """
+    def __init__(self, body=None, status_code: int = 200, headers: dict = None):
+        # If the body is a Pydantic model, turn it into a dict for you:
+        if isinstance(body, BaseModel):
+            # by_alias=True to use your camelCase field names
+            # exclude_none=True to drop any unset/None fields
+            serializable = body.dict(by_alias=True, exclude_none=True)
+        else:
+            serializable = body
+
+        # JSON‑encode anything that isn’t already a string
+        self.body = serializable if isinstance(serializable, str) else json.dumps(serializable)
+        self.status_code = status_code
+        self.headers = {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            **(headers or {}),
+        }
+
+    def render(self) -> dict:
+        """Return the dict structure API Gateway expects."""
+        return {
+            "statusCode": self.status_code,
+            "body": self.body,
+            "headers": self.headers,
+        }
+
+    @classmethod
+    def ok(cls, body):
+        """200 OK"""
+        return cls(body=body, status_code=200)
+
+    @classmethod
+    def created(cls, body):
+        """201 Created"""
+        return cls(body=body, status_code=201)
+
+    @classmethod
+    def not_found(cls, body):
+        """404 Not Found"""
+        return cls(body=body, status_code=404)
+
+    @classmethod
+    def conflict(cls, body):
+        """409 Conflict"""
+        return cls(body=body, status_code=409)
+
+    @classmethod
+    def no_content(cls):
+        """204 No Content"""
+        return cls(body=None, status_code=204)
 
 def setup_root_logging():
     global logging_configured
@@ -119,6 +175,8 @@ def api_wrapper(f):
         logger.info(f"Lambda {lambda_func_name}({code_func_name}) invoked with {_sanitize_event(event)}")
         try:
             result = f(event, context)
+            if isinstance(result, ApiResponse):
+                return result.render()
             return generate_html_response(200, result)
         except Exception as e:
             return generate_exception_response(e)

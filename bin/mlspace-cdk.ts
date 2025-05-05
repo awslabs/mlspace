@@ -37,6 +37,7 @@ import { ADCLambdaCABundleAspect } from '../lib/utils/adcCertBundleAspect';
 import { ApiDeploymentStack } from '../lib/stacks/api/apiDeployment';
 import { MLSpaceConfig, generateConfig } from '../lib/utils/configTypes';
 import { AppConfigurationApiStack } from '../lib/stacks/api/appConfiguration';
+import { ConfigurationProfilesApiStack} from '../lib/stacks/api/configurationProfiles';
 import { GroupsApiStack } from '../lib/stacks/api/groups';
 import { GroupMembershipHistoryApiStack } from '../lib/stacks/api/groupMembershipHistory';
 import { AddPermissionBoundary } from '@cdklabs/cdk-enterprise-iac';
@@ -196,6 +197,7 @@ const apiStacks = [
     new ProjectsApiStack(app, 'mlspace-project-apis', apiStackProperties),
     new EmrApiStack(app, 'mlspace-emr-apis', apiStackProperties),
     new AppConfigurationApiStack(app, 'mlspace-app-config-apis', apiStackProperties),
+    new ConfigurationProfilesApiStack(app, 'mlspace-config-profiles-apis', apiStackProperties),
     new GroupsApiStack(app, 'mlspace-group-apis', apiStackProperties),
     new GroupMembershipHistoryApiStack(app, 'mlspace-group-membership-history-apis', apiStackProperties),
 ];

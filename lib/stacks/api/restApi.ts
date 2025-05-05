@@ -307,6 +307,7 @@ export class RestApiStack extends Stack {
                 Source.data('env.js', `window.env = ${JSON.stringify(appEnvironmentConfig)}`),
             ],
             destinationBucket: websiteBucket,
+            memoryLimit: 1024,
             prune: true,
             role: props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN
                 ? Role.fromRoleArn(

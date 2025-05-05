@@ -285,6 +285,12 @@ def lambda_handler(event, context):
             elif requested_resource == "/app-config" and request_method == "POST" and IS_ADMIN:
                 # Operations for app-wide configuration can only be performed by admins
                 policy_statement["Effect"] = "Allow"
+            elif requested_resource.startswith("/config-profiles"):
+                # Configuration profiles can only be modified by admins
+                if request_method == "GET":
+                    policy_statement["Effect"] = "Allow"
+                elif request_method in ["POST", "PUT", "DELETE"] and IS_ADMIN:
+                    policy_statement["Effect"] = "Allow"
             elif requested_resource == "/login" and request_method == "PUT":
                 policy_statement["Effect"] = "Allow"
             elif (
