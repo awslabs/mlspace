@@ -132,6 +132,9 @@ export type MLSpaceConfig = {
     LAMBDA_ARCHITECTURE: Architecture,
     LAMBDA_RUNTIME: Runtime,
     SYSTEM_ROLE_ARN: string,
+    COMMON_LAYER_PATH?: string,
+    BACKEND_LAMBDA_PATH?: string,
+    JWT_LAYER_PATH?: string
     //Properties that can optionally be set in config.json
     AWS_ACCOUNT: string,
     AWS_REGION: string,
@@ -152,7 +155,8 @@ export type MLSpaceConfig = {
     EMR_EC2_INSTANCE_ROLE_ARN: string,
     BACKGROUND_REFRESH_INTERVAL: number,
 
-    SHOW_MIGRATION_OPTIONS?: boolean
+    SHOW_MIGRATION_OPTIONS?: boolean,
+
 };
 
 const validateRequiredProperty = (val: string, name: string) => {
@@ -167,7 +171,7 @@ const validateRequiredProperty = (val: string, name: string) => {
  * or defaulting to settings in constants.ts if that property hasn't been set
  * in config.json
  */
-export function generateConfig () {
+export function generateConfig (accountId?: string) {
     const config: MLSpaceConfig = {
         // Table names
         DATASETS_TABLE_NAME: DATASETS_TABLE_NAME,
@@ -241,9 +245,14 @@ export function generateConfig () {
         SHOW_MIGRATION_OPTIONS: SHOW_MIGRATION_OPTIONS
     };
 
-
+    // Try to load account-specific config if an account ID is provided
+    if (accountId && fs.existsSync(`lib/config.${accountId}.json`)) {
+        const accountConfig = JSON.parse(
+            fs.readFileSync(`lib/config.${accountId}.json`).toString('utf8')
+        );
+        _.merge(config, accountConfig);
     //Check for properties set in config.json and default to that value if it exists
-    if (fs.existsSync('lib/config.json')) {
+    } else if (fs.existsSync('lib/config.json')) {
         const fileConfig: MLSpaceConfig = JSON.parse(
             fs.readFileSync('lib/config.json').toString('utf8')
         );

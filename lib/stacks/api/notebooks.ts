@@ -15,11 +15,8 @@
 */
 
 import { App, Stack } from 'aws-cdk-lib';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
-import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { NotebooksApiConstruct } from '../../constructs/api/notebooksConstruct';
 
 export class NotebooksApiStack extends Stack {
     constructor (parent: App, id: string, props: ApiStackProperties) {
@@ -28,121 +25,8 @@ export class NotebooksApiStack extends Stack {
             ...props,
         });
 
-        // Get common layer based on arn from SSM due to issues with cross stack references
-        const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
-            'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
-        );
-
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
-            restApiId: props.restApiId,
-            rootResourceId: props.rootResourceId,
-        });
-
-        const apis: MLSpacePythonLambdaFunction[] = [
-            {
-                id: 'notebook-personal',
-                name: 'list_resources',
-                resource: 'notebook',
-                description: 'Gets all notebooks a user has access to',
-                path: 'notebook',
-                method: 'GET',
-            },
-            {
-                name: 'describe',
-                resource: 'notebook',
-                description: 'Describe a sagemaker notebook instance',
-                path: 'notebook/{notebookName}',
-                method: 'GET',
-            },
-            {
-                name: 'edit',
-                resource: 'notebook',
-                description: 'Update a sagemaker notebook instance',
-                path: 'notebook/{notebookName}',
-                method: 'PUT',
-                environment: {
-                    BUCKET: props.configBucketName,
-                    S3_KEY: props.notebookParamFileKey,
-                },
-            },
-            {
-                name: 'create',
-                resource: 'notebook',
-                description: 'Create a sagemaker notebook instance in an MLSpace project',
-                path: 'notebook',
-                method: 'POST',
-                environment: {
-                    BUCKET: props.configBucketName,
-                    DATA_BUCKET: props.dataBucketName,
-                    ENVIRONMENT: props.deploymentEnvironmentName,
-                    ROLE_ARN: props.notebookInstanceRole.roleArn,
-                    S3_KEY: props.notebookParamFileKey,
-                },
-            },
-            {
-                name: 'delete',
-                resource: 'notebook',
-                description: 'Delete a sagemaker notebook instance in an MLSpace project',
-                path: 'notebook/{notebookName}',
-                method: 'DELETE',
-            },
-            {
-                name: 'start',
-                resource: 'notebook',
-                description: 'Starts a sagemaker notebook instance in an MLSpace project',
-                path: 'notebook/{notebookName}/start',
-                method: 'POST',
-            },
-            {
-                name: 'stop',
-                resource: 'notebook',
-                description: 'Stop a sagemaker notebook instance in an MLSpace project',
-                path: 'notebook/{notebookName}/stop',
-                method: 'POST',
-            },
-            {
-                name: 'presigned_url',
-                resource: 'notebook',
-                description: 'Gets a presigned URL to open a sagemaker notebook instance',
-                path: 'notebook/{notebookName}/url',
-                method: 'GET',
-            },
-            {
-                id: 'notebooks-get-logs',
-                name: 'get',
-                resource: 'logs',
-                description: 'Returns the log events for the specified notebook',
-                path: 'notebook/{notebookName}/logs',
-                method: 'GET',
-            },
-            {
-                name: 'set_resource_termination',
-                resource: 'resource_scheduler',
-                description: 'Update the termination time of a SageMaker Notebook',
-                path: 'notebook/{notebookName}/schedule',
-                method: 'PUT',
-                id: 'resource_scheduler-set-notebook-termination',
-            },
-        ];
-
-        apis.forEach((f) => {
-            registerAPIEndpoint(
-                this,
-                restApi,
-                props.authorizer,
-                props.applicationRole,
-                props.applicationRole.roleName,
-                props.notebookInstanceRole.roleName,
-                props.lambdaSourcePath,
-                [commonLambdaLayer],
-                f,
-                props.mlSpaceVPC,
-                props.securityGroups,
-                props.mlspaceConfig,
-                props.permissionsBoundaryArn
-            );
-        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const notebooksApiConstruct = new NotebooksApiConstruct(this, id + 'Resources', props);
+        
     }
 }

@@ -15,15 +15,9 @@
 */
 
 import { App, Stack, StackProps } from 'aws-cdk-lib';
-import {
-    AccountRootPrincipal,
-    Effect,
-    PolicyDocument,
-    PolicyStatement,
-    Role,
-} from 'aws-cdk-lib/aws-iam';
-import { IKey, Key } from 'aws-cdk-lib/aws-kms';
+import { IKey } from 'aws-cdk-lib/aws-kms';
 import { MLSpaceConfig } from '../utils/configTypes';
+import { KMSConstruct } from '../constructs/kmsConstruct';
 
 export type KMSStackProp = {
     readonly keyManagerRoleName: string;
@@ -31,7 +25,7 @@ export type KMSStackProp = {
 } & StackProps;
 
 export class KMSStack extends Stack {
-    public masterKey: IKey;
+    public readonly masterKey: IKey;
 
     constructor (parent: App, name: string, props: KMSStackProp) {
         super(parent, name, {
@@ -39,51 +33,9 @@ export class KMSStack extends Stack {
             ...props,
         });
 
-        if (props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN) {
-            this.masterKey = Key.fromKeyArn(this, 'imported-kms-key', props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN);
-        } else {
-            this.masterKey = new Key(this, 'mlspace-kms-key', {
-                policy: new PolicyDocument({
-                    statements: [
-                        new PolicyStatement({
-                            effect: Effect.ALLOW,
-                            principals: [new AccountRootPrincipal()],
-                            actions: ['kms:*'],
-                            resources: ['*'],
-                        }),
-                        new PolicyStatement({
-                            effect: Effect.ALLOW,
-                            principals: [
-                                Role.fromRoleName(
-                                    this,
-                                    'mlspace-keymanager-role',
-                                    props.keyManagerRoleName
-                                ),
-                            ],
-                            actions: [
-                                'kms:Create*',
-                                'kms:Describe*',
-                                'kms:Enable*',
-                                'kms:List*',
-                                'kms:Put*',
-                                'kms:Update*',
-                                'kms:Revoke*',
-                                'kms:Disable*',
-                                'kms:Get*',
-                                'kms:Delete*',
-                                'kms:TagResource',
-                                'kms:UntagResource',
-                                'kms:ScheduleKeyDeletion',
-                                'kms:CancelKeyDeletion',
-                            ],
-                            resources: ['*'],
-                        }),
-                    ],
-                }),
-                alias: 'alias/mlspace-key',
-                description: 'KMS key for encrypting the objects in an S3 bucket',
-                enableKeyRotation: false,
-            });
-        }
+        const kmsConstruct = new KMSConstruct(this, name + 'Resources', props);
+
+        this.masterKey = kmsConstruct.masterKey;
+        
     }
 }

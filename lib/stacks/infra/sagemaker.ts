@@ -14,10 +14,9 @@
   limitations under the License.
 */
 
-import { App, Fn, Stack, StackProps } from 'aws-cdk-lib';
-import { CfnNotebookInstanceLifecycleConfig } from 'aws-cdk-lib/aws-sagemaker';
-import { readFileSync } from 'fs';
+import { App, Stack, StackProps } from 'aws-cdk-lib';
 import { MLSpaceConfig } from '../../utils/configTypes';
+import { SagemakerConstruct } from '../../constructs/infra/sagemakerConstruct';
 
 export type SagemakerStackProp = {
     readonly dataBucketName: string;
@@ -31,25 +30,8 @@ export class SagemakerStack extends Stack {
             ...props,
         });
 
-        new CfnNotebookInstanceLifecycleConfig(this, 'mlspace-notebook-lifecycle-config', {
-            notebookInstanceLifecycleConfigName: props.mlspaceConfig.MLSPACE_LIFECYCLE_CONFIG_NAME,
-            onCreate: [
-                {
-                    content: Fn.base64(
-                        readFileSync('lib/resources/sagemaker/lifecycle-create.sh', 'utf8').replace(
-                            /<DATA_BUCKET_NAME>/g,
-                            props.dataBucketName
-                        )
-                    ),
-                },
-            ],
-            onStart: [
-                {
-                    content: Fn.base64(
-                        readFileSync('lib/resources/sagemaker/lifecycle-start.sh', 'utf8')
-                    ),
-                },
-            ],
-        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const sagemakerConstruct = new SagemakerConstruct(this, name + 'Resources', props);
+
     }
 }
