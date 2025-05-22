@@ -38,6 +38,7 @@ export type LambdaLayerProps = {
     environment?: {[key: string]: string}
     layerIdentifier?: string,
     architecture: Architecture,
+    layerPath?: string
 };
 
 export class LambdaLayer extends Construct {
@@ -49,9 +50,9 @@ export class LambdaLayer extends Construct {
     constructor (scope: Construct, id: string, props: LambdaLayerProps) {
         super(scope, id);
 
-        const { layerName, description, environment, layerIdentifier, architecture } = props;
+        const { layerName, description, environment, layerIdentifier, architecture, layerPath } = props;
         const layerFileName = layerIdentifier || layerName;
-        const layerZip = path.join(WORKING_DIR, `lambda_dependencies/${layerFileName}_layer.zip`);
+        const layerZip = layerPath ||  path.join(WORKING_DIR, `lambda_dependencies/${layerFileName}_layer.zip`);
         let layerCode: Code;
 
         // prioritize manually built layers
@@ -136,12 +137,14 @@ export class LambdaLayer extends Construct {
 export function createLambdaLayer (
     scope: Construct,
     layerName: string,
-    layerIdentifier?: string
+    layerIdentifier?: string,
+    layerPath?: string
 ): LambdaLayer {
     return new LambdaLayer(scope, layerIdentifier || layerName, {
         layerName,
         description: `Lambda layer for ${layerIdentifier} dependencies needed by MLSpace`,
         layerIdentifier,
-        architecture: LAMBDA_ARCHITECTURE
+        architecture: LAMBDA_ARCHITECTURE,
+        layerPath
     });
 }

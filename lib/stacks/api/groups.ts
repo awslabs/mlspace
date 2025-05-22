@@ -15,11 +15,8 @@
 */
 
 import { App, Stack } from 'aws-cdk-lib';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
-import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { GroupsApiConstruct } from '../../constructs/api/groupsConstruct';
 
 export class GroupsApiStack extends Stack {
     constructor (parent: App, id: string, props: ApiStackProperties) {
@@ -28,120 +25,8 @@ export class GroupsApiStack extends Stack {
             ...props,
         });
 
-        // Get common layer based on arn from SSM due to issues with cross stack references
-        const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
-            'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
-        );
-
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
-            restApiId: props.restApiId,
-            rootResourceId: props.rootResourceId,
-        });
-
-        const apis: MLSpacePythonLambdaFunction[] = [
-            {
-                name: 'list_all',
-                resource: 'group',
-                description: 'List all MLSpace groups for a user',
-                path: 'group',
-                method: 'GET',
-            },
-            {
-                name: 'create',
-                resource: 'group',
-                description: 'Create a new MLSpace group',
-                path: 'group',
-                method: 'POST',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                name: 'group_datasets',
-                resource: 'group',
-                description: 'Lists datasets that belong to a group',
-                path: 'group/{groupName}/datasets',
-                method: 'GET',
-            },
-            {
-                name: 'group_users',
-                resource: 'group',
-                description: 'Lists users that belong to a group',
-                path: 'group/{groupName}/users',
-                method: 'GET',
-            },
-            {
-                name: 'add_users',
-                resource: 'group',
-                description: 'Adds users to a group',
-                path: 'group/{groupName}/users',
-                method: 'POST',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                name: 'delete',
-                resource: 'group',
-                description: 'Delete an MLSpace group',
-                path: 'group/{groupName}',
-                method: 'DELETE',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                name: 'get',
-                resource: 'group',
-                description: 'Gets the corresponding group object',
-                path: 'group/{groupName}',
-                method: 'GET',
-            },
-            {
-                name: 'group_projects',
-                resource: 'group',
-                description: 'Lists projects that belong to a group',
-                path: 'group/{groupName}/projects',
-                method: 'GET',
-            },
-            {
-                name: 'remove_user',
-                resource: 'group',
-                description: 'Removes a user from a group',
-                path: 'group/{groupName}/users/{username}',
-                method: 'DELETE',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                name: 'update',
-                resource: 'group',
-                description: 'Updates group state (suspended/active)',
-                path: 'group/{groupName}',
-                method: 'PUT',
-            },
-        ];
-
-        apis.forEach((f) => {
-            const system_permissions = ['remove_user', 'update', 'delete'];
-            registerAPIEndpoint(
-                this,
-                restApi,
-                props.authorizer,
-                system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
-                props.applicationRole.roleName,
-                props.notebookInstanceRole.roleName,
-                props.lambdaSourcePath,
-                [commonLambdaLayer],
-                f,
-                props.mlSpaceVPC,
-                props.securityGroups,
-                props.mlspaceConfig,
-                props.permissionsBoundaryArn
-            );
-        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const groupsApiConstruct = new GroupsApiConstruct(this, id + 'Resources', props);
+        
     }
 }

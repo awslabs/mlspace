@@ -15,16 +15,8 @@
 */
 
 import { App, Stack, StackProps } from 'aws-cdk-lib';
-import {
-    GatewayVpcEndpointAwsService,
-    ISecurityGroup,
-    IVpc,
-    InterfaceVpcEndpointAwsService,
-    InterfaceVpcEndpointService,
-    SecurityGroup,
-    SubnetType,
-    Vpc,
-} from 'aws-cdk-lib/aws-ec2';
+import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
+import { VPCConstruct } from '../constructs/vpcConstruct';
 import { MLSpaceConfig } from '../utils/configTypes';
 
 export type VPCStackProps = {
@@ -37,6 +29,7 @@ export type VPCStackProps = {
     readonly isIso?: boolean;
     readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
+
 export class VPCStack extends Stack {
     public readonly vpc: IVpc;
     public readonly vpcSecurityGroupId: string;
@@ -48,114 +41,11 @@ export class VPCStack extends Stack {
             ...props,
         });
 
-        const isIsoB = this.region === 'us-isob-east-1';
-        const isIsoEast = this.region === 'us-iso-east-1';
-        const isIsoWest = this.region === 'us-iso-west-1';
+        const vpcConstruct = new VPCConstruct(this, name + 'Resources', props);
+        
+        this.vpc = vpcConstruct.vpc;
+        this.vpcSecurityGroupId = vpcConstruct.vpcSecurityGroupId;
+        this.vpcSecurityGroup = vpcConstruct.vpcSecurityGroup;
 
-        if (props.mlspaceConfig.EXISTING_VPC_NAME && props.mlspaceConfig.EXISTING_VPC_ID && props.mlspaceConfig.EXISTING_VPC_DEFAULT_SECURITY_GROUP) {
-            this.vpc = Vpc.fromLookup(this, 'imported-vpc', {
-                vpcId: props.mlspaceConfig.EXISTING_VPC_ID,
-                vpcName: props.mlspaceConfig.EXISTING_VPC_NAME,
-            });
-            this.vpcSecurityGroupId = props.mlspaceConfig.EXISTING_VPC_DEFAULT_SECURITY_GROUP;
-        } else {
-            const mlSpaceVPC = new Vpc(this, 'MLSpace-VPC', {
-                enableDnsHostnames: true,
-                enableDnsSupport: true,
-                maxAzs: isIsoB ? 2 : 3,
-                subnetConfiguration: [
-                    {
-                        cidrMask: 23,
-                        name: 'MLSpace-Public',
-                        subnetType: SubnetType.PUBLIC,
-                    },
-                    {
-                        cidrMask: 23,
-                        name: 'MLSpace-Private',
-                        subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-                    },
-                ],
-            });
-
-            this.vpc = mlSpaceVPC;
-            this.vpcSecurityGroupId = mlSpaceVPC.vpcDefaultSecurityGroup;
-            if (props.deployS3Endpoint) {
-                this.vpc.addGatewayEndpoint('mlspace-S3-gateway-endpoint', {
-                    service: GatewayVpcEndpointAwsService.S3,
-                });
-            }
-
-            // DBB VPC endpoints exist iso-east but do in isob and iso-west
-            if (props.deployDDBEndpoint && !isIsoEast) {
-                this.vpc.addGatewayEndpoint('mlspace-ddb-gateway-endpoint', {
-                    service: GatewayVpcEndpointAwsService.DYNAMODB,
-                });
-            }
-
-            if (props.deployCWEndpoint && !props.isIso) {
-                this.vpc.addInterfaceEndpoint('mlspace-cw-interface-endpoint', {
-                    service: InterfaceVpcEndpointAwsService.CLOUDWATCH_MONITORING,
-                    privateDnsEnabled: true,
-                });
-            }
-
-            if (props.deployCWLEndpoint && !props.isIso) {
-                this.vpc.addInterfaceEndpoint('mlspace-cwl-interface-endpoint', {
-                    service: InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
-                    privateDnsEnabled: true,
-                });
-            }
-
-            let partitionPrefix;
-            if (isIsoEast || isIsoWest) {
-                // eslint-disable-next-line spellcheck/spell-checker
-                partitionPrefix = 'gov.ic.c2s';
-            } else if (isIsoB) {
-                // eslint-disable-next-line spellcheck/spell-checker
-                partitionPrefix = 'gov.sgov.sc2s';
-            }
-
-            this.vpc.addInterfaceEndpoint('mlspace-sm-api-interface-endpoint', {
-                service: partitionPrefix
-                    ? new InterfaceVpcEndpointService(
-                        `${partitionPrefix}.${this.region}.sagemaker.api`
-                    )
-                    : InterfaceVpcEndpointAwsService.SAGEMAKER_API,
-                privateDnsEnabled: true,
-            });
-
-            this.vpc.addInterfaceEndpoint('mlspace-sm-runtime-interface-endpoint', {
-                service: partitionPrefix
-                    ? new InterfaceVpcEndpointService(
-                        `${partitionPrefix}.${this.region}.sagemaker.runtime`
-                    )
-                    : InterfaceVpcEndpointAwsService.SAGEMAKER_RUNTIME,
-                privateDnsEnabled: true,
-            });
-
-            this.vpc.addInterfaceEndpoint('mlspace-sm-notebook-interface-endpoint', {
-                service: InterfaceVpcEndpointAwsService.SAGEMAKER_NOTEBOOK,
-                privateDnsEnabled: true,
-            });
-
-            if (props.deploySTSEndpoint && !props.isIso) {
-                this.vpc.addInterfaceEndpoint('mlspace-sts-interface-endpoint', {
-                    service: InterfaceVpcEndpointAwsService.STS,
-                    privateDnsEnabled: true,
-                });
-            }
-
-            if (props.deployCFNEndpoint && !props.isIso) {
-                this.vpc.addInterfaceEndpoint('mlspace-cfn-interface-endpoint', {
-                    service: InterfaceVpcEndpointAwsService.CLOUDFORMATION,
-                    privateDnsEnabled: true,
-                });
-            }
-        }
-        this.vpcSecurityGroup = SecurityGroup.fromSecurityGroupId(
-            this,
-            'mls-vpc-default-sg}',
-            this.vpcSecurityGroupId
-        );
     }
 }

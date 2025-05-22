@@ -15,11 +15,8 @@
  */
 
 import { App, Stack } from 'aws-cdk-lib';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
-import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { GroupMembershipHistoryApiConstruct } from '../../constructs/api/groupMembershipHistoryConstruct';
 
 export class GroupMembershipHistoryApiStack extends Stack {
     constructor (parent: App, id: string, props: ApiStackProperties) {
@@ -28,45 +25,8 @@ export class GroupMembershipHistoryApiStack extends Stack {
             ...props,
         });
 
-        // Get common layer based on arn from SSM due to issues with cross stack references
-        const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
-            'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
-        );
-
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
-            restApiId: props.restApiId,
-            rootResourceId: props.rootResourceId,
-        });
-
-        const apis: MLSpacePythonLambdaFunction[] = [
-            {
-                name: 'list_all_for_group',
-                resource: 'group_membership_history',
-                description: 'List all group membership history for a specific group',
-                path: 'group-membership-history/{groupName}',
-                method: 'GET',
-            },
-        ];
-
-        apis.forEach((f) => {
-            const system_permissions = ['remove_user', 'update', 'delete'];
-            registerAPIEndpoint(
-                this,
-                restApi,
-                props.authorizer,
-                system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
-                props.applicationRole.roleName,
-                props.notebookInstanceRole.roleName,
-                props.lambdaSourcePath,
-                [commonLambdaLayer],
-                f,
-                props.mlSpaceVPC,
-                props.securityGroups,
-                props.mlspaceConfig,
-                props.permissionsBoundaryArn
-            );
-        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const groupMembershipHistoryApiConstruct = new GroupMembershipHistoryApiConstruct(this, id + 'Resources', props);
+        
     }
 }
