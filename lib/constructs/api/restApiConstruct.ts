@@ -97,7 +97,7 @@ export class RestApiConstruct extends Construct {
             throttlingBurstLimit: 100,
         };
         if (props.mlspaceConfig.ENABLE_ACCESS_LOGGING) {
-            const apiAccessLogGroup = new LogGroup(this, 'mlspace-APIGWLogGroup', {
+            const apiAccessLogGroup = new LogGroup(scope, 'mlspace-APIGWLogGroup', {
                 logGroupName: '/aws/apigateway/MLSpace',
                 removalPolicy: RemovalPolicy.DESTROY,
             });
@@ -139,7 +139,7 @@ export class RestApiConstruct extends Construct {
                 ),
             };
         }
-        const mlSpaceRestApi = new RestApi(this, 'mlspace-api', {
+        const mlSpaceRestApi = new RestApi(scope, 'mlspace-api', {
             restApiName: 'MLSpace API',
             description: 'The MLSpace API Layer.',
             endpointConfiguration: { types: [EndpointType.REGIONAL] },
@@ -236,20 +236,20 @@ export class RestApiConstruct extends Construct {
             }
         );
 
-        const jwtDependencyLayer = createLambdaLayer(this, 'jwt', undefined, props.mlspaceConfig.JWT_LAYER_PATH);
+        const jwtDependencyLayer = createLambdaLayer(scope, 'jwt', undefined, props.mlspaceConfig.JWT_LAYER_PATH);
         // Get common layer based on arn from SSM due to issues with cross stack references
         const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
+            scope,
             'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
+            StringParameter.valueForStringParameter(scope, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
         );
 
         let ssmIdPEndpoint;
         if (props.mlspaceConfig.IDP_ENDPOINT_SSM_PARAM) {
-            ssmIdPEndpoint = StringParameter.valueForStringParameter(this, props.mlspaceConfig.IDP_ENDPOINT_SSM_PARAM);
+            ssmIdPEndpoint = StringParameter.valueForStringParameter(scope, props.mlspaceConfig.IDP_ENDPOINT_SSM_PARAM);
         }
 
-        const authorizerLambda = new Function(this, 'MLSpaceAuthorizerLambda', {
+        const authorizerLambda = new Function(scope, 'MLSpaceAuthorizerLambda', {
             runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
             architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
             handler: 'ml_space_lambda.authorizer.lambda_function.lambda_handler',
@@ -271,13 +271,12 @@ export class RestApiConstruct extends Construct {
             securityGroups: props.lambdaSecurityGroups,
         });
 
-        this.mlspaceRequestAuthorizer = new RequestAuthorizer(this, 'MLSpaceAPIGWAuthorizer', {
+        this.mlspaceRequestAuthorizer = new RequestAuthorizer(scope, 'MLSpaceAPIGWAuthorizer', {
             handler: authorizerLambda,
             resultsCacheTtl: Duration.seconds(0),
             identitySources: [IdentitySource.header('Authorization')],
         });
 
-        // TODO: I probably messed something up here. This did not originally exist before Stack -> Construct
         this.mlspaceRequestAuthorizer._attachToApi(mlSpaceRestApi);
 
         // Dynamic config relies on api URL and we don't want to do this in a separate stack
@@ -297,12 +296,12 @@ export class RestApiConstruct extends Construct {
 
         // MLSpace static react app
         const websiteBucket = Bucket.fromBucketName(
-            this,
+            scope,
             'mlspace-static-website-bucket',
             props.websiteBucketName
         );
 
-        const frontEndDeployment = new BucketDeployment(this, 'MLSpaceFrontEndDeployment', {
+        const frontEndDeployment = new BucketDeployment(scope, 'MLSpaceFrontEndDeployment', {
             sources: [
                 Source.asset(props.frontEndAssetsPath),
                 Source.data('env.js', `window.env = ${JSON.stringify(appEnvironmentConfig)}`),
@@ -312,7 +311,7 @@ export class RestApiConstruct extends Construct {
             prune: true,
             role: props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN
                 ? Role.fromRoleArn(
-                    this,
+                    scope,
                     'mlspace-website-deploy-role',
                     props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN,
                     {

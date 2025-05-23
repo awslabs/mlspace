@@ -26,7 +26,7 @@ export class NotebooksApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const notebooksApiConstruct = new NotebooksApiConstruct(this, id + 'Resources', props);
+        const notebooksApiConstruct = new NotebooksApiConstruct(this, id, props);
         
     }
 }

@@ -31,7 +31,7 @@ export class SagemakerStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const sagemakerConstruct = new SagemakerConstruct(this, name + 'Resources', props);
+        const sagemakerConstruct = new SagemakerConstruct(this, name, props);
 
     }
 }

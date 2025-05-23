@@ -26,7 +26,7 @@ export class InferenceApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const inferenceApiConstruct = new InferenceApiConstruct(this, id + 'Resources', props);
+        const inferenceApiConstruct = new InferenceApiConstruct(this, id, props);
 
     }
 }

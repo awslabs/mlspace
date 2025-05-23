@@ -29,7 +29,7 @@ export class ApiDeploymentStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const apiDeploymentConstruct = new ApiDeploymentConstruct(this, id + 'Resources', props);
+        const apiDeploymentConstruct = new ApiDeploymentConstruct(this, id, props);
 
     }
 }

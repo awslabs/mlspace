@@ -26,7 +26,7 @@ export class AdminApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const adminApiConstruct = new AdminApiConstruct(this, id + 'Resources', props);
+        const adminApiConstruct = new AdminApiConstruct(this, id, props);
 
     }
 }

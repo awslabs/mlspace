@@ -41,7 +41,7 @@ export class VPCStack extends Stack {
             ...props,
         });
 
-        const vpcConstruct = new VPCConstruct(this, name + 'Resources', props);
+        const vpcConstruct = new VPCConstruct(this, name, props);
         
         this.vpc = vpcConstruct.vpc;
         this.vpcSecurityGroupId = vpcConstruct.vpcSecurityGroupId;

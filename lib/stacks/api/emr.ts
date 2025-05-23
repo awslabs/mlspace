@@ -26,7 +26,7 @@ export class EmrApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const emrApiConstruct = new EmrApiConstruct(this, id + 'Resources', props);
+        const emrApiConstruct = new EmrApiConstruct(this, id, props);
         
     }
 }

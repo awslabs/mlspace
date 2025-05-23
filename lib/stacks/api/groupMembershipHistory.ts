@@ -26,7 +26,7 @@ export class GroupMembershipHistoryApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const groupMembershipHistoryApiConstruct = new GroupMembershipHistoryApiConstruct(this, id + 'Resources', props);
+        const groupMembershipHistoryApiConstruct = new GroupMembershipHistoryApiConstruct(this, id, props);
         
     }
 }

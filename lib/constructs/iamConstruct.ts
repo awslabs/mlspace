@@ -124,9 +124,9 @@ export class IAMConstruct extends Construct {
 
 
         if (props.mlspaceConfig.KMS_INSTANCE_CONDITIONS_POLICY_ARN) {
-            this.mlspaceKmsInstanceConditionsPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-kms-instance-constraint-policy', props.mlspaceConfig.KMS_INSTANCE_CONDITIONS_POLICY_ARN);
+            this.mlspaceKmsInstanceConditionsPolicy = ManagedPolicy.fromManagedPolicyArn(scope, 'mlspace-kms-instance-constraint-policy', props.mlspaceConfig.KMS_INSTANCE_CONDITIONS_POLICY_ARN);
         } else {
-            this.mlspaceKmsInstanceConditionsPolicy = new ManagedPolicy(this, 'mlspace-kms-instance-constraint-policy', {
+            this.mlspaceKmsInstanceConditionsPolicy = new ManagedPolicy(scope, 'mlspace-kms-instance-constraint-policy', {
                 managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-kms-instance-constraint-policy`,
                 statements:  [
                     new PolicyStatement({
@@ -548,7 +548,7 @@ export class IAMConstruct extends Construct {
             ];
         };
 
-        const notebookPolicy = new ManagedPolicy(this, 'mlspace-notebook-policy', {
+        const notebookPolicy = new ManagedPolicy(scope, 'mlspace-notebook-policy', {
             statements: notebookPolicyStatements(scope.partition, Aws.REGION),
             description: 'Enables general MLSpace actions in notebooks and across the entire application.'
         });
@@ -560,24 +560,24 @@ export class IAMConstruct extends Construct {
 
         if (props.mlspaceConfig.MANAGE_IAM_ROLES) {
             if (props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN) {
-                this.mlspaceEndpointConfigInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-endpoint-config-instance-constraint', props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN);
+                this.mlspaceEndpointConfigInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(scope, 'mlspace-endpoint-config-instance-constraint', props.mlspaceConfig.ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN);
             } else {
                 /*
                  * WARNING: @see instanceConstraintPolicyStatement
                  */
-                this.mlspaceEndpointConfigInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-endpoint-config-instance-constraint', {
+                this.mlspaceEndpointConfigInstanceConstraintPolicy = new ManagedPolicy(scope, 'mlspace-endpoint-config-instance-constraint', {
                     managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-endpoint-instance-constraint`,
                     statements: instanceConstraintPolicyStatement(scope.partition, Aws.REGION, {CreateEndpointConfig: 'endpoint-config'})
                 });
             }
     
             if (props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN) {
-                this.mlspaceJobInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(this, 'mlspace-job-instance-constraint', props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN);
+                this.mlspaceJobInstanceConstraintPolicy = ManagedPolicy.fromManagedPolicyArn(scope, 'mlspace-job-instance-constraint', props.mlspaceConfig.JOB_INSTANCE_CONSTRAINT_POLICY_ARN);
             } else {
                 /*
                  * WARNING: @see instanceConstraintPolicyStatement
                  */
-                this.mlspaceJobInstanceConstraintPolicy = new ManagedPolicy(this, 'mlspace-job-instance-constraint', {
+                this.mlspaceJobInstanceConstraintPolicy = new ManagedPolicy(scope, 'mlspace-job-instance-constraint', {
                     managedPolicyName: `${props.mlspaceConfig.IAM_RESOURCE_PREFIX}-job-instance-constraint`,
                     statements: [
                         instanceConstraintPolicyStatement(scope.partition, Aws.REGION, {
@@ -595,7 +595,7 @@ export class IAMConstruct extends Construct {
         // If roles are manually created use the existing role
         if (props.mlspaceConfig.NOTEBOOK_ROLE_ARN) {
             this.mlSpaceNotebookRole = Role.fromRoleArn(
-                this,
+                scope,
                 mlSpaceNotebookRoleName,
                 props.mlspaceConfig.NOTEBOOK_ROLE_ARN
             );
@@ -610,7 +610,7 @@ export class IAMConstruct extends Construct {
                 )
                 : new ServicePrincipal('sagemaker.amazonaws.com');
 
-            this.mlSpaceNotebookRole = new Role(this, mlSpaceNotebookRoleName, {
+            this.mlSpaceNotebookRole = new Role(scope, mlSpaceNotebookRoleName, {
                 roleName: mlSpaceNotebookRoleName,
                 assumedBy: notebookPolicyAllowPrinciples,
                 managedPolicies: notebookManagedPolicies,
@@ -627,7 +627,7 @@ export class IAMConstruct extends Construct {
             // If role was manually created
             if (props.mlspaceConfig.PERMISSIONS_BOUNDARY_POLICY_NAME) {
                 this.mlSpacePermissionsBoundary = ManagedPolicy.fromManagedPolicyName(
-                    this,
+                    scope,
                     'mlspace-existing-boundary',
                     props.mlspaceConfig.PERMISSIONS_BOUNDARY_POLICY_NAME
                 );
@@ -640,7 +640,7 @@ export class IAMConstruct extends Construct {
 
                 // Permission boundary policy that ensures IAM policies never exceed these permissions
                 this.mlSpacePermissionsBoundary = new ManagedPolicy(
-                    this,
+                    scope,
                     'mlspace-project-user-role-boundary',
                     {
                         managedPolicyName: 'mlspace-project-user-permission-boundary',
@@ -1087,12 +1087,12 @@ export class IAMConstruct extends Construct {
         };
 
         if (props.mlspaceConfig.APP_ROLE_ARN) {
-            this.mlSpaceAppRole = Role.fromRoleArn(this, 'mlspace-app-role', props.mlspaceConfig.APP_ROLE_ARN);
+            this.mlSpaceAppRole = Role.fromRoleArn(scope, 'mlspace-app-role', props.mlspaceConfig.APP_ROLE_ARN);
         } else {
             // ML Space Application role
 
 
-            const appPolicy = new ManagedPolicy(this, 'mlspace-app-policy', {
+            const appPolicy = new ManagedPolicy(scope, 'mlspace-app-policy', {
                 statements: appPolicyAndStatements(scope.partition, Aws.REGION, mlSpaceAppRoleName)
             });
 
@@ -1102,7 +1102,7 @@ export class IAMConstruct extends Construct {
                     new ServicePrincipal('translate.amazonaws.com')
                 )
                 : new ServicePrincipal('lambda.amazonaws.com');
-            this.mlSpaceAppRole = new Role(this, 'mlspace-app-role', {
+            this.mlSpaceAppRole = new Role(scope, 'mlspace-app-role', {
                 roleName: mlSpaceAppRoleName,
                 assumedBy: appPolicyAllowPrinciples,
                 managedPolicies: [
@@ -1123,9 +1123,9 @@ export class IAMConstruct extends Construct {
          * These actions include cleaning up resources for deleted projects and suspended users.
          */
         if (props.mlspaceConfig.SYSTEM_ROLE_ARN) {
-            this.mlSpaceSystemRole = Role.fromRoleArn(this, mlspaceSystemRoleName, props.mlspaceConfig.SYSTEM_ROLE_ARN);
+            this.mlSpaceSystemRole = Role.fromRoleArn(scope, mlspaceSystemRoleName, props.mlspaceConfig.SYSTEM_ROLE_ARN);
         } else {
-            const systemPolicy = new ManagedPolicy(this, 'mlspace-system-policy', {
+            const systemPolicy = new ManagedPolicy(scope, 'mlspace-system-policy', {
                 statements: appPolicyAndStatements(scope.partition, Aws.REGION, mlspaceSystemRoleName),
             });
             const systemPolicyAllowPrinciples = props.enableTranslate
@@ -1134,7 +1134,7 @@ export class IAMConstruct extends Construct {
                     new ServicePrincipal('translate.amazonaws.com')
                 )
                 : new ServicePrincipal('lambda.amazonaws.com');
-            this.mlSpaceSystemRole = new Role(this, mlspaceSystemRoleName, {
+            this.mlSpaceSystemRole = new Role(scope, mlspaceSystemRoleName, {
                 roleName: mlspaceSystemRoleName,
                 assumedBy: systemPolicyAllowPrinciples,
                 managedPolicies: [
@@ -1155,12 +1155,12 @@ export class IAMConstruct extends Construct {
          */
         if (props.mlspaceConfig.S3_READER_ROLE_ARN) {
             this.s3ReaderRole = Role.fromRoleArn(
-                this,
+                scope,
                 'mlspace-s3-reader-role',
                 props.mlspaceConfig.S3_READER_ROLE_ARN
             );
         } else {
-            const s3WebsiteReadOnlyPolicy = new ManagedPolicy(this, 'mlspace-website-read-policy', {
+            const s3WebsiteReadOnlyPolicy = new ManagedPolicy(scope, 'mlspace-website-read-policy', {
                 statements: [
                     new PolicyStatement({
                         effect: Effect.ALLOW,
@@ -1169,7 +1169,7 @@ export class IAMConstruct extends Construct {
                     }),
                 ],
             });
-            this.s3ReaderRole = new Role(this, 'mlspace-s3-reader-role', {
+            this.s3ReaderRole = new Role(scope, 'mlspace-s3-reader-role', {
                 assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
                 roleName: 'mlspace-s3-reader-Role',
                 managedPolicies: [s3WebsiteReadOnlyPolicy],
@@ -1184,12 +1184,12 @@ export class IAMConstruct extends Construct {
          */
         if (props.mlspaceConfig.ENABLE_ACCESS_LOGGING) {
             if (props.mlspaceConfig.APIGATEWAY_CLOUDWATCH_ROLE_ARN) {
-                new CfnAccount(this, 'mlspace-cwl-api-gateway-account', {
+                new CfnAccount(scope, 'mlspace-cwl-api-gateway-account', {
                     cloudWatchRoleArn: props.mlspaceConfig.APIGATEWAY_CLOUDWATCH_ROLE_ARN,
                 });
             } else {
                 // Create CW Role
-                const apiGatewayCloudWatchRole = new Role(this, 'mlspace-cwl-role', {
+                const apiGatewayCloudWatchRole = new Role(scope, 'mlspace-cwl-role', {
                     assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
                     managedPolicies: [
                         ManagedPolicy.fromAwsManagedPolicyName(
@@ -1198,7 +1198,7 @@ export class IAMConstruct extends Construct {
                     ],
                 });
 
-                new CfnAccount(this, 'mlspace-cwl-api-gateway-account', {
+                new CfnAccount(scope, 'mlspace-cwl-api-gateway-account', {
                     cloudWatchRoleArn: apiGatewayCloudWatchRole.roleArn,
                 });
             }
@@ -1212,14 +1212,14 @@ export class IAMConstruct extends Construct {
          */ 
         if (props.mlspaceConfig.EMR_DEFAULT_ROLE_ARN) {
             const existingEmrServiceRole = Role.fromRoleArn(
-                this,
+                scope,
                 'mlspace-emr_defaultrole',
                 props.mlspaceConfig.EMR_DEFAULT_ROLE_ARN
             );
             this.emrServiceRoleName = existingEmrServiceRole.roleName;
         } else {
             const serviceRoleName = 'EMR_DefaultRole';
-            new Role(this, 'mlspace-emr_defaultrole', {
+            new Role(scope, 'mlspace-emr_defaultrole', {
                 assumedBy: new ServicePrincipal('elasticmapreduce.amazonaws.com'),
                 roleName: serviceRoleName,
                 managedPolicies: [
@@ -1240,14 +1240,14 @@ export class IAMConstruct extends Construct {
          */ 
         if (props.mlspaceConfig.EMR_EC2_INSTANCE_ROLE_ARN) {
             const existingEmrEC2Role = Role.fromRoleArn(
-                this,
+                scope,
                 'mlspace-emr_ec2_defaultrole',
                 props.mlspaceConfig.EMR_EC2_INSTANCE_ROLE_ARN
             );
             this.emrEC2RoleName = existingEmrEC2Role.roleName;
         } else {
             const emrEC2RoleName = 'EMR_EC2_DefaultRole';
-            const ec2EMRRole = new Role(this, 'mlspace-emr_ec2_defaultrole', {
+            const ec2EMRRole = new Role(scope, 'mlspace-emr_ec2_defaultrole', {
                 assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
                 roleName: emrEC2RoleName,
                 managedPolicies: [
@@ -1258,7 +1258,7 @@ export class IAMConstruct extends Construct {
                 description: 'Provides needed permissions for running an EMR Cluster.',
             });
 
-            new CfnInstanceProfile(this, 'mlspace-emr-instance-profile', {
+            new CfnInstanceProfile(scope, 'mlspace-emr-instance-profile', {
                 roles: [ec2EMRRole.roleName],
                 instanceProfileName: ec2EMRRole.roleName,
             });

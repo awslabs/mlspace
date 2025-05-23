@@ -26,7 +26,7 @@ export class JobsApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const jobsApiConstruct = new JobsApiConstruct(this, id + 'Resources', props);
+        const jobsApiConstruct = new JobsApiConstruct(this, id, props);
 
     }
 }

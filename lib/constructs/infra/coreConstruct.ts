@@ -71,8 +71,8 @@ export class CoreConstruct extends Construct {
         const logsServicePrincipal = new ServicePrincipal('logs.amazonaws.com');
 
         if (props.mlspaceConfig.NOTIFICATION_DISTRO) {
-            new Subscription(this, 'Subscription', {
-                topic: new Topic(this, 'mlspace-topic'),
+            new Subscription(scope, 'Subscription', {
+                topic: new Topic(scope, 'mlspace-topic'),
                 endpoint: props.notificationDistro,
                 protocol: SubscriptionProtocol.EMAIL,
             });
@@ -80,7 +80,7 @@ export class CoreConstruct extends Construct {
 
         let accessLogBucket = undefined;
         if (props.mlspaceConfig.ENABLE_ACCESS_LOGGING) {
-            accessLogBucket = new Bucket(this, 'mlspace-access-logs-bucket', {
+            accessLogBucket = new Bucket(scope, 'mlspace-access-logs-bucket', {
                 bucketName: props.accessLogsBucketName,
                 encryption: BucketEncryption.S3_MANAGED,
                 publicReadAccess: false,
@@ -91,7 +91,7 @@ export class CoreConstruct extends Construct {
         }
 
         // Config Bucket (holds emr config/notebook parameters)
-        const configBucket = new Bucket(this, 'mlspace-config-bucket', {
+        const configBucket = new Bucket(scope, 'mlspace-config-bucket', {
             bucketName: props.configBucketName,
             ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: BucketEncryption.S3_MANAGED},
             removalPolicy: RemovalPolicy.DESTROY,
@@ -104,15 +104,15 @@ export class CoreConstruct extends Construct {
         // Publish notebook config
         // This is a pretty ugly hack but at the moment you can't use json data with
         // cross stack parameters - https://github.com/aws/aws-cdk/issues/21503
-        const mlspaceNotebookRole = new StringParameter(this, 'dynamic-config-notebook-role', {
+        const mlspaceNotebookRole = new StringParameter(scope, 'dynamic-config-notebook-role', {
             parameterName: 'notebook-param-notebook-role-arn',
             stringValue: props.mlSpaceNotebookRole.roleArn,
         });
-        const secGroupId = new StringParameter(this, 'dynamic-config-security-group', {
+        const secGroupId = new StringParameter(scope, 'dynamic-config-security-group', {
             parameterName: 'notebook-param-vpc-security-group',
             stringValue: props.mlSpaceDefaultSecurityGroupId,
         });
-        const subnetIds = new StringParameter(this, 'dynamic-config-subnets', {
+        const subnetIds = new StringParameter(scope, 'dynamic-config-subnets', {
             parameterName: 'notebook-param-subnet-ids',
             stringValue: props.mlSpaceVPC.isolatedSubnets
                 .concat(props.mlSpaceVPC.privateSubnets)
@@ -120,7 +120,7 @@ export class CoreConstruct extends Construct {
                 .join(','),
         });
 
-        const kmsKeyId = new StringParameter(this, 'dynamic-config-kms-id', {
+        const kmsKeyId = new StringParameter(scope, 'dynamic-config-kms-id', {
             parameterName: 'notebook-param-kms-id',
             stringValue: props.encryptionKey.keyId,
         });
@@ -133,7 +133,7 @@ export class CoreConstruct extends Construct {
             pSMSDataBucketName: props.dataBucketName,
         };
 
-        const configDeployment = new BucketDeployment(this, 'MLSpaceConfigDeployment', {
+        const configDeployment = new BucketDeployment(scope, 'MLSpaceConfigDeployment', {
             sources: [
                 Source.jsonData(props.mlspaceConfig.NOTEBOOK_PARAMETERS_FILE_NAME, notebookParams),
                 Source.asset('./lib/resources/config'),
@@ -141,14 +141,14 @@ export class CoreConstruct extends Construct {
             destinationBucket: configBucket,
             prune: true,
             role: props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN
-                ? Role.fromRoleArn(this, 'mlspace-config-deploy-role', props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN, {
+                ? Role.fromRoleArn(scope, 'mlspace-config-deploy-role', props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN, {
                     mutable: false,
                 })
                 : undefined,
         });
 
         // Static Site
-        const websiteBucket = new Bucket(this, 'mlspace-website-bucket', {
+        const websiteBucket = new Bucket(scope, 'mlspace-website-bucket', {
             bucketName: props.websiteBucketName,
             accessControl: BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
             encryption: BucketEncryption.S3_MANAGED,
@@ -179,7 +179,7 @@ export class CoreConstruct extends Construct {
         websiteBucket.grantRead(new ServicePrincipal('apigateway.amazonaws.com'));
 
         // Data Bucket
-        const dataBucket = new Bucket(this, 'mlspace-data-bucket', {
+        const dataBucket = new Bucket(scope, 'mlspace-data-bucket', {
             bucketName: props.dataBucketName,
             ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: BucketEncryption.S3_MANAGED},
             removalPolicy: RemovalPolicy.DESTROY,
@@ -197,7 +197,7 @@ export class CoreConstruct extends Construct {
             serverAccessLogsPrefix: accessLogBucket ? 'mlspace-data-bucket' : undefined,
         });
 
-        const exampleDataDeployment = new BucketDeployment(this, 'MLSpaceExampleDataDeployment', {
+        const exampleDataDeployment = new BucketDeployment(scope, 'MLSpaceExampleDataDeployment', {
             sources: [
                 Source.jsonData(props.mlspaceConfig.NOTEBOOK_PARAMETERS_FILE_NAME, notebookParams),
                 Source.asset('lib/resources/sagemaker/global/'),
@@ -207,7 +207,7 @@ export class CoreConstruct extends Construct {
             prune: false,
             role: props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN
                 ? Role.fromRoleArn(
-                    this,
+                    scope,
                     'mlspace-example-data-deploy-role',
                     props.mlspaceConfig.BUCKET_DEPLOYMENT_ROLE_ARN,
                     {
@@ -217,16 +217,16 @@ export class CoreConstruct extends Construct {
                 : undefined,
         });
 
-        const commonLambdaLayer = createLambdaLayer(this, 'common', undefined, props.mlspaceConfig.COMMON_LAYER_PATH);
+        const commonLambdaLayer = createLambdaLayer(scope, 'common', undefined, props.mlspaceConfig.COMMON_LAYER_PATH);
 
         // Save common layer arn to SSM to avoid issue related to cross stack references
-        new StringParameter(this, 'VersionArn', {
+        new StringParameter(scope, 'VersionArn', {
             parameterName: props.mlspaceConfig.COMMON_LAYER_ARN_PARAM,
             stringValue: commonLambdaLayer.layerVersion.layerVersionArn,
         });
 
         // Lambda for populating the initial allowed instances in the app config 
-        const appConfigLambda = new Function(this, 'appConfigDeployment', {
+        const appConfigLambda = new Function(scope, 'appConfigDeployment', {
             functionName: 'mls-lambda-app-config-deployment',
             description:
                 'Populates the initial app config',
@@ -249,7 +249,7 @@ export class CoreConstruct extends Construct {
         });
 
         // Lambda for cleaning up permissions that have been deprecated from the application
-        const permissionCleanupLambda = new Function(this, 'permissionCleanupLambda', {
+        const permissionCleanupLambda = new Function(scope, 'permissionCleanupLambda', {
             functionName: 'mls-lambda-permission-cleanup',
             description:
                 'Clears out deprecated permissions from tables',
@@ -264,7 +264,7 @@ export class CoreConstruct extends Construct {
             securityGroups: props.lambdaSecurityGroups,
         });
 
-        const dynamicRolesAttachPoliciesOnDeployLambda = new Function(this, 'drAttachPoliciesOnDeployLambda', {
+        const dynamicRolesAttachPoliciesOnDeployLambda = new Function(scope, 'drAttachPoliciesOnDeployLambda', {
             functionName: 'mls-lambda-dr-attach-policies-on-deploy',
             description: 'Attaches policies from notebook role to all dynamic user roles.',
             runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
@@ -287,7 +287,7 @@ export class CoreConstruct extends Construct {
         });
 
         // run dynamicRolesAttachPoliciesOnDeployLambda every deploy
-        new AwsCustomResource(this, 'drAttachPoliciesOnDeploy', {
+        new AwsCustomResource(scope, 'drAttachPoliciesOnDeploy', {
             onCreate: {
                 service: 'Lambda',
                 action: 'invoke',
@@ -300,7 +300,7 @@ export class CoreConstruct extends Construct {
             role: props.mlSpaceAppRole
         });
 
-        const updateInstanceKmsConditionsLambda = new Function(this, 'updateInstanceKmsConditionsLambda', {
+        const updateInstanceKmsConditionsLambda = new Function(scope, 'updateInstanceKmsConditionsLambda', {
             functionName: 'mls-lambda-instance-kms-conditions',
             description: '',
             runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
@@ -319,7 +319,7 @@ export class CoreConstruct extends Construct {
         });
 
         // run updateInstanceKmsConditionsLambda every deploy
-        new AwsCustomResource(this, 'kms-key-constraints', {
+        new AwsCustomResource(scope, 'kms-key-constraints', {
             onCreate: {
                 service: 'Lambda',
                 action: 'invoke',
@@ -333,14 +333,14 @@ export class CoreConstruct extends Construct {
         });
 
         // schedule updateInstanceKmsConditionsLambda to run every day
-        const updateInstanceKmsConditionsLambdaScheduleRule = new Rule(this, 'updateInstanceKmsConditionsLambdaScheduleRule', {
+        const updateInstanceKmsConditionsLambdaScheduleRule = new Rule(scope, 'updateInstanceKmsConditionsLambdaScheduleRule', {
             schedule: Schedule.cron({hour: '2', minute: '45'})
         });
         updateInstanceKmsConditionsLambdaScheduleRule.addTarget(new LambdaFunction(updateInstanceKmsConditionsLambda));
 
-        const notifierLambdaLayer = createLambdaLayer(this, 'common', 'notifier', props.mlspaceConfig.COMMON_LAYER_PATH);
+        const notifierLambdaLayer = createLambdaLayer(scope, 'common', 'notifier', props.mlspaceConfig.COMMON_LAYER_PATH);
 
-        const s3NotificationLambda = new Function(this, 's3Notifier', {
+        const s3NotificationLambda = new Function(scope, 's3Notifier', {
             functionName: 'mls-lambda-s3-notifier',
             description:
                 'S3 event notification function to handle ddb actions in response to dataset file actions',
@@ -375,7 +375,7 @@ export class CoreConstruct extends Construct {
             new LambdaDestination(s3NotificationLambda)
         );
 
-        const terminateResourcesLambda = new Function(this, 'resourceTerminator', {
+        const terminateResourcesLambda = new Function(scope, 'resourceTerminator', {
             functionName: 'mls-lambda-resource-terminator',
             description:
                 'Sweeper function that stops/terminates resources based on scheduled configuration',
@@ -395,14 +395,14 @@ export class CoreConstruct extends Construct {
         });
 
         const ruleName = 'mlspace-rule-terminate-resources';
-        new Rule(this, ruleName, {
+        new Rule(scope, ruleName, {
             schedule: Schedule.rate(Duration.minutes(props.mlspaceConfig.RESOURCE_TERMINATION_INTERVAL)),
             targets: [new LambdaFunction(terminateResourcesLambda)],
             ruleName: ruleName,
         });
 
         // Logs Bucket
-        const cwlBucket = new Bucket(this, 'mlspace-logs-bucket', {
+        const cwlBucket = new Bucket(scope, 'mlspace-logs-bucket', {
             bucketName: props.cwlBucketName,
             removalPolicy: RemovalPolicy.DESTROY,
             ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: BucketEncryption.S3_MANAGED},
@@ -441,7 +441,7 @@ export class CoreConstruct extends Construct {
 
         // Cloudtrail setup
         if (props.mlspaceConfig.CREATE_MLSPACE_CLOUDTRAIL_TRAIL) {
-            new Trail(this, 'mlspace-cloudtrail', {
+            new Trail(scope, 'mlspace-cloudtrail', {
                 trailName: 'mlspace-cloudtrail',
                 isMultiRegionTrail: true,
                 includeGlobalServiceEvents: true,
@@ -452,7 +452,7 @@ export class CoreConstruct extends Construct {
         // Datasets Table
         const datasetScopeAttribute = { name: 'scope', type: AttributeType.STRING };
         const datasetNameAttribute = { name: 'name', type: AttributeType.STRING };
-        new Table(this, 'mlspace-ddb-datasets', {
+        new Table(scope, 'mlspace-ddb-datasets', {
             tableName: props.mlspaceConfig.DATASETS_TABLE_NAME,
             partitionKey: datasetScopeAttribute,
             sortKey: datasetNameAttribute,
@@ -461,7 +461,7 @@ export class CoreConstruct extends Construct {
         });
 
         // Projects Table
-        new Table(this, 'mlspace-ddb-projects', {
+        new Table(scope, 'mlspace-ddb-projects', {
             tableName: props.mlspaceConfig.PROJECTS_TABLE_NAME,
             partitionKey: { name: 'name', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
@@ -471,7 +471,7 @@ export class CoreConstruct extends Construct {
         // Project Users Table
         const projectAttribute = { name: 'project', type: AttributeType.STRING };
         const userAttribute = { name: 'user', type: AttributeType.STRING };
-        const projectUsersTable = new Table(this, 'mlspace-ddb-project-users', {
+        const projectUsersTable = new Table(scope, 'mlspace-ddb-project-users', {
             tableName: props.mlspaceConfig.PROJECT_USERS_TABLE_NAME,
             partitionKey: projectAttribute,
             sortKey: userAttribute,
@@ -487,7 +487,7 @@ export class CoreConstruct extends Construct {
         });
 
         // Groups Table
-        new Table(this, 'mlspace-ddb-groups', {
+        new Table(scope, 'mlspace-ddb-groups', {
             tableName: props.mlspaceConfig.GROUPS_TABLE_NAME,
             partitionKey: { name: 'name', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
@@ -497,7 +497,7 @@ export class CoreConstruct extends Construct {
         // Group Datasets Table
         const groupAttribute = { name: 'group', type: AttributeType.STRING };
         const groupDatasetAttribute = { name: 'dataset', type: AttributeType.STRING };
-        const groupDatasetTable = new Table(this, 'mlspace-ddb-group-datasets', {
+        const groupDatasetTable = new Table(scope, 'mlspace-ddb-group-datasets', {
             tableName: props.mlspaceConfig.GROUP_DATASETS_TABLE_NAME,
             partitionKey: groupAttribute,
             sortKey: groupDatasetAttribute,
@@ -514,7 +514,7 @@ export class CoreConstruct extends Construct {
 
         // Group Users Table
         const groupUserAttribute = { name: 'user', type: AttributeType.STRING };
-        const groupUsersTable = new Table(this, 'mlspace-ddb-group-users', {
+        const groupUsersTable = new Table(scope, 'mlspace-ddb-group-users', {
             tableName: props.mlspaceConfig.GROUP_USERS_TABLE_NAME,
             partitionKey: groupAttribute,
             sortKey: groupUserAttribute,
@@ -532,7 +532,7 @@ export class CoreConstruct extends Construct {
         // Group Membership History Table
         const groupMembershipHistoryAttribute = { name: 'group', type: AttributeType.STRING };
         const groupMembershipHistorySortAttribute = { name: 'actionedAt', type: AttributeType.NUMBER };
-        new Table(this, 'mlspace-ddb-group-membership-history', {
+        new Table(scope, 'mlspace-ddb-group-membership-history', {
             tableName: props.mlspaceConfig.GROUPS_MEMBERSHIP_HISTORY_TABLE_NAME,
             partitionKey: groupMembershipHistoryAttribute,
             sortKey: groupMembershipHistorySortAttribute,
@@ -541,7 +541,7 @@ export class CoreConstruct extends Construct {
         });
 
         // Users Table
-        new Table(this, 'mlspace-ddb-users', {
+        new Table(scope, 'mlspace-ddb-users', {
             tableName: props.mlspaceConfig.USERS_TABLE_NAME,
             partitionKey: { name: 'username', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
@@ -549,7 +549,7 @@ export class CoreConstruct extends Construct {
         });
 
         // Project Groups Table
-        const projectGroupsTable = new Table(this, 'mlspace-ddb-project-groups', {
+        const projectGroupsTable = new Table(scope, 'mlspace-ddb-project-groups', {
             tableName: props.mlspaceConfig.PROJECT_GROUPS_TABLE_NAME,
             partitionKey: projectAttribute,
             sortKey: groupAttribute,
@@ -567,7 +567,7 @@ export class CoreConstruct extends Construct {
         // Resource Termination Schedule Table
         const resourceIdAttribute = { name: 'resourceId', type: AttributeType.STRING };
         const resourceTypeAttribute = { name: 'resourceType', type: AttributeType.STRING };
-        new Table(this, 'mlspace-ddb-resource-schedule', {
+        new Table(scope, 'mlspace-ddb-resource-schedule', {
             tableName: props.mlspaceConfig.RESOURCE_SCHEDULE_TABLE_NAME,
             partitionKey: resourceIdAttribute,
             sortKey: resourceTypeAttribute,
@@ -576,7 +576,7 @@ export class CoreConstruct extends Construct {
         });
 
         // Resources Metadata Table
-        const resourcesMetadataTable = new Table(this, 'mlspace-resource-metadata', {
+        const resourcesMetadataTable = new Table(scope, 'mlspace-resource-metadata', {
             tableName: props.mlspaceConfig.RESOURCE_METADATA_TABLE_NAME,
             partitionKey: resourceTypeAttribute,
             sortKey: resourceIdAttribute,
@@ -597,7 +597,7 @@ export class CoreConstruct extends Construct {
         });
 
         // App Configuration Table
-        new Table(this, 'mlspace-ddb-app-configuration', {
+        new Table(scope, 'mlspace-ddb-app-configuration', {
             tableName: props.mlspaceConfig.APP_CONFIGURATION_TABLE_NAME,
             partitionKey: { name: 'configScope', type: AttributeType.STRING },
             sortKey: { name: 'versionId', type: AttributeType.NUMBER },
@@ -606,7 +606,7 @@ export class CoreConstruct extends Construct {
         });
 
         // Populate the App Config table with default config
-        new AwsCustomResource(this, 'mlspace-init-ddb-app-config', {
+        new AwsCustomResource(scope, 'mlspace-init-ddb-app-config', {
             onCreate: {
                 service: 'DynamoDB',
                 action: 'putItem',
@@ -619,7 +619,7 @@ export class CoreConstruct extends Construct {
             role: props.mlSpaceAppRole
         });
 
-        new AwsCustomResource(this, 'initial-app-config-deployment-001', {
+        new AwsCustomResource(scope, 'initial-app-config-deployment-001', {
             onCreate: {
                 service: 'Lambda',
                 action: 'invoke',
@@ -632,7 +632,7 @@ export class CoreConstruct extends Construct {
             role: props.mlSpaceAppRole
         });
 
-        new AwsCustomResource(this, 'cleanup-deprecated-permissions', {
+        new AwsCustomResource(scope, 'cleanup-deprecated-permissions', {
             onCreate: {
                 service: 'Lambda',
                 action: 'invoke',
@@ -646,7 +646,7 @@ export class CoreConstruct extends Construct {
         });
 
         // EMR Security Configuration
-        new CfnSecurityConfiguration(this, 'mlspace-emr-security-config', {
+        new CfnSecurityConfiguration(scope, 'mlspace-emr-security-config', {
             name: props.mlspaceConfig.EMR_SECURITY_CONFIG_NAME,
             securityConfiguration: {
                 InstanceMetadataServiceConfiguration: {
@@ -656,7 +656,7 @@ export class CoreConstruct extends Construct {
             },
         });
 
-        const resourceMetadataLambda = new Function(this, 'mlspace-resource-metadata-lambda', {
+        const resourceMetadataLambda = new Function(scope, 'mlspace-resource-metadata-lambda', {
             functionName: 'mls-lambda-resource-metadata',
             description:
                 'Lambda to process event bridge notifications and update corresponding entries in the mlspace resource metadata ddb table.',
@@ -677,7 +677,7 @@ export class CoreConstruct extends Construct {
         });
 
         // Event bridge rule for resource metadata capture
-        new Rule(this, 'mlspace-resource-metadata-rule', {
+        new Rule(scope, 'mlspace-resource-metadata-rule', {
             ruleName: 'mlspace-resource-metadata-sync',
             eventPattern: {
                 account: [scope.account],
@@ -699,7 +699,7 @@ export class CoreConstruct extends Construct {
             targets: [new LambdaFunction(resourceMetadataLambda)],
         });
 
-        new Rule(this, 'mlspace-cloudtrail-metadata-rule', {
+        new Rule(scope, 'mlspace-cloudtrail-metadata-rule', {
             ruleName: 'mlspace-cloudtrail-metadata-sync',
             eventPattern: {
                 account: [scope.account],
