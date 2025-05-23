@@ -1,7 +1,0 @@
-{
-    "AWS_ACCOUNT": "517451398312",
-    "AWS_REGION": "us-west-2",
-    "OIDC_URL": "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_iJilekZ5n",
-    "OIDC_CLIENT_NAME": "127lvk3btthk2qkmabl4n7jis1",
-    "KEY_MANAGER_ROLE_NAME": "IibsAdminAccess-DO-NOT-DELETE"
-}
