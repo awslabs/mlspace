@@ -33,7 +33,7 @@ export class KMSStack extends Stack {
             ...props,
         });
 
-        const kmsConstruct = new KMSConstruct(this, name + 'Resources', props);
+        const kmsConstruct = new KMSConstruct(this, name, props);
 
         this.masterKey = kmsConstruct.masterKey;
         

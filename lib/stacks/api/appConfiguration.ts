@@ -26,7 +26,7 @@ export class AppConfigurationApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const appConfigurationApiConstruct = new AppConfigurationApiConstruct(this, id + 'Resources', props);
+        const appConfigurationApiConstruct = new AppConfigurationApiConstruct(this, id, props);
 
     }
 }

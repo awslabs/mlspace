@@ -26,7 +26,7 @@ export class DatasetsApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const datasetsApiConstruct = new DatasetsApiConstruct(this, id + 'Resources', props);
+        const datasetsApiConstruct = new DatasetsApiConstruct(this, id, props);
 
     }
 }

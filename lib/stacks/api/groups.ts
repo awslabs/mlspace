@@ -26,7 +26,7 @@ export class GroupsApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const groupsApiConstruct = new GroupsApiConstruct(this, id + 'Resources', props);
+        const groupsApiConstruct = new GroupsApiConstruct(this, id, props);
         
     }
 }

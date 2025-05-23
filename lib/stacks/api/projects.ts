@@ -26,7 +26,7 @@ export class ProjectsApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const projectsApiConstruct = new ProjectsApiConstruct(this, id + 'Resources', props);
+        const projectsApiConstruct = new ProjectsApiConstruct(this, id, props);
 
     }
 }

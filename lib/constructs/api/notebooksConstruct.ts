@@ -30,10 +30,10 @@ export class NotebooksApiConstruct extends Construct {
         const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
             scope,
             'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
+            StringParameter.valueForStringParameter(scope, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
         );
 
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
+        const restApi = RestApi.fromRestApiAttributes(scope, 'RestApi', {
             restApiId: props.restApiId,
             rootResourceId: props.rootResourceId,
         });

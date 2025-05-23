@@ -26,7 +26,7 @@ export class TranslateApiStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const translateApiConstruct = new TranslateApiConstruct(this, id + 'Resources', props);
+        const translateApiConstruct = new TranslateApiConstruct(this, id, props);
 
     }
 }

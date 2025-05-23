@@ -29,7 +29,7 @@ export class SagemakerConstruct extends Construct {
     constructor (scope: Stack, id: string, props: SagemakerStackProp) {
         super(scope, id);
 
-        new CfnNotebookInstanceLifecycleConfig(this, 'mlspace-notebook-lifecycle-config', {
+        new CfnNotebookInstanceLifecycleConfig(scope, 'mlspace-notebook-lifecycle-config', {
             notebookInstanceLifecycleConfigName: props.mlspaceConfig.MLSPACE_LIFECYCLE_CONFIG_NAME,
             onCreate: [
                 {

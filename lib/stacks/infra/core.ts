@@ -50,7 +50,7 @@ export class CoreStack extends Stack {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const coreConstruct = new CoreConstruct(this, name + 'Resources', props);
+        const coreConstruct = new CoreConstruct(this, name, props);
 
     }
 }

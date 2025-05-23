@@ -28,12 +28,12 @@ export class ProjectsApiConstruct extends Construct {
 
         // Get common layer based on arn from SSM due to issues with cross stack references
         const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
+            scope,
             'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
+            StringParameter.valueForStringParameter(scope, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
         );
 
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
+        const restApi = RestApi.fromRestApiAttributes(scope, 'RestApi', {
             restApiId: props.restApiId,
             rootResourceId: props.rootResourceId,
         });

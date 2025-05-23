@@ -54,7 +54,7 @@ export class IAMStack extends Stack {
             ...props,
         });
 
-        const iamConstruct = new IAMConstruct(this, name + 'Resources', props);
+        const iamConstruct = new IAMConstruct(this, name, props);
         
         this.mlSpaceAppRole = iamConstruct.mlSpaceAppRole;
         this.mlSpaceNotebookRole = iamConstruct.mlSpaceNotebookRole;

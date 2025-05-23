@@ -30,8 +30,8 @@ export class ApiDeploymentConstruct extends Construct {
         // Related CDK issues:
         // https://github.com/aws/aws-cdk/issues/12417
         // https://github.com/aws/aws-cdk/issues/13383
-        const deployment = new Deployment(this, `ApiDeployment-${new Date().getTime()}`, {
-            api: RestApi.fromRestApiId(this, 'MLSpaceRestApiRef', props.restApiId),
+        const deployment = new Deployment(scope, `ApiDeployment-${new Date().getTime()}`, {
+            api: RestApi.fromRestApiId(scope, 'MLSpaceRestApiRef', props.restApiId),
         });
         // This hack will allow us to redeploy to an existing stage but once CDK
         // adds first class support for this we will migrate

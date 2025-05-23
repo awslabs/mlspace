@@ -75,7 +75,7 @@ export class RestApiStack extends Stack {
             ...props,
         });
        
-        const restApiConstruct = new RestApiConstruct(this, id + 'Resources', props);
+        const restApiConstruct = new RestApiConstruct(this, id, props);
         
         this.mlspaceRequestAuthorizer = restApiConstruct.mlspaceRequestAuthorizer;
         this.mlSpaceRestApiId = restApiConstruct.mlSpaceRestApiId;
