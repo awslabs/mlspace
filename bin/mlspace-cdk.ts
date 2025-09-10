@@ -53,14 +53,19 @@ const app = new App();
 const stacks = [];
 const isIso = ['us-iso-east-1', 'us-isob-east-1'].includes(config.AWS_REGION);
 
+//Translate is not currently available in us-isob-east1
+const enableTranslate = !['us-isob-east-1'].includes(config.AWS_REGION);
+
 const vpcStack = new VPCStack(app, 'mlspace-vpc', {
     env: envProperties,
     deployCFNEndpoint: true,
     deployCWEndpoint: true,
     deployCWLEndpoint: true,
     deployDDBEndpoint: true,
+    deployEMREndpoint: true,
     deployS3Endpoint: true,
     deploySTSEndpoint: true,
+    deployTranslateEndpoint: enableTranslate,
     isIso,
     mlspaceConfig: config
 });
@@ -78,9 +83,6 @@ const dataBucketName = `${config.DATA_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 const websiteBucketName = `${config.WEBSITE_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 const cwlBucketName = `${config.LOGS_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
 const accessLogsBucketName = `${config.ACCESS_LOGS_BUCKET_NAME}-${config.AWS_ACCOUNT}`;
-
-//Translate is not currently available in us-isob-east1
-const enableTranslate = !['us-isob-east-1'].includes(config.AWS_REGION);
 
 const iamStack = new IAMStack(app, 'mlspace-iam', {
     env: envProperties,
