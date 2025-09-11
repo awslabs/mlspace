@@ -24,8 +24,10 @@ export type VPCStackProps = {
     readonly deployCWEndpoint: boolean;
     readonly deployCWLEndpoint: boolean;
     readonly deployDDBEndpoint: boolean;
+    readonly deployEMREndpoint: boolean;
     readonly deployS3Endpoint: boolean;
     readonly deploySTSEndpoint: boolean;
+    readonly deployTranslateEndpoint: boolean;
     readonly isIso?: boolean;
     readonly mlspaceConfig: MLSpaceConfig;
 } & StackProps;
@@ -46,6 +48,5 @@ export class VPCStack extends Stack {
         this.vpc = vpcConstruct.vpc;
         this.vpcSecurityGroupId = vpcConstruct.vpcSecurityGroupId;
         this.vpcSecurityGroup = vpcConstruct.vpcSecurityGroup;
-
     }
 }

@@ -142,6 +142,20 @@ export class VPCConstruct extends Construct {
                     privateDnsEnabled: true,
                 });
             }
+
+            if (props.deployTranslateEndpoint && !props.isIso) {
+                this.vpc.addInterfaceEndpoint('mlspace-translate-interface-endpoint', {
+                    service: InterfaceVpcEndpointAwsService.TRANSLATE,
+                    privateDnsEnabled: true,
+                });
+            }
+
+            if (props.deployEMREndpoint && !props.isIso) {
+                this.vpc.addInterfaceEndpoint('mlspace-emr-interface-endpoint', {
+                    service: InterfaceVpcEndpointAwsService.EMR,
+                    privateDnsEnabled: true,
+                });
+            }
         }
         
         this.vpcSecurityGroup = SecurityGroup.fromSecurityGroupId(
