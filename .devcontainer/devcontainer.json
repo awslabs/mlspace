@@ -26,8 +26,7 @@
 	},
 
 	"mounts": [
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly,type=bind",
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.midway,target=/home/vscode/.midway,readonly,type=bind"
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly,type=bind"
 	 ],
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
