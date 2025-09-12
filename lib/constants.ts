@@ -34,7 +34,7 @@ export const GROUP_USERS_TABLE_NAME = 'mlspace-group-users';
 export const CONFIG_BUCKET_NAME = 'mlspace-config';
 export const DATA_BUCKET_NAME = 'mlspace-data';
 export const LOGS_BUCKET_NAME = 'mlspace-logs';
-export const ACCESS_LOGS_BUCKET_NAME = 'mlspace-access-logs';
+export const ACCESS_LOGS_BUCKET_NAME = 'mlspace-access-logs-alpha';
 export const WEBSITE_BUCKET_NAME = 'mlspace-website';
 export const MLSPACE_LIFECYCLE_CONFIG_NAME = 'mlspace-notebook-lifecycle-config';
 export const NOTEBOOK_PARAMETERS_FILE_NAME = 'notebook-params.json';
@@ -140,3 +140,7 @@ export const LAMBDA_ARCHITECTURE = Architecture.X86_64;
 export const LAMBDA_RUNTIME = Runtime.PYTHON_3_11;
 
 export const SHOW_MIGRATION_OPTIONS = false;
+
+// Set this to true to enable customer-managed KMS encryption for DynamoDB tables
+// Requires EXISTING_KMS_MASTER_KEY_ARN to be set. Defaults to false for backward compatibility.
+export const ENABLE_DDB_KMS_CMK_ENCRYPTION = false;

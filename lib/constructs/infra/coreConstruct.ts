@@ -457,7 +457,7 @@ export class CoreConstruct extends Construct {
             partitionKey: datasetScopeAttribute,
             sortKey: datasetNameAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         // Projects Table
@@ -465,7 +465,7 @@ export class CoreConstruct extends Construct {
             tableName: props.mlspaceConfig.PROJECTS_TABLE_NAME,
             partitionKey: { name: 'name', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         // Project Users Table
@@ -476,7 +476,7 @@ export class CoreConstruct extends Construct {
             partitionKey: projectAttribute,
             sortKey: userAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         projectUsersTable.addGlobalSecondaryIndex({
@@ -491,7 +491,7 @@ export class CoreConstruct extends Construct {
             tableName: props.mlspaceConfig.GROUPS_TABLE_NAME,
             partitionKey: { name: 'name', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         // Group Datasets Table
@@ -502,7 +502,7 @@ export class CoreConstruct extends Construct {
             partitionKey: groupAttribute,
             sortKey: groupDatasetAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         groupDatasetTable.addGlobalSecondaryIndex({
@@ -519,7 +519,7 @@ export class CoreConstruct extends Construct {
             partitionKey: groupAttribute,
             sortKey: groupUserAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         groupUsersTable.addGlobalSecondaryIndex({
@@ -537,7 +537,7 @@ export class CoreConstruct extends Construct {
             partitionKey: groupMembershipHistoryAttribute,
             sortKey: groupMembershipHistorySortAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         // Users Table
@@ -545,7 +545,7 @@ export class CoreConstruct extends Construct {
             tableName: props.mlspaceConfig.USERS_TABLE_NAME,
             partitionKey: { name: 'username', type: AttributeType.STRING },
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         // Project Groups Table
@@ -554,7 +554,7 @@ export class CoreConstruct extends Construct {
             partitionKey: projectAttribute,
             sortKey: groupAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         projectGroupsTable.addGlobalSecondaryIndex({
@@ -572,7 +572,7 @@ export class CoreConstruct extends Construct {
             partitionKey: resourceIdAttribute,
             sortKey: resourceTypeAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         // Resources Metadata Table
@@ -581,7 +581,7 @@ export class CoreConstruct extends Construct {
             partitionKey: resourceTypeAttribute,
             sortKey: resourceIdAttribute,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         resourcesMetadataTable.addLocalSecondaryIndex({
@@ -602,7 +602,7 @@ export class CoreConstruct extends Construct {
             partitionKey: { name: 'configScope', type: AttributeType.STRING },
             sortKey: { name: 'versionId', type: AttributeType.NUMBER },
             billingMode: BillingMode.PAY_PER_REQUEST,
-            ...props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
         // Populate the App Config table with default config

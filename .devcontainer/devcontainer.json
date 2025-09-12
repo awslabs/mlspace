@@ -7,14 +7,14 @@
 	"features": {
 		"ghcr.io/devcontainers/features/aws-cli:1": {},
 		"ghcr.io/devcontainers/features/node:1": {},
-		"ghcr.io/devcontainers-contrib/features/aws-cdk:2": {},
+		"ghcr.io/devcontainers-extra/features/aws-cdk:2": {},
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/dhoeric/features/act:1": {},
-		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
-		"ghcr.io/devcontainers-contrib/features/black:2": {},
-		"ghcr.io/devcontainers-contrib/features/flake8:2": {},
-		"ghcr.io/devcontainers-contrib/features/isort:2": {}
+		"ghcr.io/devcontainers-extra/features/pre-commit:2": {},
+		"ghcr.io/devcontainers-extra/features/black:2": {},
+		"ghcr.io/devcontainers-extra/features/flake8:2": {},
+		"ghcr.io/devcontainers-extra/features/isort:2": {}
 	},
 	"customizations": {
 		"vscode": {
@@ -26,7 +26,8 @@
 	},
 
 	"mounts": [
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly,type=bind"
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly,type=bind",
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.midway,target=/home/vscode/.midway,readonly,type=bind"
 	 ],
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
