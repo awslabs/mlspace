@@ -15,11 +15,8 @@
 */
 
 import { App, Stack } from 'aws-cdk-lib';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
-import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { DatasetsApiConstruct } from '../../constructs/api/datasetsConstructs';
 
 export class DatasetsApiStack extends Stack {
     constructor (parent: App, id: string, props: ApiStackProperties) {
@@ -28,110 +25,8 @@ export class DatasetsApiStack extends Stack {
             ...props,
         });
 
-        // Get common layer based on arn from SSM due to issues with cross stack references
-        const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
-            'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
-        );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const datasetsApiConstruct = new DatasetsApiConstruct(this, id, props);
 
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
-            restApiId: props.restApiId,
-            rootResourceId: props.rootResourceId,
-        });
-
-        const apis: MLSpacePythonLambdaFunction[] = [
-            {
-                name: 'presigned_url',
-                resource: 'dataset',
-                description: 'Generates presigned url for MLSpace Dataset',
-                path: 'dataset/presigned-url',
-                method: 'POST',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                name: 'create_dataset',
-                resource: 'dataset',
-                description: 'Creates a new dataset',
-                path: 'dataset/create',
-                method: 'POST',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                id: 'dataset-personal',
-                name: 'list_resources',
-                resource: 'dataset',
-                description: 'List all global, group, and private datasets for user',
-                path: 'dataset',
-                method: 'GET',
-            },
-            {
-                name: 'edit',
-                resource: 'dataset',
-                description: 'Edits dataset',
-                path: 'v2/dataset/{type}/{scope}/{datasetName}',
-                method: 'PUT',
-            },
-            {
-                name: 'get',
-                resource: 'dataset',
-                description: 'Gets dataset details',
-                path: 'v2/dataset/{type}/{scope}/{datasetName}',
-                method: 'GET',
-            },
-            {
-                name: 'delete',
-                resource: 'dataset',
-                description: 'Removes a dataset from an MLSpace project',
-                path: 'v2/dataset/{type}/{scope}/{datasetName}',
-                method: 'DELETE',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                name: 'delete_file',
-                resource: 'dataset',
-                description: 'Removes a file from a dataset',
-                // use a greedy path here so object keys containing '/' are fully matched
-                path: 'v2/dataset/{type}/{scope}/{datasetName}/{file+}',
-                method: 'DELETE',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-            {
-                name: 'list_files',
-                resource: 'dataset',
-                description: 'List all file in a dataset',
-                path: 'v2/dataset/{type}/{scope}/{datasetName}/files',
-                method: 'GET',
-                environment: {
-                    DATA_BUCKET: props.dataBucketName,
-                },
-            },
-        ];
-
-        apis.forEach((f) => {
-            registerAPIEndpoint(
-                this,
-                restApi,
-                props.authorizer,
-                props.applicationRole,
-                props.applicationRole.roleName,
-                props.notebookInstanceRole.roleName,
-                props.lambdaSourcePath,
-                [commonLambdaLayer],
-                f,
-                props.mlSpaceVPC,
-                props.securityGroups,
-                props.mlspaceConfig,
-                props.permissionsBoundaryArn
-            );
-        });
     }
 }

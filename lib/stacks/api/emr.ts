@@ -15,11 +15,8 @@
 */
 
 import { App, Stack } from 'aws-cdk-lib';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
-import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { EmrApiConstruct } from '../../constructs/api/emrConstruct';
 
 export class EmrApiStack extends Stack {
     constructor (parent: App, id: string, props: ApiStackProperties) {
@@ -28,80 +25,8 @@ export class EmrApiStack extends Stack {
             ...props,
         });
 
-        // Get common layer based on arn from SSM due to issues with cross stack references
-        const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
-            'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
-        );
-
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
-            restApiId: props.restApiId,
-            rootResourceId: props.rootResourceId,
-        });
-
-        const apis: MLSpacePythonLambdaFunction[] = [
-            {
-                name: 'get',
-                resource: 'emr',
-                description: 'Describe an EMR Cluster',
-                path: 'emr/{clusterId}',
-                method: 'GET',
-            },
-            {
-                name: 'delete',
-                resource: 'emr',
-                description: 'Delete an EMR Cluster',
-                path: 'emr/{clusterId}',
-                method: 'DELETE',
-            },
-            {
-                name: 'remove',
-                resource: 'emr',
-                description: 'Remove an EMR Cluster from the resource metadata table',
-                path: 'emr/{clusterId}/remove',
-                method: 'DELETE',
-            },
-            {
-                name: 'set_resource_termination',
-                resource: 'resource_scheduler',
-                description: 'Update the termination time of an EMR Cluster',
-                path: 'emr/{clusterId}/schedule',
-                method: 'PUT',
-                id: 'resource_scheduler-set-emr-termination',
-            },
-            {
-                name: 'list_applications',
-                resource: 'emr',
-                description: 'List all applications available to install and configure when launching a cluster',
-                path: 'emr/applications',
-                method: 'GET',
-            },
-            {
-                name: 'list_release_labels',
-                resource: 'emr',
-                description: 'List of available EMR release labels',
-                path: 'emr/release',
-                method: 'GET',
-            },
-        ];
-
-        apis.forEach((f) => {
-            registerAPIEndpoint(
-                this,
-                restApi,
-                props.authorizer,
-                props.applicationRole,
-                props.applicationRole.roleName,
-                props.notebookInstanceRole.roleName,
-                props.lambdaSourcePath,
-                [commonLambdaLayer],
-                f,
-                props.mlSpaceVPC,
-                props.securityGroups,
-                props.mlspaceConfig,
-                props.permissionsBoundaryArn
-            );
-        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const emrApiConstruct = new EmrApiConstruct(this, id, props);
+        
     }
 }

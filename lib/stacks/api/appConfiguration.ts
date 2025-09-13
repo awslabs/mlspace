@@ -15,11 +15,8 @@
 */
 
 import { App, Stack } from 'aws-cdk-lib';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
-import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { AppConfigurationApiConstruct } from '../../constructs/api/appConfigurationConstruct';
 
 export class AppConfigurationApiStack extends Stack {
     constructor (parent: App, id: string, props: ApiStackProperties) {
@@ -28,57 +25,8 @@ export class AppConfigurationApiStack extends Stack {
             ...props,
         });
 
-        // Get common layer based on arn from SSM due to issues with cross stack references
-        const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
-            'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
-        );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const appConfigurationApiConstruct = new AppConfigurationApiConstruct(this, id, props);
 
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
-            restApiId: props.restApiId,
-            rootResourceId: props.rootResourceId,
-        });
-
-        const apis: MLSpacePythonLambdaFunction[] = [
-            {
-                name: 'get_configuration',
-                resource: 'app_configuration',
-                description: 'Get the requested number of MLSpace application configurations, starting from the most recent',
-                path: 'app-config',
-                method: 'GET',
-                noAuthorizer: true
-            },
-            {
-                name: 'update_configuration',
-                resource: 'app_configuration',
-                description: 'Update the MLSpace application configuration',
-                path: 'app-config',
-                method: 'POST',
-                environment: {
-                    ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: props.endpointConfigInstanceConstraintPolicy?.managedPolicyArn || '',
-                    JOB_INSTANCE_CONSTRAINT_POLICY_ARN: props.jobInstanceConstraintPolicy?.managedPolicyArn || '',
-                }
-            },
-        ];
-
-        const system_permissions = ['update_configuration'];
-        apis.forEach((f) => {
-            registerAPIEndpoint(
-                this,
-                restApi,
-                props.authorizer,
-                system_permissions.includes(f.name) ? props.systemRole : props.applicationRole,
-                props.applicationRole.roleName,
-                props.notebookInstanceRole.roleName,
-                props.lambdaSourcePath,
-                [commonLambdaLayer],
-                f,
-                props.mlSpaceVPC,
-                props.securityGroups,
-                props.mlspaceConfig,
-                props.permissionsBoundaryArn
-            );
-        });
     }
 }

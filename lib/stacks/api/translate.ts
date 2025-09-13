@@ -15,11 +15,8 @@
 */
 
 import { App, Stack } from 'aws-cdk-lib';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
-import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { MLSpacePythonLambdaFunction, registerAPIEndpoint } from '../../utils/apiFunction';
 import { ApiStackProperties } from './restApi';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { TranslateApiConstruct } from '../../constructs/api/translateConstruct';
 
 export class TranslateApiStack extends Stack {
     constructor (parent: App, id: string, props: ApiStackProperties) {
@@ -28,94 +25,8 @@ export class TranslateApiStack extends Stack {
             ...props,
         });
 
-        // Get common layer based on arn from SSM due to issues with cross stack references
-        const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
-            this,
-            'mls-common-lambda-layer',
-            StringParameter.valueForStringParameter(this, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
-        );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const translateApiConstruct = new TranslateApiConstruct(this, id, props);
 
-        const restApi = RestApi.fromRestApiAttributes(this, 'RestApi', {
-            restApiId: props.restApiId,
-            rootResourceId: props.rootResourceId,
-        });
-
-        const apis: MLSpacePythonLambdaFunction[] = [
-            {
-                name: 'translate_text',
-                resource: 'translate_realtime',
-                description:
-                    'Perform a real-time translation of a source text, with a source and target language',
-                path: 'translate/realtime/text',
-                method: 'POST',
-            },
-            {
-                name: 'translate_document',
-                resource: 'translate_realtime',
-                description:
-                    'Perform a real-time translation of a source document, with a source and target language',
-                path: 'translate/realtime/document',
-                method: 'POST',
-            },
-            {
-                name: 'describe',
-                resource: 'batch_translate',
-                description: 'Describe a Batch Translate job',
-                path: 'batch-translate/{jobId}',
-                method: 'GET',
-            },
-            {
-                name: 'create',
-                resource: 'batch_translate',
-                description: 'Create a Batch Translate job in an MLSpace project',
-                path: 'batch-translate',
-                method: 'POST',
-                environment: {
-                    BUCKET: props.configBucketName,
-                    S3_KEY: props.notebookParamFileKey,
-                    DATA_BUCKET: props.dataBucketName,
-                    TRANSLATE_DATE_ROLE_ARN: props.applicationRole.roleArn,
-                },
-            },
-            {
-                name: 'stop',
-                resource: 'batch_translate',
-                description: 'Stop a Batch Translate job',
-                path: 'batch-translate/{jobId}/stop',
-                method: 'POST',
-            },
-            {
-                name: 'list_languages',
-                resource: 'metadata',
-                description: 'List the supported languages for AWS Translate',
-                path: 'translate/list-languages',
-                method: 'GET',
-            },
-            {
-                name: 'list',
-                resource: 'custom_terminology',
-                description: 'List pages of Custom Terminologies for AWS Translate',
-                path: 'translate/custom-terminologies',
-                method: 'GET',
-            },
-        ];
-
-        apis.forEach((f) => {
-            registerAPIEndpoint(
-                this,
-                restApi,
-                props.authorizer,
-                props.applicationRole,
-                props.applicationRole.roleName,
-                props.notebookInstanceRole.roleName,
-                props.lambdaSourcePath,
-                [commonLambdaLayer],
-                f,
-                props.mlSpaceVPC,
-                props.securityGroups,
-                props.mlspaceConfig,
-                props.permissionsBoundaryArn
-            );
-        });
     }
 }

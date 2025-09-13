@@ -140,3 +140,7 @@ export const LAMBDA_ARCHITECTURE = Architecture.X86_64;
 export const LAMBDA_RUNTIME = Runtime.PYTHON_3_11;
 
 export const SHOW_MIGRATION_OPTIONS = false;
+
+// Set this to true to enable customer-managed KMS encryption for DynamoDB tables
+// Requires EXISTING_KMS_MASTER_KEY_ARN to be set. Defaults to false for backward compatibility.
+export const ENABLE_DDB_KMS_CMK_ENCRYPTION = true;

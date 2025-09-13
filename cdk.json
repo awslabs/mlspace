@@ -34,7 +34,7 @@
     "@aws-cdk/aws-sns-subscriptions:restrictSqsDescryption": true,
     "@aws-cdk/core:target-partitions": [
       "aws",
-      "aws-gov",
+      "aws-us-gov",
       "aws-iso",
       "aws-iso-b"
     ]
