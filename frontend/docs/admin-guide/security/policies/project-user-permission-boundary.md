@@ -352,6 +352,26 @@ This set of permissions allows users to view and list the contents of the global
 
 ### Statement 17
 
+This set of permissions allows users to access all Bedrock APIs with the exception of tagging and untagging resources. 
+
+```json:line-numbers
+    {
+        "Condition": {
+            "ForAllValues:StringNotLike": {
+                "bedrock:Action": [
+                    "bedrock:TagResource",
+                    "bedrock:UntagResource"
+                ]
+            }
+        },
+        "Action": "bedrock:*",
+        "Resource": "*",
+        "Effect": "Allow"
+    }
+```
+
+### Statement 18
+
 These actions provide the capability to assign MLSpace-prefixed roles to Translate when executing and managing jobs.
 
 ```json:line-numbers
@@ -367,7 +387,7 @@ These actions provide the capability to assign MLSpace-prefixed roles to Transla
     }
 ```
 
-### Statement 18    
+### Statement 19
 
 These actions authorize users to create Amazon SageMaker Endpoint Configurations, contingent upon the inclusion of User, System, and Project tags in the request.  This tagging requirement ensures proper resource management, auditing, and access control.
 
@@ -386,7 +406,7 @@ These actions authorize users to create Amazon SageMaker Endpoint Configurations
     }
 ```
 
-### Statement 19
+### Statement 20
 
 These actions authorize users to initiate Hyperparameter Optimization (HPO) and Training jobs in Amazon SageMaker, subject to specific conditions. The request must include SageMaker VPC information, as well as User, System, and Project tags. This tagging requirement ensures proper resource management, auditing, and access control.
 
@@ -413,7 +433,7 @@ These actions authorize users to initiate Hyperparameter Optimization (HPO) and 
     }
 ```
 
-### Statement 20
+### Statement 21
 
 These actions authorize users to create Transform jobs in Amazon SageMaker, subject to a specific condition. The request must include User, System, and Project tags. This requirement ensures proper resource attribution, facilitates effective management, and maintains compliance with organizational tagging policies. This tagging requirement ensures proper resource management, auditing, and access control.
 
@@ -430,6 +450,90 @@ These actions authorize users to create Transform jobs in Amazon SageMaker, subj
       "Resource": "arn:*:sagemaker:*:012345678910:transform-job/*",
       "Effect": "Allow"
     }
+```
+
+### Statement 22
+
+These actions authorize users to create Bedrock resources, subject to a specific condition. The request must include System, and Project tags. This requirement ensures proper resource attribution, facilitates effective management, and maintains compliance with organizational tagging policies. This tagging requirement ensures proper resource management, auditing, and access control.
+
+```json:line-numbers
+		{
+			"Sid": "DenyBedrockCreateWithoutMLSpaceTag",
+			"Effect": "Deny",
+			"Action": [
+				"bedrock:Create*",
+				"bedrock:InvokeDataAutomationAsync",
+				"bedrock:PutResourcePolicy",
+				"bedrock:InvokeModel"
+			],
+			"NotResource": [
+				"arn:*:bedrock:*:*:data-automation-profile/*",
+				"arn:*:bedrock:*:*:bedrock-marketplace-model-endpoint/*",
+				"arn:*:bedrock:*:*:flow-execution/*",
+				"arn:*:bedrock:*:*:guardrail-profile/*",
+				"arn:*:bedrock:*:*:prompt-router/*",
+				"arn:*:bedrock:*:*:inference-profile/*",
+				"arn:*:bedrock:*:*:default-prompt-router/*",
+				"arn:*:bedrock:*::foundation-model/*"
+			],
+			"Condition": {
+				"StringNotEquals": {
+					"aws:RequestTag/project": "pmo20251008",
+					"aws:RequestTag/system": "MLSpace"
+				}
+			}
+		}
+```
+
+### Statement 23
+
+These actions authorize users to access Bedrock resources, subject to a specific condition. The request must include System, and Project tags. This requirement ensures proper resource attribution, facilitates effective management, and maintains compliance with organizational tagging policies. This tagging requirement ensures proper resource management, auditing, and access control.
+
+```json:line-numbers
+		{
+			"Sid": "DenyBedrockActionsWithoutSystemMLSpaceTag",
+			"Effect": "Deny",
+			"NotAction": [
+				"bedrock:Create*",
+				"bedrock:InvokeDataAutomationAsync",
+				"bedrock:PutResourcePolicy",
+				"bedrock:InvokeModel"
+			],
+			"Resource": [
+				"arn:*:bedrock:*:*:agent-alias/*/*",
+				"arn:*:bedrock:*:*:agent/*",
+				"arn:*:bedrock:*:*:application-inference-profile/*",
+				"arn:*:bedrock:*:*:async-invoke/*",
+				"arn:*:bedrock:*:*:automated-reasoning-policy-version/*",
+				"arn:*:bedrock:*:*:automated-reasoning-policy/*",
+				"arn:*:bedrock:*:*:blueprint/*",
+				"arn:*:bedrock:*:*:custom-model-deployment/*",
+				"arn:*:bedrock:*:*:custom-model/*",
+				"arn:*:bedrock:*:*:data-automation-invocation-job/*",
+				"arn:*:bedrock:*:*:data-automation-project/*",
+				"arn:*:bedrock:*:*:evaluation-job/*",
+				"arn:*:bedrock:*:*:flow-alias/*",
+				"arn:*:bedrock:*:*:flow/*",
+				"arn:*:bedrock:*:*:guardrail/*",
+				"arn:*:bedrock:*:*:imported-model/*",
+				"arn:*:bedrock:*:*:knowledge-base/*",
+				"arn:*:bedrock:*:*:model-copy-job/*",
+				"arn:*:bedrock:*:*:model-customization-job/*",
+				"arn:*:bedrock:*:*:model-evaluation-job/*",
+				"arn:*:bedrock:*:*:model-import-job/*",
+				"arn:*:bedrock:*:*:model-invocation-job/*",
+				"arn:*:bedrock:*:*:prompt-version/*",
+				"arn:*:bedrock:*:*:prompt/*",
+				"arn:*:bedrock:*:*:provisioned-model/*",
+				"arn:*:bedrock:*:*:session/*"
+			],
+			"Condition": {
+				"StringNotEquals": {
+					"aws:ResourceTag/project": "pmo20251008",
+					"aws:ResourceTag/system": "MLSpace"
+				}
+			}
+		}
 ```
 
 ## Full Policy
