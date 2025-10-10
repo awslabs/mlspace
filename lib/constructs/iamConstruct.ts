@@ -361,37 +361,13 @@ export class IAMConstruct extends Construct {
                     },
                 }),
                 /**
-                 * Bedrock Permissions
+                 * Allow bedrock resources. By default we are permissive as the permissions are scoped down by
+                 * the permission boundary and user/project policies.
                  */
                 new PolicyStatement({
                     effect: Effect.ALLOW,
-                    actions: [
-                        // mutating
-                        'bedrock:Associate*',
-                        'bedrock:Create*',
-                        'bedrock:BatchDelete*',
-                        'bedrock:Delete*',
-                        'bedrock:Put*',
-                        'bedrock:Retrieve*',
-                        'bedrock:Start*',
-                        'bedrock:Update*',
-                        
-                        // non-mutating
-                        'bedrock:Apply*',
-                        'bedrock:Detect*',
-                        'bedrock:List*',
-                        'bedrock:Get*',
-                        'bedrock:Invoke*',
-                        'bedrock:Retrieve*',
-                    ],
-                    resources: [`arn:${partition}:sagemaker:${region}:${scope.account}:*`],
-                    conditions: {
-                        Null: {
-                            ...requestTagsConditions,
-                            ...resourceTagsConditions,
-                        },
-                        ...requestSystemTagEqualsConditions[SystemTagCondition.Equals]
-                    },
+                    actions: ['bedrock:*'],
+                    resources: ['*'],
                 }),
             ];
             
@@ -634,9 +610,10 @@ export class IAMConstruct extends Construct {
             } else {
                 // If roles are dynamically managed
                 // Translate Permissions Principles
-                const passRolePrincipals = props.enableTranslate
-                    ? ['sagemaker.amazonaws.com', 'translate.amazonaws.com']
-                    : 'sagemaker.amazonaws.com';
+                const passRolePrincipals = ['sagemaker.amazonaws.com', 'bedrock.amazonaws.com'];
+                if (props.enableTranslate) {
+                    passRolePrincipals.push('translate.amazonaws.com');
+                }
 
                 // Permission boundary policy that ensures IAM policies never exceed these permissions
                 this.mlSpacePermissionsBoundary = new ManagedPolicy(
@@ -704,7 +681,21 @@ export class IAMConstruct extends Construct {
                                     },
                                 },
                             }),
-                            ...notebookPolicyStatements('*', '*', true),
+                            // Bedrock permissions - allow all actions except tagging
+                            new PolicyStatement({
+                                effect: Effect.ALLOW,
+                                actions: ['bedrock:*'],
+                                resources: ['*'],
+                                conditions: {
+                                    'ForAllValues:StringNotLike': {
+                                        'bedrock:Action': ['bedrock:TagResource', 'bedrock:UntagResource']
+                                    }
+                                }
+                            }),
+                            ...notebookPolicyStatements('*', '*', true).filter((policyStatement) => {
+                                // don't pull in any bedrock statements from the notebook policy since we defined our own above
+                                return policyStatement.actions.findIndex((action) => action.startsWith('bedrock')) === -1;
+                            }),
                         ],
                     }
                 );
