@@ -39,6 +39,20 @@ For a more comprehensive understanding of permissions boundaries, please refer t
 
 When a user's membership changes with a Group, Dataset, or Project, MLSpace immediately removes any unnecessary roles, scopes down IAM policies to ensure least-privilege permissions, and restricts access to resources, ensuring that access is only granted to what is required for the user's new role. This proactive approach helps maintain the security and integrity of your AWS account by minimizing the attack surface and reducing the risk of unauthorized access.
 
+Here's the updated structured version:
+
+## Logging Architecture
+
+MLSpace employs a multi-layered logging strategy:
+
+**Application Logging:** The application performs informational logging throughout its operations to support monitoring and troubleshooting.
+
+**Audit Logging:** MLSpace primarily relies on AWS CloudTrail for audit purposes. CloudTrail records most attributable actions along with the IAM role used to execute them, providing comprehensive accountability.
+
+**Storage Access Logging:** S3 bucket access logging is enabled across all buckets, with logs aggregated in a central logging S3 bucket for unified access tracking.
+
+**Default Configuration:** MLSpace automatically creates a CloudTrail trail that writes to a CloudWatch logs bucket during initial setup. This behavior is configurable via the `CREATE_MLSPACE_CLOUDTRAIL_TRAIL` parameter, which is set to `true` by default.
+
 
 ## Role Descriptions
 

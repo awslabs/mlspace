@@ -88,9 +88,13 @@ The {{ $params.APPLICATION_NAME }} web application is a React Redux-based TypeSc
 
 The frontend leverages a number of open-source libraries to both speed up development and reinforce best practices. The UI is built around [CloudScape](https://cloudscape.design/), an open-source component library developed by AWS that aims to assist in building accessible user interfaces that share a similar UX with the AWS console. In order to seamlessly integrate with spec-compliant OIDC providers, `react-oidc-context` is used. This library handles the PKCE authentication flow as well as periodic token refreshing. _Eslint_ and _Husky_ are used to enforce common coding standards, consistent styling, and best practices throughout the codebase.
 
-## Architecture
+## High Level Architecture Diagram
 
 ![{{ $params.APPLICATION_NAME }} Architecture diagram](../img/getting-started/arch.png)
+
+## Detailed Architecture Diagram
+
+![{{ $params.APPLICATION_NAME }} Detailed Architecture diagram](../img/getting-started/detailed-arch.png)
 
 ### DynamoDB
 

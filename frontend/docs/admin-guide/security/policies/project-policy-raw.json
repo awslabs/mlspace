@@ -57,21 +57,7 @@
                 "sagemaker:DescribeTransformJob",
                 "sagemaker:StopTransformJob",
                 "sagemaker:UpdateEndpoint",
-                "sagemaker:UpdateEndpointWeightsAndCapacities",
-                "bedrock:Associate*",
-                "bedrock:Create*",
-                "bedrock:BatchDelete*",
-                "bedrock:Delete*",
-                "bedrock:Put*",
-                "bedrock:Retrieve*",
-                "bedrock:Start*",
-                "bedrock:Update*",  
-                "bedrock:Apply*",
-                "bedrock:Detect*",
-                "bedrock:List*",
-                "bedrock:Get*",
-                "bedrock:Invoke*",
-                "bedrock:Retrieve*"
+                "sagemaker:UpdateEndpointWeightsAndCapacities"
             ],
             "Resource": "*",
             "Condition": {

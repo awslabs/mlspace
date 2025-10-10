@@ -79,6 +79,11 @@ This statement authorizes the Notebook to perform various read operations on mul
     {
         "Action": [
             /**
+            * Allow all Bedrock access as it will be scoped down by the User and Project policy
+            */
+            "bedrock:*",
+
+            /**
             *
             */
             "comprehend:BatchDetect*",
@@ -371,50 +376,5 @@ The statement includes conditions that enforce additional constraints, ensuring 
             "arn:aws:sagemaker:us-east-1:012345678910:training-job/*"
         ],
         "Effect": "Deny"
-    },
-```
-
-## Statement 14
-
-This statement allows the necessary permissions for interacting with Amazon Bedrock if it is tagged appropriately. The policy ensures that all Bedrock resources are properly tagged with user, system, and project information, maintaining consistent resource management and adhering to organizational tagging standards within the MLSpace environment.
-
-The statement includes conditions that enforce additional constraints, ensuring adherence to security requirements, networking configurations, and appropriate tagging for assured attribution. These measures help maintain consistent access control and adhere to the principle of least privilege within the MLSpace environment.
-
-```json:line-numbers
-    // HPO Permissions
-    {
-        "Condition": {
-            "Null": {
-                "aws:RequestTag/user": "true",
-                "aws:RequestTag/project": "true",
-                "aws:ResourceTag/user": "true",
-                "aws:ResourceTag/system": "true",
-                "aws:ResourceTag/project": "true",
-            },
-            "StringNotEqualsIgnoreCase": {
-                "aws:RequestTag/system": "MLSpace"
-            }
-        },
-        "Action": [
-            // mutating
-            "bedrock:Associate*",
-            "bedrock:Create*",
-            "bedrock:BatchDelete*",
-            "bedrock:Delete*",
-            "bedrock:Put*",
-            "bedrock:Retrieve*",
-            "bedrock:Start*",
-            "bedrock:Update*",
-            
-            // non-mutating
-            "bedrock:Apply*",
-            "bedrock:Detect*",
-            "bedrock:List*",
-            "bedrock:Get*",
-            "bedrock:Invoke*",
-            "bedrock:Retrieve*",
-        ],
-        "Resource": "arn:aws:sagemaker:us-east-1:012345678910:*",
-        "Effect": "Allow"
     },
 ```
