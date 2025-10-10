@@ -91,21 +91,7 @@ These actions grants a role the ability to create the specified SageMaker and Be
             "sagemaker:DescribeTransformJob",
             "sagemaker:StopTransformJob",
             "sagemaker:UpdateEndpoint",
-            "sagemaker:UpdateEndpointWeightsAndCapacities",
-            "bedrock:Associate*",
-            "bedrock:BatchDelete*",
-            "bedrock:Cancel*",
-            "bedrock:Create*",
-            "bedrock:Delete*",
-            "bedrock:Deregister*",
-            "bedrock:Put*",
-            "bedrock:Register*",
-            "bedrock:Start*",
-            "bedrock:Tag*",
-            "bedrock:Untag*",
-            "bedrock:Update*",
-            "bedrock:Apply*",
-            "bedrock:Export*"
+            "sagemaker:UpdateEndpointWeightsAndCapacities"
         ],
         "Resource": "*",
         "Condition": {
