@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 IAM_ROLE_NAME_MAX_LENGTH = 64
 IAM_POLICY_NAME_MAX_LENGTH = 128
-USER_POLICY_VERSION = 1
-PROJECT_POLICY_VERSION = 1
+USER_POLICY_VERSION = 2
+PROJECT_POLICY_VERSION = 2
 DYNAMIC_USER_ROLE_TAG = {"Key": "dynamic-user-role", "Value": "true"}
 
 group_user_dao = GroupUserDAO()
@@ -47,104 +47,6 @@ class IAMManager:
         self.sts_client = sts_client if sts_client else boto3.client("sts", config=retry_config)
         self.aws_partition = boto3.Session().get_partition_for_region(boto3.Session().region_name)
         self.iam_client = iam_client if iam_client else boto3.client("iam", config=retry_config)
-
-        # If you update this you need to increment the PROJECT_POLICY_VERSION value
-        self.project_policy = """{
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "s3:GetObject",
-                        "s3:DeleteObject",
-                        "s3:PutObject",
-                        "s3:PutObjectTagging"
-                    ],
-                    "Resource": "arn:$PARTITION:s3:::$BUCKET_NAME/project/$PROJECT_NAME/*"
-                },
-                {
-                    "Effect": "Deny",
-                    "Action": [
-                        "sagemaker:CreateEndpoint"
-                    ],
-                    "Resource": "arn:$PARTITION:sagemaker:*:*:endpoint/*",
-                    "Condition": {
-                        "StringNotEqualsIgnoreCase": {
-                            "aws:RequestTag/project": "$PROJECT_NAME"
-                        }
-                    }
-                },
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "sagemaker:CreateEndpoint"
-                    ],
-                    "Resource": "arn:$PARTITION:sagemaker:*:*:endpoint-config/*"
-                },
-                {
-                    "Effect": "Deny",
-                    "Action": [
-                        "sagemaker:CreateModel",
-                        "sagemaker:CreateEndpointConfig",
-                        "sagemaker:CreateTrainingJob",
-                        "sagemaker:CreateProcessingJob",
-                        "sagemaker:CreateHyperParameterTuningJob",
-                        "sagemaker:CreateTransformJob",
-                        "sagemaker:DeleteModel",
-                        "sagemaker:DescribeModel",
-                        "sagemaker:DeleteEndpoint",
-                        "sagemaker:DescribeEndpoint",
-                        "sagemaker:InvokeEndpoint",
-                        "sagemaker:DeleteEndpointConfig",
-                        "sagemaker:DescribeEndpointConfig",
-                        "sagemaker:DescribeLabelingJob",
-                        "sagemaker:StopLabelingJob",
-                        "sagemaker:DescribeTrainingJob",
-                        "sagemaker:StopTrainingJob",
-                        "sagemaker:DescribeProcessingJob",
-                        "sagemaker:StopProcessingJob",
-                        "sagemaker:DescribeHyperParameterTuningJob",
-                        "sagemaker:StopHyperParameterTuningJob",
-                        "sagemaker:DescribeTransformJob",
-                        "sagemaker:StopTransformJob",
-                        "sagemaker:UpdateEndpoint",
-                        "sagemaker:UpdateEndpointWeightsAndCapacities",
-                        "bedrock:Associate*",
-                        "bedrock:Create*",
-                        "bedrock:BatchDelete*",
-                        "bedrock:Delete*",
-                        "bedrock:Put*",
-                        "bedrock:Retrieve*",
-                        "bedrock:Start*",
-                        "bedrock:Update*",
-                        "bedrock:Apply*",
-                        "bedrock:Detect*",
-                        "bedrock:List*",
-                        "bedrock:Get*",
-                        "bedrock:Invoke*",
-                        "bedrock:Retrieve*"
-                    ],
-                    "Resource": "*",
-                    "Condition": {
-                        "StringNotEqualsIgnoreCase": {
-                            "aws:RequestTag/project": "$PROJECT_NAME",
-                            "aws:ResourceTag/project": "$PROJECT_NAME"
-                        }
-                    }
-                },
-                {
-                    "Effect": "Allow",
-                    "Action": "s3:ListBucket",
-                    "Resource": "arn:$PARTITION:s3:::$BUCKET_NAME",
-                    "Condition": {
-                        "StringLike": {
-                            "s3:prefix": "project/$PROJECT_NAME/*"
-                        }
-                    }
-                }
-            ]
-        }
-        """
 
         env_variables = get_environment_variables()
         self.data_bucket = env_variables[EnvVariable.DATA_BUCKET]
@@ -365,7 +267,7 @@ class IAMManager:
                     "Statement": [
                         {
                             "Effect": "Allow",
-                            "Principal": {"Service": "sagemaker.amazonaws.com"},
+                            "Principal": {"Service": ["sagemaker.amazonaws.com", "bedrock.amazonaws.com"]},
                             "Action": "sts:AssumeRole",
                         }
                     ],
@@ -439,12 +341,140 @@ class IAMManager:
         return detached_iam_policies
 
     def _generate_project_policy(self, project: str) -> str:
-        return (
-            self.project_policy.replace("\n", "")
-            .replace("$PROJECT_NAME", project)
-            .replace("$BUCKET_NAME", self.data_bucket)
-            .replace("$PARTITION", self.aws_partition)
-        )
+        # If you update this you need to increment the PROJECT_POLICY_VERSION value
+        project_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": ["s3:GetObject", "s3:DeleteObject", "s3:PutObject", "s3:PutObjectTagging"],
+                    "Resource": f"arn:{self.aws_partition}:s3:::{self.data_bucket}/project/{project}/*",
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": ["sagemaker:CreateEndpoint"],
+                    "Resource": f"arn:{self.aws_partition}:sagemaker:*:*:endpoint/*",
+                    "Condition": {"StringNotEqualsIgnoreCase": {"aws:RequestTag/project": project}},
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": ["sagemaker:CreateEndpoint"],
+                    "Resource": f"arn:{self.aws_partition}:sagemaker:*:*:endpoint-config/*",
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": [
+                        "sagemaker:CreateModel",
+                        "sagemaker:CreateEndpointConfig",
+                        "sagemaker:CreateTrainingJob",
+                        "sagemaker:CreateProcessingJob",
+                        "sagemaker:CreateHyperParameterTuningJob",
+                        "sagemaker:CreateTransformJob",
+                        "sagemaker:DeleteModel",
+                        "sagemaker:DescribeModel",
+                        "sagemaker:DeleteEndpoint",
+                        "sagemaker:DescribeEndpoint",
+                        "sagemaker:InvokeEndpoint",
+                        "sagemaker:DeleteEndpointConfig",
+                        "sagemaker:DescribeEndpointConfig",
+                        "sagemaker:DescribeLabelingJob",
+                        "sagemaker:StopLabelingJob",
+                        "sagemaker:DescribeTrainingJob",
+                        "sagemaker:StopTrainingJob",
+                        "sagemaker:DescribeProcessingJob",
+                        "sagemaker:StopProcessingJob",
+                        "sagemaker:DescribeHyperParameterTuningJob",
+                        "sagemaker:StopHyperParameterTuningJob",
+                        "sagemaker:DescribeTransformJob",
+                        "sagemaker:StopTransformJob",
+                        "sagemaker:UpdateEndpoint",
+                        "sagemaker:UpdateEndpointWeightsAndCapacities",
+                    ],
+                    "Resource": "*",
+                    "Condition": {
+                        "StringNotEqualsIgnoreCase": {"aws:RequestTag/project": project, "aws:ResourceTag/project": project}
+                    },
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:ListBucket",
+                    "Resource": f"arn:{self.aws_partition}:s3:::{self.data_bucket}",
+                    "Condition": {"StringLike": {"s3:prefix": f"project/{project}/*"}},
+                },
+                {
+                    "Sid": "DenyBedrockCreateWithoutMLSpaceTag",
+                    "Effect": "Deny",
+                    "Action": [
+                        "bedrock:Create*",
+                        "bedrock:InvokeDataAutomationAsync",
+                        "bedrock:PutResourcePolicy",
+                        "bedrock:InvokeModel",
+                    ],
+                    "NotResource": [
+                        "arn:*:bedrock:*:*:data-automation-profile/*",
+                        "arn:*:bedrock:*:*:bedrock-marketplace-model-endpoint/*",
+                        "arn:*:bedrock:*:*:flow-execution/*",
+                        "arn:*:bedrock:*:*:guardrail-profile/*",
+                        "arn:*:bedrock:*:*:prompt-router/*",
+                        "arn:*:bedrock:*:*:inference-profile/*",
+                        "arn:*:bedrock:*:*:default-prompt-router/*",
+                        "arn:*:bedrock:*::foundation-model/*",
+                    ],
+                    "Condition": {
+                        "StringNotEquals": {
+                            "aws:RequestTag/project": f"{project}",
+                            "aws:RequestTag/system": f"{self.system_tag}",
+                        }
+                    },
+                },
+                {
+                    "Sid": "DenyBedrockActionsWithoutSystemMLSpaceTag",
+                    "Effect": "Deny",
+                    "NotAction": [
+                        "bedrock:Create*",
+                        "bedrock:InvokeDataAutomationAsync",
+                        "bedrock:PutResourcePolicy",
+                        "bedrock:InvokeModel",
+                    ],
+                    "Resource": [
+                        "arn:*:bedrock:*:*:agent-alias/*/*",
+                        "arn:*:bedrock:*:*:agent/*",
+                        "arn:*:bedrock:*:*:application-inference-profile/*",
+                        "arn:*:bedrock:*:*:async-invoke/*",
+                        "arn:*:bedrock:*:*:automated-reasoning-policy-version/*",
+                        "arn:*:bedrock:*:*:automated-reasoning-policy/*",
+                        "arn:*:bedrock:*:*:blueprint/*",
+                        "arn:*:bedrock:*:*:custom-model-deployment/*",
+                        "arn:*:bedrock:*:*:custom-model/*",
+                        "arn:*:bedrock:*:*:data-automation-invocation-job/*",
+                        "arn:*:bedrock:*:*:data-automation-project/*",
+                        "arn:*:bedrock:*:*:evaluation-job/*",
+                        "arn:*:bedrock:*:*:flow-alias/*",
+                        "arn:*:bedrock:*:*:flow/*",
+                        "arn:*:bedrock:*:*:guardrail/*",
+                        "arn:*:bedrock:*:*:imported-model/*",
+                        "arn:*:bedrock:*:*:knowledge-base/*",
+                        "arn:*:bedrock:*:*:model-copy-job/*",
+                        "arn:*:bedrock:*:*:model-customization-job/*",
+                        "arn:*:bedrock:*:*:model-evaluation-job/*",
+                        "arn:*:bedrock:*:*:model-import-job/*",
+                        "arn:*:bedrock:*:*:model-invocation-job/*",
+                        "arn:*:bedrock:*:*:prompt-version/*",
+                        "arn:*:bedrock:*:*:prompt/*",
+                        "arn:*:bedrock:*:*:provisioned-model/*",
+                        "arn:*:bedrock:*:*:session/*",
+                    ],
+                    "Condition": {
+                        "StringNotEquals": {
+                            "aws:ResourceTag/project": f"{project}",
+                            "aws:ResourceTag/system": f"{self.system_tag}",
+                        }
+                    },
+                },
+            ],
+        }
+
+        return json.dumps(project_policy)
 
     def _generate_user_policy(self, user: str) -> str:
         resource_arns = [
@@ -530,23 +560,69 @@ class IAMManager:
                         "sagemaker:StopTransformJob",
                         "sagemaker:UpdateEndpoint",
                         "sagemaker:UpdateEndpointWeightsAndCapacities",
-                        "bedrock:Associate*",
-                        "bedrock:Create*",
-                        "bedrock:BatchDelete*",
-                        "bedrock:Delete*",
-                        "bedrock:Put*",
-                        "bedrock:Retrieve*",
-                        "bedrock:Start*",
-                        "bedrock:Update*",
-                        "bedrock:Apply*",
-                        "bedrock:Detect*",
-                        "bedrock:List*",
-                        "bedrock:Get*",
-                        "bedrock:Invoke*",
-                        "bedrock:Retrieve*",
                     ],
                     "Resource": "*",
                     "Condition": {"StringNotEqualsIgnoreCase": {"aws:RequestTag/user": user, "aws:ResourceTag/user": user}},
+                },
+                {
+                    "Sid": "DenyBedrockCreateWithoutMLSpaceTag",
+                    "Effect": "Deny",
+                    "Action": [
+                        "bedrock:Create*",
+                        "bedrock:InvokeDataAutomationAsync",
+                        "bedrock:PutResourcePolicy",
+                        "bedrock:InvokeModel",
+                    ],
+                    "NotResource": [
+                        "arn:*:bedrock:*:*:data-automation-profile/*",
+                        "arn:*:bedrock:*:*:bedrock-marketplace-model-endpoint/*",
+                        "arn:*:bedrock:*:*:flow-execution/*",
+                        "arn:*:bedrock:*:*:guardrail-profile/*",
+                        "arn:*:bedrock:*:*:prompt-router/*",
+                        "arn:*:bedrock:*:*:inference-profile/*",
+                        "arn:*:bedrock:*:*:default-prompt-router/*",
+                        "arn:*:bedrock:*::foundation-model/*",
+                    ],
+                    "Condition": {"StringNotEquals": {"aws:RequestTag/user": f"{user}"}},
+                },
+                {
+                    "Sid": "DenyBedrockActionsWithoutSystemMLSpaceTag",
+                    "Effect": "Deny",
+                    "NotAction": [
+                        "bedrock:Create*",
+                        "bedrock:InvokeDataAutomationAsync",
+                        "bedrock:PutResourcePolicy",
+                        "bedrock:InvokeModel",
+                    ],
+                    "Resource": [
+                        "arn:*:bedrock:*:*:agent-alias/*/*",
+                        "arn:*:bedrock:*:*:agent/*",
+                        "arn:*:bedrock:*:*:application-inference-profile/*",
+                        "arn:*:bedrock:*:*:async-invoke/*",
+                        "arn:*:bedrock:*:*:automated-reasoning-policy-version/*",
+                        "arn:*:bedrock:*:*:automated-reasoning-policy/*",
+                        "arn:*:bedrock:*:*:blueprint/*",
+                        "arn:*:bedrock:*:*:custom-model-deployment/*",
+                        "arn:*:bedrock:*:*:custom-model/*",
+                        "arn:*:bedrock:*:*:data-automation-invocation-job/*",
+                        "arn:*:bedrock:*:*:data-automation-project/*",
+                        "arn:*:bedrock:*:*:evaluation-job/*",
+                        "arn:*:bedrock:*:*:flow-alias/*",
+                        "arn:*:bedrock:*:*:flow/*",
+                        "arn:*:bedrock:*:*:guardrail/*",
+                        "arn:*:bedrock:*:*:imported-model/*",
+                        "arn:*:bedrock:*:*:knowledge-base/*",
+                        "arn:*:bedrock:*:*:model-copy-job/*",
+                        "arn:*:bedrock:*:*:model-customization-job/*",
+                        "arn:*:bedrock:*:*:model-evaluation-job/*",
+                        "arn:*:bedrock:*:*:model-import-job/*",
+                        "arn:*:bedrock:*:*:model-invocation-job/*",
+                        "arn:*:bedrock:*:*:prompt-version/*",
+                        "arn:*:bedrock:*:*:prompt/*",
+                        "arn:*:bedrock:*:*:provisioned-model/*",
+                        "arn:*:bedrock:*:*:session/*",
+                    ],
+                    "Condition": {"StringNotEquals": {"aws:ResourceTag/user": f"{user}"}},
                 },
             ],
         }

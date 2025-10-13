@@ -44,6 +44,7 @@
         },
         {
             "Action": [
+                "bedrock:*",
                 "comprehend:BatchDetect*",
                 "comprehend:Detect*",
                 "ec2:DescribeDhcpOptions",
@@ -183,41 +184,6 @@
             },
             "Action": "s3:ListBucket",
             "Resource": "arn:aws:s3:::mlspace-data-012345678910",
-            "Effect": "Allow"
-        },
-        {
-            "Condition": {
-                "Null": {
-                    "aws:RequestTag/user": "true",
-                    "aws:RequestTag/project": "true",
-                    "aws:ResourceTag/user": "true",
-                    "aws:ResourceTag/system": "true",
-                    "aws:ResourceTag/project": "true",
-                },
-                "StringNotEqualsIgnoreCase": {
-                    "aws:RequestTag/system": "MLSpace"
-                }
-            },
-            "Action": [
-                // mutating
-                "bedrock:Associate*",
-                "bedrock:Create*",
-                "bedrock:BatchDelete*",
-                "bedrock:Delete*",
-                "bedrock:Put*",
-                "bedrock:Retrieve*",
-                "bedrock:Start*",
-                "bedrock:Update*",
-                
-                // non-mutating
-                "bedrock:Apply*",
-                "bedrock:Detect*",
-                "bedrock:List*",
-                "bedrock:Get*",
-                "bedrock:Invoke*",
-                "bedrock:Retrieve*",
-            ],
-            "Resource": "arn:aws:sagemaker:us-east-1:012345678910:*",
             "Effect": "Allow"
         },
         {
