@@ -8,6 +8,11 @@
 * Added an updated detailed architecture diagram to showcase MLSpace’s infrastructure and component relationships.
 * Expanded documentation to cover how MLSpace stores auditable logs, providing greater transparency into logging mechanisms.
 
+ ## Upcoming
+* **Bedrock VPC Endpoints**: Addition of a VPC endpoint for Amazon Bedrock to ensure traffic remains private within the customer's AWS network for enhanced security.
+* **Bedrock Configuration Parameter**: New configuration parameter to allow customers to disable Bedrock capabilities in notebooks if desired.
+* **GroundTruth Label Verification**: Addition of GroundTruth Label Verification jobs to the UI, enabling users to review and validate labeled data directly from the MLSpace interface.
+
 ## Acknowledgements
 
 * @bedanley
