@@ -1,23 +1,18 @@
-# v1.6.10
+# v1.6.11
 
-## Security
+## Features
+* **Bedrock IAM Policies**: Updated existing IAM policies to address Amazon Bedrock API updates. MLSpace customers can continue to directly call service APIs directly from their notebooks, enabling seamless integration with Bedrock’s foundation models and generative AI capabilities.
 
-* **Default VPC Endpoints**: When MLSpace provisions a VPC, it now automatically includes endpoints for **Amazon Translate** and **Amazon EMR**, ensuring that traffic to these AWS services remains private within the AWS network.
-* **DynamoDB Encryption with KMS**: MLSpace now encrypts DynamoDB tables using a **customer-managed KMS key (CMK)** if provided, giving customers direct control over encryption. This behavior is enabled by default and can be disabled by setting the `ENABLE_DDB_KMS_CMK_ENCRYPTION` flag to **false**.
-* Updated dependencies with the latest security patches.
-
-## Bug Fixes
-
-* Fixed an issue affecting GovCloud partition handling.
-
-## Special Thanks
-
-* 🎉 Special thanks to [@szotrj](https://github.com/awslabs/mlspace/pull/318) for contributing their first PR!
+## Documentation
+* Updated Bedrock policy documentation to reflect updated IAM policies.
+* Added an updated detailed architecture diagram to showcase MLSpace’s infrastructure and component relationships.
+* Expanded documentation to cover how MLSpace stores auditable logs, providing greater transparency into logging mechanisms.
 
 ## Acknowledgements
 
 * @bedanley
 * @dustins
 * @estohlmann
+* @jmharold
 
-**Full Changelog**: [v1.6.9...v1.6.10](https://github.com/awslabs/mlspace/compare/v1.6.9...v1.6.10)
+**Full Changelog**: [v1.6.10...v1.6.11](https://github.com/awslabs/mlspace/compare/v1.6.10...v1.6.11)
