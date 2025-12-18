@@ -605,6 +605,15 @@ export class CoreConstruct extends Construct {
             ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 
+        // Authentication Sessions Table
+        new Table(scope, 'mlspace-ddb-auth-sessions', {
+            tableName: props.mlspaceConfig.AUTH_SESSION_TABLE_NAME,
+            partitionKey: { name: 'pk', type: AttributeType.STRING },
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            timeToLiveAttribute: 'ttl',
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+        });
+
         // Populate the App Config table with default config
         new AwsCustomResource(scope, 'mlspace-init-ddb-app-config', {
             onCreate: {

@@ -10,7 +10,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Update `lib/utils/configTypes.ts` to add AUTH_* properties to MLSpaceConfig interface
   - _Requirements: 6.1, 6.3_
 
-- [ ] 2. Create DynamoDB session table
+- [x] 2. Create DynamoDB session table
   - Add session table creation in the stack where other DynamoDB tables are created
   - Use MLSpace's conditional encryption pattern (KMS if configured, otherwise AWS-managed)
   - Configure TTL attribute for automatic session cleanup
