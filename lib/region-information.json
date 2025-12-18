@@ -1,0 +1,28 @@
+{
+    "regions": {
+        "default": {
+            "supported": {
+                "vpc/GatewayVpcEndpointAwsService": ["S3", "DYNAMODB"],
+                "vpc/InterfaceVpcEndpointAwsService": ["CLOUDWATCH_MONITORING", "CLOUDWATCH_LOGS", "SAGEMAKER_API", "SAGEMAKER_RUNTIME", "SAGEMAKER_NOTEBOOK", "STS", "CLOUDFORMATION", "TRANSLATE", "EMR"]
+            }
+        },
+
+        "us-iso-east-1": {
+            "partitionPrefix": "gov.ic.c2s",
+            "supported": {
+                "vpc/GatewayVpcEndpointAwsService": ["S3", "DYNAMODB"],
+                "vpc/InterfaceVpcEndpointAwsService": ["CLOUDWATCH_MONITORING", "CLOUDWATCH_LOGS", "SAGEMAKER_API", "SAGEMAKER_RUNTIME", "SAGEMAKER_NOTEBOOK", "STS", "CLOUDFORMATION", "TRANSLATE", "EMR"]
+            }
+        },
+
+        "us-isob-east-1": {
+            "partitionPrefix": "gov.sgov.sc2s",
+            "availabilityZones": ["us-isob-east-1b", "us-isob-east-1c"],
+            "supported": {
+                "vpc/InterfaceVpcEndpointService": ["SAGEMAKER_API", "SAGEMAKER_RUNTIME"],
+                "vpc/GatewayVpcEndpointAwsService": ["S3", "DYNAMODB"],
+                "vpc/InterfaceVpcEndpointAwsService": ["CLOUDWATCH_MONITORING", "CLOUDWATCH_LOGS", "SAGEMAKER_API", "SAGEMAKER_RUNTIME", "SAGEMAKER_NOTEBOOK", "STS", "CLOUDFORMATION", "TRANSLATE", "EMR"]
+            }
+        }
+    }
+}

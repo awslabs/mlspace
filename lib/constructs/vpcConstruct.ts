@@ -27,6 +27,7 @@ import {
 } from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
 import { VPCStackProps } from '../stacks/vpc';
+import { createRegionInformationProvider } from '../utils/rip';
 
 export class VPCConstruct extends Construct {
     public readonly vpc: IVpc;
@@ -36,9 +37,8 @@ export class VPCConstruct extends Construct {
     constructor (scope: Stack, id: string, props: VPCStackProps) {
         super(scope, id);
 
-        const isIsoB = scope.region === 'us-isob-east-1';
-        const isIsoEast = scope.region === 'us-iso-east-1';
-        const isIsoWest = scope.region === 'us-iso-west-1';
+        const regionInformation = createRegionInformationProvider().getRegionInformation(scope.region);
+        console.log(regionInformation);
 
         if (props.mlspaceConfig.EXISTING_VPC_NAME && 
             props.mlspaceConfig.EXISTING_VPC_ID && 
@@ -52,7 +52,7 @@ export class VPCConstruct extends Construct {
             const mlSpaceVPC = new Vpc(scope, 'MLSpace-VPC', {
                 enableDnsHostnames: true,
                 enableDnsSupport: true,
-                availabilityZones: isIsoB ? ['us-isob-east-1b', 'us-isob-east-1c'] : undefined,
+                availabilityZones: regionInformation.availabilityZones,
                 restrictDefaultSecurityGroup: false,
                 subnetConfiguration: [
                     {
@@ -77,13 +77,13 @@ export class VPCConstruct extends Construct {
                 });
             }
 
-            if (props.deployDDBEndpoint && !isIsoEast) {
+            if (props.deployDDBEndpoint && regionInformation.isSupported('vpc/GatewayVpcEndpointAwsService', 'DYNAMODB')) {
                 this.vpc.addGatewayEndpoint('mlspace-ddb-gateway-endpoint', {
                     service: GatewayVpcEndpointAwsService.DYNAMODB,
                 });
             }
 
-            if (props.deployCWEndpoint && !props.isIso) {
+            if (props.deployCWEndpoint && regionInformation.isSupported('vpc/GatewayVpcEndpointAwsService', 'CLOUDWATCH_MONITORING')) {
                 this.vpc.addInterfaceEndpoint('mlspace-cw-interface-endpoint', {
                     service: InterfaceVpcEndpointAwsService.CLOUDWATCH_MONITORING,
                     privateDnsEnabled: true,
@@ -97,28 +97,19 @@ export class VPCConstruct extends Construct {
                 });
             }
 
-            let partitionPrefix;
-            if (isIsoEast || isIsoWest) {
-                // eslint-disable-next-line spellcheck/spell-checker
-                partitionPrefix = 'gov.ic.c2s';
-            } else if (isIsoB) {
-                // eslint-disable-next-line spellcheck/spell-checker
-                partitionPrefix = 'gov.sgov.sc2s';
-            }
-
             this.vpc.addInterfaceEndpoint('mlspace-sm-api-interface-endpoint', {
-                service: partitionPrefix
-                    ? new InterfaceVpcEndpointService(
-                        `${partitionPrefix}.${scope.region}.sagemaker.api`
+                service: regionInformation.isSupported('vpc/InterfaceVpcEndpointService', 'SAGEMAKER_API') ?
+                    new InterfaceVpcEndpointService(
+                        [regionInformation.partitionPrefix, regionInformation.name, 'sagemaker.api'].join('.')
                     )
                     : InterfaceVpcEndpointAwsService.SAGEMAKER_API,
                 privateDnsEnabled: true,
             });
 
             this.vpc.addInterfaceEndpoint('mlspace-sm-runtime-interface-endpoint', {
-                service: partitionPrefix
-                    ? new InterfaceVpcEndpointService(
-                        `${partitionPrefix}.${scope.region}.sagemaker.runtime`
+                service: regionInformation.isSupported('vpc/InterfaceVpcEndpointService', 'SAGEMAKER_RUNTIME') ?
+                    new InterfaceVpcEndpointService(
+                        [regionInformation.partitionPrefix, regionInformation.name, 'sagemaker.runtime'].join('.')
                     )
                     : InterfaceVpcEndpointAwsService.SAGEMAKER_RUNTIME,
                 privateDnsEnabled: true,
