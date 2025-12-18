@@ -115,20 +115,46 @@ export const ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN = '';
 export const JOB_INSTANCE_CONSTRAINT_POLICY_ARN = '';
 
 /* Web app properties */
-export const IDP_ENDPOINT_SSM_PARAM = '';
-export const OIDC_URL = '';
+
+// BFF Authentication Configuration
+// Authentication session table
+export const AUTH_SESSION_TABLE_NAME = 'mlspace-auth-sessions';
+
+// Authentication configuration
+export const AUTH_IDP_TYPE = 'oidc'; // Currently only 'oidc' is supported
+export const AUTH_OIDC_URL = ''; // OIDC issuer URL
+export const AUTH_OIDC_CLIENT_ID = ''; // OIDC client ID
+export const AUTH_OIDC_CLIENT_SECRET_SSM_PARAM = '/mlspace/auth/oidc-client-secret'; // SSM parameter name for OIDC client secret
+export const AUTH_OIDC_VERIFY_SSL = true; // Whether to verify SSL certificates for OIDC requests
+export const AUTH_OIDC_VERIFY_SIGNATURE = true; // Whether to verify OIDC token signatures
+
+// Domain configuration for cross-domain cookie sync
+export const AUTH_PRIMARY_DOMAIN = ''; // Optional: Override API Gateway domain for cookies
+export const AUTH_SYNC_DOMAINS = ''; // Optional: Comma-separated list of additional domains for cookie sync
+
+// Session configuration
+export const AUTH_SESSION_TTL_HOURS = 24; // Session duration in hours
+
+// Encryption configuration
+export const AUTH_ENCRYPTION_KEY_SSM_PARAM = '/mlspace/auth/encryption-key'; // SSM parameter for token encryption key
+export const AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM = '/mlspace/auth/state-encryption-key'; // SSM parameter for state encryption key
+
+// Legacy OIDC configuration (deprecated - maintained for backward compatibility during migration)
+// Use AUTH_OIDC_URL, AUTH_OIDC_CLIENT_ID, and other AUTH_* constants instead
+export const IDP_ENDPOINT_SSM_PARAM = ''; // Deprecated: Use AUTH_OIDC_URL instead
+export const OIDC_URL = ''; // Deprecated: Use AUTH_OIDC_URL instead
 // OIDC URL that can be hit by authorizer lambda for token validation. If the OIDC endpoint is
 // exposed publicly and can be hit by from the MLSpace VPC this value does not need to be set.
 // If the OIDC endpoint is not accessible directly from VPC and requires peering or some other
 // proxy, this can be set to something which the lambda can traverse in order to reach the OIDC
 // instance.
-export const INTERNAL_OIDC_URL = '';
-export const OIDC_CLIENT_NAME = '';
+export const INTERNAL_OIDC_URL = ''; // Deprecated: No longer needed with BFF pattern
+export const OIDC_CLIENT_NAME = ''; // Deprecated: Use AUTH_OIDC_CLIENT_ID instead
 // If your OIDC server is using a self signed cert set this to false
-export const OIDC_VERIFY_SSL = true;
-export const OIDC_VERIFY_SIGNATURE = true;
+export const OIDC_VERIFY_SSL = true; // Deprecated: Use AUTH_OIDC_VERIFY_SSL instead
+export const OIDC_VERIFY_SIGNATURE = true; // Deprecated: Use AUTH_OIDC_VERIFY_SIGNATURE instead
 // This defaults to the APIGW url but if you're using custom DNS you should set this to that
-export const OIDC_REDIRECT_URI = '';
+export const OIDC_REDIRECT_URI = ''; // Deprecated: No longer needed with BFF pattern
 // Interval (in minutes) to run the resource termination cleanup lambda
 export const RESOURCE_TERMINATION_INTERVAL = 60;
 // Interval (in minutes) to run background resource data updates

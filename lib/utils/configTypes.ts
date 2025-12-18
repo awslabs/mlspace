@@ -20,6 +20,18 @@ import {
     APIGATEWAY_CLOUDWATCH_ROLE_ARN,
     APPLICATION_NAME,
     APP_ROLE_ARN,
+    AUTH_ENCRYPTION_KEY_SSM_PARAM,
+    AUTH_IDP_TYPE,
+    AUTH_OIDC_CLIENT_ID,
+    AUTH_OIDC_CLIENT_SECRET_SSM_PARAM,
+    AUTH_OIDC_URL,
+    AUTH_OIDC_VERIFY_SIGNATURE,
+    AUTH_OIDC_VERIFY_SSL,
+    AUTH_PRIMARY_DOMAIN,
+    AUTH_SESSION_TABLE_NAME,
+    AUTH_SESSION_TTL_HOURS,
+    AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM,
+    AUTH_SYNC_DOMAINS,
     AWS_ACCOUNT,
     AWS_REGION,
     BACKGROUND_REFRESH_INTERVAL,
@@ -108,12 +120,25 @@ export type MLSpaceConfig = {
     // EMR settings
     EMR_SECURITY_CONFIG_NAME: string,
     EMR_EC2_SSH_KEY: string,
-    // OIDC settings
+    // OIDC settings (legacy - deprecated, use AUTH_OIDC_URL instead)
     IDP_ENDPOINT_SSM_PARAM: string,
     INTERNAL_OIDC_URL: string,
     OIDC_VERIFY_SSL: boolean,
     OIDC_VERIFY_SIGNATURE: boolean,
     OIDC_REDIRECT_URI: string,
+    // BFF Authentication settings
+    AUTH_SESSION_TABLE_NAME: string,
+    AUTH_IDP_TYPE: string,
+    AUTH_OIDC_URL: string,
+    AUTH_OIDC_CLIENT_ID: string,
+    AUTH_OIDC_CLIENT_SECRET_SSM_PARAM: string,
+    AUTH_OIDC_VERIFY_SSL: boolean,
+    AUTH_OIDC_VERIFY_SIGNATURE: boolean,
+    AUTH_PRIMARY_DOMAIN: string,
+    AUTH_SYNC_DOMAINS: string,
+    AUTH_SESSION_TTL_HOURS: number,
+    AUTH_ENCRYPTION_KEY_SSM_PARAM: string,
+    AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM: string,
     // Other properties not handled in config.json
     SYSTEM_TAG: string,
     IAM_RESOURCE_PREFIX: string,
@@ -201,12 +226,25 @@ export function generateConfig (accountId?: string) {
         // EMR settings
         EMR_SECURITY_CONFIG_NAME: EMR_SECURITY_CONFIG_NAME,
         EMR_EC2_SSH_KEY: EMR_EC2_SSH_KEY,
-        // OIDC settings
+        // OIDC settings (legacy)
         IDP_ENDPOINT_SSM_PARAM: IDP_ENDPOINT_SSM_PARAM,
         INTERNAL_OIDC_URL: INTERNAL_OIDC_URL,
         OIDC_VERIFY_SSL: OIDC_VERIFY_SSL,
         OIDC_VERIFY_SIGNATURE: OIDC_VERIFY_SIGNATURE,
         OIDC_REDIRECT_URI: OIDC_REDIRECT_URI,
+        // BFF Authentication settings
+        AUTH_SESSION_TABLE_NAME: AUTH_SESSION_TABLE_NAME,
+        AUTH_IDP_TYPE: AUTH_IDP_TYPE,
+        AUTH_OIDC_URL: AUTH_OIDC_URL,
+        AUTH_OIDC_CLIENT_ID: AUTH_OIDC_CLIENT_ID,
+        AUTH_OIDC_CLIENT_SECRET_SSM_PARAM: AUTH_OIDC_CLIENT_SECRET_SSM_PARAM,
+        AUTH_OIDC_VERIFY_SSL: AUTH_OIDC_VERIFY_SSL,
+        AUTH_OIDC_VERIFY_SIGNATURE: AUTH_OIDC_VERIFY_SIGNATURE,
+        AUTH_PRIMARY_DOMAIN: AUTH_PRIMARY_DOMAIN,
+        AUTH_SYNC_DOMAINS: AUTH_SYNC_DOMAINS,
+        AUTH_SESSION_TTL_HOURS: AUTH_SESSION_TTL_HOURS,
+        AUTH_ENCRYPTION_KEY_SSM_PARAM: AUTH_ENCRYPTION_KEY_SSM_PARAM,
+        AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM: AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM,
         // Other properties not prompted for in config-helper
         SYSTEM_TAG: SYSTEM_TAG,
         IAM_RESOURCE_PREFIX: IAM_RESOURCE_PREFIX,
@@ -268,9 +306,16 @@ export function generateConfig (accountId?: string) {
     }
 
     validateRequiredProperty(config.AWS_ACCOUNT, 'AWS_ACCOUNT');
+    validateRequiredProperty(config.AWS_REGION, 'AWS_REGION');
+
+    // Validate BFF authentication configuration
+    validateRequiredProperty(config.AUTH_OIDC_URL, 'AUTH_OIDC_URL');
+    validateRequiredProperty(config.AUTH_OIDC_CLIENT_ID, 'AUTH_OIDC_CLIENT_ID');
+    validateRequiredProperty(config.AUTH_OIDC_CLIENT_SECRET_SSM_PARAM, 'AUTH_OIDC_CLIENT_SECRET_SSM_PARAM');
+    
+    // Legacy OIDC properties are still validated for backward compatibility during migration
     validateRequiredProperty(config.OIDC_URL, 'OIDC_URL');
     validateRequiredProperty(config.OIDC_CLIENT_NAME, 'OIDC_CLIENT_NAME');
-    validateRequiredProperty(config.AWS_REGION, 'AWS_REGION');
 
     if (!config.EXISTING_KMS_MASTER_KEY_ARN) {
         validateRequiredProperty(config.KEY_MANAGER_ROLE_NAME, 'KEY_MANAGER_ROLE_NAME');
