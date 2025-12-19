@@ -25,11 +25,12 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Dict
+from typing import Dict, Optional, Tuple
 from urllib.parse import urlparse
 
 import boto3
 
+from ml_space_lambda.auth.handlers.base_handler import AuthError, AuthStatus, IdentityResponse, SessionInfo, UserData
 from ml_space_lambda.auth.handlers.oidc_handler import OIDCConfig, OIDCHandler
 from ml_space_lambda.auth.session.encryption import TokenEncryption, decode_key_from_storage
 from ml_space_lambda.auth.session.manager import OTACManager, SessionManager
@@ -795,3 +796,228 @@ def logout(event, context):
         }
 
         return create_json_response(body=error_response, status_code=500, cookies=cookies)
+
+
+def _validate_session_cookie(event) -> Optional[str]:
+    """
+    Extract and validate session cookie from request.
+
+    Args:
+        event: Lambda event containing headers
+
+    Returns:
+        Session ID if valid cookie found, None otherwise
+    """
+    cookie_header = event.get("headers", {}).get("Cookie") or event.get("headers", {}).get("cookie", "")
+    return get_cookie_value(cookie_header, "mlspace_session")
+
+
+def _check_token_refresh_needed(session_info: Dict) -> bool:
+    """
+    Check if token refresh is needed based on refreshAt timestamp.
+
+    Args:
+        session_info: Session information dictionary
+
+    Returns:
+        True if refresh is needed, False otherwise
+    """
+    refresh_at_str = session_info.get("refreshAt")
+    if not refresh_at_str:
+        return False
+
+    try:
+        refresh_at = datetime.fromisoformat(refresh_at_str)
+        now = datetime.now(timezone.utc)
+        return now >= refresh_at
+    except ValueError:
+        logger.warning(f"Invalid refreshAt timestamp in session: {refresh_at_str}")
+        return False
+
+
+def _attempt_token_refresh(
+    session_id: str, session_info: Dict, config: Dict, session_manager: SessionManager, event: Dict
+) -> Tuple[bool, Optional[str], Dict]:
+    """
+    Attempt to refresh tokens if refresh token is available.
+
+    Args:
+        session_id: Session identifier
+        session_info: Current session information
+        config: Authentication configuration
+        session_manager: Session manager instance
+        event: Lambda event for cookie creation
+
+    Returns:
+        Tuple of (refreshed, new_session_cookie, updated_session_info)
+    """
+    refresh_token = session_info.get("refresh_token")
+    if not refresh_token:
+        logger.info(f"No refresh token available for session: {session_id}")
+        return False, None, session_info
+
+    try:
+        # Create authentication handler for token refresh
+        auth_handler = _create_auth_handler(config)
+
+        # Attempt token refresh
+        refresh_result = auth_handler.refresh_tokens(refresh_token)
+
+        if not refresh_result.success:
+            logger.warning(f"Token refresh failed for session {session_id}: {refresh_result.error}")
+            return False, None, session_info
+
+        # Calculate new expiration times
+        access_expires, refresh_expires = auth_handler.extract_token_expiration(refresh_result.tokens)
+        new_expires_at = datetime.now(timezone.utc) + timedelta(seconds=access_expires)
+        new_refresh_at = new_expires_at - timedelta(minutes=5)
+
+        # Update session with new tokens and user data
+        update_success = session_manager.refresh_session_with_user_data(
+            session_id=session_id,
+            tokens=refresh_result.tokens.model_dump(),
+            user_data=refresh_result.user_data.model_dump(),
+            expires_at=new_expires_at,
+            refresh_at=new_refresh_at,
+            raw_idp_response=refresh_result.raw_response,
+        )
+
+        if not update_success:
+            logger.error(f"Failed to update session after token refresh: {session_id}")
+            return False, None, session_info
+
+        # Update session info for response
+        updated_session_info = session_info.copy()
+        updated_session_info.update(
+            {
+                "expiresAt": new_expires_at.isoformat(),
+                "refreshAt": new_refresh_at.isoformat(),
+                "provider": session_info.get("provider", config["idp_type"]),
+            }
+        )
+
+        # Create new session cookie with updated expiration
+        host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+        secure_flag = should_set_secure_flag(host_header)
+        domain = extract_domain_from_host(host_header)
+
+        new_session_cookie = create_session_cookie(
+            session_id=session_id, max_age_seconds=int(access_expires), domain=domain, secure=secure_flag
+        )
+
+        logger.info(f"Token refresh successful for session: {session_id}")
+        return True, new_session_cookie, updated_session_info
+
+    except Exception as e:
+        logger.error(f"Token refresh attempt failed for session {session_id}: {e}")
+        return False, None, session_info
+
+
+def _create_identity_response(user_data: Dict, session_info: Dict, config: Dict, refreshed: bool = False) -> IdentityResponse:
+    """
+    Create identity response from session data.
+
+    Args:
+        user_data: User information dictionary
+        session_info: Session information dictionary
+        config: Authentication configuration
+        refreshed: Whether tokens were refreshed
+
+    Returns:
+        IdentityResponse model
+    """
+    user = UserData(
+        id=user_data.get("id", ""),
+        displayName=user_data.get("displayName", ""),
+        email=user_data.get("email", ""),
+        groups=user_data.get("groups", []),
+        attributes=user_data.get("attributes", {}),
+    )
+
+    session = SessionInfo(
+        expiresAt=session_info.get("expiresAt", ""),
+        refreshAt=session_info.get("refreshAt", ""),
+        provider=session_info.get("provider", config["idp_type"]),
+        refreshed=refreshed if refreshed else None,
+    )
+
+    return IdentityResponse(status=AuthStatus.AUTHENTICATED, user=user, session=session)
+
+
+def identity(event, context):
+    """
+    Handle GET /auth/identity - Retrieve current user identity and authentication status.
+
+    Validates session cookie, retrieves session from DynamoDB, checks if token refresh
+    is needed, attempts token refresh if needed, and returns user identity and session information.
+
+    Args:
+        event: Lambda event containing identity request
+        context: Lambda context
+
+    Returns:
+        JSON response with user identity and session info, or 401 if unauthenticated
+    """
+    try:
+        # Extract and validate session cookie
+        session_id = _validate_session_cookie(event)
+        if not session_id:
+            logger.info("No session cookie found in identity request")
+            response = IdentityResponse(
+                status=AuthStatus.UNAUTHENTICATED, error=AuthError.NO_SESSION, message="No session cookie found"
+            )
+            return create_json_response(body=response.model_dump(exclude_none=True), status_code=401)
+
+        # Get authentication configuration and session manager
+        config = _get_auth_config()
+        session_manager = _create_session_manager(config)
+
+        # Retrieve session from DynamoDB
+        session_data = session_manager.get_session(session_id)
+        if not session_data:
+            logger.info(f"Invalid or expired session in identity request: {session_id}")
+            response = IdentityResponse(
+                status=AuthStatus.UNAUTHENTICATED, error=AuthError.SESSION_EXPIRED, message="Session has expired or is invalid"
+            )
+            return create_json_response(body=response.model_dump(exclude_none=True), status_code=401)
+
+        # Extract session information
+        user_data = session_data.get("data", {}).get("user", {})
+        session_info = session_data.get("data", {}).get("session", {})
+
+        # Check if token refresh is needed and attempt refresh
+        needs_refresh = _check_token_refresh_needed(session_info)
+        refreshed = False
+        new_session_cookie = None
+
+        if needs_refresh:
+            refreshed, new_session_cookie, session_info = _attempt_token_refresh(
+                session_id, session_info, config, session_manager, event
+            )
+            # Update user_data if refresh was successful
+            if refreshed:
+                # Re-fetch session to get updated user data
+                updated_session_data = session_manager.get_session(session_id)
+                if updated_session_data:
+                    user_data = updated_session_data.get("data", {}).get("user", user_data)
+                    session_info = updated_session_data.get("data", {}).get("session", session_info)
+
+        # Create and return response
+        response = _create_identity_response(user_data, session_info, config, refreshed)
+
+        logger.info(f"Identity request successful for user: {user_data.get('id', 'unknown')}")
+
+        cookies = [new_session_cookie] if new_session_cookie else None
+        return create_json_response(body=response.model_dump(exclude_none=True), status_code=200, cookies=cookies)
+
+    except Exception as e:
+        logger.error(f"Identity request processing failed: {e}")
+
+        response = IdentityResponse(
+            status=AuthStatus.UNAUTHENTICATED,
+            error=AuthError.INTERNAL_ERROR,
+            message="Failed to process identity request",
+            timestamp=context.aws_request_id if context else None,
+        )
+
+        return create_json_response(body=response.model_dump(exclude_none=True), status_code=401)

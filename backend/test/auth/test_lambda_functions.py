@@ -18,7 +18,7 @@ import json
 import os
 from unittest.mock import Mock, patch
 
-from ml_space_lambda.auth.lambda_functions import callback, callback_post, login, logout
+from ml_space_lambda.auth.lambda_functions import callback, callback_post, identity, login, logout
 
 
 class TestAuthLambdaFunctions:
@@ -639,3 +639,340 @@ class TestAuthLambdaFunctions:
         # Verify session cookie is still cleared
         assert "multiValueHeaders" in response
         assert "Set-Cookie" in response["multiValueHeaders"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    def test_identity_success(self, mock_session_manager_class, mock_ssm_client):
+        """Test successful identity request."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager
+        from datetime import datetime, timedelta, timezone
+
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
+        refresh_time = datetime.now(timezone.utc) + timedelta(minutes=30)
+
+        mock_session_data = {
+            "data": {
+                "user": {
+                    "id": "test-user",
+                    "displayName": "Test User",
+                    "email": "test@example.com",
+                    "groups": ["users", "admin"],
+                    "attributes": {"department": "Engineering"},
+                },
+                "session": {"provider": "oidc", "expiresAt": future_time.isoformat(), "refreshAt": refresh_time.isoformat()},
+            }
+        }
+
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = mock_session_data
+        mock_session_manager_class.return_value = mock_session_manager
+
+        event = {"headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:test-session-id"}}
+
+        response = identity(event, self.mock_context)
+
+        # Verify response
+        assert response["statusCode"] == 200
+        body = json.loads(response["body"])
+        assert body["status"] == "AUTHENTICATED"
+        assert body["user"]["id"] == "test-user"
+        assert body["user"]["displayName"] == "Test User"
+        assert body["user"]["email"] == "test@example.com"
+        assert body["user"]["groups"] == ["users", "admin"]
+        assert body["user"]["attributes"] == {"department": "Engineering"}
+        assert body["session"]["provider"] == "oidc"
+        assert body["session"]["expiresAt"] == future_time.isoformat()
+        assert body["session"]["refreshAt"] == refresh_time.isoformat()
+        assert "refreshed" not in body["session"]
+
+    def test_identity_no_session_cookie(self):
+        """Test identity request with no session cookie."""
+        event = {"headers": {"Host": "app.example.com"}}
+
+        response = identity(event, self.mock_context)
+
+        # Should return unauthenticated
+        assert response["statusCode"] == 401
+        body = json.loads(response["body"])
+        assert body["status"] == "UNAUTHENTICATED"
+        assert body["error"] == "NO_SESSION"
+        assert body["message"] == "No session cookie found"
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    def test_identity_invalid_session(self, mock_session_manager_class, mock_ssm_client):
+        """Test identity request with invalid session."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager to return None (invalid session)
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = None
+        mock_session_manager_class.return_value = mock_session_manager
+
+        event = {"headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:invalid-session-id"}}
+
+        response = identity(event, self.mock_context)
+
+        # Should return unauthenticated
+        assert response["statusCode"] == 401
+        body = json.loads(response["body"])
+        assert body["status"] == "UNAUTHENTICATED"
+        assert body["error"] == "SESSION_EXPIRED"
+        assert body["message"] == "Session has expired or is invalid"
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    @patch("ml_space_lambda.auth.lambda_functions.OIDCHandler")
+    def test_identity_with_token_refresh(self, mock_oidc_handler_class, mock_session_manager_class, mock_ssm_client):
+        """Test identity request that triggers token refresh."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager
+        from datetime import datetime, timedelta, timezone
+
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
+        # Set refresh time in the past to trigger refresh
+        past_refresh_time = datetime.now(timezone.utc) - timedelta(minutes=5)
+
+        mock_session_data = {
+            "data": {
+                "user": {
+                    "id": "test-user",
+                    "displayName": "Test User",
+                    "email": "test@example.com",
+                    "groups": ["users"],
+                    "attributes": {},
+                },
+                "session": {
+                    "provider": "oidc",
+                    "expiresAt": future_time.isoformat(),
+                    "refreshAt": past_refresh_time.isoformat(),
+                    "refresh_token": "refresh-token-value",
+                },
+            }
+        }
+
+        # Updated session data after refresh
+        updated_session_data = {
+            "data": {
+                "user": {
+                    "id": "test-user",
+                    "displayName": "Test User Updated",
+                    "email": "test@example.com",
+                    "groups": ["users", "premium"],
+                    "attributes": {},
+                },
+                "session": {
+                    "provider": "oidc",
+                    "expiresAt": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
+                    "refreshAt": (datetime.now(timezone.utc) + timedelta(minutes=55)).isoformat(),
+                    "refresh_token": "new-refresh-token-value",
+                },
+            }
+        }
+
+        mock_session_manager = Mock()
+        # First call returns original data, second call returns updated data
+        mock_session_manager.get_session.side_effect = [mock_session_data, updated_session_data]
+        mock_session_manager.refresh_session_with_user_data.return_value = True
+        mock_session_manager_class.return_value = mock_session_manager
+
+        # Mock OIDC handler for token refresh
+        from ml_space_lambda.auth.handlers.base_handler import AuthenticationResult, IdPTokens, UserData
+
+        mock_user_data = UserData(
+            id="test-user",
+            displayName="Test User Updated",
+            email="test@example.com",
+            groups=["users", "premium"],
+            attributes={},
+        )
+
+        mock_tokens = IdPTokens(
+            access_token="new-access-token", refresh_token="new-refresh-token", id_token="new-id-token", expires_in=3600
+        )
+
+        mock_refresh_result = AuthenticationResult(
+            success=True, user_data=mock_user_data, tokens=mock_tokens, raw_response="new-raw-response"
+        )
+
+        mock_oidc_handler = Mock()
+        mock_oidc_handler.refresh_tokens.return_value = mock_refresh_result
+        mock_oidc_handler.extract_token_expiration.return_value = (3600, 86400)
+        mock_oidc_handler_class.return_value = mock_oidc_handler
+
+        event = {"headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:test-session-id"}}
+
+        response = identity(event, self.mock_context)
+
+        # Verify response
+        assert response["statusCode"] == 200
+        body = json.loads(response["body"])
+        assert body["status"] == "AUTHENTICATED"
+        assert body["user"]["displayName"] == "Test User Updated"
+        assert body["user"]["groups"] == ["users", "premium"]
+        assert body["session"]["provider"] == "oidc"
+        assert body["session"]["refreshed"] is True
+
+        # Verify token refresh was called
+        mock_oidc_handler.refresh_tokens.assert_called_once_with("refresh-token-value")
+
+        # Verify session was updated
+        mock_session_manager.refresh_session_with_user_data.assert_called_once()
+
+        # Verify new session cookie is set
+        assert "multiValueHeaders" in response
+        assert "Set-Cookie" in response["multiValueHeaders"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    @patch("ml_space_lambda.auth.lambda_functions.OIDCHandler")
+    def test_identity_refresh_failure(self, mock_oidc_handler_class, mock_session_manager_class, mock_ssm_client):
+        """Test identity request when token refresh fails."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager
+        from datetime import datetime, timedelta, timezone
+
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
+        # Set refresh time in the past to trigger refresh
+        past_refresh_time = datetime.now(timezone.utc) - timedelta(minutes=5)
+
+        mock_session_data = {
+            "data": {
+                "user": {
+                    "id": "test-user",
+                    "displayName": "Test User",
+                    "email": "test@example.com",
+                    "groups": ["users"],
+                    "attributes": {},
+                },
+                "session": {
+                    "provider": "oidc",
+                    "expiresAt": future_time.isoformat(),
+                    "refreshAt": past_refresh_time.isoformat(),
+                    "refresh_token": "refresh-token-value",
+                },
+            }
+        }
+
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = mock_session_data
+        mock_session_manager_class.return_value = mock_session_manager
+
+        # Mock OIDC handler for failed token refresh
+        from ml_space_lambda.auth.handlers.base_handler import AuthenticationResult
+
+        mock_refresh_result = AuthenticationResult(success=False, error="Token refresh failed")
+
+        mock_oidc_handler = Mock()
+        mock_oidc_handler.refresh_tokens.return_value = mock_refresh_result
+        mock_oidc_handler_class.return_value = mock_oidc_handler
+
+        event = {"headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:test-session-id"}}
+
+        response = identity(event, self.mock_context)
+
+        # Should still return authenticated with original session data
+        assert response["statusCode"] == 200
+        body = json.loads(response["body"])
+        assert body["status"] == "AUTHENTICATED"
+        assert body["user"]["id"] == "test-user"
+        assert body["user"]["displayName"] == "Test User"
+        assert "refreshed" not in body["session"]
+
+        # Verify token refresh was attempted
+        mock_oidc_handler.refresh_tokens.assert_called_once_with("refresh-token-value")
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    def test_identity_no_refresh_token(self, mock_session_manager_class, mock_ssm_client):
+        """Test identity request when refresh is needed but no refresh token available."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager
+        from datetime import datetime, timedelta, timezone
+
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
+        # Set refresh time in the past to trigger refresh
+        past_refresh_time = datetime.now(timezone.utc) - timedelta(minutes=5)
+
+        mock_session_data = {
+            "data": {
+                "user": {
+                    "id": "test-user",
+                    "displayName": "Test User",
+                    "email": "test@example.com",
+                    "groups": ["users"],
+                    "attributes": {},
+                },
+                "session": {
+                    "provider": "oidc",
+                    "expiresAt": future_time.isoformat(),
+                    "refreshAt": past_refresh_time.isoformat(),
+                    # No refresh_token
+                },
+            }
+        }
+
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = mock_session_data
+        mock_session_manager_class.return_value = mock_session_manager
+
+        event = {"headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:test-session-id"}}
+
+        response = identity(event, self.mock_context)
+
+        # Should still return authenticated with original session data
+        assert response["statusCode"] == 200
+        body = json.loads(response["body"])
+        assert body["status"] == "AUTHENTICATED"
+        assert body["user"]["id"] == "test-user"
+        assert "refreshed" not in body["session"]

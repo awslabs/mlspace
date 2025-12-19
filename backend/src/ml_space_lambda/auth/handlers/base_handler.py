@@ -21,9 +21,28 @@ Defines the interface that all IdP handlers must implement for the BFF authentic
 """
 
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
+
+
+class AuthStatus(str, Enum):
+    """Authentication status enumeration."""
+
+    AUTHENTICATED = "AUTHENTICATED"
+    UNAUTHENTICATED = "UNAUTHENTICATED"
+
+
+class AuthError(str, Enum):
+    """Authentication error codes."""
+
+    NO_SESSION = "NO_SESSION"
+    SESSION_EXPIRED = "SESSION_EXPIRED"
+    INVALID_SESSION = "INVALID_SESSION"
+    TOKEN_REFRESH_FAILED = "TOKEN_REFRESH_FAILED"
+    INTERNAL_ERROR = "INTERNAL_ERROR"
+    INVALID_CONFIGURATION = "INVALID_CONFIGURATION"
 
 
 class UserData(BaseModel):
@@ -50,6 +69,26 @@ class IdPTokens(BaseModel):
     expires_in: Optional[int] = Field(None, description="Access token expiration in seconds")
     refresh_expires_in: Optional[int] = Field(None, description="Refresh token expiration in seconds")
     scope: Optional[str] = Field(None, description="Granted OAuth2 scopes")
+
+
+class SessionInfo(BaseModel):
+    """Session information for identity responses."""
+
+    expiresAt: str = Field(..., description="Session expiration timestamp (ISO 8601)")
+    refreshAt: str = Field(..., description="Token refresh threshold timestamp (ISO 8601)")
+    provider: str = Field(..., description="Identity provider type")
+    refreshed: Optional[bool] = Field(None, description="Whether tokens were refreshed in this request")
+
+
+class IdentityResponse(BaseModel):
+    """Response model for /auth/identity endpoint."""
+
+    status: AuthStatus = Field(..., description="Authentication status")
+    user: Optional[UserData] = Field(None, description="User identity information")
+    session: Optional[SessionInfo] = Field(None, description="Session information")
+    error: Optional[AuthError] = Field(None, description="Error code if unauthenticated")
+    message: Optional[str] = Field(None, description="Human-readable error message")
+    timestamp: Optional[str] = Field(None, description="Error timestamp")
 
 
 class AuthenticationResult(BaseModel):

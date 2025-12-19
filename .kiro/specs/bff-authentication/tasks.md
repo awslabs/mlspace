@@ -62,7 +62,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Optionally redirect to IdP logout endpoint
   - _Requirements: 1.5, 5.3_
 
-- [ ] 8. Implement /auth/identity endpoint
+- [x] 8. Implement /auth/identity endpoint
   - Add `identity` handler to `lambda_functions.py`
   - Validate session cookie and retrieve session from DynamoDB
   - Check if token refresh is needed based on refreshAt timestamp
