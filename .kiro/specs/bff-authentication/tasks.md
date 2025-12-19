@@ -71,7 +71,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Return 401 UNAUTHENTICATED if session invalid or expired
   - _Requirements: 4.2, 4.3, 5.1, 5.2_
 
-- [ ] 9. Implement /auth/sync endpoint for cross-domain cookie synchronization
+- [x] 9. Implement /auth/sync endpoint for cross-domain cookie synchronization
   - Add `sync` handler to `lambda_functions.py`
   - Validate OTAC with strong consistency read from DynamoDB
   - Mark OTAC as used with conditional update

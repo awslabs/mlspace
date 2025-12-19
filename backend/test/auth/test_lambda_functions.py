@@ -976,3 +976,345 @@ class TestAuthLambdaFunctions:
         assert body["status"] == "AUTHENTICATED"
         assert body["user"]["id"] == "test-user"
         assert "refreshed" not in body["session"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.OTACManager")
+    def test_sync_success_end_of_chain(self, mock_otac_manager_class, mock_ssm_client):
+        """Test successful sync request at end of chain."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock OTAC manager
+        mock_otac_data = {
+            "sessionId": "session:test-session-id",
+            "remainingDomains": [],  # End of chain
+            "finalRedirectUrl": "/dashboard",
+            "usedAt": None,
+        }
+
+        mock_otac_manager = Mock()
+        mock_otac_manager.validate_and_consume_otac.return_value = mock_otac_data
+        mock_otac_manager_class.return_value = mock_otac_manager
+
+        event = {
+            "headers": {"Host": "api.example.com"},
+            "queryStringParameters": {
+                "otac": "otac:valid-otac-code",
+                "final": "/dashboard",
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Verify response
+        assert response["statusCode"] == 302
+        assert response["headers"]["Location"] == "/dashboard"
+        assert "multiValueHeaders" in response
+        assert "Set-Cookie" in response["multiValueHeaders"]
+
+        # Verify session cookie is set
+        cookies = response["multiValueHeaders"]["Set-Cookie"]
+        session_cookie = next((c for c in cookies if "mlspace_session" in c), None)
+        assert session_cookie is not None
+        assert "session:test-session-id" in session_cookie
+        assert "HttpOnly" in session_cookie
+        assert "Secure" in session_cookie
+
+        # Verify OTAC validation was called
+        mock_otac_manager.validate_and_consume_otac.assert_called_once_with("otac:valid-otac-code")
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.OTACManager")
+    def test_sync_success_continue_chain(self, mock_otac_manager_class, mock_ssm_client):
+        """Test successful sync request that continues the chain."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock OTAC manager
+        mock_otac_data = {
+            "sessionId": "session:test-session-id",
+            "remainingDomains": ["notebooks.example.com"],  # More domains to sync
+            "finalRedirectUrl": "/dashboard",
+            "usedAt": None,
+        }
+
+        mock_otac_manager = Mock()
+        mock_otac_manager.validate_and_consume_otac.return_value = mock_otac_data
+        mock_otac_manager.create_otac.return_value = "otac:next-otac-code"
+        mock_otac_manager_class.return_value = mock_otac_manager
+
+        event = {
+            "headers": {"Host": "api.example.com"},
+            "queryStringParameters": {
+                "otac": "otac:valid-otac-code",
+                "next": "notebooks.example.com",
+                "final": "/dashboard",
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Verify response
+        assert response["statusCode"] == 302
+        assert "notebooks.example.com" in response["headers"]["Location"]
+        assert "otac=otac%3Anext-otac-code" in response["headers"]["Location"]  # URL encoded
+        assert "final=%2Fdashboard" in response["headers"]["Location"]
+
+        # Verify session cookie is set
+        assert "multiValueHeaders" in response
+        assert "Set-Cookie" in response["multiValueHeaders"]
+        cookies = response["multiValueHeaders"]["Set-Cookie"]
+        session_cookie = next((c for c in cookies if "mlspace_session" in c), None)
+        assert session_cookie is not None
+
+        # Verify OTAC operations
+        mock_otac_manager.validate_and_consume_otac.assert_called_once_with("otac:valid-otac-code")
+        mock_otac_manager.create_otac.assert_called_once_with(
+            session_id="session:test-session-id",
+            remaining_domains=[],  # notebooks.example.com removed from list
+            final_redirect_url="/dashboard",
+        )
+
+    def test_sync_missing_otac(self):
+        """Test sync request with missing OTAC."""
+        event = {
+            "headers": {"Host": "api.example.com"},
+            "queryStringParameters": {
+                "final": "/dashboard",
+                # Missing "otac"
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=invalid_otac" in response["headers"]["Location"]
+
+    def test_sync_invalid_otac_format(self):
+        """Test sync request with invalid OTAC format."""
+        event = {
+            "headers": {"Host": "api.example.com"},
+            "queryStringParameters": {
+                "otac": "invalid-otac-format",
+                "final": "/dashboard",
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=invalid_otac" in response["headers"]["Location"]
+
+    def test_sync_missing_final_url(self):
+        """Test sync request with missing final redirect URL."""
+        event = {
+            "headers": {"Host": "api.example.com"},
+            "queryStringParameters": {
+                "otac": "otac:valid-otac-code",
+                # Missing "final"
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=invalid_request" in response["headers"]["Location"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    def test_sync_missing_host_header(self, mock_ssm_client):
+        """Test sync request with missing Host header."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        event = {
+            "headers": {},  # Missing Host header
+            "queryStringParameters": {
+                "otac": "otac:valid-otac-code",
+                "final": "/dashboard",
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=invalid_request" in response["headers"]["Location"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.OTACManager")
+    def test_sync_invalid_otac(self, mock_otac_manager_class, mock_ssm_client):
+        """Test sync request with invalid/expired OTAC."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock OTAC manager to return None (invalid OTAC)
+        mock_otac_manager = Mock()
+        mock_otac_manager.validate_and_consume_otac.return_value = None
+        mock_otac_manager_class.return_value = mock_otac_manager
+
+        event = {
+            "headers": {"Host": "api.example.com"},
+            "queryStringParameters": {
+                "otac": "otac:invalid-otac-code",
+                "final": "/dashboard",
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=invalid_otac" in response["headers"]["Location"]
+        assert "Authentication code is invalid or expired" in response["headers"]["Location"]
+
+        # Verify OTAC validation was attempted
+        mock_otac_manager.validate_and_consume_otac.assert_called_once_with("otac:invalid-otac-code")
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.OTACManager")
+    def test_sync_otac_creation_failure(self, mock_otac_manager_class, mock_ssm_client):
+        """Test sync request when OTAC creation for next domain fails."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock OTAC manager
+        mock_otac_data = {
+            "sessionId": "session:test-session-id",
+            "remainingDomains": ["notebooks.example.com"],
+            "finalRedirectUrl": "/dashboard",
+            "usedAt": None,
+        }
+
+        mock_otac_manager = Mock()
+        mock_otac_manager.validate_and_consume_otac.return_value = mock_otac_data
+        mock_otac_manager.create_otac.side_effect = Exception("OTAC creation failed")
+        mock_otac_manager_class.return_value = mock_otac_manager
+
+        event = {
+            "headers": {"Host": "api.example.com"},
+            "queryStringParameters": {
+                "otac": "otac:valid-otac-code",
+                "next": "notebooks.example.com",
+                "final": "/dashboard",
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=sync_failed" in response["headers"]["Location"]
+        assert "Failed to continue synchronization" in response["headers"]["Location"]
+
+    @patch.dict("os.environ")
+    def test_sync_unauthorized_domain(self):
+        """Test sync request from unauthorized domain."""
+        # Set up environment with specific sync domains
+        env_vars = self.env_vars.copy()
+        env_vars["AUTH_SYNC_DOMAINS"] = "api.example.com,notebooks.example.com"
+        env_vars["AUTH_PRIMARY_DOMAIN"] = "app.example.com"
+
+        for key, value in env_vars.items():
+            os.environ[key] = value
+
+        event = {
+            "headers": {"Host": "unauthorized.example.com"},  # Not in allowed domains
+            "queryStringParameters": {
+                "otac": "otac:valid-otac-code",
+                "final": "/dashboard",
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=unauthorized_domain" in response["headers"]["Location"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    def test_sync_configuration_error(self, mock_ssm_client):
+        """Test sync request with configuration error."""
+        # Set up environment with missing required config
+        env_vars = self.env_vars.copy()
+        env_vars["AUTH_SESSION_TABLE_NAME"] = ""  # Missing required config
+
+        for key, value in env_vars.items():
+            os.environ[key] = value
+
+        event = {
+            "headers": {"Host": "api.example.com"},
+            "queryStringParameters": {
+                "otac": "otac:valid-otac-code",
+                "final": "/dashboard",
+            },
+        }
+
+        from ml_space_lambda.auth.lambda_functions import sync
+
+        response = sync(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=sync_failed" in response["headers"]["Location"]

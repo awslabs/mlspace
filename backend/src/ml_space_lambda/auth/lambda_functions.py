@@ -26,7 +26,7 @@ import logging
 import os
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import boto3
@@ -1100,3 +1100,234 @@ def identity(event, context):
         )
 
         return create_json_response(body=response.model_dump(exclude_none=True), status_code=401)
+
+
+def _validate_sync_parameters(event) -> Tuple[Optional[str], List[str], Optional[str], Optional[Dict]]:
+    """
+    Validate sync request parameters.
+
+    Args:
+        event: Lambda event containing sync request
+
+    Returns:
+        Tuple of (otac, remaining_domains, final_redirect_url, error_response)
+        If error_response is not None, should return it immediately
+    """
+    from ml_space_lambda.auth.utils.otac import parse_sync_request, validate_otac_format
+
+    query_params = event.get("queryStringParameters") or {}
+
+    # Parse sync parameters
+    otac, remaining_domains, final_redirect_url = parse_sync_request(query_params)
+
+    # Validate OTAC format
+    if not otac or not validate_otac_format(otac):
+        logger.warning("Invalid or missing OTAC in sync request")
+        error_url = "/?error=invalid_otac&message=Invalid or missing authentication code"
+        return None, [], None, create_redirect_response(location=error_url, status_code=302)
+
+    # Validate final redirect URL
+    if not final_redirect_url:
+        logger.warning("Missing final redirect URL in sync request")
+        error_url = "/?error=invalid_request&message=Missing final redirect URL"
+        return None, [], None, create_redirect_response(location=error_url, status_code=302)
+
+    return otac, remaining_domains, final_redirect_url, None
+
+
+def _validate_requesting_domain(event, config) -> Tuple[Optional[str], Optional[Dict]]:
+    """
+    Validate that the requesting domain is allowed for sync operations.
+
+    Args:
+        event: Lambda event containing request headers
+        config: Authentication configuration
+
+    Returns:
+        Tuple of (requesting_domain, error_response)
+        If error_response is not None, should return it immediately
+    """
+    from ml_space_lambda.auth.utils.otac import build_domain_list, normalize_domain
+
+    host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+    if not host_header:
+        logger.warning("Missing Host header in sync request")
+        error_url = "/?error=invalid_request&message=Invalid request"
+        return None, create_redirect_response(location=error_url, status_code=302)
+
+    requesting_domain = normalize_domain(host_header)
+
+    # Build allowed domains list (primary + sync domains)
+    primary_domain = normalize_domain(config.get("primary_domain", "") or host_header)
+    sync_domains = build_domain_list(primary_domain, config.get("sync_domains", ""))
+    allowed_domains = [primary_domain] + sync_domains
+
+    # Validate requesting domain is in allowed list
+    if requesting_domain not in allowed_domains:
+        logger.warning(f"Unauthorized domain in sync request: {requesting_domain}")
+        error_url = "/?error=unauthorized_domain&message=Domain not authorized for sync"
+        return None, create_redirect_response(location=error_url, status_code=302)
+
+    return requesting_domain, None
+
+
+def _validate_and_consume_otac(otac_manager, otac) -> Tuple[Optional[Dict], Optional[Dict]]:
+    """
+    Validate OTAC and mark it as used.
+
+    Args:
+        otac_manager: OTACManager instance
+        otac: OTAC identifier to validate
+
+    Returns:
+        Tuple of (otac_data, error_response)
+        If error_response is not None, should return it immediately
+    """
+    otac_data = otac_manager.validate_and_consume_otac(otac)
+
+    if not otac_data:
+        logger.warning(f"Invalid or expired OTAC: {otac}")
+        error_url = "/?error=invalid_otac&message=Authentication code is invalid or expired"
+        return None, create_redirect_response(location=error_url, status_code=302)
+
+    return otac_data, None
+
+
+def _set_session_cookie_for_domain(session_id, event, config) -> str:
+    """
+    Create session cookie for the current domain.
+
+    Args:
+        session_id: Session identifier
+        event: Lambda event for domain extraction
+        config: Authentication configuration
+
+    Returns:
+        Session cookie header value
+    """
+    host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+    secure_flag = should_set_secure_flag(host_header)
+    domain = extract_domain_from_host(host_header)
+
+    # Use default session TTL (24 hours) for sync cookies
+    session_ttl = int(config.get("session_ttl_hours", "24")) * 3600
+
+    return create_session_cookie(session_id=session_id, max_age_seconds=session_ttl, domain=domain, secure=secure_flag)
+
+
+def _handle_sync_chain_continuation(
+    otac_manager, otac_data, remaining_domains, event
+) -> Tuple[bool, Optional[str], Optional[Dict]]:
+    """
+    Handle continuation of sync chain if more domains remain.
+
+    Args:
+        otac_manager: OTACManager instance
+        otac_data: Current OTAC data
+        remaining_domains: Domains remaining in sync chain
+        event: Lambda event for domain extraction
+
+    Returns:
+        Tuple of (should_continue, next_otac, error_response)
+        If should_continue is True, redirect to next domain
+        If error_response is not None, should return it immediately
+    """
+    from ml_space_lambda.auth.utils.otac import build_sync_chain_url
+
+    if not remaining_domains:
+        # End of chain
+        return False, None, None
+
+    try:
+        # Create new OTAC for next domain in chain
+        next_otac = otac_manager.create_otac(
+            session_id=otac_data["sessionId"],
+            remaining_domains=remaining_domains[1:],  # Remove first domain from remaining list
+            final_redirect_url=otac_data["finalRedirectUrl"],
+        )
+
+        # Build sync chain URL for next domain
+        host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+        current_domain = extract_domain_from_host(host_header) or host_header
+
+        next_sync_url = build_sync_chain_url(
+            current_domain=current_domain,
+            otac=next_otac,
+            remaining_domains=remaining_domains,
+            final_redirect_url=otac_data["finalRedirectUrl"],
+        )
+
+        logger.info(f"Continuing sync chain to next domain: {remaining_domains[0]}")
+        return True, next_sync_url, None
+
+    except Exception as e:
+        logger.error(f"Failed to create OTAC for sync chain continuation: {e}")
+        error_url = "/?error=sync_failed&message=Failed to continue synchronization"
+        return False, None, create_redirect_response(location=error_url, status_code=302)
+
+
+def sync(event, context):
+    """
+    Handle GET /auth/sync - Cross-domain cookie synchronization.
+
+    Validates OTAC with strong consistency read from DynamoDB, marks OTAC as used,
+    retrieves session ID from OTAC record, sets session cookie for current domain,
+    generates new OTAC for next domain in chain if applicable, and redirects to
+    next domain or final destination.
+
+    Args:
+        event: Lambda event containing sync request
+        context: Lambda context
+
+    Returns:
+        Redirect response to next domain in chain or final destination
+    """
+    try:
+        # Validate sync request parameters
+        otac, remaining_domains, final_redirect_url, error_response = _validate_sync_parameters(event)
+        if error_response:
+            return error_response
+
+        # Get authentication configuration and create managers
+        config = _get_auth_config()
+        otac_manager = _create_otac_manager(config)
+
+        # Validate requesting domain is authorized
+        requesting_domain, error_response = _validate_requesting_domain(event, config)
+        if error_response:
+            return error_response
+
+        # Validate OTAC and mark as used (strong consistency)
+        otac_data, error_response = _validate_and_consume_otac(otac_manager, otac)
+        if error_response:
+            return error_response
+
+        # Extract session ID from OTAC
+        session_id = otac_data["sessionId"]
+
+        # Create session cookie for current domain
+        session_cookie = _set_session_cookie_for_domain(session_id, event, config)
+
+        # Check if sync chain should continue
+        should_continue, next_sync_url, error_response = _handle_sync_chain_continuation(
+            otac_manager, otac_data, remaining_domains, event
+        )
+
+        if error_response:
+            return error_response
+
+        if should_continue:
+            # Continue sync chain to next domain
+            logger.info(f"Cross-domain sync successful for domain: {requesting_domain}, continuing chain")
+            return create_redirect_response(location=next_sync_url, cookies=[session_cookie], status_code=302)
+        else:
+            # End of chain, redirect to final destination
+            logger.info(f"Cross-domain sync chain completed for domain: {requesting_domain}")
+            return create_redirect_response(location=otac_data["finalRedirectUrl"], cookies=[session_cookie], status_code=302)
+
+    except Exception as e:
+        logger.error(f"Sync processing failed: {e}")
+
+        # Return error redirect
+        error_url = "/?error=sync_failed&message=Cross-domain synchronization failed"
+        return create_redirect_response(location=error_url, status_code=302)
