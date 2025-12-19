@@ -25,6 +25,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
+from enum import Enum
 from typing import Dict, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -54,6 +55,13 @@ logger = logging.getLogger(__name__)
 ssm_client = boto3.client("ssm")
 
 
+class IdPType(str, Enum):
+    """Identity Provider type enumeration."""
+
+    OIDC = "oidc"
+    SAML = "saml"
+
+
 def _get_auth_config() -> Dict[str, str]:
     """
     Get authentication configuration from environment variables.
@@ -65,7 +73,7 @@ def _get_auth_config() -> Dict[str, str]:
         Exception: If required configuration is missing or invalid
     """
     config = {
-        "idp_type": os.environ.get("AUTH_IDP_TYPE", "oidc"),
+        "idp_type": os.environ.get("AUTH_IDP_TYPE", IdPType.OIDC),
         "oidc_url": os.environ.get("AUTH_OIDC_URL", ""),
         "oidc_client_id": os.environ.get("AUTH_OIDC_CLIENT_ID", ""),
         "oidc_client_secret_param": os.environ.get("AUTH_OIDC_CLIENT_SECRET_SSM_PARAM", ""),
@@ -78,8 +86,8 @@ def _get_auth_config() -> Dict[str, str]:
     }
 
     # Validate IdP type first
-    if config["idp_type"] != "oidc":
-        raise Exception(f"Unsupported IdP type: {config['idp_type']}. Only 'oidc' is currently supported.")
+    if config["idp_type"] != IdPType.OIDC:
+        raise Exception(f"Unsupported IdP type: {config['idp_type']}. Only '{IdPType.OIDC.value}' is currently supported.")
 
     # Validate required configuration for OIDC
     if not config["oidc_url"]:
@@ -138,8 +146,8 @@ def _create_auth_handler(config: Dict[str, str]) -> OIDCHandler:
     # This function currently only supports OIDC
     # The IdP type validation should have already been done in _get_auth_config()
     # but we double-check here for safety
-    if config["idp_type"] != "oidc":
-        raise Exception(f"Unsupported IdP type: {config['idp_type']}. Only 'oidc' is currently supported.")
+    if config["idp_type"] != IdPType.OIDC:
+        raise Exception(f"Unsupported IdP type: {config['idp_type']}. Only '{IdPType.OIDC.value}' is currently supported.")
 
     # OIDC-specific handler creation
     # Get OIDC client secret if configured
@@ -380,7 +388,7 @@ def login(event, context):
         )
 
         error_response = {
-            "error": "INVALID_CONFIGURATION" if is_config_error else "INTERNAL_ERROR",
+            "error": AuthError.INVALID_CONFIGURATION if is_config_error else AuthError.INTERNAL_ERROR,
             "message": error_message,
             "timestamp": context.aws_request_id if context else None,
         }
@@ -658,7 +666,7 @@ def callback_post(event, context):
         config = _get_auth_config()
 
         # Currently only OIDC is supported, which uses GET callbacks
-        if config["idp_type"] != "saml":
+        if config["idp_type"] != IdPType.SAML:
             logger.warning(f"POST callback not supported for IdP type: {config['idp_type']}")
             error_url = "/?error=unsupported_callback&message=POST callback not supported for this IdP type"
             return create_redirect_response(location=error_url, status_code=302)
@@ -681,6 +689,132 @@ def callback_post(event, context):
         return create_redirect_response(location=error_url, status_code=302)
 
 
+def _parse_logout_request(event) -> Tuple[Optional[str], bool]:
+    """
+    Parse logout request to extract session ID and logout options.
+
+    Args:
+        event: Lambda event containing logout request
+
+    Returns:
+        Tuple of (session_id, logout_from_idp)
+    """
+    # Extract session cookie
+    cookie_header = event.get("headers", {}).get("Cookie") or event.get("headers", {}).get("cookie", "")
+    session_id = get_cookie_value(cookie_header, "mlspace_session")
+
+    # Parse request body for logout options
+    body = {}
+    if event.get("body"):
+        try:
+            body = json.loads(event["body"])
+        except json.JSONDecodeError:
+            logger.warning("Invalid JSON in logout request body")
+
+    logout_from_idp = body.get("logoutFromIdp", False)
+    return session_id, logout_from_idp
+
+
+def _validate_logout_session(session_id: str, session_manager: SessionManager) -> Optional[Dict]:
+    """
+    Validate session exists and is active for logout.
+
+    Args:
+        session_id: Session identifier to validate
+        session_manager: Session manager instance
+
+    Returns:
+        Session data if valid, None otherwise
+    """
+    session_data = session_manager.get_session(session_id)
+    if not session_data:
+        logger.warning(f"Invalid or expired session in logout request: {session_id}")
+        return None
+
+    return session_data
+
+
+def _delete_user_session(session_id: str, session_manager: SessionManager) -> bool:
+    """
+    Delete session record from storage.
+
+    Args:
+        session_id: Session identifier to delete
+        session_manager: Session manager instance
+
+    Returns:
+        True if deletion successful, False otherwise
+    """
+    deletion_success = session_manager.delete_session(session_id)
+    if not deletion_success:
+        logger.error(f"Failed to delete session: {session_id}")
+    return deletion_success
+
+
+def _get_idp_logout_url(config: Dict[str, str], host_header: str) -> Optional[str]:
+    """
+    Generate IdP logout URL for single sign-out.
+
+    Args:
+        config: Authentication configuration
+        host_header: Host header from request
+
+    Returns:
+        IdP logout URL if available, None otherwise
+    """
+    try:
+        # Create authentication handler to get logout URL
+        auth_handler = _create_auth_handler(config)
+
+        # Build post-logout redirect URI (back to login page)
+        protocol = "https"
+        if host_header.startswith("localhost") or "127.0.0.1" in host_header:
+            protocol = "http"
+        post_logout_redirect_uri = f"{protocol}://{host_header}/"
+
+        idp_logout_url = auth_handler.get_logout_url(post_logout_redirect_uri)
+
+        if idp_logout_url:
+            logger.info("IdP logout URL generated for single sign-out")
+        else:
+            logger.info("IdP does not support logout endpoint")
+
+        return idp_logout_url
+
+    except Exception as e:
+        logger.warning(f"Failed to get IdP logout URL: {e}")
+        return None
+
+
+def _create_logout_error_response(context, event) -> Dict:
+    """
+    Create error response for logout failures with session cookie cleanup.
+
+    Args:
+        context: Lambda context
+        event: Lambda event for cookie domain extraction
+
+    Returns:
+        Error response dictionary with cookies
+    """
+    # Try to clear session cookie even on error
+    try:
+        host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+        domain = extract_domain_from_host(host_header)
+        clear_session = clear_session_cookie(domain=domain)
+        cookies = [clear_session]
+    except Exception:
+        cookies = None
+
+    error_response = {
+        "error": AuthError.INTERNAL_ERROR,
+        "message": "Logout processing failed",
+        "timestamp": context.aws_request_id if context else None,
+    }
+
+    return create_json_response(body=error_response, status_code=500, cookies=cookies)
+
+
 def logout(event, context):
     """
     Handle POST /auth/logout - Terminate user session and optionally logout from IdP.
@@ -696,81 +830,42 @@ def logout(event, context):
         JSON response with logout status and optional IdP logout URL
     """
     try:
-        # Extract session cookie first
-        cookie_header = event.get("headers", {}).get("Cookie") or event.get("headers", {}).get("cookie", "")
-        session_id = get_cookie_value(cookie_header, "mlspace_session")
+        # Parse logout request
+        session_id, logout_from_idp = _parse_logout_request(event)
 
-        # Parse request body for logout options
-        body = {}
-        if event.get("body"):
-            try:
-                body = json.loads(event["body"])
-            except json.JSONDecodeError:
-                logger.warning("Invalid JSON in logout request body")
-
-        logout_from_idp = body.get("logoutFromIdp", False)
-
-        # Validate session cookie
+        # Validate session exists first (before getting config)
         if not session_id:
-            logger.warning("No session cookie found in logout request")
             return create_json_response(
-                body={"error": "INVALID_SESSION", "message": "No active session found"}, status_code=400
+                body={"error": AuthError.INVALID_SESSION, "message": "No active session found"}, status_code=400
             )
 
-        # Get authentication configuration
+        # Get authentication configuration and session manager
         config = _get_auth_config()
-
-        # Create session manager
         session_manager = _create_session_manager(config)
 
-        # Retrieve session to validate it exists
-        session_data = session_manager.get_session(session_id)
+        # Validate session exists in storage
+        session_data = _validate_logout_session(session_id, session_manager)
         if not session_data:
-            logger.warning(f"Invalid or expired session in logout request: {session_id}")
             return create_json_response(
-                body={"error": "INVALID_SESSION", "message": "No active session found"}, status_code=400
+                body={"error": AuthError.INVALID_SESSION, "message": "No active session found"}, status_code=400
             )
 
-        # Delete session record from DynamoDB
-        deletion_success = session_manager.delete_session(session_id)
-        if not deletion_success:
-            logger.error(f"Failed to delete session: {session_id}")
-            # Continue with logout even if deletion fails
+        # Delete session record
+        _delete_user_session(session_id, session_manager)
 
-        # Get host header for cookie domain
+        # Get host header and clear session cookie
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
         domain = extract_domain_from_host(host_header)
-
-        # Clear session cookie
         clear_session = clear_session_cookie(domain=domain)
 
         # Prepare response
         response_body = {"status": "LOGGED_OUT"}
 
         # Get IdP logout URL if requested
-        idp_logout_url = None
         if logout_from_idp:
-            try:
-                # Create authentication handler to get logout URL
-                auth_handler = _create_auth_handler(config)
-
-                # Build post-logout redirect URI (back to login page)
-                protocol = "https"
-                if host_header.startswith("localhost") or "127.0.0.1" in host_header:
-                    protocol = "http"
-                post_logout_redirect_uri = f"{protocol}://{host_header}/"
-
-                idp_logout_url = auth_handler.get_logout_url(post_logout_redirect_uri)
-
-                if idp_logout_url:
-                    response_body["idpLogoutUrl"] = idp_logout_url
-                    logger.info("IdP logout URL generated for single sign-out")
-                else:
-                    logger.info("IdP does not support logout endpoint")
-
-            except Exception as e:
-                logger.warning(f"Failed to get IdP logout URL: {e}")
-                # Continue with logout even if IdP logout URL generation fails
+            idp_logout_url = _get_idp_logout_url(config, host_header)
+            if idp_logout_url:
+                response_body["idpLogoutUrl"] = idp_logout_url
 
         logger.info(f"User logout successful for session: {session_id}")
 
@@ -779,23 +874,7 @@ def logout(event, context):
 
     except Exception as e:
         logger.error(f"Logout processing failed: {e}")
-
-        # Try to clear session cookie even on error
-        try:
-            host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
-            domain = extract_domain_from_host(host_header)
-            clear_session = clear_session_cookie(domain=domain)
-            cookies = [clear_session]
-        except Exception:
-            cookies = None
-
-        error_response = {
-            "error": "INTERNAL_ERROR",
-            "message": "Logout processing failed",
-            "timestamp": context.aws_request_id if context else None,
-        }
-
-        return create_json_response(body=error_response, status_code=500, cookies=cookies)
+        return _create_logout_error_response(context, event)
 
 
 def _validate_session_cookie(event) -> Optional[str]:
