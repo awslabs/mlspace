@@ -18,7 +18,7 @@ import json
 import os
 from unittest.mock import Mock, patch
 
-from ml_space_lambda.auth.lambda_functions import login
+from ml_space_lambda.auth.lambda_functions import callback, callback_post, login
 
 
 class TestAuthLambdaFunctions:
@@ -36,6 +36,8 @@ class TestAuthLambdaFunctions:
             "AUTH_OIDC_CLIENT_ID": "test-client-id",
             "AUTH_OIDC_CLIENT_SECRET_SSM_PARAM": "/test/client-secret",
             "AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM": "/test/state-key",
+            "AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM": "/test/token-key",
+            "AUTH_SESSION_TABLE_NAME": "test-session-table",
             "AUTH_OIDC_VERIFY_SSL": "true",
             "AUTH_PRIMARY_DOMAIN": "",
             "AUTH_SYNC_DOMAINS": "",
@@ -43,13 +45,18 @@ class TestAuthLambdaFunctions:
 
         # Mock SSM responses
         # Generate a valid Fernet key for testing
+        import base64
+
         from cryptography.fernet import Fernet
 
         test_fernet_key = Fernet.generate_key().decode("utf-8")
+        # Generate a 32-byte key for token encryption and encode as base64
+        test_token_key = base64.b64encode(os.urandom(32)).decode("utf-8")
 
         self.mock_ssm_responses = {
             "/test/client-secret": "test-client-secret",
             "/test/state-key": test_fernet_key,
+            "/test/token-key": test_token_key,
         }
 
     @patch.dict("os.environ", {})
@@ -257,3 +264,148 @@ class TestAuthLambdaFunctions:
         assert body["error"] == "INVALID_CONFIGURATION"
         assert "Unsupported IdP type: saml" in body["message"]
         assert "Only 'oidc' is currently supported" in body["message"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.OIDCHandler")
+    @patch("ml_space_lambda.auth.lambda_functions.StateManager")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    @patch("ml_space_lambda.auth.lambda_functions.OTACManager")
+    def test_callback_success(
+        self,
+        mock_otac_manager_class,
+        mock_session_manager_class,
+        mock_state_manager_class,
+        mock_oidc_handler_class,
+        mock_ssm_client,
+    ):
+        """Test successful callback flow."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock state manager
+        mock_state_manager = Mock()
+        mock_state_manager.validate_state.return_value = {
+            "redirect_url": "/dashboard",
+            "nonce": "test-nonce",
+            "domain": "app.example.com",
+        }
+        mock_state_manager_class.return_value = mock_state_manager
+
+        # Mock OIDC handler
+        from ml_space_lambda.auth.handlers.base_handler import AuthenticationResult, IdPTokens, UserData
+
+        mock_user_data = UserData(
+            id="test-user", displayName="Test User", email="test@example.com", groups=["users"], attributes={}
+        )
+
+        mock_tokens = IdPTokens(
+            access_token="access-token", refresh_token="refresh-token", id_token="id-token", expires_in=3600
+        )
+
+        mock_auth_result = AuthenticationResult(
+            success=True, user_data=mock_user_data, tokens=mock_tokens, raw_response="raw-response"
+        )
+
+        mock_oidc_handler = Mock()
+        mock_oidc_handler.handle_callback.return_value = mock_auth_result
+        mock_oidc_handler.extract_token_expiration.return_value = (3600, 86400)
+        mock_oidc_handler_class.return_value = mock_oidc_handler
+
+        # Mock session manager
+        mock_session_manager = Mock()
+        mock_session_manager.create_session.return_value = "session:test-session-id"
+        mock_session_manager_class.return_value = mock_session_manager
+
+        # Mock OTAC manager
+        mock_otac_manager = Mock()
+        mock_otac_manager_class.return_value = mock_otac_manager
+
+        event = {
+            "headers": {"Host": "app.example.com", "Cookie": "mlspace_auth_state=test-nonce"},
+            "queryStringParameters": {"code": "auth-code", "state": "encrypted-state"},
+        }
+
+        response = callback(event, self.mock_context)
+
+        # Verify response
+        assert response["statusCode"] == 302
+        assert "Location" in response["headers"]
+        assert response["headers"]["Location"] == "/dashboard"
+        assert "multiValueHeaders" in response
+        assert "Set-Cookie" in response["multiValueHeaders"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    def test_callback_missing_code(self, mock_ssm_client):
+        """Test callback with missing authorization code."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        event = {
+            "headers": {"Host": "app.example.com"},
+            "queryStringParameters": {
+                "state": "encrypted-state"
+                # Missing "code"
+            },
+        }
+
+        response = callback(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=invalid_request" in response["headers"]["Location"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    def test_callback_idp_error(self, mock_ssm_client):
+        """Test callback with IdP error response."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        event = {
+            "headers": {"Host": "app.example.com"},
+            "queryStringParameters": {"error": "access_denied", "error_description": "User denied access"},
+        }
+
+        response = callback(event, self.mock_context)
+
+        # Should redirect with error
+        assert response["statusCode"] == 302
+        assert "error=authentication_failed" in response["headers"]["Location"]
+
+    @patch.dict("os.environ")
+    def test_callback_post_unsupported(self):
+        """Test POST callback for unsupported IdP type."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        event = {"headers": {"Host": "app.example.com"}, "body": "saml-assertion-data"}
+
+        response = callback_post(event, self.mock_context)
+
+        # Should redirect with error (SAML not implemented)
+        assert response["statusCode"] == 302
+        assert "error=unsupported_callback" in response["headers"]["Location"]

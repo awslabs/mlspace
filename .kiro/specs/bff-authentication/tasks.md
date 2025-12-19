@@ -42,7 +42,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Handle configuration errors gracefully
   - _Requirements: 1.2, 5.3_
 
-- [ ] 6. Implement /auth/callback endpoint
+- [x] 6. Implement /auth/callback endpoint
   - Add `callback` handler to `lambda_functions.py` for GET requests
   - Add `callback_post` handler for POST requests (future IdP support)
   - Validate state parameter against state cookie
