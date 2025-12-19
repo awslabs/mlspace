@@ -34,7 +34,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Extract and normalize user identity from OIDC tokens
   - _Requirements: 7.1, 7.4_
 
-- [ ] 5. Implement /auth/login endpoint
+- [x] 5. Implement /auth/login endpoint
   - Create `backend/src/ml_space_lambda/auth/lambda_functions.py` with `login` handler
   - Generate and encrypt state parameter
   - Set state cookie with appropriate security flags
