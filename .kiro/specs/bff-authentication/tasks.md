@@ -54,7 +54,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Redirect to final destination or error page
   - _Requirements: 1.3, 2.1, 2.2, 4.4, 6.2, 6.4_
 
-- [ ] 7. Implement /auth/logout endpoint
+- [x] 7. Implement /auth/logout endpoint
   - Add `logout` handler to `lambda_functions.py`
   - Validate session cookie
   - Delete session record from DynamoDB

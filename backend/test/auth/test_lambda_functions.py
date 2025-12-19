@@ -18,7 +18,7 @@ import json
 import os
 from unittest.mock import Mock, patch
 
-from ml_space_lambda.auth.lambda_functions import callback, callback_post, login
+from ml_space_lambda.auth.lambda_functions import callback, callback_post, login, logout
 
 
 class TestAuthLambdaFunctions:
@@ -409,3 +409,233 @@ class TestAuthLambdaFunctions:
         # Should redirect with error (SAML not implemented)
         assert response["statusCode"] == 302
         assert "error=unsupported_callback" in response["headers"]["Location"]
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    def test_logout_success(self, mock_session_manager_class, mock_ssm_client):
+        """Test successful logout flow."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = {
+            "data": {
+                "user": {"id": "test-user", "displayName": "Test User", "email": "test@example.com"},
+                "session": {"provider": "oidc"},
+            }
+        }
+        mock_session_manager.delete_session.return_value = True
+        mock_session_manager_class.return_value = mock_session_manager
+
+        event = {
+            "headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:test-session-id"},
+            "body": json.dumps({"logoutFromIdp": False}),
+        }
+
+        response = logout(event, self.mock_context)
+
+        # Verify response
+        assert response["statusCode"] == 200
+        body = json.loads(response["body"])
+        assert body["status"] == "LOGGED_OUT"
+        assert "idpLogoutUrl" not in body
+
+        # Verify session cookie is cleared
+        assert "multiValueHeaders" in response
+        assert "Set-Cookie" in response["multiValueHeaders"]
+        cookies = response["multiValueHeaders"]["Set-Cookie"]
+        session_cookie = next((c for c in cookies if "mlspace_session" in c), None)
+        assert session_cookie is not None
+        assert "Max-Age=0" in session_cookie
+
+        # Verify session deletion was called
+        mock_session_manager.delete_session.assert_called_once_with("session:test-session-id")
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    @patch("ml_space_lambda.auth.lambda_functions.OIDCHandler")
+    def test_logout_with_idp_logout(self, mock_oidc_handler_class, mock_session_manager_class, mock_ssm_client):
+        """Test logout with IdP logout URL generation."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = {
+            "data": {
+                "user": {"id": "test-user", "displayName": "Test User", "email": "test@example.com"},
+                "session": {"provider": "oidc"},
+            }
+        }
+        mock_session_manager.delete_session.return_value = True
+        mock_session_manager_class.return_value = mock_session_manager
+
+        # Mock OIDC handler
+        mock_oidc_handler = Mock()
+        mock_oidc_handler.get_logout_url.return_value = (
+            "https://example.com/logout?post_logout_redirect_uri=https://app.example.com/"
+        )
+        mock_oidc_handler_class.return_value = mock_oidc_handler
+
+        event = {
+            "headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:test-session-id"},
+            "body": json.dumps({"logoutFromIdp": True}),
+        }
+
+        response = logout(event, self.mock_context)
+
+        # Verify response
+        assert response["statusCode"] == 200
+        body = json.loads(response["body"])
+        assert body["status"] == "LOGGED_OUT"
+        assert "idpLogoutUrl" in body
+        assert "https://example.com/logout" in body["idpLogoutUrl"]
+
+        # Verify IdP logout URL was requested
+        mock_oidc_handler.get_logout_url.assert_called_once_with("https://app.example.com/")
+
+    def test_logout_no_session_cookie(self):
+        """Test logout with no session cookie."""
+        event = {
+            "headers": {"Host": "app.example.com"},
+            "body": json.dumps({"logoutFromIdp": False}),
+        }
+
+        response = logout(event, self.mock_context)
+
+        # Should return error
+        assert response["statusCode"] == 400
+        body = json.loads(response["body"])
+        assert body["error"] == "INVALID_SESSION"
+        assert body["message"] == "No active session found"
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    def test_logout_invalid_session(self, mock_session_manager_class, mock_ssm_client):
+        """Test logout with invalid session."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager to return None (invalid session)
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = None
+        mock_session_manager_class.return_value = mock_session_manager
+
+        event = {
+            "headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:invalid-session-id"},
+            "body": json.dumps({"logoutFromIdp": False}),
+        }
+
+        response = logout(event, self.mock_context)
+
+        # Should return error
+        assert response["statusCode"] == 400
+        body = json.loads(response["body"])
+        assert body["error"] == "INVALID_SESSION"
+        assert body["message"] == "No active session found"
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    def test_logout_no_body(self, mock_session_manager_class, mock_ssm_client):
+        """Test logout with no request body."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = {
+            "data": {
+                "user": {"id": "test-user", "displayName": "Test User", "email": "test@example.com"},
+                "session": {"provider": "oidc"},
+            }
+        }
+        mock_session_manager.delete_session.return_value = True
+        mock_session_manager_class.return_value = mock_session_manager
+
+        event = {
+            "headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:test-session-id"},
+            # No body
+        }
+
+        response = logout(event, self.mock_context)
+
+        # Should succeed with default behavior (no IdP logout)
+        assert response["statusCode"] == 200
+        body = json.loads(response["body"])
+        assert body["status"] == "LOGGED_OUT"
+        assert "idpLogoutUrl" not in body
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
+    def test_logout_session_deletion_failure(self, mock_session_manager_class, mock_ssm_client):
+        """Test logout when session deletion fails."""
+        # Set up environment
+        for key, value in self.env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock session manager
+        mock_session_manager = Mock()
+        mock_session_manager.get_session.return_value = {
+            "data": {
+                "user": {"id": "test-user", "displayName": "Test User", "email": "test@example.com"},
+                "session": {"provider": "oidc"},
+            }
+        }
+        mock_session_manager.delete_session.return_value = False  # Deletion fails
+        mock_session_manager_class.return_value = mock_session_manager
+
+        event = {
+            "headers": {"Host": "app.example.com", "Cookie": "mlspace_session=session:test-session-id"},
+            "body": json.dumps({"logoutFromIdp": False}),
+        }
+
+        response = logout(event, self.mock_context)
+
+        # Should still succeed (logout continues even if deletion fails)
+        assert response["statusCode"] == 200
+        body = json.loads(response["body"])
+        assert body["status"] == "LOGGED_OUT"
+
+        # Verify session cookie is still cleared
+        assert "multiValueHeaders" in response
+        assert "Set-Cookie" in response["multiValueHeaders"]

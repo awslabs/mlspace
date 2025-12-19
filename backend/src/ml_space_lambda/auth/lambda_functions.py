@@ -34,6 +34,7 @@ from ml_space_lambda.auth.handlers.oidc_handler import OIDCConfig, OIDCHandler
 from ml_space_lambda.auth.session.encryption import TokenEncryption, decode_key_from_storage
 from ml_space_lambda.auth.session.manager import OTACManager, SessionManager
 from ml_space_lambda.auth.utils.cookies import (
+    clear_session_cookie,
     clear_state_cookie,
     create_json_response,
     create_redirect_response,
@@ -677,3 +678,120 @@ def callback_post(event, context):
         logger.error(f"POST callback processing failed: {e}")
         error_url = "/?error=internal_error&message=Authentication processing failed"
         return create_redirect_response(location=error_url, status_code=302)
+
+
+def logout(event, context):
+    """
+    Handle POST /auth/logout - Terminate user session and optionally logout from IdP.
+
+    Validates session cookie, deletes session record from DynamoDB,
+    clears session cookie, and optionally redirects to IdP logout endpoint.
+
+    Args:
+        event: Lambda event containing logout request
+        context: Lambda context
+
+    Returns:
+        JSON response with logout status and optional IdP logout URL
+    """
+    try:
+        # Extract session cookie first
+        cookie_header = event.get("headers", {}).get("Cookie") or event.get("headers", {}).get("cookie", "")
+        session_id = get_cookie_value(cookie_header, "mlspace_session")
+
+        # Parse request body for logout options
+        body = {}
+        if event.get("body"):
+            try:
+                body = json.loads(event["body"])
+            except json.JSONDecodeError:
+                logger.warning("Invalid JSON in logout request body")
+
+        logout_from_idp = body.get("logoutFromIdp", False)
+
+        # Validate session cookie
+        if not session_id:
+            logger.warning("No session cookie found in logout request")
+            return create_json_response(
+                body={"error": "INVALID_SESSION", "message": "No active session found"}, status_code=400
+            )
+
+        # Get authentication configuration
+        config = _get_auth_config()
+
+        # Create session manager
+        session_manager = _create_session_manager(config)
+
+        # Retrieve session to validate it exists
+        session_data = session_manager.get_session(session_id)
+        if not session_data:
+            logger.warning(f"Invalid or expired session in logout request: {session_id}")
+            return create_json_response(
+                body={"error": "INVALID_SESSION", "message": "No active session found"}, status_code=400
+            )
+
+        # Delete session record from DynamoDB
+        deletion_success = session_manager.delete_session(session_id)
+        if not deletion_success:
+            logger.error(f"Failed to delete session: {session_id}")
+            # Continue with logout even if deletion fails
+
+        # Get host header for cookie domain
+        host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+        domain = extract_domain_from_host(host_header)
+
+        # Clear session cookie
+        clear_session = clear_session_cookie(domain=domain)
+
+        # Prepare response
+        response_body = {"status": "LOGGED_OUT"}
+
+        # Get IdP logout URL if requested
+        idp_logout_url = None
+        if logout_from_idp:
+            try:
+                # Create authentication handler to get logout URL
+                auth_handler = _create_auth_handler(config)
+
+                # Build post-logout redirect URI (back to login page)
+                protocol = "https"
+                if host_header.startswith("localhost") or "127.0.0.1" in host_header:
+                    protocol = "http"
+                post_logout_redirect_uri = f"{protocol}://{host_header}/"
+
+                idp_logout_url = auth_handler.get_logout_url(post_logout_redirect_uri)
+
+                if idp_logout_url:
+                    response_body["idpLogoutUrl"] = idp_logout_url
+                    logger.info("IdP logout URL generated for single sign-out")
+                else:
+                    logger.info("IdP does not support logout endpoint")
+
+            except Exception as e:
+                logger.warning(f"Failed to get IdP logout URL: {e}")
+                # Continue with logout even if IdP logout URL generation fails
+
+        logger.info(f"User logout successful for session: {session_id}")
+
+        # Return success response with cleared session cookie
+        return create_json_response(body=response_body, status_code=200, cookies=[clear_session])
+
+    except Exception as e:
+        logger.error(f"Logout processing failed: {e}")
+
+        # Try to clear session cookie even on error
+        try:
+            host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+            domain = extract_domain_from_host(host_header)
+            clear_session = clear_session_cookie(domain=domain)
+            cookies = [clear_session]
+        except Exception:
+            cookies = None
+
+        error_response = {
+            "error": "INTERNAL_ERROR",
+            "message": "Logout processing failed",
+            "timestamp": context.aws_request_id if context else None,
+        }
+
+        return create_json_response(body=error_response, status_code=500, cookies=cookies)
