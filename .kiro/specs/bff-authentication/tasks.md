@@ -81,7 +81,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Redirect to next domain or final destination
   - _Requirements: 6.4_
 
-- [ ] 10. Register auth endpoints in CDK stack
+- [x] 10. Register auth endpoints in CDK stack
   - Define `authCommonEnv` and `oidcEnv` environment variable objects
   - Create array of auth endpoint definitions using MLSpacePythonLambdaFunction interface
   - Register each endpoint using `registerAPIEndpoint` utility
