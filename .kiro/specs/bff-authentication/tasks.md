@@ -97,7 +97,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Remove legacy OIDC token validation logic
   - _Requirements: 1.4, 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 12. Update axios-utils to remove Authorization header logic
+- [x] 12. Update axios-utils to remove Authorization header logic
   - Modify `frontend/src/shared/util/axios-utils.ts`
   - Remove OIDC token extraction from sessionStorage
   - Remove Authorization header setting
