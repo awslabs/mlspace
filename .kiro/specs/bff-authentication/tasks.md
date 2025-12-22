@@ -88,7 +88,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Set `noAuthorizer: true` for all auth endpoints
   - _Requirements: 1.2, 1.4, 6.3_
 
-- [ ] 11. Update Lambda authorizer to validate session cookies
+- [x] 11. Update Lambda authorizer to validate session cookies
   - Modify `backend/src/ml_space_lambda/authorizer/lambda_functions.py`
   - Extract session cookie from request headers
   - Validate session from DynamoDB

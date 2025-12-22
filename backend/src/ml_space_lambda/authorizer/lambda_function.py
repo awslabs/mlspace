@@ -17,13 +17,12 @@
 import json
 import logging
 import os
-import time
-import urllib
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
-import jwt
-import urllib3
-
+from ml_space_lambda.auth.session.encryption import TokenEncryption
+from ml_space_lambda.auth.session.manager import SessionManager
+from ml_space_lambda.auth.session.validator import SessionValidator
+from ml_space_lambda.auth.utils.cookies import get_cookie_value
 from ml_space_lambda.data_access_objects.dataset import DatasetDAO
 from ml_space_lambda.data_access_objects.group_dataset import GroupDatasetDAO
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
@@ -46,12 +45,106 @@ resource_metadata_dao = ResourceMetadataDAO()
 group_user_dao = GroupUserDAO()
 group_dataset_dao = GroupDatasetDAO()
 
-oidc_keys: Dict[str, str] = {}
-# If using self signed certs on the OIDC endpoint we need to skip ssl verification
-http = urllib3.PoolManager(
-    num_pools=2,
-    cert_reqs="CERT_NONE" if os.getenv("OIDC_VERIFY_SSL", "True").lower() == "false" else "CERT_REQUIRED",
-)
+# Session manager for validating session cookies
+_session_manager: Optional[SessionManager] = None
+
+
+def _get_session_manager() -> SessionManager:
+    """
+    Get or create session manager instance.
+
+    Returns:
+        SessionManager instance
+
+    Raises:
+        Exception: If session manager cannot be created
+    """
+    global _session_manager
+
+    if _session_manager is None:
+        # Get configuration from environment variables
+        session_table_name = os.environ.get("AUTH_SESSION_TABLE_NAME")
+        token_encryption_key_param = os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM")
+
+        if not session_table_name:
+            raise Exception("AUTH_SESSION_TABLE_NAME environment variable is required")
+
+        if not token_encryption_key_param:
+            raise Exception("AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM environment variable is required")
+
+        # Create token encryption instance
+        try:
+            from ml_space_lambda.utils.common_functions import get_ssm_parameter
+
+            encryption_key = get_ssm_parameter(token_encryption_key_param)
+            token_encryption = TokenEncryption(encryption_key)
+        except Exception as e:
+            logger.error(f"Failed to create token encryption: {e}")
+            raise Exception(f"Failed to initialize token encryption: {e}")
+
+        # Create session manager
+        try:
+            _session_manager = SessionManager(table_name=session_table_name, encryption=token_encryption)
+        except Exception as e:
+            logger.error(f"Failed to create session manager: {e}")
+            raise Exception(f"Failed to initialize session manager: {e}")
+
+    return _session_manager
+
+
+def _validate_session_cookie(event: Dict[str, Any]) -> Optional[Dict]:
+    """
+    Validate session cookie from request headers.
+
+    Args:
+        event: Lambda event containing request headers
+
+    Returns:
+        Session data if valid, None otherwise
+    """
+    try:
+        # Extract session cookie from headers
+        cookie_header = None
+        if "cookie" in event.get("headers", {}):
+            cookie_header = event["headers"]["cookie"]
+        elif "Cookie" in event.get("headers", {}):
+            cookie_header = event["headers"]["Cookie"]
+
+        if not cookie_header:
+            logger.info("No cookie header found in request")
+            return None
+
+        # Extract session ID from cookie
+        session_id = get_cookie_value(cookie_header, "mlspace_session")
+        if not session_id:
+            logger.info("No mlspace_session cookie found")
+            return None
+
+        # Validate session ID format
+        if not session_id.startswith("session:"):
+            logger.info(f"Invalid session ID format: {session_id}")
+            return None
+
+        # Get session manager and validate session
+        session_manager = _get_session_manager()
+        session_data = session_manager.get_session(session_id)
+
+        if not session_data:
+            logger.info(f"Session not found or expired: {session_id}")
+            return None
+
+        # Validate session structure
+        is_valid, error_message = SessionValidator.validate_session_data(session_data)
+        if not is_valid:
+            logger.info(f"Invalid session data: {error_message}")
+            return None
+
+        logger.info(f"Session validated successfully for user: {session_data['data']['user']['id']}")
+        return session_data
+
+    except Exception as e:
+        logger.error(f"Error validating session cookie: {e}")
+        return None
 
 
 @authorization_wrapper
@@ -73,339 +166,314 @@ def lambda_handler(event, context):
         f"- Method: {request_method}"
     )
 
-    client_token = None
-    token_failure = False
-    auth_header = None
+    # Validate session cookie
+    session_data = _validate_session_cookie(event)
 
-    if "authorization" in event["headers"]:
-        auth_header = event["headers"]["authorization"].split(" ")
-    if "Authorization" in event["headers"]:
-        auth_header = event["headers"]["Authorization"].split(" ")
-
-    if auth_header and len(auth_header) == 2:
-        client_token = auth_header[1]
-
-    if not client_token:
-        logging.info("Access Denied. No authentication token provided.")
-        token_failure = True
-
-    if client_token and not token_failure:
-        # Decode token based on public key
-        verify_token = os.getenv("OIDC_VERIFY_SIGNATURE", "true").lower()
-        if verify_token != "false":
-            try:
-                # Grab public key id from token
-                token_headers = jwt.get_unverified_header(client_token)
-                [public_key, client_name] = _get_oidc_props(token_headers["kid"])
-                token_info = jwt.decode(client_token, public_key, audience=client_name, algorithms=["RS256"])
-            except Exception as e:
-                logging.exception(e)
-                logging.info("Access Denied. Encountered error validating supplied authentication token.")
-                token_failure = True
-        else:
-            try:
-                token_info = jwt.decode(client_token, options={"verify_signature": False})
-            except Exception as e:
-                logging.exception(e)
-                logging.info("Access Denied. Encountered error decoding supplied authentication token.")
-                token_failure = True
-
-    if token_failure:
+    if not session_data:
+        logger.info("Access Denied. No valid session found.")
         return {
             "principalId": "Unknown",
             "policyDocument": {"Version": "2012-10-17", "Statement": [policy_statement]},
             "context": response_context,
         }
 
-    username = urllib.parse.unquote(token_info["preferred_username"]).replace(",", "-").replace("=", "-").replace(" ", "-")
+    # Extract user information from session
+    user_data = session_data["data"]["user"]
+    username = user_data["id"]
 
-    # Only run through the auth logic if the token has not yet expired
-    if token_info["exp"] > time.time():
-        # Look up user record
-        user = user_dao.get(username)
-        IS_ADMIN = Permission.ADMIN in user.permissions if user else False
+    # Look up user record from database to get permissions and suspension status
+    user = user_dao.get(username)
 
-        if requested_resource == "/user" and request_method == "POST":
-            logger.info("Attempting to create new user account...")
-            # Anyone can create a user account
+    if not user:
+        # User doesn't exist in database - this shouldn't happen in normal flow
+        # but we'll create a minimal user object for authorization
+        logger.warning(f"User {username} found in session but not in database")
+        user = UserModel(
+            username=username,
+            email=user_data["email"],
+            display_name=user_data["displayName"],
+            permissions=[],  # No permissions if not in database
+            suspended=False,  # Session existence implies user is not suspended
+        )
+
+    IS_ADMIN = Permission.ADMIN in user.permissions if user else False
+
+    if requested_resource.startswith("/auth"):
+        logger.info("Accessing auth API...")
+        # Anyone can create a user account
+        policy_statement["Effect"] = "Allow"
+    elif requested_resource == "/user" and request_method == "POST":
+        logger.info("Attempting to create new user account...")
+        # Anyone can create a user account
+        policy_statement["Effect"] = "Allow"
+    elif user.suspended:
+        if (requested_resource == "/login" and request_method == "PUT") or (
+            requested_resource == "/current-user" and request_method == "GET"
+        ):
+            logger.info(f"User: '{username}' is currently suspended. Only login/current-user is allowed.")
             policy_statement["Effect"] = "Allow"
-        elif not user:
-            logger.info(f"Access Denied. Unknown user: '{username}'")
-        elif user.suspended:
-            if (requested_resource == "/login" and request_method == "PUT") or (
-                requested_resource == "/current-user" and request_method == "GET"
+        else:
+            logger.info(f"Access Denied. User: '{username}' is currently suspended.")
+    else:
+        # Check route access restrictions
+        response_context = {"user": json.dumps(user.to_dict())}
+
+        # Create/Download/Delete/List Reports
+        if requested_resource.startswith("/report") and IS_ADMIN and request_method in ["GET", "DELETE", "POST"]:
+            policy_statement["Effect"] = "Allow"
+        # If the route has path params then we need to check project membership/resource ownership
+        elif path_params:
+            # Updating / deleting a user requires admin privileges or the user
+            # making the request must be the user getting updated
+            if (
+                requested_resource.startswith("/user/")
+                and "username" in path_params
+                and request_method in ["GET", "PUT", "DELETE"]
             ):
-                logger.info(f"User: '{username}' is currently suspended. Only login/current-user is allowed.")
+                if IS_ADMIN:
+                    policy_statement["Effect"] = "Allow"
+                elif path_params["username"] == user.username and request_method == "PUT":
+                    # Users can update their own account preferences
+                    policy_statement["Effect"] = "Allow"
+                else:
+                    logger.info(f"Access Denied. User: '{username}' does not have permission to modify users.")
+            # Path params need to be checked individually
+            elif "projectName" in path_params:
+                project_name = path_params["projectName"]
+                # User must belong to the project for any project specific resources
+                if IS_ADMIN or is_member_of_project(user.username, project_name):
+                    IS_OWNER = is_owner_of_project(user.username, project_name)
+                    project_user = project_user_dao.get(project_name, username)
+                    # User must be an owner or admin to add/remove users or update the project config
+                    if (
+                        (
+                            request_method == "POST"
+                            and (
+                                requested_resource.endswith("/users")
+                                or requested_resource.endswith("/groups")
+                                or requested_resource.endswith("/app-config")
+                            )
+                        )
+                        or (
+                            request_method in ["PUT", "DELETE"]
+                            and len(path_params) == 2
+                            and ("username" in path_params or "groupName" in path_params)
+                        )
+                    ) and (project_user and not IS_OWNER and not IS_ADMIN):
+                        logging.info(f"Access Denied. User: '{username}' does not have project user management permissions.")
+                    # User must be a project owner to delete/update a project
+                    elif (
+                        len(path_params) == 1
+                        and request_method in ["PUT", "DELETE"]
+                        and (project_user and not IS_OWNER and not IS_ADMIN)
+                    ):
+                        logging.info(f"Access Denied. User: '{username}' does not have project management permission.")
+                    # Check if there is a second param here and we're updating users...
+                    else:
+                        policy_statement["Effect"] = "Allow"
+            elif "clusterId" in path_params:
+                try:
+                    if _handle_emr_request(request_method, path_params, user, response_context):
+                        policy_statement["Effect"] = "Allow"
+                except Exception as e:
+                    logging.exception(e)
+                    logging.info("Access Denied. Encountered error while determining EMR access policy.")
+            elif "notebookName" in path_params:
+                try:
+                    if _handle_notebook_request(
+                        requested_resource,
+                        request_method,
+                        path_params,
+                        user,
+                        response_context,
+                    ):
+                        policy_statement["Effect"] = "Allow"
+                except Exception as e:
+                    logging.exception(e)
+                    logging.info("Access Denied. Encountered error while determining notebook access policy.")
+            elif "scope" in path_params:
+                if "datasetName" in path_params:
+                    try:
+                        if _handle_dataset_request(
+                            request_method,
+                            path_params,
+                            user,
+                        ):
+                            policy_statement["Effect"] = "Allow"
+                    except Exception as e:
+                        logging.exception(e)
+                        logging.info("Access Denied. Encountered error while determining dataset access policy.")
+            elif "jobId" in path_params:
+                if IS_ADMIN:
+                    policy_statement["Effect"] = "Allow"
+                else:
+                    job = resource_metadata_dao.get(path_params["jobId"], ResourceType.BATCH_TRANSLATE_JOB)
+                    response_context["projectName"] = job.project
+                    project_user = project_user_dao.get(job.project, user.username)
+                    if project_user and Permission.PROJECT_OWNER in project_user.permissions:
+                        policy_statement["Effect"] = "Allow"
+                    else:
+                        if job.user == user.username and project_user:
+                            policy_statement["Effect"] = "Allow"
+                        elif request_method == "POST":
+                            logging.info(f"Access Denied. User: '{user.username}' does not have permission to stop this job.")
+                        elif request_method == "GET":
+                            # if user is part of the project, they can view this translate job
+                            if project_user:
+                                policy_statement["Effect"] = "Allow"
+            elif "groupName" in path_params:
+                is_group_member = _is_group_member(path_params["groupName"], username)
+                if IS_ADMIN:
+                    policy_statement["Effect"] = "Allow"
+                elif request_method == "GET" and is_group_member:
+                    policy_statement["Effect"] = "Allow"
+            else:
+                # All other sagemaker resources have the same general handling, GET calls
+                # typically require ADMIN or project membership, PUT/POST/DELETE typically
+                # require ADMIN or ownership of the resource. Additional comments for
+                # decisions can be found in the _allow_project_resources_read method.
+                job_type = ""
+                if (
+                    requested_resource.endswith("/logs")
+                    and "/notebook" not in requested_resource
+                    and "/endpoint" not in requested_resource
+                ):
+                    job_type = path_params["jobType"]
+
+                try:
+                    if _allow_project_resource_action(
+                        user,
+                        request_method,
+                        path_params,
+                        requested_resource,
+                        response_context,
+                        job_type,
+                    ):
+                        policy_statement["Effect"] = "Allow"
+                except Exception as e:
+                    logging.exception(e)
+                    logging.info("Access Denied. Encountered error while determining resource access policy.")
+        elif requested_resource == "/app-config" and request_method == "POST" and IS_ADMIN:
+            # Operations for app-wide configuration can only be performed by admins
+            policy_statement["Effect"] = "Allow"
+        elif requested_resource == "/login" and request_method == "PUT":
+            policy_statement["Effect"] = "Allow"
+        elif (
+            (requested_resource == "/config" and request_method == "GET") or requested_resource.startswith("/admin/")
+        ) and IS_ADMIN:
+            policy_statement["Effect"] = "Allow"
+        elif requested_resource == "/project" and request_method == "POST":
+            if IS_ADMIN:
                 policy_statement["Effect"] = "Allow"
             else:
-                logger.info(f"Access Denied. User: '{username}' is currently suspended.")
-        else:
-            # Check route access restrictions
-            response_context = {"user": json.dumps(user.to_dict())}
-
-            # Create/Download/Delete/List Reports
-            if requested_resource.startswith("/report") and IS_ADMIN and request_method in ["GET", "DELETE", "POST"]:
+                # Get the latest app config
+                app_config = get_app_config()
+                # Check if project creation is admin only; if not, anyone can create a project
+                if not app_config.configuration.project_creation.admin_only:
+                    policy_statement["Effect"] = "Allow"
+        elif requested_resource == "/group" and request_method == "POST":
+            if IS_ADMIN:
                 policy_statement["Effect"] = "Allow"
-            # If the route has path params then we need to check project membership/resource ownership
-            elif path_params:
-                # Updating / deleting a user requires admin privileges or the user
-                # making the request must be the user getting updated
-                if (
-                    requested_resource.startswith("/user/")
-                    and "username" in path_params
-                    and request_method in ["GET", "PUT", "DELETE"]
-                ):
-                    if IS_ADMIN:
-                        policy_statement["Effect"] = "Allow"
-                    elif path_params["username"] == user.username and request_method == "PUT":
-                        # Users can update their own account preferences
-                        policy_statement["Effect"] = "Allow"
-                    else:
-                        logger.info(f"Access Denied. User: '{username}' does not have permission to modify users.")
-                # Path params need to be checked individually
-                elif "projectName" in path_params:
-                    project_name = path_params["projectName"]
-                    # User must belong to the project for any project specific resources
-                    if IS_ADMIN or is_member_of_project(user.username, project_name):
-                        IS_OWNER = is_owner_of_project(user.username, project_name)
-                        project_user = project_user_dao.get(project_name, username)
-                        # User must be an owner or admin to add/remove users or update the project config
-                        if (
-                            (
-                                request_method == "POST"
-                                and (
-                                    requested_resource.endswith("/users")
-                                    or requested_resource.endswith("/groups")
-                                    or requested_resource.endswith("/app-config")
-                                )
-                            )
-                            or (
-                                request_method in ["PUT", "DELETE"]
-                                and len(path_params) == 2
-                                and ("username" in path_params or "groupName" in path_params)
-                            )
-                        ) and (project_user and not IS_OWNER and not IS_ADMIN):
-                            logging.info(
-                                f"Access Denied. User: '{username}' does not have project user management permissions."
-                            )
-                        # User must be a project owner to delete/update a project
-                        elif (
-                            len(path_params) == 1
-                            and request_method in ["PUT", "DELETE"]
-                            and (project_user and not IS_OWNER and not IS_ADMIN)
-                        ):
-                            logging.info(f"Access Denied. User: '{username}' does not have project management permission.")
-                        # Check if there is a second param here and we're updating users...
-                        else:
-                            policy_statement["Effect"] = "Allow"
-                elif "clusterId" in path_params:
-                    try:
-                        if _handle_emr_request(request_method, path_params, user, response_context):
-                            policy_statement["Effect"] = "Allow"
-                    except Exception as e:
-                        logging.exception(e)
-                        logging.info("Access Denied. Encountered error while determining EMR access policy.")
-                elif "notebookName" in path_params:
-                    try:
-                        if _handle_notebook_request(
-                            requested_resource,
-                            request_method,
-                            path_params,
-                            user,
-                            response_context,
-                        ):
-                            policy_statement["Effect"] = "Allow"
-                    except Exception as e:
-                        logging.exception(e)
-                        logging.info("Access Denied. Encountered error while determining notebook access policy.")
-                elif "scope" in path_params:
-                    if "datasetName" in path_params:
-                        try:
-                            if _handle_dataset_request(
-                                request_method,
-                                path_params,
-                                user,
-                            ):
-                                policy_statement["Effect"] = "Allow"
-                        except Exception as e:
-                            logging.exception(e)
-                            logging.info("Access Denied. Encountered error while determining dataset access policy.")
-                elif "jobId" in path_params:
-                    if IS_ADMIN:
-                        policy_statement["Effect"] = "Allow"
-                    else:
-                        job = resource_metadata_dao.get(path_params["jobId"], ResourceType.BATCH_TRANSLATE_JOB)
-                        response_context["projectName"] = job.project
-                        project_user = project_user_dao.get(job.project, user.username)
-                        if project_user and Permission.PROJECT_OWNER in project_user.permissions:
-                            policy_statement["Effect"] = "Allow"
-                        else:
-                            if job.user == user.username and project_user:
-                                policy_statement["Effect"] = "Allow"
-                            elif request_method == "POST":
-                                logging.info(
-                                    f"Access Denied. User: '{user.username}' does not have permission to stop this job."
-                                )
-                            elif request_method == "GET":
-                                # if user is part of the project, they can view this translate job
-                                if project_user:
-                                    policy_statement["Effect"] = "Allow"
-                elif "groupName" in path_params:
-                    is_group_member = _is_group_member(path_params["groupName"], username)
-                    if IS_ADMIN:
-                        policy_statement["Effect"] = "Allow"
-                    elif request_method == "GET" and is_group_member:
-                        policy_statement["Effect"] = "Allow"
-                else:
-                    # All other sagemaker resources have the same general handling, GET calls
-                    # typically require ADMIN or project membership, PUT/POST/DELETE typically
-                    # require ADMIN or ownership of the resource. Additional comments for
-                    # decisions can be found in the _allow_project_resources_read method.
-                    job_type = ""
-                    if (
-                        requested_resource.endswith("/logs")
-                        and "/notebook" not in requested_resource
-                        and "/endpoint" not in requested_resource
-                    ):
-                        job_type = path_params["jobType"]
-
-                    try:
-                        if _allow_project_resource_action(
-                            user,
-                            request_method,
-                            path_params,
-                            requested_resource,
-                            response_context,
-                            job_type,
-                        ):
-                            policy_statement["Effect"] = "Allow"
-                    except Exception as e:
-                        logging.exception(e)
-                        logging.info("Access Denied. Encountered error while determining resource access policy.")
-            elif requested_resource == "/app-config" and request_method == "POST" and IS_ADMIN:
-                # Operations for app-wide configuration can only be performed by admins
-                policy_statement["Effect"] = "Allow"
-            elif requested_resource == "/login" and request_method == "PUT":
-                policy_statement["Effect"] = "Allow"
-            elif (
-                (requested_resource == "/config" and request_method == "GET") or requested_resource.startswith("/admin/")
-            ) and IS_ADMIN:
-                policy_statement["Effect"] = "Allow"
-            elif requested_resource == "/project" and request_method == "POST":
+        elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
+            # If this is a request for a dataset related presigned url or for
+            # creating a new dataset, we need to determine the underlying dataset
+            # and whether the user should have access to it
+            if "x-mlspace-dataset-type" in event["headers"] and "x-mlspace-dataset-scope" in event["headers"]:
+                target_type = event["headers"]["x-mlspace-dataset-type"]
+                target_scope = event["headers"]["x-mlspace-dataset-scope"]
                 if IS_ADMIN:
                     policy_statement["Effect"] = "Allow"
-                else:
-                    # Get the latest app config
-                    app_config = get_app_config()
-                    # Check if project creation is admin only; if not, anyone can create a project
-                    if not app_config.configuration.project_creation.admin_only:
-                        policy_statement["Effect"] = "Allow"
-            elif requested_resource == "/group" and request_method == "POST":
-                if IS_ADMIN:
+                elif target_type == DatasetType.GLOBAL:
                     policy_statement["Effect"] = "Allow"
-            elif requested_resource in ["/dataset/presigned-url", "/dataset/create"]:
-                # If this is a request for a dataset related presigned url or for
-                # creating a new dataset, we need to determine the underlying dataset
-                # and whether the user should have access to it
-                if "x-mlspace-dataset-type" in event["headers"] and "x-mlspace-dataset-scope" in event["headers"]:
-                    target_type = event["headers"]["x-mlspace-dataset-type"]
-                    target_scope = event["headers"]["x-mlspace-dataset-scope"]
-                    if IS_ADMIN:
+                elif target_type == DatasetType.PROJECT:
+                    project_user = project_user_dao.get(target_scope, username)
+                    if project_user:
                         policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.GLOBAL:
-                        policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.PROJECT:
+                    else:
                         project_user = project_user_dao.get(target_scope, username)
                         if project_user:
                             policy_statement["Effect"] = "Allow"
-                        else:
-                            project_user = project_user_dao.get(target_scope, username)
-                            if project_user:
-                                policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.PRIVATE and username == target_scope:
-                        policy_statement["Effect"] = "Allow"
-                    elif target_type == DatasetType.GROUP:
-                        user_groups = group_user_dao.get_groups_for_user(username)
-                        user_group_names = set()
-                        for user_group in user_groups:
-                            user_group_names.add(user_group.group)
+                elif target_type == DatasetType.PRIVATE and username == target_scope:
+                    policy_statement["Effect"] = "Allow"
+                elif target_type == DatasetType.GROUP:
+                    user_groups = group_user_dao.get_groups_for_user(username)
+                    user_group_names = set()
+                    for user_group in user_groups:
+                        user_group_names.add(user_group.group)
 
-                        if requested_resource == "/dataset/create":
-                            groups = target_scope.split(",")
-                            # check that this user is a member of every group they're adding to the group dataset
-                            is_valid_group_list = True
-                            for group_names in user_group_names:
-                                if group_names not in groups:
-                                    is_valid_group_list = False
-                            if is_valid_group_list:
+                    if requested_resource == "/dataset/create":
+                        groups = target_scope.split(",")
+                        # check that this user is a member of every group they're adding to the group dataset
+                        is_valid_group_list = True
+                        for group_names in user_group_names:
+                            if group_names not in groups:
+                                is_valid_group_list = False
+                        if is_valid_group_list:
+                            policy_statement["Effect"] = "Allow"
+                    elif requested_resource == "/dataset/presigned-url":
+                        groups = group_dataset_dao.get_groups_for_dataset(target_scope)
+                        for group in groups:
+                            # validate the user is a member of at least one group associated with this dataset
+                            if group.group in user_group_names:
                                 policy_statement["Effect"] = "Allow"
-                        elif requested_resource == "/dataset/presigned-url":
-                            groups = group_dataset_dao.get_groups_for_dataset(target_scope)
-                            for group in groups:
-                                # validate the user is a member of at least one group associated with this dataset
-                                if group.group in user_group_names:
-                                    policy_statement["Effect"] = "Allow"
-                                    break
+                                break
 
-                else:
-                    logger.info(
-                        "Missing one or more required headers 'x-mlspace-dataset-type', "
-                        " 'x-mlspace-dataset-scope' for request."
-                    )
-            elif (
-                requested_resource in ["/metadata/find-public-amis"] or requested_resource.startswith("/translate/realtime")
-            ) and request_method == "POST":
-                policy_statement["Effect"] = "Allow"
-            elif (
-                requested_resource
-                in [
-                    "/notebook",
-                    "/endpoint",
-                    "/model",
-                    "/endpoint-config",
-                    "/emr",
-                    "/batch-translate",
-                ]
-                or requested_resource.startswith("/job/")
-            ) and request_method == "POST":
-                # If a user is attempting to create a job, notebook, endpoint,
-                # endpoint-config, or model we need to inspect the request to
-                # determining what project they're
-                # creating the job within the scope of
-                if "x-mlspace-project" in event["headers"]:
-                    project_name = event["headers"]["x-mlspace-project"]
-                    project_user = project_user_dao.get(project_name, username)
-                    if project_user:
-                        policy_statement["Effect"] = "Allow"
-                else:
-                    logger.info("Missing required header 'x-mlspace-project' for request.")
-            elif (
-                requested_resource
-                in [
-                    "/notebook",
-                    "/dataset",
-                    "/current-user",
-                    "/user",
-                    "/model/images",
-                    "/metadata/compute-types",
-                    "/metadata/notebook-options",
-                    "/metadata/subnets",
-                    "/translate/list-languages",
-                    "/project",
-                    "/group",
-                    "/emr",
-                    "/emr/applications",
-                    "/emr/release",
-                    "/translate/custom-terminologies",
-                ]
-            ) and request_method == "GET":
-                # None of these paths require specific permissions, most will be scoped
-                # to the current user or don't care about the user at al (metadata related)
-                policy_statement["Effect"] = "Allow"
             else:
-                logger.info("Unhandled route. Access denied by default.")
-    else:
-        logger.info(f"Access Denied. Token is expired for user: '{username}'.")
+                logger.info(
+                    "Missing one or more required headers 'x-mlspace-dataset-type', " " 'x-mlspace-dataset-scope' for request."
+                )
+        elif (
+            requested_resource in ["/metadata/find-public-amis"] or requested_resource.startswith("/translate/realtime")
+        ) and request_method == "POST":
+            policy_statement["Effect"] = "Allow"
+        elif (
+            requested_resource
+            in [
+                "/notebook",
+                "/endpoint",
+                "/model",
+                "/endpoint-config",
+                "/emr",
+                "/batch-translate",
+            ]
+            or requested_resource.startswith("/job/")
+        ) and request_method == "POST":
+            # If a user is attempting to create a job, notebook, endpoint,
+            # endpoint-config, or model we need to inspect the request to
+            # determining what project they're
+            # creating the job within the scope of
+            if "x-mlspace-project" in event["headers"]:
+                project_name = event["headers"]["x-mlspace-project"]
+                project_user = project_user_dao.get(project_name, username)
+                if project_user:
+                    policy_statement["Effect"] = "Allow"
+            else:
+                logger.info("Missing required header 'x-mlspace-project' for request.")
+        elif (
+            requested_resource
+            in [
+                "/notebook",
+                "/dataset",
+                "/current-user",
+                "/user",
+                "/model/images",
+                "/metadata/compute-types",
+                "/metadata/notebook-options",
+                "/metadata/subnets",
+                "/translate/list-languages",
+                "/project",
+                "/group",
+                "/emr",
+                "/emr/applications",
+                "/emr/release",
+                "/translate/custom-terminologies",
+            ]
+        ) and request_method == "GET":
+            # None of these paths require specific permissions, most will be scoped
+            # to the current user or don't care about the user at al (metadata related)
+            policy_statement["Effect"] = "Allow"
+        else:
+            logger.info("Unhandled route. Access denied by default.")
 
     return {
         "principalId": username,
@@ -632,36 +700,6 @@ def _allow_project_resource_action(
     )
 
     return False
-
-
-def _get_oidc_props(key_id: str) -> Tuple[Optional[str], Optional[str]]:
-    oidc_client_name = os.getenv("OIDC_CLIENT_NAME")
-
-    global oidc_keys
-    if key_id not in oidc_keys:
-        oidc_endpoint = os.getenv("OIDC_URL")
-        if not oidc_client_name or not oidc_endpoint:
-            logging.error(
-                "Unable to retrieve OIDC configuration. Please ensure the environment " "variables are properly configured"
-            )
-            raise ValueError("Missing OIDC environment variables.")
-        # Grab cert endpoint from well known config
-        response = http.request("GET", f"{oidc_endpoint}/.well-known/openid-configuration")
-        well_known_config = json.loads(response.data.decode("utf-8"))
-        if "jwks_uri" not in well_known_config:
-            logging.error("Unable to retrieve OIDC configuration. JWKS_URI not found in well known config.")
-            raise ValueError("Missing JWKS_URI.")
-        # Grab certs from jwks_uri endpoint
-        jwks_response = http.request("GET", f"{well_known_config['jwks_uri']}")
-        key_data = json.loads(jwks_response.data.decode("utf-8"))
-        for key in key_data["keys"]:
-            oidc_keys[key["kid"]] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
-
-    if key_id not in oidc_keys:
-        logging.info(f"Unable to finding matching OIDC public key for id '{key_id}'.")
-        raise ValueError("Missing OIDC configuration parameters.")
-
-    return (oidc_keys[key_id], oidc_client_name)
 
 
 def _is_group_member(group_name: str, username: str) -> bool:
