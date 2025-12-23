@@ -124,7 +124,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Handle incoming broadcast messages to trigger checkAuthStatus
   - _Requirements: 4.5_
 
-- [ ] 15. Create authentication hooks and utilities
+- [x] 15. Create authentication hooks and utilities
   - Create `useAuth` hook to access AuthContext
   - Create `useUser` convenience hook
   - Create `useAuthStatus` convenience hook

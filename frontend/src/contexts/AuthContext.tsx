@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import axios, { axiosCatch } from '../shared/util/axios-utils';
-import React, { useState, useEffect, useRef, useContext, useMemo, createContext } from 'react';
+import React, { useState, useEffect, useRef, useMemo, createContext } from 'react';
 
 // Types and Interfaces
 export type AuthUser = {
@@ -87,7 +87,7 @@ class AuthSyncManager {
 }
 
 // Create the context
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 // AuthProvider props
 type AuthProviderProps = {
@@ -248,178 +248,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     );
 };
 
-// Custom hooks for consuming the context
-export const useAuth = (): AuthContextValue => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
+// Custom hooks for consuming the context are now in shared/auth/hooks.ts
+// Import them from there: import { useAuth, useUser, useAuthStatus, useRequireAuth } from '../shared/auth/hooks';
 
-// Convenience hooks for common patterns
-export const useUser = () => {
-    const { user } = useAuth();
-    return user;
-};
-
-export const useAuthStatus = () => {
-    const { status } = useAuth();
-    return status;
-};
-
-export const useRequireAuth = () => {
-    const { status, login } = useAuth();
-    
-    useEffect(() => {
-        if (status === 'unauthenticated') {
-            login();
-        }
-    }, [status, login]);
-    
-    return status === 'authenticated';
-};
-
-// Protected Route component
-type ProtectedRouteProps = {
-    children: React.ReactNode;
-    fallback?: React.ReactNode;
-    requiredGroups?: string[];
-};
-
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-    children,
-    fallback = <div>Loading...</div>,
-    requiredGroups = []
-}) => {
-    const { status, user, login } = useAuth();
-    
-    if (status === 'loading') {
-        return <>{fallback}</>;
-    }
-    
-    if (status === 'unauthenticated') {
-        login(window.location.pathname);
-        return <>{fallback}</>;
-    }
-    
-    if (requiredGroups.length > 0 && user) {
-        const hasRequiredGroup = requiredGroups.some((group) =>
-            user.groups.includes(group)
-        );
-        
-        if (!hasRequiredGroup) {
-            return <div>Access denied. Required groups: {requiredGroups.join(', ')}</div>;
-        }
-    }
-    
-    return <>{children}</>;
-};
-
-// Loading wrapper component
-type LoadingStateProps = {
-    status: AuthContextValue['status'];
-    children: React.ReactNode;
-};
-
-export const AuthLoadingWrapper: React.FC<LoadingStateProps> = ({
-    status,
-    children
-}) => {
-    if (status === 'loading') {
-        return (
-            <div className='auth-loading'>
-                <div className='spinner' />
-                <p>Checking authentication...</p>
-            </div>
-        );
-    }
-    
-    return <>{children}</>;
-};
-
-// Session expiration notice component
-export const SessionExpirationNotice: React.FC = () => {
-    const { status, session, login } = useAuth();
-    const [showWarning, setShowWarning] = useState(false);
-    
-    useEffect(() => {
-        if (status === 'authenticated' && session) {
-            const expiryTime = new Date(session.expiresAt).getTime();
-            const warningTime = expiryTime - (5 * 60 * 1000); // 5 minutes before expiry
-            const now = Date.now();
-            
-            if (now >= warningTime) {
-                setShowWarning(true);
-            } else {
-                const timeout = setTimeout(() => setShowWarning(true), warningTime - now);
-                return () => clearTimeout(timeout);
-            }
-        }
-    }, [status, session]);
-    
-    if (!showWarning || status !== 'authenticated') {
-        return null;
-    }
-    
-    return (
-        <div className='session-expiration-notice'>
-            <p>Your session will expire soon. Click to extend your session.</p>
-            <button onClick={() => login()}>
-        Extend Session
-            </button>
-            <button onClick={() => setShowWarning(false)}>
-        Dismiss
-            </button>
-        </div>
-    );
-};
-
-// Error boundary for authentication errors
-type AuthErrorBoundaryState = {
-    hasError: boolean;
-    error: Error | null;
-};
-
-export class AuthErrorBoundary extends React.Component<
-    React.PropsWithChildren<Record<string, never>>,
-    AuthErrorBoundaryState
-> {
-    constructor (props: React.PropsWithChildren<Record<string, never>>) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
-    
-    static getDerivedStateFromError (error: Error): AuthErrorBoundaryState {
-        return { hasError: true, error };
-    }
-    
-    componentDidCatch (error: Error, errorInfo: React.ErrorInfo) {
-        console.error('Authentication error:', error, errorInfo);
-        
-        // Report to monitoring service if available
-        if ((window as any).analytics) {
-            (window as any).analytics.track('Auth Error', {
-                error: error.message,
-                stack: error.stack,
-                componentStack: errorInfo.componentStack
-            });
-        }
-    }
-    
-    render () {
-        if (this.state.hasError) {
-            return (
-                <div className='auth-error'>
-                    <h2>Authentication Error</h2>
-                    <p>Something went wrong with authentication. Please try refreshing the page.</p>
-                    <button onClick={() => window.location.reload()}>
-                Refresh Page
-                    </button>
-                </div>
-            );
-        }
-        
-        return this.props.children;
-    }
-}
+// Authentication components are now in shared/auth/components.tsx
+// Import them from there: import { ProtectedRoute, AuthLoadingWrapper, SessionExpirationNotice, AuthErrorBoundary } from '../shared/auth/components';
