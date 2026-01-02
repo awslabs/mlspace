@@ -24,7 +24,7 @@ import {
 import { useAppDispatch, useAppSelector } from './config/store';
 import EntitiesRoutes from './entities/routes';
 import Home from './shared/layout/home/home';
-import { hasAuthParams, useAuth } from 'react-oidc-context';
+import { useAuth } from './shared/auth/hooks';
 import Condition from './modules/condition';
 import { Button, ColumnLayout, Container, SpaceBetween } from '@cloudscape-design/components';
 import { getCurrentUser, selectCurrentUser, setCurrentUser } from './entities/user/user.reducer';
@@ -51,7 +51,7 @@ export default function AppRoutes () {
     const [markdown, setMarkdown] = useState<string>('');
 
     useEffect(() => {
-        if (hasAuthParams() || auth.isAuthenticated || auth.activeNavigator || auth.isLoading) {
+        if (auth.status === 'authenticated') {
             getCurrentUser()
                 .then((response) => {
                     if (response.status === 200) {
@@ -73,11 +73,7 @@ export default function AppRoutes () {
         dispatch(setBreadcrumbs([]));
     }, [
         dispatch,
-        auth,
-        auth.isAuthenticated,
-        auth.activeNavigator,
-        auth.isLoading,
-        auth.signinRedirect,
+        auth.status,
     ]);
 
     useMemo(async () => {
@@ -121,7 +117,7 @@ export default function AppRoutes () {
 
     return (
         <div className='view-routes'>
-            <Condition condition={!auth.isAuthenticated && !auth.isLoading}>
+            <Condition condition={auth.status !== 'authenticated' && auth.status !== 'loading'}>
                 <Routes>
                     <Route
                         path='*'
@@ -157,7 +153,7 @@ export default function AppRoutes () {
                                             className='landing-page-card-button'
                                             variant='primary'
                                             onClick={() => {
-                                                auth.signinRedirect();
+                                                auth.login();
                                             }}>
                                                 Login
                                         </Button>
@@ -202,7 +198,7 @@ export default function AppRoutes () {
                 </Routes>
             </Condition>
 
-            <Condition condition={auth.isAuthenticated && currentUser.suspended!}>
+            <Condition condition={auth.status === 'authenticated' && currentUser.suspended!}>
                 <Routes>
                     <Route
                         path='*'
@@ -221,7 +217,7 @@ export default function AppRoutes () {
                 </Routes>
             </Condition>
 
-            <Condition condition={auth.isAuthenticated && !currentUser.suspended}>
+            <Condition condition={auth.status === 'authenticated' && !currentUser.suspended}>
                 <ErrorBoundaryRoutes>
                     <Route index element={<Home />} />
                     <Route path='*' element={<EntitiesRoutes />} />

@@ -140,7 +140,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Display user-friendly error message with refresh option
   - _Requirements: 5.3_
 
-- [ ] 17. Update application to use new AuthProvider
+- [x] 17. Update application to use new AuthProvider
   - Replace existing OIDC context provider with AuthProvider in app root
   - Wrap application with AuthErrorBoundary
   - Update any components that directly access OIDC context to use new useAuth hook

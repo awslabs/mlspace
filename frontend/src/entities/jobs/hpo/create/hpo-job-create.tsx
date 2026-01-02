@@ -38,7 +38,6 @@ import _ from 'lodash';
 import { createHPOJobThunk, CreateHPOJobThunkPayload } from '../hpo-job.reducer';
 import { ConfigureTuningJobResources } from './configure-tuning-job-resources';
 import { EditTrainingJobDefinition } from './edit-training-job-definition';
-import { useAuth } from 'react-oidc-context';
 import { getBase } from '../../../../shared/util/breadcrumb-utils';
 import { DocTitle, scrollToPageHeader } from '../../../../../src/shared/doc';
 import { getDate, getPaddedNumberString } from '../../../../shared/util/date-utils';
@@ -48,6 +47,7 @@ import { tryCreateDataset } from '../../../dataset/dataset.service';
 import { datasetFromS3Uri } from '../../../../shared/util/dataset-utils';
 import { useNotificationService } from '../../../../shared/util/hooks';
 import '../../../../wizard.css';
+import { useUsername } from '../../../../shared/util/auth-utils';
 
 export type HPOJobCreateState = {
     editingJobDefinition: any;
@@ -62,8 +62,7 @@ export function HPOJobCreate () {
     const navigate = useNavigate();
     const location = useLocation();
     const { projectName } = useParams();
-    const auth = useAuth();
-    const userName = auth.user!.profile.preferred_username;
+    const userName = useUsername();
     const dispatch = useAppDispatch();
     const notificationService = useNotificationService(dispatch);
 

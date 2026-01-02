@@ -17,7 +17,7 @@
 import React from 'react';
 import { Header as CloudscapeHeader, ButtonDropdown } from '@cloudscape-design/components';
 import { persistor, useAppDispatch, useAppSelector } from '../../../config/store';
-import { useAuth } from 'react-oidc-context';
+import { useAuth } from '../../auth/hooks';
 import Condition from '../../../modules/condition';
 import { Timezone } from '../../model/user.model';
 import { selectCurrentUser, updateUser } from '../../../entities/user/user.reducer';
@@ -35,7 +35,7 @@ export default function Header () {
         <CloudscapeHeader
             variant='h1'
             actions={
-                <Condition condition={auth.isAuthenticated}>
+                <Condition condition={auth.status === 'authenticated'}>
                     <ButtonDropdown
                         data-cy='user-actions'
                         items={[
@@ -63,7 +63,7 @@ export default function Header () {
                                 persistor.purge().then(() => {
                                     persistor.flush().then(() => {
                                         persistor.pause();
-                                        auth.signoutRedirect();
+                                        auth.logout();
                                     });
                                 });
                             } else if (
@@ -118,7 +118,7 @@ export default function Header () {
                             }
                         }}
                     >
-                        Greetings, {auth.user?.profile.name}!
+                        Greetings, {auth.user?.displayName}!
                     </ButtonDropdown>
                 </Condition>
             }

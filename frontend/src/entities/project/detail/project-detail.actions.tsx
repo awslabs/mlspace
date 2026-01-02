@@ -23,24 +23,23 @@ import { IProject } from '../../../shared/model/project.model';
 import { removeUserFromProject, selectCurrentUser } from '../../user/user.reducer';
 import { selectProject } from '../card/project-card.reducer';
 import { deleteProject, getProject, listProjectsForUser, updateProject } from '../project.reducer';
-import { useAuth } from 'react-oidc-context';
 import { hasPermission } from '../../../shared/util/permission-utils';
 import { Permission } from '../../../shared/model/user.model';
 import Modal, { ModalProps } from '../../../modules/modal';
 import { useNotificationService } from '../../../shared/util/hooks';
 import { INotificationService } from '../../../shared/layout/notification/notification.service';
+import { useUsername } from '../../../shared/util/auth-utils';
 
 function ProjectDetailActions () {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const auth = useAuth();
     const nav = (endpoint: string) => navigate(endpoint);
     const { projectName } = useParams();
     let project: IProject = useAppSelector((state) => state.project.project);
     if (!project) {
         project = { name: projectName };
     }
-    const username = auth.user!.profile.preferred_username!;
+    const username = useUsername();
 
     return (
         <SpaceBetween direction='horizontal' size='xs'>
