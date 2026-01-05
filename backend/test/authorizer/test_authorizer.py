@@ -21,7 +21,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict
 from unittest import mock
 
-import jwt
 import pytest
 from botocore.exceptions import ClientError
 
@@ -35,7 +34,7 @@ from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetada
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType, ServiceType
 
-TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "OIDC_VERIFY_SIGNATURE": "False"}
+TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "AUTH_SESSION_TABLE": "test-sessions"}
 MOCK_OIDC_ENV = {
     "AWS_DEFAULT_REGION": "us-east-1",
     "OIDC_URL": "https://example-oidc.com/realms/mlspace",
@@ -109,6 +108,50 @@ def policy_response(
     }
 
 
+def mock_session_data(user: UserModel = None, username: str = MOCK_USERNAME, expired: bool = False) -> Dict:
+    """
+    Create mock session data for testing.
+
+    Args:
+        user: User model to create session for
+        username: Username if no user model provided
+        expired: Whether session should be expired
+
+    Returns:
+        Mock session data structure
+    """
+    now = datetime.now(timezone.utc)
+    expires_at = now - timedelta(hours=1) if expired else now + timedelta(hours=1)
+    refresh_at = now - timedelta(minutes=30) if expired else now + timedelta(minutes=30)
+
+    session_user = user if user else UserModel(username, f"{username}@example.com", username, False, [])
+
+    return {
+        "pk": "session:test-session-id",
+        "ttl": int(expires_at.timestamp()) + 3600,
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+        "data": {
+            "user": {
+                "id": session_user.username,
+                "displayName": session_user.display_name,
+                "email": session_user.email,
+                "groups": [],
+                "attributes": {},
+            },
+            "session": {
+                "provider": "oidc",
+                "expiresAt": expires_at.isoformat(),
+                "refreshAt": refresh_at.isoformat(),
+                "accessToken": "encrypted_access_token",
+                "refreshToken": "encrypted_refresh_token",
+                "idToken": "encrypted_id_token",
+            },
+            "metadata": {"loginDomain": "app.example.com", "syncedDomains": []},
+        },
+    }
+
+
 def mock_event(
     method: str = "GET",
     path_params: Dict[str, str] = {},
@@ -118,23 +161,33 @@ def mock_event(
     headers: Dict[str, str] = {},
     username: str = MOCK_USERNAME,
     kid: str = "GLptrSDjXhtLZfjbgEjpmZy4r6CtwWnNg6k-Oyfd864",
+    valid_session: bool = True,
 ):
-    now = datetime.now(tz=timezone.utc)
-    exp_time = now if expired_token else now + timedelta(minutes=60)
-    with open("test/authorizer/jwtRS256.key") as rsa_key:
-        encoded_jwt = jwt.encode(
-            {
-                "aud": "web-client",
-                "exp": exp_time,
-                "preferred_username": user.username if user else username,
-                "email": user.email if user else username,
-            },
-            rsa_key.read(),
-            algorithm="RS256",
-            headers={"kid": kid},
-        )
+    """
+    Create mock Lambda event for testing with session cookie.
 
-    headers["authorization"] = f"Bearer {encoded_jwt}"
+    Args:
+        method: HTTP method
+        path_params: Path parameters
+        resource: Resource path
+        expired_token: Whether session should be expired (legacy param name)
+        user: User model for session
+        headers: Additional headers
+        username: Username if no user model
+        kid: Legacy parameter (unused)
+        valid_session: Whether to include valid session cookie
+
+    Returns:
+        Mock Lambda event
+    """
+    if valid_session:
+        # Add session cookie to headers
+        session_id = "session:test-session-id"
+        if "cookie" in headers:
+            headers["cookie"] += f"; mlspace_session={session_id}"
+        else:
+            headers["cookie"] = f"mlspace_session={session_id}"
+
     return {
         "resource": resource,
         "pathParameters": path_params,
@@ -220,42 +273,59 @@ def test_missing_auth_header():
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 def test_invalid_auth_header():
+    # Test with invalid session cookie
     assert lambda_handler(
         {
             "resource": "/fake-resource",
             "pathParameters": {},
             "httpMethod": "GET",
             "methodArn": "fakeArn",
-            "headers": {"authorization": "Bearer "},
+            "headers": {"cookie": "mlspace_session=invalid"},
         },
         {},
     ) == policy_response(allow=False, valid_token=False)
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.jwt")
-def test_malformed_token(mock_jwt):
-    mock_jwt.decode.side_effect = Exception("DecodeError")
+@mock.patch("ml_space_lambda.authorizer.lambda_function._get_session_manager")
+def test_malformed_token(mock_get_session_manager):
+    # Mock session manager to raise exception
+    mock_session_manager = mock.Mock()
+    mock_session_manager.get_session.side_effect = Exception("Session error")
+    mock_get_session_manager.return_value = mock_session_manager
+
     assert lambda_handler(
         {
             "resource": "/fake-resource",
             "pathParameters": {},
             "httpMethod": "GET",
             "methodArn": "fakeArn",
-            "headers": {"authorization": "Bearer asdf"},
+            "headers": {"cookie": "mlspace_session=session:test"},
         },
         {},
     ) == policy_response(allow=False, valid_token=False)
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-def test_expired_token():
-    assert lambda_handler(mock_event(expired_token=True), {}) == policy_response(allow=False)
+@mock.patch("ml_space_lambda.authorizer.lambda_function._get_session_manager")
+def test_expired_token(mock_get_session_manager):
+    # Mock session manager to return expired session
+    mock_session_manager = mock.Mock()
+    mock_session_manager.get_session.return_value = None  # Expired sessions return None
+    mock_get_session_manager.return_value = mock_session_manager
+
+    assert lambda_handler(mock_event(expired_token=True), {}) == policy_response(allow=False, valid_token=False)
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_initcap_header(mock_user_dao):
+@mock.patch("ml_space_lambda.authorizer.lambda_function._get_session_manager")
+def test_initcap_header(mock_get_session_manager, mock_user_dao):
+    # Mock session manager to return valid session
+    mock_session_manager = mock.Mock()
+    mock_session_manager.get_session.return_value = mock_session_data(MOCK_ADMIN_USER)
+    mock_get_session_manager.return_value = mock_session_manager
+
     mock_user_dao.get.return_value = MOCK_ADMIN_USER
     mock_event_body = copy.deepcopy(
         mock_event(
@@ -264,8 +334,7 @@ def test_initcap_header(mock_user_dao):
             method="GET",
         )
     )
-    mock_event_body["headers"]["Authorization"] = mock_event_body["headers"]["authorization"]
-    del mock_event_body["headers"]["authorization"]
+    # Remove the old authorization header test - we're using cookies now
 
     assert lambda_handler(
         mock_event_body,
@@ -276,14 +345,28 @@ def test_initcap_header(mock_user_dao):
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_nonexistent_user(mock_user_dao):
+@mock.patch("ml_space_lambda.authorizer.lambda_function._get_session_manager")
+def test_nonexistent_user(mock_get_session_manager, mock_user_dao):
+    # Mock session manager to return valid session but user doesn't exist in DB
+    mock_session_manager = mock.Mock()
+    mock_session_manager.get_session.return_value = mock_session_data(username="nonexistent")
+    mock_get_session_manager.return_value = mock_session_manager
+
     mock_user_dao.get.return_value = None
-    assert lambda_handler(mock_event(), {}) == policy_response(allow=False)
+    assert lambda_handler(mock_event(username="nonexistent"), {}) == policy_response(
+        allow=False, username="nonexistent", valid_token=True, default_to_username=True
+    )
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_suspended_user(mock_user_dao):
+@mock.patch("ml_space_lambda.authorizer.lambda_function._get_session_manager")
+def test_suspended_user(mock_get_session_manager, mock_user_dao):
+    # Mock session manager to return valid session
+    mock_session_manager = mock.Mock()
+    mock_session_manager.get_session.return_value = mock_session_data(MOCK_SUSPENDED_USER)
+    mock_get_session_manager.return_value = mock_session_manager
+
     mock_user_dao.get.return_value = MOCK_SUSPENDED_USER
     assert lambda_handler(mock_event(user=MOCK_SUSPENDED_USER), {}) == policy_response(allow=False, user=MOCK_SUSPENDED_USER)
     mock_user_dao.get.assert_called_with(MOCK_SUSPENDED_USER.username)
@@ -292,6 +375,7 @@ def test_suspended_user(mock_user_dao):
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 def test_create_user(mock_user_dao):
+    # User creation doesn't require session - it's open to everyone
     mock_user_dao.get.return_value = None
     new_username = "new-user"
     assert lambda_handler(
@@ -299,10 +383,11 @@ def test_create_user(mock_user_dao):
             resource="/user",
             method="POST",
             username=new_username,
+            valid_session=False,  # No session needed for user creation
         ),
         {},
-    ) == policy_response(username=new_username)
-    mock_user_dao.get.assert_called_with(new_username)
+    ) == policy_response(username=new_username, valid_token=False)
+    # User DAO should not be called for user creation endpoint
 
 
 @pytest.mark.parametrize(

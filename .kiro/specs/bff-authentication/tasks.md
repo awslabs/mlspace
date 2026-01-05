@@ -147,7 +147,7 @@ This implementation plan breaks down the BFF authentication feature into discret
   - Test authentication flow end-to-end
   - _Requirements: 1.1, 3.5_
 
-- [ ] 18. Checkpoint - Ensure all tests pass
+- [x] 18. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 19. Update deployment documentation
