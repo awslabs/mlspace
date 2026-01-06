@@ -284,7 +284,7 @@ export class RestApiConstruct extends Construct {
             OIDC_URL: ssmIdPEndpoint ||  props.mlspaceConfig.OIDC_URL,
             OIDC_REDIRECT_URI:  props.mlspaceConfig.OIDC_REDIRECT_URI || mlSpaceRestApi.url,
             OIDC_CLIENT_NAME:  props.mlspaceConfig.OIDC_CLIENT_NAME,
-            LAMBDA_ENDPOINT: mlSpaceRestApi.url,
+            LAMBDA_ENDPOINT: props.mlspaceConfig.WEB_CUSTOM_DOMAIN_NAME || mlSpaceRestApi.url,
             MANAGE_IAM_ROLES:  props.mlspaceConfig.MANAGE_IAM_ROLES,
             SHOW_MIGRATION_OPTIONS: props.mlspaceConfig.SHOW_MIGRATION_OPTIONS,
             ENABLE_TRANSLATE: props.enableTranslate,

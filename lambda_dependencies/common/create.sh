@@ -9,4 +9,7 @@ python3 -m pip install --no-deps dynamodb_json -t .
 python3 -m pip install --no-deps simplejson -t .
 python3 -m pip install --no-deps cachetools -t .
 python3 -m pip install --no-cache-dir pyseto -t .
+python3 -m pip install --no-cache-dir authlib -t .
+python3 -m pip install --no-cache-dir pydantic -t .
+python3 -m pip install --no-cache-dir requests -t .
 python3 -m pip install boto3 -t .

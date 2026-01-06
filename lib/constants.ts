@@ -170,3 +170,7 @@ export const SHOW_MIGRATION_OPTIONS = false;
 // Set this to true to enable customer-managed KMS encryption for DynamoDB tables
 // Requires EXISTING_KMS_MASTER_KEY_ARN to be set. Defaults to false for backward compatibility.
 export const ENABLE_DDB_KMS_CMK_ENCRYPTION = true;
+
+// An optional custom domain name to use in place of the default API Gateway URL
+// eg: 'https://mlspace.mycompany.com'
+export const WEB_CUSTOM_DOMAIN_NAME = undefined;
