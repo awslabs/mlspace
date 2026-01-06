@@ -150,7 +150,7 @@ This implementation plan breaks down the BFF authentication feature into discret
 - [x] 18. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 19. Update deployment documentation
+- [x] 19. Update deployment documentation
   - Document new AUTH_* configuration parameters
   - Document migration steps from legacy OIDC configuration
   - Document SSM parameter setup for client secret
