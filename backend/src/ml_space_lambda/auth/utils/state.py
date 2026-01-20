@@ -46,7 +46,9 @@ class StateManager:
         """
         self.cipher = Fernet(secret_key)
 
-    def create_state(self, redirect_url: str, domain: str, nonce: Optional[str] = None) -> str:
+    def create_state(
+        self, redirect_url: str, domain: str, nonce: Optional[str] = None, protocol_data: Optional[Dict] = None
+    ) -> str:
         """
         Create encrypted state parameter for auth flow.
 
@@ -54,6 +56,7 @@ class StateManager:
             redirect_url: Where to redirect after authentication
             domain: Domain initiating the authentication
             nonce: Optional nonce (generated if not provided)
+            protocol_data: Optional protocol-specific data to store securely (e.g., PKCE code_verifier)
 
         Returns:
             Encrypted state string
@@ -64,7 +67,16 @@ class StateManager:
         if nonce is None:
             nonce = secrets.token_urlsafe(32)
 
-        state_data = {"redirect_url": redirect_url, "nonce": nonce, "timestamp": int(time.time()), "domain": domain}
+        state_data = {
+            "redirect_url": redirect_url,
+            "nonce": nonce,
+            "timestamp": int(time.time()),
+            "domain": domain,
+        }
+
+        # Add protocol-specific data if provided
+        if protocol_data:
+            state_data["protocol_data"] = protocol_data
 
         try:
             state_json = json.dumps(state_data, separators=(",", ":"))

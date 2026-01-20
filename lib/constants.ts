@@ -34,7 +34,7 @@ export const GROUP_USERS_TABLE_NAME = 'mlspace-group-users';
 export const CONFIG_BUCKET_NAME = 'mlspace-config';
 export const DATA_BUCKET_NAME = 'mlspace-data';
 export const LOGS_BUCKET_NAME = 'mlspace-logs';
-export const ACCESS_LOGS_BUCKET_NAME = 'mlspace-access-logs';
+export const ACCESS_LOGS_BUCKET_NAME = 'mlspace-access-logs-alpha';
 export const WEBSITE_BUCKET_NAME = 'mlspace-website';
 export const MLSPACE_LIFECYCLE_CONFIG_NAME = 'mlspace-notebook-lifecycle-config';
 export const NOTEBOOK_PARAMETERS_FILE_NAME = 'notebook-params.json';
@@ -50,6 +50,9 @@ export const AWS_REGION = '';
 
 export const SYSTEM_TAG = 'MLSpace';
 export const IAM_RESOURCE_PREFIX = 'MLSpace';
+
+// The prefix to use for system resources
+export const SYSTEM_RESOURCE_PREFIX = 'mls';
 
 // Set this to false if you do not want MLSpace to dynamically manage roles for project users
 export const MANAGE_IAM_ROLES = true;
@@ -124,7 +127,9 @@ export const AUTH_SESSION_TABLE_NAME = 'mlspace-auth-sessions';
 export const AUTH_IDP_TYPE = 'oidc'; // Currently only 'oidc' is supported
 export const AUTH_OIDC_URL = ''; // OIDC issuer URL
 export const AUTH_OIDC_CLIENT_ID = ''; // OIDC client ID
-export const AUTH_OIDC_CLIENT_SECRET_SSM_PARAM = '/mlspace/auth/oidc-client-secret'; // SSM parameter name for OIDC client secret
+export const AUTH_OIDC_CLIENT_SECRET_NAME = 'mlspace/auth/oidc-client-secret'; // Secrets Manager name for OIDC client secret
+export const AUTH_OIDC_CLIENT_SECRET_VALUE = ''; // Optional OIDC client secret value for deployment-time configuration
+export const AUTH_OIDC_USE_PKCE = true; // Whether to use PKCE flow (recommended even with client_secret)
 export const AUTH_OIDC_VERIFY_SSL = true; // Whether to verify SSL certificates for OIDC requests
 export const AUTH_OIDC_VERIFY_SIGNATURE = true; // Whether to verify OIDC token signatures
 
@@ -136,8 +141,8 @@ export const AUTH_SYNC_DOMAINS = ''; // Optional: Comma-separated list of additi
 export const AUTH_SESSION_TTL_HOURS = 24; // Session duration in hours
 
 // Encryption configuration
-export const AUTH_ENCRYPTION_KEY_SSM_PARAM = '/mlspace/auth/encryption-key'; // SSM parameter for token encryption key
-export const AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM = '/mlspace/auth/state-encryption-key'; // SSM parameter for state encryption key
+export const AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/token-encryption-keys'; // Versioned secret for token encryption keys (rotatable)
+export const AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/state-encryption-key'; // Simple secret for state encryption key (deploy-time generated)
 
 // Legacy OIDC configuration (deprecated - maintained for backward compatibility during migration)
 // Use AUTH_OIDC_URL, AUTH_OIDC_CLIENT_ID, and other AUTH_* constants instead

@@ -34,16 +34,17 @@ class TestAuthLambdaFunctions:
             "AUTH_IDP_TYPE": "oidc",
             "AUTH_OIDC_URL": "https://example.com",
             "AUTH_OIDC_CLIENT_ID": "test-client-id",
-            "AUTH_OIDC_CLIENT_SECRET_SSM_PARAM": "/test/client-secret",
-            "AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM": "/test/state-key",
-            "AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM": "/test/token-key",
+            "AUTH_OIDC_CLIENT_SECRET_NAME": "test/client-secret",
+            "AUTH_OIDC_USE_PKCE": "true",
+            "AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME": "test/state-key",
+            "AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME": "test/token-key",
             "AUTH_SESSION_TABLE_NAME": "test-session-table",
             "AUTH_OIDC_VERIFY_SSL": "true",
             "AUTH_PRIMARY_DOMAIN": "",
             "AUTH_SYNC_DOMAINS": "",
         }
 
-        # Mock SSM responses
+        # Mock SSM responses (legacy - keeping for backward compatibility tests)
         # Generate a valid Fernet key for testing
         import base64
 
@@ -57,6 +58,23 @@ class TestAuthLambdaFunctions:
             "/test/client-secret": "test-client-secret",
             "/test/state-key": test_fernet_key,
             "/test/token-key": test_token_key,
+        }
+
+        # Mock Secrets Manager responses
+        self.mock_secrets_responses = {
+            "test/client-secret": {
+                "current_version": 1,
+                "keys": {"1": "test-client-secret"},
+                "key_type": "token",
+                "created_by": "test",
+            },
+            "test/state-key": {
+                "current_version": 1,
+                "keys": {"1": test_fernet_key},
+                "key_type": "state",
+                "created_by": "test",
+            },
+            "test/token-key": {"current_version": 1, "keys": {"1": test_token_key}, "key_type": "token", "created_by": "test"},
         }
 
     @patch.dict("os.environ", {})
@@ -75,10 +93,11 @@ class TestAuthLambdaFunctions:
         assert "AUTH_OIDC_URL" in body["message"]
 
     @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.secrets_client")
     @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
     @patch("ml_space_lambda.auth.lambda_functions.OIDCHandler")
     @patch("ml_space_lambda.auth.lambda_functions.StateManager")
-    def test_login_success(self, mock_state_manager_class, mock_oidc_handler_class, mock_ssm_client):
+    def test_login_success(self, mock_state_manager_class, mock_oidc_handler_class, mock_ssm_client, mock_secrets_client):
         """Test successful login flow."""
         # Set up environment
         for key, value in self.env_vars.items():
@@ -89,6 +108,13 @@ class TestAuthLambdaFunctions:
             return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
 
         mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock Secrets Manager client
+        def mock_get_secret_value(SecretId):
+            secret_data = self.mock_secrets_responses[SecretId]
+            return {"SecretString": json.dumps(secret_data)}
+
+        mock_secrets_client.get_secret_value.side_effect = mock_get_secret_value
 
         # Mock state manager
         mock_state_manager = Mock()
@@ -124,8 +150,9 @@ class TestAuthLambdaFunctions:
         assert "Secure" in state_cookie
 
     @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.secrets_client")
     @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
-    def test_login_invalid_redirect_url(self, mock_ssm_client):
+    def test_login_invalid_redirect_url(self, mock_ssm_client, mock_secrets_client):
         """Test login with invalid redirect URL."""
         # Set up environment
         for key, value in self.env_vars.items():
@@ -136,6 +163,13 @@ class TestAuthLambdaFunctions:
             return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
 
         mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock Secrets Manager client
+        def mock_get_secret_value(SecretId):
+            secret_data = self.mock_secrets_responses[SecretId]
+            return {"SecretString": json.dumps(secret_data)}
+
+        mock_secrets_client.get_secret_value.side_effect = mock_get_secret_value
 
         with patch("ml_space_lambda.auth.lambda_functions.OIDCHandler") as mock_oidc_handler_class, patch(
             "ml_space_lambda.auth.lambda_functions.StateManager"
@@ -168,8 +202,9 @@ class TestAuthLambdaFunctions:
             assert call_args["redirect_url"] == "/"  # Should default to safe URL
 
     @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.secrets_client")
     @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
-    def test_login_no_body(self, mock_ssm_client):
+    def test_login_no_body(self, mock_ssm_client, mock_secrets_client):
         """Test login with no request body."""
         # Set up environment
         for key, value in self.env_vars.items():
@@ -180,6 +215,13 @@ class TestAuthLambdaFunctions:
             return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
 
         mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock Secrets Manager client
+        def mock_get_secret_value(SecretId):
+            secret_data = self.mock_secrets_responses[SecretId]
+            return {"SecretString": json.dumps(secret_data)}
+
+        mock_secrets_client.get_secret_value.side_effect = mock_get_secret_value
 
         with patch("ml_space_lambda.auth.lambda_functions.OIDCHandler") as mock_oidc_handler_class, patch(
             "ml_space_lambda.auth.lambda_functions.StateManager"
@@ -266,6 +308,7 @@ class TestAuthLambdaFunctions:
         assert "Only 'oidc' is currently supported" in body["message"]
 
     @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.secrets_client")
     @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
     @patch("ml_space_lambda.auth.lambda_functions.OIDCHandler")
     @patch("ml_space_lambda.auth.lambda_functions.StateManager")
@@ -278,6 +321,7 @@ class TestAuthLambdaFunctions:
         mock_state_manager_class,
         mock_oidc_handler_class,
         mock_ssm_client,
+        mock_secrets_client,
     ):
         """Test successful callback flow."""
         # Set up environment
@@ -290,6 +334,13 @@ class TestAuthLambdaFunctions:
 
         mock_ssm_client.get_parameter.side_effect = mock_get_parameter
 
+        # Mock Secrets Manager client
+        def mock_get_secret_value(SecretId):
+            secret_data = self.mock_secrets_responses[SecretId]
+            return {"SecretString": json.dumps(secret_data)}
+
+        mock_secrets_client.get_secret_value.side_effect = mock_get_secret_value
+
         # Mock state manager
         mock_state_manager = Mock()
         mock_state_manager.validate_state.return_value = {
@@ -300,7 +351,7 @@ class TestAuthLambdaFunctions:
         mock_state_manager_class.return_value = mock_state_manager
 
         # Mock OIDC handler
-        from ml_space_lambda.auth.handlers.base_handler import AuthenticationResult, IdPTokens, UserData
+        from ml_space_lambda.auth.models.auth_models import AuthenticationResult, IdPTokens, UserData
 
         mock_user_data = UserData(
             id="test-user", displayName="Test User", email="test@example.com", groups=["users"], attributes={}
@@ -807,7 +858,7 @@ class TestAuthLambdaFunctions:
         mock_session_manager_class.return_value = mock_session_manager
 
         # Mock OIDC handler for token refresh
-        from ml_space_lambda.auth.handlers.base_handler import AuthenticationResult, IdPTokens, UserData
+        from ml_space_lambda.auth.models.auth_models import AuthenticationResult, IdPTokens, UserData
 
         mock_user_data = UserData(
             id="test-user",
@@ -899,7 +950,7 @@ class TestAuthLambdaFunctions:
         mock_session_manager_class.return_value = mock_session_manager
 
         # Mock OIDC handler for failed token refresh
-        from ml_space_lambda.auth.handlers.base_handler import AuthenticationResult
+        from ml_space_lambda.auth.models.auth_models import AuthenticationResult
 
         mock_refresh_result = AuthenticationResult(success=False, error="Token refresh failed")
 

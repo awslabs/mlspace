@@ -8,19 +8,17 @@ This document provides detailed design specifications for implementing the Backe
 
 ### Authentication Endpoints
 
-#### POST /auth/login
+#### GET /auth/login
 
 Initiates the authentication process by redirecting the user to the configured Identity Provider.
 
 **Request:**
 ```http
-POST /auth/login
-Content-Type: application/json
-
-{
-  "redirectUrl": "https://app.mlspace.com/dashboard" // Optional: where to redirect after auth
-}
+GET /auth/login?redirectUrl=https%3A%2F%2Fapp.mlspace.com%2Fdashboard
 ```
+
+**Query Parameters:**
+- `redirectUrl` (optional): URL to redirect to after successful authentication
 
 **Response (Redirect):**
 ```http
@@ -1448,7 +1446,7 @@ def log_auth_event(event_type: str, details: dict):
 backend/src/ml_space_lambda/
 ├── auth/
 │   ├── __init__.py
-│   ├── login.py              # POST /auth/login handler
+│   ├── login.py              # GET /auth/login handler
 │   ├── callback.py           # GET/POST /auth/callback handler
 │   ├── logout.py             # POST /auth/logout handler
 │   ├── identity.py           # GET /auth/identity handler
@@ -1590,7 +1588,7 @@ Each Lambda handler follows the MLSpace pattern:
 ```python
 # backend/src/ml_space_lambda/auth/lambda_functions.py
 def login(event, context):
-    """POST /auth/login handler"""
+    """GET /auth/login handler"""
     # Implementation
     pass
 

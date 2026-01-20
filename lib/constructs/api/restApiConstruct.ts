@@ -265,6 +265,8 @@ export class RestApiConstruct extends Construct {
                 OIDC_CLIENT_NAME: props.mlspaceConfig.OIDC_CLIENT_NAME,
                 OIDC_VERIFY_SSL: props.mlspaceConfig.OIDC_VERIFY_SSL ? 'True' : 'False',
                 OIDC_VERIFY_SIGNATURE: props.verifyOIDCTokenSignature ? 'True' : 'False',
+                AUTH_SESSION_TABLE_NAME: props.mlspaceConfig.AUTH_SESSION_TABLE_NAME,
+                AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,
                 ...props.mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,
             },
             vpc: props.mlSpaceVPC,

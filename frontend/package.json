@@ -1,6 +1,6 @@
 {
   "name": "@amzn/mlspace",
-  "homepage": "/Prod",
+  "homepage": "/",
   "version": "1.6.11",
   "main": "dist/lib/index.js",
   "types": "dist/types/index.d.ts",

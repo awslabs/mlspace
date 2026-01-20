@@ -32,20 +32,15 @@ from authlib.integrations.requests_client import OAuth2Session
 from authlib.jose import JsonWebToken
 from authlib.oauth2.rfc6749 import OAuth2Token
 from authlib.oidc.discovery import OpenIDProviderMetadata, get_well_known_url
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field
 
-from ml_space_lambda.auth.handlers.base_handler import (
-    AuthenticationResult,
-    AuthHandlerConfig,
-    BaseAuthHandler,
-    IdPTokens,
-    UserData,
-)
+from ml_space_lambda.auth.models.auth_models import AuthenticationResult, IdPTokens, UserData
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
-class OIDCConfig(AuthHandlerConfig):
+class OIDCConfig(BaseModel):
     """
     OIDC-specific configuration.
     """
@@ -54,18 +49,10 @@ class OIDCConfig(AuthHandlerConfig):
     client_id: str = Field(..., description="OIDC client ID")
     client_secret: Optional[str] = Field(None, description="OIDC client secret (for confidential clients)")
     scopes: List[str] = Field(default=["openid", "profile", "email"], description="OAuth2 scopes to request")
-    use_pkce: Optional[bool] = Field(None, description="Whether to use PKCE flow (auto-detected if None)")
-
-    @field_validator("use_pkce")
-    @classmethod
-    def set_use_pkce(cls, v, info):
-        """Auto-detect PKCE usage based on client_secret presence."""
-        if v is None:
-            return not bool(info.data.get("client_secret"))
-        return v
+    use_pkce: bool = Field(default=True, description="Whether to use PKCE flow (recommended even with client_secret)")
 
 
-class OIDCHandler(BaseAuthHandler):
+class OIDCHandler:
     """
     OIDC authentication handler supporting both PKCE and client secret flows.
 
@@ -87,7 +74,7 @@ class OIDCHandler(BaseAuthHandler):
         Args:
             config: OIDC configuration (Pydantic model)
         """
-        super().__init__(config)
+        self.config = config
 
         # Initialize authlib components
         # Common JWT algorithms for OIDC
@@ -110,7 +97,7 @@ class OIDCHandler(BaseAuthHandler):
         """
         try:
             # Use authlib's get_well_known_url and OpenIDProviderMetadata
-            well_known_url = get_well_known_url(self.config.issuer_url)
+            well_known_url = get_well_known_url(self.config.issuer_url, external=True)
             response = requests.get(well_known_url, timeout=10)
             response.raise_for_status()
 
@@ -146,34 +133,45 @@ class OIDCHandler(BaseAuthHandler):
             token_endpoint_auth_method="client_secret_post" if self.config.client_secret else None,
         )
 
-    def get_authorization_url(self, state: str, redirect_uri: str) -> str:
+    def get_authorization_url(self, state: str, redirect_uri: str, code_verifier: Optional[str] = None) -> str:
         """
         Generate OIDC authorization URL using authlib.
 
         Args:
             state: CSRF protection state parameter
             redirect_uri: Where IdP should redirect after authentication
+            code_verifier: PKCE code verifier (required if use_pkce is True)
 
         Returns:
             Authorization URL for user redirection
+
+        Raises:
+            Exception: If URL generation fails or code_verifier is missing when PKCE is enabled
         """
         try:
-            # Create temporary OAuth2 session for URL generation
-            client = OAuth2Session(
-                client_id=self.config.client_id, redirect_uri=redirect_uri, scope=" ".join(self.config.scopes)
-            )
+            session_params = {
+                "client_id": self.config.client_id,
+                "scope": " ".join(self.config.scopes),
+                "redirect_uri": redirect_uri,
+            }
+            authorization_params = {"state": state}
 
             # Generate authorization URL with PKCE if enabled
             if self.config.use_pkce:
-                authorization_url, code_verifier = client.create_authorization_url(
-                    self.authorization_endpoint, state=state, code_challenge_method="S256"
-                )
-                # Store code_verifier in state for later use
-                # Note: In production, this should be stored securely (e.g., in session state)
+                if not code_verifier:
+                    raise ValueError("code_verifier is required when PKCE is enabled")
+
+                session_params.update({"code_challenge_method": "S256"})
+
+                authorization_params.update({"code_verifier": code_verifier})
+
                 logger.info("Generated OIDC authorization URL with PKCE")
             else:
-                authorization_url, _ = client.create_authorization_url(self.authorization_endpoint, state=state)
-                logger.info("Generated OIDC authorization URL with client secret")
+                logger.info("Generated OIDC authorization URL")
+
+            # Create temporary OAuth2 session for URL generation
+            client = OAuth2Session(**session_params)
+            authorization_url, _ = client.create_authorization_url(self.authorization_endpoint, **authorization_params)
 
             return authorization_url
 
@@ -181,30 +179,36 @@ class OIDCHandler(BaseAuthHandler):
             logger.error(f"Failed to generate authorization URL: {e}")
             raise Exception(f"Authorization URL generation failed: {e}")
 
-    def handle_callback(self, callback_data: Dict, redirect_uri: str) -> AuthenticationResult:
+    def handle_callback(self, code: str, redirect_uri: str, code_verifier: Optional[str] = None) -> AuthenticationResult:
         """
         Process OIDC callback and exchange authorization code for tokens using authlib.
 
         Args:
-            callback_data: Callback data containing 'code' and 'state'
+            code: Authorization code from IdP callback
             redirect_uri: Redirect URI used in authorization request
+            code_verifier: PKCE code verifier (required if use_pkce is True)
 
         Returns:
             AuthenticationResult with user data and tokens
+
+        Raises:
+            Exception: If code_verifier is missing when PKCE is enabled
         """
         try:
-            auth_code = callback_data.get("code")
-            if not auth_code:
+            if not code:
                 return AuthenticationResult(success=False, error="Missing authorization code in callback")
 
             # Exchange authorization code for tokens using authlib
-            oauth_token = self._exchange_code_for_tokens(auth_code, redirect_uri)
+            oauth_token = self._exchange_code_for_tokens(code, redirect_uri, code_verifier)
+            logger.info(f"oauth_token={json.dumps(oauth_token)}")
 
             # Convert OAuth2Token to our IdPTokens model
             tokens = self._oauth_token_to_idp_tokens(oauth_token)
+            logger.info(f"tokens={tokens.model_dump_json()}")
 
             # Get user information from tokens
             user_data = self._get_user_info_from_oauth_token(oauth_token)
+            logger.info(f"user_data={user_data.model_dump_json()}")
 
             # Encode raw response for debugging
             raw_response = base64.b64encode(
@@ -407,29 +411,35 @@ class OIDCHandler(BaseAuthHandler):
 
         return access_expires, refresh_expires
 
-    def _exchange_code_for_tokens(self, auth_code: str, redirect_uri: str) -> OAuth2Token:
+    def _exchange_code_for_tokens(self, auth_code: str, redirect_uri: str, code_verifier: Optional[str] = None) -> OAuth2Token:
         """
         Exchange authorization code for tokens using authlib's OAuth2Session.
 
         Args:
             auth_code: Authorization code from callback
             redirect_uri: Redirect URI used in authorization request
+            code_verifier: PKCE code verifier (required if use_pkce is True)
 
         Returns:
             OAuth2Token from authlib
 
         Raises:
-            Exception: If token exchange fails
+            Exception: If token exchange fails or code_verifier is missing when PKCE is enabled
         """
         try:
+            fetch_token_params = {
+                "code": auth_code,
+                "redirect_uri": redirect_uri,
+            }
+
+            # Add code_verifier for PKCE flow
+            if self.config.use_pkce:
+                if not code_verifier:
+                    raise ValueError("code_verifier is required when PKCE is enabled")
+                fetch_token_params["code_verifier"] = code_verifier
+
             # Use authlib's fetch_token method
-            oauth_token = self.oauth_session.fetch_token(
-                self.token_endpoint,
-                code=auth_code,
-                redirect_uri=redirect_uri,
-                # PKCE code verifier would be added here if implemented
-                # code_verifier=code_verifier
-            )
+            oauth_token = self.oauth_session.fetch_token(self.token_endpoint, **fetch_token_params)
 
             logger.info("Token exchange successful using authlib")
             return oauth_token

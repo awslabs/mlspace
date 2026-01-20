@@ -12,4 +12,5 @@ python3 -m pip install --no-cache-dir pyseto -t .
 python3 -m pip install --no-cache-dir authlib -t .
 python3 -m pip install --no-cache-dir pydantic -t .
 python3 -m pip install --no-cache-dir requests -t .
+python3 -m pip install --no-cache-dir cryptography -t .
 python3 -m pip install boto3 -t .

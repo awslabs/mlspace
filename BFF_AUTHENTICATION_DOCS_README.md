@@ -2,6 +2,38 @@
 
 This document summarizes the deployment documentation created for the BFF authentication feature.
 
+## OIDC Client Secret Configuration
+
+### Secrets Manager Integration
+The OIDC client secret is now stored in AWS Secrets Manager instead of Systems Manager Parameter Store for enhanced security:
+
+- **Secret Name**: `mlspace/auth/oidc-client-secret`
+- **Configuration Parameter**: `AUTH_OIDC_CLIENT_SECRET_NAME` (replaces `AUTH_OIDC_CLIENT_SECRET_SSM_PARAM`)
+- **Optional Deployment Configuration**: `AUTH_OIDC_CLIENT_SECRET_VALUE`
+
+### Deployment-Time Configuration
+You can set the OIDC client secret during deployment by adding it to your `lib/config.json`:
+
+```json
+{
+  "AUTH_OIDC_CLIENT_SECRET_VALUE": "your-actual-client-secret-here"
+}
+```
+
+If not provided during deployment, the secret will be created with a placeholder that you can update manually via AWS Console or CLI.
+
+### Manual Configuration
+If you need to update the client secret after deployment:
+
+```bash
+aws secretsmanager update-secret \
+  --secret-id mlspace/auth/oidc-client-secret \
+  --secret-string '{"client_secret":"your-new-secret","configured":true}'
+```
+
+## Key Rotation Integration
+The OIDC client secret is managed alongside other authentication secrets in the `AuthSecretsConstruct` with proper encryption and access controls.
+
 ## Created Documentation Files
 
 ### 1. BFF Authentication Configuration Guide

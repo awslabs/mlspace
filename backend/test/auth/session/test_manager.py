@@ -80,10 +80,13 @@ class TestSessionManager:
         call_args = mock_store._update.call_args
         update_expression = call_args[0][1]  # Second positional argument
 
-        # Should have token and user data updates
-        assert "access_token" in update_expression
+        # Should have refresh_token (only token stored), user data, and timestamp updates
+        assert "refresh_token" in update_expression
         assert "displayName" in update_expression
         assert "expires_at" in update_expression
+        # access_token and id_token should NOT be in the update expression (not stored)
+        assert "access_token" not in update_expression
+        assert "id_token" not in update_expression
 
     def test_update_session_invalid_session_id(self):
         """Test updating session with invalid session ID."""

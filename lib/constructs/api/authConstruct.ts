@@ -45,15 +45,16 @@ export class AuthApiConstruct extends Construct {
             AUTH_PRIMARY_DOMAIN: props.mlspaceConfig.AUTH_PRIMARY_DOMAIN,
             AUTH_SYNC_DOMAINS: props.mlspaceConfig.AUTH_SYNC_DOMAINS,
             AUTH_SESSION_TTL_HOURS: props.mlspaceConfig.AUTH_SESSION_TTL_HOURS.toString(),
-            AUTH_ENCRYPTION_KEY_SSM_PARAM: props.mlspaceConfig.AUTH_ENCRYPTION_KEY_SSM_PARAM,
-            AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM: props.mlspaceConfig.AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM,
+            AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,
+            AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME,
         };
 
         // OIDC-specific environment variables
         const oidcEnv = {
             AUTH_OIDC_URL: props.mlspaceConfig.AUTH_OIDC_URL,
             AUTH_OIDC_CLIENT_ID: props.mlspaceConfig.AUTH_OIDC_CLIENT_ID,
-            AUTH_OIDC_CLIENT_SECRET_SSM_PARAM: props.mlspaceConfig.AUTH_OIDC_CLIENT_SECRET_SSM_PARAM,
+            AUTH_OIDC_CLIENT_SECRET_NAME: props.mlspaceConfig.AUTH_OIDC_CLIENT_SECRET_NAME,
+            AUTH_OIDC_USE_PKCE: props.mlspaceConfig.AUTH_OIDC_USE_PKCE ? 'True' : 'False',
             AUTH_OIDC_VERIFY_SSL: props.mlspaceConfig.AUTH_OIDC_VERIFY_SSL ? 'True' : 'False',
             AUTH_OIDC_VERIFY_SIGNATURE: props.mlspaceConfig.AUTH_OIDC_VERIFY_SIGNATURE ? 'True' : 'False',
         };
@@ -64,7 +65,7 @@ export class AuthApiConstruct extends Construct {
                 resource: 'auth',
                 description: 'Initiates authentication flow by redirecting to Identity Provider',
                 path: 'auth/login',
-                method: 'POST',
+                method: 'GET',
                 environment: {
                     ...authCommonEnv,
                     ...oidcEnv,

@@ -25,7 +25,7 @@ from unittest import mock
 TEST_SESSION_ENV = {
     "AWS_DEFAULT_REGION": "us-east-1",
     "AUTH_SESSION_TABLE_NAME": "test-session-table",
-    "AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM": "/test/encryption/key",
+    "AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME": "test/encryption/key",
 }
 
 

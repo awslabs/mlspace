@@ -84,7 +84,12 @@ class TestOIDCHandler:
 
         handler = OIDCHandler(self.config)
 
-        auth_url = handler.get_authorization_url("test-state", "https://app.example.com/callback")
+        # Generate code_verifier for PKCE
+        from authlib.common.security import generate_token
+
+        code_verifier = generate_token(48)
+
+        auth_url = handler.get_authorization_url("test-state", "https://app.example.com/callback", code_verifier=code_verifier)
 
         assert "https://example.com/auth" in auth_url
         assert "client_id=test-client-id" in auth_url
@@ -136,7 +141,7 @@ class TestOIDCHandler:
         """Test token expiration extraction."""
         handler = self._create_test_handler()
 
-        from ml_space_lambda.auth.handlers.base_handler import IdPTokens
+        from ml_space_lambda.auth.models.auth_models import IdPTokens
 
         # Test with standard expires_in
         tokens = IdPTokens(access_token="token123", expires_in=3600, refresh_token="refresh123")
@@ -165,7 +170,7 @@ class TestOIDCHandler:
 
         # Mock the normalize_user_data method to return expected result
         with patch.object(handler, "normalize_user_data") as mock_normalize:
-            from ml_space_lambda.auth.handlers.base_handler import UserData
+            from ml_space_lambda.auth.models.auth_models import UserData
 
             expected_user = UserData(id="user123", displayName="John Doe", email="john.doe@example.com")
             mock_normalize.return_value = expected_user
@@ -208,7 +213,7 @@ class TestOIDCHandler:
         """Test token validation."""
         handler = self._create_test_handler()
 
-        from ml_space_lambda.auth.handlers.base_handler import UserData
+        from ml_space_lambda.auth.models.auth_models import UserData
 
         # Mock get_user_info to return user data for valid token
         with patch.object(handler, "get_user_info") as mock_get_user_info:
@@ -243,7 +248,7 @@ class TestOIDCHandler:
         """Test successful token refresh."""
         from authlib.oauth2.rfc6749 import OAuth2Token
 
-        from ml_space_lambda.auth.handlers.base_handler import UserData
+        from ml_space_lambda.auth.models.auth_models import UserData
 
         handler = self._create_test_handler()
 

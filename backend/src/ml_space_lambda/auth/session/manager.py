@@ -25,7 +25,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from ml_space_lambda.auth.session.encryption import TokenEncryption
 from ml_space_lambda.data_access_objects.dynamo_data_store import DynamoDBObjectStore
 
 
@@ -37,13 +36,13 @@ class SessionManager:
     with encrypted token storage.
     """
 
-    def __init__(self, table_name: str, encryption: TokenEncryption, client=None):
+    def __init__(self, table_name: str, encryption, client=None):
         """
         Initialize session manager.
 
         Args:
             table_name: DynamoDB table name for session storage
-            encryption: Token encryption instance
+            encryption: Token encryption instance (TokenEncryption or VersionedTokenEncryption)
             client: Optional DynamoDB client (for testing)
         """
         self.store = DynamoDBObjectStore(table_name, client)
@@ -65,7 +64,7 @@ class SessionManager:
 
         Args:
             user_data: User identity information (id, displayName, email, groups, attributes)
-            tokens: IdP tokens (access_token, refresh_token, id_token)
+            tokens: IdP tokens dict (only refresh_token is stored encrypted; access_token and id_token are not persisted)
             provider: Identity provider type (e.g., 'oidc')
             expires_at: Session expiration timestamp
             refresh_at: Token refresh threshold timestamp
@@ -81,11 +80,10 @@ class SessionManager:
         """
         session_id = f"session:{uuid.uuid4()}"
 
-        # Encrypt sensitive tokens
+        # Encrypt only the refresh token (needed for token refresh)
         encrypted_tokens = {}
-        for token_type, token_value in tokens.items():
-            if token_value:  # Only encrypt non-empty tokens
-                encrypted_tokens[token_type] = self.encryption.encrypt_token(token_value)
+        if tokens.get("refresh_token"):
+            encrypted_tokens["refresh_token"] = self.encryption.encrypt_token(tokens["refresh_token"])
 
         # Calculate TTL (session expiration + 1 hour buffer for cleanup)
         ttl = int(expires_at.timestamp()) + 3600
@@ -160,7 +158,7 @@ class SessionManager:
 
         Args:
             session_id: Session identifier
-            tokens: New IdP tokens
+            tokens: New IdP tokens dict (only refresh_token is stored)
             expires_at: New session expiration timestamp
             refresh_at: New token refresh threshold timestamp
 
@@ -186,7 +184,7 @@ class SessionManager:
 
         Args:
             session_id: Session identifier
-            tokens: New IdP tokens (optional)
+            tokens: New IdP tokens dict (only refresh_token is stored; optional)
             user_data: Updated user information (optional)
             expires_at: New session expiration timestamp (optional)
             refresh_at: New token refresh threshold timestamp (optional)
@@ -208,16 +206,11 @@ class SessionManager:
             update_parts.append("updated_at = :updated_at")
             expression_values[":updated_at"] = datetime.now(timezone.utc).isoformat()
 
-            # Update tokens if provided
-            if tokens:
-                encrypted_tokens = {}
-                for token_type, token_value in tokens.items():
-                    if token_value:
-                        encrypted_tokens[token_type] = self.encryption.encrypt_token(token_value)
-
-                for token_type, encrypted_token in encrypted_tokens.items():
-                    update_parts.append(f"#data.#session.{token_type} = :{token_type}")
-                    expression_values[f":{token_type}"] = encrypted_token
+            # Update tokens if provided (only refresh_token is stored)
+            if tokens and tokens.get("refresh_token"):
+                encrypted_refresh_token = self.encryption.encrypt_token(tokens["refresh_token"])
+                update_parts.append("#data.#session.refresh_token = :refresh_token")
+                expression_values[":refresh_token"] = encrypted_refresh_token
 
             # Update timestamps if provided
             if expires_at:
@@ -296,7 +289,7 @@ class SessionManager:
 
         Args:
             session_id: Session identifier
-            tokens: New IdP tokens
+            tokens: New IdP tokens dict (only refresh_token is stored)
             user_data: Updated user information from IdP
             expires_at: New session expiration timestamp
             refresh_at: New token refresh threshold timestamp
@@ -375,16 +368,14 @@ class SessionManager:
         decrypted_record = session_record.copy()
         session_data = decrypted_record.get("data", {}).get("session", {})
 
-        # Decrypt each token field
-        token_fields = ["access_token", "refresh_token", "id_token"]
-        for field in token_fields:
-            if field in session_data and session_data[field]:
-                try:
-                    if self.encryption.is_encrypted_token(session_data[field]):
-                        session_data[field] = self.encryption.decrypt_token(session_data[field])
-                except Exception:
-                    # If decryption fails, remove the token
-                    session_data[field] = None
+        # Decrypt refresh_token if present
+        if "refresh_token" in session_data and session_data["refresh_token"]:
+            try:
+                if self.encryption.is_encrypted_token(session_data["refresh_token"]):
+                    session_data["refresh_token"] = self.encryption.decrypt_token(session_data["refresh_token"])
+            except Exception:
+                # If decryption fails, remove the token
+                session_data["refresh_token"] = None
 
         return decrypted_record
 

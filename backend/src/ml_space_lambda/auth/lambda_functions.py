@@ -30,10 +30,11 @@ from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import boto3
+from authlib.common.security import generate_token
 
-from ml_space_lambda.auth.handlers.base_handler import AuthError, AuthStatus, IdentityResponse, SessionInfo, UserData
 from ml_space_lambda.auth.handlers.oidc_handler import OIDCConfig, OIDCHandler
-from ml_space_lambda.auth.session.encryption import TokenEncryption, decode_key_from_storage
+from ml_space_lambda.auth.models.auth_models import AuthError, AuthStatus, IdentityResponse, SessionInfo, UserData
+from ml_space_lambda.auth.session.key_manager import VersionedKeyManager, VersionedTokenEncryption
 from ml_space_lambda.auth.session.manager import OTACManager, SessionManager
 from ml_space_lambda.auth.utils.cookies import (
     clear_session_cookie,
@@ -53,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize AWS clients
 ssm_client = boto3.client("ssm")
+secrets_client = boto3.client("secretsmanager")
 
 
 class IdPType(str, Enum):
@@ -76,10 +78,11 @@ def _get_auth_config() -> Dict[str, str]:
         "idp_type": os.environ.get("AUTH_IDP_TYPE", IdPType.OIDC),
         "oidc_url": os.environ.get("AUTH_OIDC_URL", ""),
         "oidc_client_id": os.environ.get("AUTH_OIDC_CLIENT_ID", ""),
-        "oidc_client_secret_param": os.environ.get("AUTH_OIDC_CLIENT_SECRET_SSM_PARAM", ""),
+        "oidc_client_secret_name": os.environ.get("AUTH_OIDC_CLIENT_SECRET_NAME", ""),
+        "oidc_use_pkce": os.environ.get("AUTH_OIDC_USE_PKCE", "true").lower() == "true",
         "oidc_verify_ssl": os.environ.get("AUTH_OIDC_VERIFY_SSL", "true").lower() == "true",
-        "state_encryption_key_param": os.environ.get("AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM", ""),
-        "token_encryption_key_param": os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM", ""),
+        "state_encryption_key_secret_name": os.environ.get("AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME", ""),
+        "token_encryption_key_secret_name": os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME", ""),
         "session_table_name": os.environ.get("AUTH_SESSION_TABLE_NAME", ""),
         "primary_domain": os.environ.get("AUTH_PRIMARY_DOMAIN", ""),
         "sync_domains": os.environ.get("AUTH_SYNC_DOMAINS", ""),
@@ -96,11 +99,11 @@ def _get_auth_config() -> Dict[str, str]:
     if not config["oidc_client_id"]:
         raise Exception("AUTH_OIDC_CLIENT_ID environment variable is required")
 
-    if not config["state_encryption_key_param"]:
-        raise Exception("AUTH_STATE_ENCRYPTION_KEY_SSM_PARAM environment variable is required")
+    if not config["state_encryption_key_secret_name"]:
+        raise Exception("AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME environment variable is required")
 
-    if not config["token_encryption_key_param"]:
-        raise Exception("AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM environment variable is required")
+    if not config["token_encryption_key_secret_name"]:
+        raise Exception("AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME environment variable is required")
 
     if not config["session_table_name"]:
         raise Exception("AUTH_SESSION_TABLE_NAME environment variable is required")
@@ -130,6 +133,36 @@ def _get_ssm_parameter(parameter_name: str, decrypt: bool = True) -> str:
         raise Exception(f"Configuration error: Unable to retrieve {parameter_name}")
 
 
+def _get_secret_value(secret_arn: str, key: str = "key") -> str:
+    """
+    Get secret value from AWS Secrets Manager.
+
+    Expects the new versioned format (VersionedKeyData structure).
+
+    Args:
+        secret_arn: Secret ARN or name
+        key: Unused parameter (kept for API compatibility)
+
+    Returns:
+        Current key from versioned secret
+
+    Raises:
+        Exception: If secret retrieval fails
+    """
+    try:
+        response = secrets_client.get_secret_value(SecretId=secret_arn)
+
+        # Always expect versioned format
+        from ml_space_lambda.auth.models.key_models import VersionedKeyData
+
+        key_data = VersionedKeyData.from_secrets_manager_format(response["SecretString"])
+        return key_data.get_current_key()
+
+    except Exception as e:
+        logger.error(f"Failed to get secret {secret_arn}: {e}")
+        raise Exception(f"Configuration error: Unable to retrieve secret {secret_arn}")
+
+
 def _create_auth_handler(config: Dict[str, str]) -> OIDCHandler:
     """
     Create authentication handler based on configuration.
@@ -152,9 +185,9 @@ def _create_auth_handler(config: Dict[str, str]) -> OIDCHandler:
     # OIDC-specific handler creation
     # Get OIDC client secret if configured
     client_secret = None
-    if config["oidc_client_secret_param"]:
+    if config["oidc_client_secret_name"]:
         try:
-            client_secret = _get_ssm_parameter(config["oidc_client_secret_param"])
+            client_secret = _get_secret_value(config["oidc_client_secret_name"], "client_secret")
         except Exception as e:
             logger.warning(f"Failed to retrieve OIDC client secret: {e}")
             # Continue without client secret (PKCE flow)
@@ -165,7 +198,7 @@ def _create_auth_handler(config: Dict[str, str]) -> OIDCHandler:
         client_id=config["oidc_client_id"],
         client_secret=client_secret,
         scopes=["openid", "profile", "email"],
-        use_pkce=None,  # Auto-detect based on client_secret presence
+        use_pkce=config["oidc_use_pkce"],
     )
 
     return OIDCHandler(oidc_config)
@@ -185,8 +218,8 @@ def _create_state_manager(config: Dict[str, str]) -> StateManager:
         Exception: If state manager creation fails
     """
     try:
-        # Get state encryption key from SSM
-        encoded_key = _get_ssm_parameter(config["state_encryption_key_param"])
+        # Get state encryption key from Secrets Manager
+        encoded_key = _get_secret_value(config["state_encryption_key_secret_name"], key="client_secret")
         encryption_key = decode_state_key_from_storage(encoded_key)
 
         return StateManager(encryption_key)
@@ -195,27 +228,25 @@ def _create_state_manager(config: Dict[str, str]) -> StateManager:
         raise Exception("Configuration error: Unable to initialize state management")
 
 
-def _create_token_encryption(config: Dict[str, str]) -> TokenEncryption:
+def _create_token_encryption(config: Dict[str, str]) -> VersionedTokenEncryption:
     """
-    Create token encryption instance for securing IdP tokens.
+    Create versioned token encryption instance for securing IdP tokens.
 
     Args:
         config: Authentication configuration
 
     Returns:
-        Configured token encryption instance
+        Configured versioned token encryption instance
 
     Raises:
         Exception: If token encryption creation fails
     """
     try:
-        # Get token encryption key from SSM
-        encoded_key = _get_ssm_parameter(config["token_encryption_key_param"])
-        encryption_key = decode_key_from_storage(encoded_key)
-
-        return TokenEncryption(encryption_key)
+        # Use versioned key manager for token encryption
+        key_manager = VersionedKeyManager(secret_arn=config["token_encryption_key_secret_name"], key_type="token")
+        return VersionedTokenEncryption(key_manager)
     except Exception as e:
-        logger.error(f"Failed to create token encryption: {e}")
+        logger.error(f"Failed to create versioned token encryption: {e}")
         raise Exception("Configuration error: Unable to initialize token encryption")
 
 
@@ -310,7 +341,7 @@ def _validate_redirect_url(redirect_url: str, host_header: str) -> bool:
 
 def login(event, context):
     """
-    Handle POST /auth/login - Initiate authentication flow.
+    Handle GET /auth/login - Initiate authentication flow.
 
     Generates state parameter, sets state cookie, and redirects to IdP.
 
@@ -331,16 +362,9 @@ def login(event, context):
         # Create state manager
         state_manager = _create_state_manager(config)
 
-        # Parse request body
-        body = {}
-        if event.get("body"):
-            try:
-                body = json.loads(event["body"])
-            except json.JSONDecodeError:
-                logger.warning("Invalid JSON in request body")
-
-        # Get redirect URL from request
-        redirect_url = body.get("redirectUrl", "/")
+        # Get redirect URL from query parameters
+        query_params = event.get("queryStringParameters") or {}
+        redirect_url = query_params.get("redirectUrl", "/")
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
 
         # Validate redirect URL
@@ -354,18 +378,28 @@ def login(event, context):
         # Generate nonce for state parameter
         nonce = state_manager.generate_nonce()
 
-        # Create encrypted state parameter
-        encrypted_state = state_manager.create_state(redirect_url=redirect_url, domain=domain or host_header, nonce=nonce)
+        # Generate protocol-specific data for OIDC (PKCE code_verifier if enabled)
+        protocol_data = None
+        if config["oidc_use_pkce"]:
+            protocol_data = {"code_verifier": generate_token(48)}
+
+        # Create encrypted state parameter with protocol-specific data
+        encrypted_state = state_manager.create_state(
+            redirect_url=redirect_url, domain=domain or host_header, nonce=nonce, protocol_data=protocol_data
+        )
 
         # Get redirect URI for OIDC callback
         redirect_uri = _get_redirect_uri(event)
 
-        # Generate authorization URL
-        authorization_url = auth_handler.get_authorization_url(state=encrypted_state, redirect_uri=redirect_uri)
+        # Generate authorization URL with code_verifier if PKCE is enabled
+        code_verifier = protocol_data.get("code_verifier") if protocol_data else None
+        authorization_url = auth_handler.get_authorization_url(
+            state=encrypted_state, redirect_uri=redirect_uri, code_verifier=code_verifier
+        )
 
         # Create state cookie
         secure_flag = should_set_secure_flag(host_header)
-        state_cookie = create_state_cookie(nonce=nonce, max_age_seconds=600, secure=secure_flag)  # 10 minutes
+        state_cookie = create_state_cookie(nonce=nonce, max_age_seconds=600, secure=secure_flag, same_site="Lax")  # 10 minutes
 
         logger.info(f"Login initiated for domain: {domain}, redirecting to IdP")
 
@@ -455,14 +489,14 @@ def _validate_state_parameter(event, state_manager, encrypted_state):
     return state_data, None
 
 
-def _exchange_code_for_tokens(auth_handler, auth_code, encrypted_state, event):
+def _exchange_code_for_tokens(auth_handler, auth_code, state_data, event):
     """
     Exchange authorization code for tokens via OIDC handler.
 
     Args:
         auth_handler: OIDC handler instance
         auth_code: Authorization code from callback
-        encrypted_state: Encrypted state parameter
+        state_data: Validated state data containing protocol_data if present
         event: Lambda event for building redirect URI
 
     Returns:
@@ -472,10 +506,12 @@ def _exchange_code_for_tokens(auth_handler, auth_code, encrypted_state, event):
     # Get redirect URI for token exchange
     redirect_uri = _get_redirect_uri(event)
 
+    # Extract code_verifier from protocol_data if present (for PKCE flow)
+    protocol_data = state_data.get("protocol_data", {})
+    code_verifier = protocol_data.get("code_verifier")
+
     # Exchange authorization code for tokens
-    auth_result = auth_handler.handle_callback(
-        callback_data={"code": auth_code, "state": encrypted_state}, redirect_uri=redirect_uri
-    )
+    auth_result = auth_handler.handle_callback(code=auth_code, redirect_uri=redirect_uri, code_verifier=code_verifier)
 
     if not auth_result.success:
         logger.error(f"Token exchange failed: {auth_result.error}")
@@ -602,7 +638,7 @@ def callback(event, context):
             return error_response
 
         # Exchange authorization code for tokens
-        auth_result, error_response = _exchange_code_for_tokens(auth_handler, auth_code, encrypted_state, event)
+        auth_result, error_response = _exchange_code_for_tokens(auth_handler, auth_code, state_data, event)
         if error_response:
             return error_response
 

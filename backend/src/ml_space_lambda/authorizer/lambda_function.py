@@ -19,7 +19,6 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
-from ml_space_lambda.auth.session.encryption import TokenEncryption
 from ml_space_lambda.auth.session.manager import SessionManager
 from ml_space_lambda.auth.session.validator import SessionValidator
 from ml_space_lambda.auth.utils.cookies import get_cookie_value
@@ -64,20 +63,22 @@ def _get_session_manager() -> SessionManager:
     if _session_manager is None:
         # Get configuration from environment variables
         session_table_name = os.environ.get("AUTH_SESSION_TABLE_NAME")
-        token_encryption_key_param = os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM")
+        token_encryption_key_secret_name = os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME")
 
         if not session_table_name:
             raise Exception("AUTH_SESSION_TABLE_NAME environment variable is required")
 
-        if not token_encryption_key_param:
-            raise Exception("AUTH_TOKEN_ENCRYPTION_KEY_SSM_PARAM environment variable is required")
+        if not token_encryption_key_secret_name:
+            raise Exception("AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME environment variable is required")
 
         # Create token encryption instance
         try:
-            from ml_space_lambda.utils.common_functions import get_ssm_parameter
+            # Always expect versioned format - use VersionedKeyManager
+            from ml_space_lambda.auth.session.key_manager import VersionedKeyManager, VersionedTokenEncryption
 
-            encryption_key = get_ssm_parameter(token_encryption_key_param)
-            token_encryption = TokenEncryption(encryption_key)
+            key_manager = VersionedKeyManager(secret_arn=token_encryption_key_secret_name, key_type="token")
+            token_encryption = VersionedTokenEncryption(key_manager)
+
         except Exception as e:
             logger.error(f"Failed to create token encryption: {e}")
             raise Exception(f"Failed to initialize token encryption: {e}")
