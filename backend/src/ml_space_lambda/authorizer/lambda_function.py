@@ -203,10 +203,11 @@ def lambda_handler(event, context):
         logger.info("Accessing auth API...")
         # Anyone can create a user account
         policy_statement["Effect"] = "Allow"
-    elif requested_resource == "/user" and request_method == "POST":
-        logger.info("Attempting to create new user account...")
-        # Anyone can create a user account
-        policy_statement["Effect"] = "Allow"
+    # users are now created as part of the login process
+    # elif requested_resource == "/user" and request_method == "POST":
+    #     logger.info("Attempting to create new user account...")
+    #     # Anyone can create a user account
+    #     policy_statement["Effect"] = "Allow"
     elif user.suspended:
         if (requested_resource == "/login" and request_method == "PUT") or (
             requested_resource == "/current-user" and request_method == "GET"

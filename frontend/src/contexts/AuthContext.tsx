@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import axios, { axiosCatch } from '../shared/util/axios-utils';
-import React, { useState, useEffect, useRef, useMemo, createContext } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, createContext } from 'react';
 
 // Types and Interfaces
 export type AuthUser = {
@@ -44,40 +44,51 @@ export type AuthContextValue = AuthState & {
     // Actions
     login: (redirectUrl?: string) => void;
     logout: (logoutFromIdp?: boolean) => Promise<void>;
-    refresh: () => Promise<void>;
     clearError: () => void;
 };
 
+enum AuthBroadcastMessageType {
+    'AUTH_STATE_CHANGED',
+    'SESSION_EXPIRED',
+    'LOGOUT_INITIATED'
+}
+
 // Cross-tab synchronization message types
-type AuthBroadcastMessage =
-| { type: 'AUTH_STATE_CHANGED' }
-| { type: 'SESSION_EXPIRED' }
-| { type: 'LOGOUT_INITIATED' };
+type AuthBroadcastMessage = { type: AuthBroadcastMessageType; senderId: string };
 
 // Cross-tab synchronization manager
 class AuthSyncManager {
     private channel: BroadcastChannel;
+    private readonly id: string;
+    private onStateChangeRef: { current: () => void };
     
-    constructor (private onStateChange: () => void) {
+    constructor (onStateChangeRef: { current: () => void }) {
+        this.id = `auth-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         this.channel = new BroadcastChannel('mlspace-auth');
+        this.onStateChangeRef = onStateChangeRef;
         this.channel.addEventListener('message', this.handleMessage);
     }
     
     private handleMessage = (event: MessageEvent<AuthBroadcastMessage>) => {
+        // Ignore messages from this instance
+        if (event.data.senderId === this.id) {
+            return;
+        }
+        
         switch (event.data.type) {
-            case 'AUTH_STATE_CHANGED':
-            case 'SESSION_EXPIRED':
-                this.onStateChange();
+            case AuthBroadcastMessageType.AUTH_STATE_CHANGED:
+            case AuthBroadcastMessageType.SESSION_EXPIRED:
+                this.onStateChangeRef.current();
                 break;
-            case 'LOGOUT_INITIATED':
+            case AuthBroadcastMessageType.LOGOUT_INITIATED:
             // Immediate logout without API call (already done in originating tab)
-                this.onStateChange();
+                this.onStateChangeRef.current();
                 break;
         }
     };
     
-    broadcast (message: AuthBroadcastMessage) {
-        this.channel.postMessage(message);
+    broadcast (type: AuthBroadcastMessageType) {
+        this.channel.postMessage({ type, senderId: this.id });
     }
     
     destroy () {
@@ -93,14 +104,12 @@ export const AuthContext = createContext<AuthContextValue | null>(null);
 type AuthProviderProps = {
     children: React.ReactNode;
     checkInterval?: number; // Default: 60000ms (1 minute)
-    refreshThreshold?: number; // Default: 300000ms (5 minutes before expiry)
 };
 
 // AuthProvider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({
     children,
-    checkInterval = 60000,
-    refreshThreshold = 300000
+    checkInterval = 60000
 }) => {
     const [state, setState] = useState<AuthState>({
         status: 'loading',
@@ -110,25 +119,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     });
     
     // Cross-tab synchronization
-    const syncManagerRef = useRef<AuthSyncManager | null>(null);
+    const syncManagerRef = useRef<AuthSyncManager>();
+    const checkAuthStatusRef = useRef<() => void>();
     
-    const shouldRefresh = (session: AuthSession): boolean => {
-        const refreshTime = new Date(session.refreshAt).getTime();
-        const now = Date.now();
-        return now >= refreshTime - refreshThreshold;
-    };
-    
-    const refresh = async () => {
-        await checkAuthStatus();
-    };
-    
-    const checkAuthStatus = async () => {
+    const checkAuthStatus = useCallback(async () => {
+        console.log('checking auth status');
+        const wasAuthenticated = state.status === 'authenticated';
+
         try {
             // Use axios-utils for standardized baseURL configuration
             const response = await axios.get('/auth/identity').catch(axiosCatch);
-            
-            const wasAuthenticated = state.status === 'authenticated';
-            
+
             setState({
                 status: 'authenticated',
                 user: response.data.user,
@@ -138,17 +139,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
             
             // Broadcast auth state changes to other tabs
             if (!wasAuthenticated || response.data.session.refreshed) {
-                syncManagerRef.current?.broadcast({ type: 'AUTH_STATE_CHANGED' });
-            }
-            
-            // Check if refresh is needed
-            if (shouldRefresh(response.data.session)) {
-                await refresh();
+                syncManagerRef.current?.broadcast(AuthBroadcastMessageType.AUTH_STATE_CHANGED);
             }
         } catch (error: any) {
-            if (error?.code === 401) {
-                const wasAuthenticated = state.status === 'authenticated';
-                
+            if (error?.code === 401) {                
                 setState({
                     status: 'unauthenticated',
                     user: null,
@@ -158,7 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
                 
                 // Broadcast session expiration to other tabs
                 if (wasAuthenticated) {
-                    syncManagerRef.current?.broadcast({ type: 'SESSION_EXPIRED' });
+                    syncManagerRef.current?.broadcast(AuthBroadcastMessageType.SESSION_EXPIRED);
                 }
             } else {
                 setState((prev) => ({
@@ -168,28 +162,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
                 }));
             }
         }
-    };
+    }, [state.status]);
+    
+    // Keep ref updated for AuthSyncManager
+    useEffect(() => {
+        checkAuthStatusRef.current = checkAuthStatus;
+    }, [checkAuthStatus]);
     
     useEffect(() => {
-        syncManagerRef.current = new AuthSyncManager(checkAuthStatus);
+        syncManagerRef.current = new AuthSyncManager(checkAuthStatusRef as { current: () => void });
         return () => {
             syncManagerRef.current?.destroy();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     
     // Initial authentication check on mount
     useEffect(() => {
         checkAuthStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [checkAuthStatus]);
     
     // Periodic session validation
     useEffect(() => {
+        console.log('reset periodic refresh');
         const interval = setInterval(checkAuthStatus, checkInterval);
         return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [checkInterval]);
+    }, [checkInterval, checkAuthStatus]);
     
 
     
@@ -216,7 +213,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
             });
             
             // Notify other tabs
-            syncManagerRef.current?.broadcast({ type: 'LOGOUT_INITIATED' });
+            syncManagerRef.current?.broadcast(AuthBroadcastMessageType.LOGOUT_INITIATED);
             
             // Redirect to IdP logout if provided
             if (response.data.idpLogoutUrl) {
@@ -236,7 +233,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         ...state,
         login,
         logout,
-        refresh,
         clearError
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [state]);

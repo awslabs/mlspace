@@ -66,7 +66,7 @@ def test_environment_variables():
             EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
             EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN: "",
             EnvVariable.MANAGE_IAM_ROLES: "",
-            EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
+            EnvVariable.NEW_USERS_SUSPENDED: "True",
             EnvVariable.NOTEBOOK_ROLE_NAME: "",
             EnvVariable.PERMISSIONS_BOUNDARY_ARN: "",
             EnvVariable.PROJECTS_TABLE: "mlspace-projects",

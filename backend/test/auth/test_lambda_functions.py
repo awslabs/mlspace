@@ -314,8 +314,12 @@ class TestAuthLambdaFunctions:
     @patch("ml_space_lambda.auth.lambda_functions.StateManager")
     @patch("ml_space_lambda.auth.lambda_functions.SessionManager")
     @patch("ml_space_lambda.auth.lambda_functions.OTACManager")
+    @patch("ml_space_lambda.data_access_objects.dynamo_data_store.boto3")
+    @patch("ml_space_lambda.auth.lambda_functions.get_environment_variables")
     def test_callback_success(
         self,
+        mock_get_env_vars,
+        mock_boto3,
         mock_otac_manager_class,
         mock_session_manager_class,
         mock_state_manager_class,
@@ -327,6 +331,18 @@ class TestAuthLambdaFunctions:
         # Set up environment
         for key, value in self.env_vars.items():
             os.environ[key] = value
+
+        # Mock environment variables for user creation
+        mock_get_env_vars.return_value = {
+            "NEW_USERS_SUSPENDED": "False",
+            "USERS_TABLE": "test-users-table",
+        }
+
+        # Mock DynamoDB client for UserDAO
+        mock_dynamodb_client = Mock()
+        mock_dynamodb_client.get_item.return_value = {}  # User doesn't exist
+        mock_dynamodb_client.put_item.return_value = {}
+        mock_boto3.client.return_value = mock_dynamodb_client
 
         # Mock SSM client
         def mock_get_parameter(Name, WithDecryption=True):
@@ -354,7 +370,11 @@ class TestAuthLambdaFunctions:
         from ml_space_lambda.auth.models.auth_models import AuthenticationResult, IdPTokens, UserData
 
         mock_user_data = UserData(
-            id="test-user", displayName="Test User", email="test@example.com", groups=["users"], attributes={}
+            id="test-user",
+            displayName="Test User",
+            email="test@example.com",
+            groups=["users"],
+            attributes={"sub": "idp-sub-12345"},  # Include sub claim in attributes
         )
 
         mock_tokens = IdPTokens(
@@ -392,6 +412,10 @@ class TestAuthLambdaFunctions:
         assert response["headers"]["Location"] == "/dashboard"
         assert "multiValueHeaders" in response
         assert "Set-Cookie" in response["multiValueHeaders"]
+
+        # Verify user was checked and created
+        mock_dynamodb_client.get_item.assert_called()
+        mock_dynamodb_client.put_item.assert_called()
 
     @patch.dict("os.environ")
     @patch("ml_space_lambda.auth.lambda_functions.ssm_client")

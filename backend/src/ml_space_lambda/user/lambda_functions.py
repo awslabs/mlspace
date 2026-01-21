@@ -38,7 +38,7 @@ iam_manager = IAMManager()
 def create(event, context):
     entity = json.loads(event["body"])
     username = entity["username"]
-    suspended_state = get_environment_variables().get("NEW_USER_SUSPENSION_DEFAULT") == "True"
+    suspended_state = get_environment_variables().get("NEW_USERS_SUSPENDED") == "True"
     preferences = {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL}
 
     existing_user = user_dao.get(username)

@@ -24,6 +24,7 @@ callback, logout, identity, and cross-domain synchronization.
 import json
 import logging
 import os
+import time
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
@@ -49,6 +50,9 @@ from ml_space_lambda.auth.utils.cookies import (
 )
 from ml_space_lambda.auth.utils.otac import build_domain_list, build_sync_chain_url, should_initiate_sync
 from ml_space_lambda.auth.utils.state import StateManager, decode_state_key_from_storage
+from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserDAO, UserModel
+from ml_space_lambda.enums import TimezonePreference
+from ml_space_lambda.utils.mlspace_config import get_environment_variables
 
 logger = logging.getLogger(__name__)
 
@@ -521,9 +525,61 @@ def _exchange_code_for_tokens(auth_handler, auth_code, state_data, event):
     return auth_result, None
 
 
+def _ensure_user_exists(user_data: UserData) -> None:
+    """
+    Ensure user exists in the system, creating or updating as needed.
+
+    Creates users with username and display_name matching the pattern from the frontend
+    (oidc.config.ts onSigninCallback). Updates existing users to backfill the id field
+    from the IdP's "sub" claim.
+
+    Args:
+        user_data: User data from authentication result
+    """
+    user_dao = UserDAO()
+
+    # Extract the sub claim from attributes (stored by normalize_user_data)
+    idp_sub = user_data.attributes.get("sub", "")
+
+    # Check if user already exists
+    existing_user = user_dao.get(user_data.id)
+
+    if existing_user:
+        # Update existing user: set last login and backfill id field if missing
+        existing_user.last_login = int(time.time())
+
+        # Backfill the id field with the IdP's sub claim if not already set
+        if not existing_user.id and idp_sub:
+            existing_user.id = idp_sub
+            logger.info(f"Backfilled id field for existing user: {user_data.id}")
+
+        user_dao.update(user_data.id, existing_user)
+        logger.info(f"Updated last login for existing user: {user_data.id}")
+    else:
+        # Create new user matching the frontend pattern:
+        # - username: sanitized preferred_username (user_data.id)
+        # - display_name: name claim or constructed name (user_data.displayName)
+        # - email: email claim
+        # - id: sub claim from IdP
+        env_vars = get_environment_variables()
+        suspended_state = env_vars.get("NEW_USERS_SUSPENDED") == "True"
+        preferences = {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL}
+
+        new_user = UserModel(
+            username=user_data.id,  # Sanitized preferred_username
+            email=user_data.email or "",
+            display_name=user_data.displayName,  # Name claim, matching frontend
+            suspended=suspended_state,
+            preferences=preferences,
+            id=idp_sub if idp_sub else None,  # IdP's sub claim
+        )
+        user_dao.create(new_user)
+        logger.info(f"Created new user: {user_data.id} with IdP id: {idp_sub}")
+
+
 def _create_user_session(session_manager, auth_result, auth_handler, config, event):
     """
-    Create session record in DynamoDB with encrypted tokens.
+    Create session record in DynamoDB with encrypted tokens and ensure user exists.
 
     Args:
         session_manager: SessionManager instance
@@ -535,14 +591,24 @@ def _create_user_session(session_manager, auth_result, auth_handler, config, eve
     Returns:
         Tuple of (session_id, expires_at, login_domain)
     """
+    # Ensure user exists in the system (create or update)
+    _ensure_user_exists(auth_result.user_data)
+
     # Calculate session expiration times
     access_expires, refresh_expires = auth_handler.extract_token_expiration(auth_result.tokens)
 
-    # Session expires when access token expires (with some buffer)
-    expires_at = datetime.now(timezone.utc) + timedelta(seconds=access_expires)
+    # Session expires when refresh token expires (or default to 24 hours if no refresh token)
+    if not refresh_expires:
+        refresh_expires = 60 * 60 * 24
 
-    # Refresh tokens 5 minutes before expiration
-    refresh_at = expires_at - timedelta(minutes=5)
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=refresh_expires)
+
+    # Refresh at access token expiration to keep user info fresh, but not later than 5 minutes before session expires
+    access_token_expiration = datetime.now(timezone.utc) + timedelta(seconds=access_expires)
+    five_minutes_before_expiry = expires_at - timedelta(minutes=5)
+
+    # Use the earlier of the two times
+    refresh_at = min(access_token_expiration, five_minutes_before_expiry)
 
     # Create session record
     login_domain = extract_domain_from_host(event.get("headers", {}).get("Host", ""))
@@ -558,7 +624,7 @@ def _create_user_session(session_manager, auth_result, auth_handler, config, eve
         raw_idp_response=auth_result.raw_response,
     )
 
-    return session_id, access_expires, login_domain
+    return session_id, refresh_expires, login_domain
 
 
 def _handle_multi_domain_sync(otac_manager, session_id, config, event, state_data, session_cookie, clear_state):
@@ -643,9 +709,7 @@ def callback(event, context):
             return error_response
 
         # Create session record
-        session_id, access_expires, login_domain = _create_user_session(
-            session_manager, auth_result, auth_handler, config, event
-        )
+        session_id, expires_at, login_domain = _create_user_session(session_manager, auth_result, auth_handler, config, event)
 
         # Create session cookie
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
@@ -653,7 +717,7 @@ def callback(event, context):
         domain = extract_domain_from_host(host_header)
 
         session_cookie = create_session_cookie(
-            session_id=session_id, max_age_seconds=int(access_expires), domain=domain, secure=secure_flag
+            session_id=session_id, max_age_seconds=int(expires_at), domain=domain, secure=secure_flag
         )
 
         # Clear state cookie
@@ -984,8 +1048,20 @@ def _attempt_token_refresh(
 
         # Calculate new expiration times
         access_expires, refresh_expires = auth_handler.extract_token_expiration(refresh_result.tokens)
-        new_expires_at = datetime.now(timezone.utc) + timedelta(seconds=access_expires)
-        new_refresh_at = new_expires_at - timedelta(minutes=5)
+
+        # Session expires when refresh token expires (or default to 24 hours if no refresh token)
+        if refresh_expires:
+            new_expires_at = datetime.now(timezone.utc) + timedelta(seconds=refresh_expires)
+        else:
+            # Default to 24 hours if no refresh token expiration provided
+            new_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+
+        # Refresh at access token expiration to keep user info fresh, but not later than 5 minutes before session expires
+        access_token_expiration = datetime.now(timezone.utc) + timedelta(seconds=access_expires)
+        five_minutes_before_expiry = new_expires_at - timedelta(minutes=5)
+
+        # Use the earlier of the two times
+        new_refresh_at = min(access_token_expiration, five_minutes_before_expiry)
 
         # Update session with new tokens and user data
         update_success = session_manager.refresh_session_with_user_data(

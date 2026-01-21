@@ -47,6 +47,7 @@ export class AuthApiConstruct extends Construct {
             AUTH_SESSION_TTL_HOURS: props.mlspaceConfig.AUTH_SESSION_TTL_HOURS.toString(),
             AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,
             AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME,
+            NEW_USERS_SUSPENDED: props.mlspaceConfig.NEW_USERS_SUSPENDED ? 'True' : 'False'
         };
 
         // OIDC-specific environment variables

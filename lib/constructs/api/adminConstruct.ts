@@ -60,7 +60,7 @@ export class AdminApiConstruct extends Construct {
                 path: 'user',
                 method: 'POST',
                 environment: {
-                    NEW_USER_SUSPENSION_DEFAULT: props.mlspaceConfig.NEW_USERS_SUSPENDED ? 'True' : 'False',
+                    NEW_USERS_SUSPENDED: props.mlspaceConfig.NEW_USERS_SUSPENDED ? 'True' : 'False',
                 },
             },
             {

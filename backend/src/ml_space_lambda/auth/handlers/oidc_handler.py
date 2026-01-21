@@ -344,13 +344,26 @@ class OIDCHandler:
             Normalized user data with MLSpace standard fields
         """
         # OIDC standard claims mapping
-        user_id = (
-            raw_user_data.get("sub") or raw_user_data.get("preferred_username") or raw_user_data.get("email", "").split("@")[0]
-        )
+        # Use "sub" as the durable identifier (OIDC standard)
+        sub = raw_user_data.get("sub", "")
 
+        # Use preferred_username for the username, sanitized to remove special characters
+        preferred_username = raw_user_data.get("preferred_username", "")
+        if preferred_username:
+            # Sanitize username by replacing problematic characters with dashes
+            user_id = preferred_username.replace(",", "-").replace("=", "-").replace(" ", "-")
+        else:
+            # Fallback to email prefix if preferred_username not available
+            user_id = raw_user_data.get("email", "").split("@")[0]
+
+        # Use name claim for display name, fallback to constructing from given/family names
         display_name = (
             raw_user_data.get("name") or raw_user_data.get("given_name", "") + " " + raw_user_data.get("family_name", "")
         ).strip()
+
+        # If no name available, use the username
+        if not display_name:
+            display_name = user_id
 
         email = raw_user_data.get("email", "")
 
@@ -387,9 +400,13 @@ class OIDCHandler:
             key: value for key, value in raw_user_data.items() if key not in standard_claims and not key.startswith("_")
         }
 
+        # Store the sub claim in attributes for reference
+        if sub:
+            attributes["sub"] = sub
+
         return UserData(
-            id=user_id,
-            displayName=display_name or user_id,
+            id=user_id,  # Sanitized username for MLSpace
+            displayName=display_name,
             email=email,
             groups=list(set(groups)),  # Remove duplicates
             attributes=attributes,
