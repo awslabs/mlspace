@@ -17,15 +17,6 @@ limitations under the License.
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { AuthErrorBoundary } from './components';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { beforeEach } from 'node:test';
-import { describe } from 'node:test';
 
 // Mock component that throws an error
 const ThrowError: React.FC<{ shouldThrow: boolean }> = ({ shouldThrow }) => {

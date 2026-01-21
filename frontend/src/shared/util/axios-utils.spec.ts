@@ -30,11 +30,9 @@
   limitations under the License.
 */
 
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { default as Axios } from 'axios';
 import { default as axios } from './axios-utils';
-import { afterEach } from 'node:test';
-import { beforeEach } from 'node:test';
 
 const dummyUrl = 'https://any.com';
 const mockLambdaEndpoint = 'https://fake-endpoint.com';

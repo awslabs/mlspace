@@ -114,11 +114,14 @@ class TestOIDCHandler:
 
         normalized = handler.normalize_user_data(raw_data)
 
-        assert normalized.id == "user123"
+        # The ID should be derived from email prefix (fallback when preferred_username not present)
+        assert normalized.id == "john.doe"
         assert normalized.displayName == "John Doe"
         assert normalized.email == "john.doe@example.com"
         assert set(normalized.groups) == {"admin", "users"}
         assert normalized.attributes["department"] == "Engineering"
+        # sub should be stored in attributes for reference
+        assert normalized.attributes["sub"] == "user123"
         # Standard OIDC claims should not be in attributes
         assert "iss" not in normalized.attributes
         assert "aud" not in normalized.attributes
@@ -301,3 +304,265 @@ class TestOIDCHandler:
                 self.end_session_endpoint = "https://example.com/logout"
 
         return TestOIDCHandler(self.config)
+
+    def test_get_authorization_url_without_pkce(self):
+        """Test authorization URL generation without PKCE."""
+        config = OIDCConfig(
+            issuer_url="https://example.com", client_id="test-client-id", client_secret="secret", use_pkce=False
+        )
+
+        with patch("requests.get") as mock_get:
+            mock_response = Mock()
+            mock_response.ok = True
+            mock_response.json.return_value = self.discovery_doc
+            mock_get.return_value = mock_response
+
+            handler = OIDCHandler(config)
+
+            auth_url = handler.get_authorization_url("test-state", "https://app.example.com/callback")
+
+            assert "https://example.com/auth" in auth_url
+            assert "client_id=test-client-id" in auth_url
+            # Should not have code_challenge when PKCE is disabled
+            assert "code_challenge" not in auth_url
+
+    def test_get_authorization_url_missing_code_verifier(self):
+        """Test authorization URL generation with PKCE but missing code_verifier."""
+        handler = self._create_test_handler()
+
+        with pytest.raises(Exception, match="Authorization URL generation failed"):
+            handler.get_authorization_url("test-state", "https://app.example.com/callback")
+
+    def test_get_authorization_url_exception(self):
+        """Test authorization URL generation with exception."""
+        handler = self._create_test_handler()
+
+        # Mock OAuth2Session to raise an exception
+        with patch("ml_space_lambda.auth.handlers.oidc_handler.OAuth2Session") as mock_session_class:
+            mock_session = Mock()
+            mock_session.create_authorization_url.side_effect = Exception("Network error")
+            mock_session_class.return_value = mock_session
+
+            from authlib.common.security import generate_token
+
+            code_verifier = generate_token(48)
+
+            with pytest.raises(Exception, match="Authorization URL generation failed"):
+                handler.get_authorization_url("test-state", "https://app.example.com/callback", code_verifier=code_verifier)
+
+    def test_handle_callback_missing_code(self):
+        """Test callback handling with missing authorization code."""
+        handler = self._create_test_handler()
+
+        result = handler.handle_callback("", "https://app.example.com/callback")
+
+        assert result.success is False
+        assert "Missing authorization code" in result.error
+
+    def test_handle_callback_success(self):
+        """Test successful callback handling."""
+        from authlib.oauth2.rfc6749 import OAuth2Token
+
+        from ml_space_lambda.auth.models.auth_models import UserData
+
+        handler = self._create_test_handler()
+
+        oauth_token = OAuth2Token(
+            {
+                "access_token": "access123",
+                "refresh_token": "refresh123",
+                "id_token": "id123",
+                "expires_in": 3600,
+                "token_type": "Bearer",
+            }
+        )
+
+        # Mock the token exchange
+        with patch.object(handler, "_exchange_code_for_tokens") as mock_exchange:
+            mock_exchange.return_value = oauth_token
+
+            # Mock user info extraction
+            with patch.object(handler, "_get_user_info_from_oauth_token") as mock_get_user:
+                mock_get_user.return_value = UserData(id="user123", displayName="John Doe", email="john@example.com")
+
+                from authlib.common.security import generate_token
+
+                code_verifier = generate_token(48)
+
+                result = handler.handle_callback(
+                    "auth-code-123", "https://app.example.com/callback", code_verifier=code_verifier
+                )
+
+                assert result.success is True
+                assert result.user_data.id == "user123"
+                assert result.tokens.access_token == "access123"
+                assert result.raw_response is not None
+
+    def test_handle_callback_exception(self):
+        """Test callback handling with exception."""
+        handler = self._create_test_handler()
+
+        # Mock the token exchange to raise an exception
+        with patch.object(handler, "_exchange_code_for_tokens") as mock_exchange:
+            mock_exchange.side_effect = Exception("Token exchange failed")
+
+            from authlib.common.security import generate_token
+
+            code_verifier = generate_token(48)
+
+            result = handler.handle_callback("auth-code-123", "https://app.example.com/callback", code_verifier=code_verifier)
+
+            assert result.success is False
+            assert "Authentication failed" in result.error
+
+    def test_normalize_user_data_with_preferred_username(self):
+        """Test user data normalization with preferred_username."""
+        handler = self._create_test_handler()
+
+        raw_data = {
+            "sub": "user123",
+            "preferred_username": "jdoe",
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "groups": ["admin"],
+        }
+
+        normalized = handler.normalize_user_data(raw_data)
+
+        assert normalized.id == "jdoe"
+        assert normalized.displayName == "John Doe"
+        assert normalized.email == "john.doe@example.com"
+
+    def test_normalize_user_data_with_sub_only(self):
+        """Test user data normalization with only sub claim."""
+        handler = self._create_test_handler()
+
+        raw_data = {"sub": "user123"}
+
+        normalized = handler.normalize_user_data(raw_data)
+
+        # When there's no preferred_username or email, user_id will be empty
+        # but displayName will fallback to user_id (which is empty)
+        assert normalized.id == ""
+        assert normalized.displayName == ""
+        assert normalized.email == ""
+        # sub should be in attributes
+        assert normalized.attributes["sub"] == "user123"
+
+    def test_normalize_user_data_with_given_family_names(self):
+        """Test user data normalization with given_name and family_name."""
+        handler = self._create_test_handler()
+
+        raw_data = {"sub": "user123", "given_name": "John", "family_name": "Doe", "email": "john@example.com"}
+
+        normalized = handler.normalize_user_data(raw_data)
+
+        assert normalized.displayName == "John Doe"
+
+    def test_normalize_user_data_with_only_given_name(self):
+        """Test user data normalization with only given_name."""
+        handler = self._create_test_handler()
+
+        raw_data = {"sub": "user123", "given_name": "John"}
+
+        normalized = handler.normalize_user_data(raw_data)
+
+        assert normalized.displayName == "John"
+
+    def test_normalize_user_data_filters_standard_claims(self):
+        """Test that standard OIDC claims are filtered from attributes."""
+        handler = self._create_test_handler()
+
+        raw_data = {
+            "sub": "user123",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "iss": "https://example.com",
+            "aud": "client-id",
+            "exp": 1234567890,
+            "iat": 1234567800,
+            "auth_time": 1234567800,
+            "custom_claim": "custom_value",
+            "department": "Engineering",
+        }
+
+        normalized = handler.normalize_user_data(raw_data)
+
+        # Standard claims that ARE filtered (in standard_claims set)
+        assert "iss" not in normalized.attributes
+        assert "aud" not in normalized.attributes
+        assert "exp" not in normalized.attributes
+        assert "iat" not in normalized.attributes
+        assert "auth_time" not in normalized.attributes
+        assert "name" not in normalized.attributes
+        assert "email" not in normalized.attributes
+
+        # Custom claims should be in attributes
+        assert normalized.attributes["custom_claim"] == "custom_value"
+        assert normalized.attributes["department"] == "Engineering"
+        # sub should be preserved
+        assert normalized.attributes["sub"] == "user123"
+
+    def test_extract_token_expiration_with_expires_at(self):
+        """Test token expiration extraction with expires_at timestamp."""
+        handler = self._create_test_handler()
+
+        from ml_space_lambda.auth.models.auth_models import IdPTokens
+
+        # Test with expires_at (absolute timestamp)
+        tokens = IdPTokens(access_token="token123", expires_at=1234567890)
+
+        access_exp, refresh_exp = handler.extract_token_expiration(tokens)
+
+        # Should calculate relative expiration from expires_at
+        assert access_exp > 0
+
+    def test_get_user_info_http_error(self):
+        """Test user info retrieval with HTTP error."""
+        handler = self._create_test_handler()
+
+        # Mock OAuth2Session.get to raise an exception
+        with patch("ml_space_lambda.auth.handlers.oidc_handler.OAuth2Session") as mock_session_class:
+            mock_session = Mock()
+            mock_session.get.side_effect = Exception("Network error")
+            mock_session_class.return_value = mock_session
+
+            result = handler.get_user_info("test-token")
+
+            assert result.id == ""
+            assert result.displayName == ""
+            assert result.email == ""
+
+    def test_validate_token_with_exception(self):
+        """Test token validation when get_user_info raises exception."""
+        handler = self._create_test_handler()
+
+        with patch.object(handler, "get_user_info") as mock_get_user_info:
+            mock_get_user_info.side_effect = Exception("Validation error")
+
+            assert handler.validate_token("token") is False
+
+    def test_refresh_tokens_with_user_info_failure(self):
+        """Test token refresh when user info retrieval fails."""
+        from authlib.oauth2.rfc6749 import OAuth2Token
+
+        from ml_space_lambda.auth.models.auth_models import UserData
+
+        handler = self._create_test_handler()
+
+        new_oauth_token = OAuth2Token(
+            {"access_token": "new-access-token", "refresh_token": "new-refresh-token", "expires_in": 3600}
+        )
+
+        with patch.object(handler.oauth_session, "refresh_token") as mock_refresh:
+            mock_refresh.return_value = new_oauth_token
+
+            # Mock user info retrieval to return empty user
+            with patch.object(handler, "_get_user_info_from_oauth_token") as mock_get_user_info:
+                mock_get_user_info.return_value = UserData(id="", displayName="", email="")
+
+                result = handler.refresh_tokens("old-refresh-token")
+
+                # Should still succeed even if user info is empty
+                assert result.success is True
+                assert result.tokens.access_token == "new-access-token"

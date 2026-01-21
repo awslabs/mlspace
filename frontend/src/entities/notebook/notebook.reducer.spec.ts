@@ -29,55 +29,6 @@ import reducer, {
     stopNotebookInstance,
     updateNotebookInstance,
 } from './notebook.reducer';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { it } from 'node:test';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { it } from 'node:test';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { it } from 'node:test';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { it } from 'node:test';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { it } from 'node:test';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { it } from 'node:test';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { it } from 'node:test';
-import { expect } from '@jest/globals';
-import { expect } from '@jest/globals';
-import { it } from 'node:test';
-import { beforeEach } from 'node:test';
-import { afterEach } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { describe } from 'node:test';
 
 describe('Entities reducer tests', () => {
     const initialState = {

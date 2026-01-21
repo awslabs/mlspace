@@ -17,6 +17,7 @@
 import json
 import logging
 import os
+import urllib.parse
 from typing import Any, Dict, Optional
 
 from ml_space_lambda.auth.session.manager import SessionManager
@@ -181,6 +182,10 @@ def lambda_handler(event, context):
     # Extract user information from session
     user_data = session_data["data"]["user"]
     username = user_data["id"]
+
+    # Normalize username for AWS IAM principal ID compatibility
+    # Replace special characters that aren't allowed in principal IDs
+    username = urllib.parse.unquote(username).replace(",", "-").replace("=", "-").replace(" ", "-")
 
     # Look up user record from database to get permissions and suspension status
     user = user_dao.get(username)
