@@ -40,6 +40,7 @@ class TestAuthLambdaFunctions:
             "AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME": "test/token-key",
             "AUTH_SESSION_TABLE_NAME": "test-session-table",
             "AUTH_OIDC_VERIFY_SSL": "true",
+            "AUTH_OIDC_VERIFY_SIGNATURE": "true",
             "AUTH_PRIMARY_DOMAIN": "",
             "AUTH_SYNC_DOMAINS": "",
         }

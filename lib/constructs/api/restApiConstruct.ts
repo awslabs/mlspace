@@ -72,7 +72,6 @@ export type RestApiStackProperties = {
     readonly websiteBucketName: string;
     readonly websiteS3ReaderRole: IRole;
     readonly mlSpaceAppRole: IRole;
-    readonly verifyOIDCTokenSignature: boolean;
     readonly mlSpaceVPC: IVpc;
     readonly lambdaSecurityGroups: ISecurityGroup[];
     readonly isIso?: boolean;
@@ -261,10 +260,6 @@ export class RestApiConstruct extends Construct {
             role: props.mlSpaceAppRole,
             layers: [jwtDependencyLayer.layerVersion, commonLambdaLayer],
             environment: {
-                OIDC_URL: ssmIdPEndpoint || props.mlspaceConfig.INTERNAL_OIDC_URL || props.mlspaceConfig.OIDC_URL,
-                OIDC_CLIENT_NAME: props.mlspaceConfig.OIDC_CLIENT_NAME,
-                OIDC_VERIFY_SSL: props.mlspaceConfig.OIDC_VERIFY_SSL ? 'True' : 'False',
-                OIDC_VERIFY_SIGNATURE: props.verifyOIDCTokenSignature ? 'True' : 'False',
                 AUTH_SESSION_TABLE_NAME: props.mlspaceConfig.AUTH_SESSION_TABLE_NAME,
                 AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,
                 ...props.mlspaceConfig.ADDITIONAL_LAMBDA_ENVIRONMENT_VARS,

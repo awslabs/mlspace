@@ -151,7 +151,6 @@ const restStack = new RestApiStack(app, 'mlspace-web-tier', {
     mlSpaceAppRole,
     lambdaSourcePath,
     frontEndAssetsPath,
-    verifyOIDCTokenSignature: config.OIDC_VERIFY_SIGNATURE,
     mlSpaceVPC,
     lambdaSecurityGroups: [vpcStack.vpcSecurityGroup],
     isIso,

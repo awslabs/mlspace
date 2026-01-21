@@ -85,6 +85,7 @@ def _get_auth_config() -> Dict[str, str]:
         "oidc_client_secret_name": os.environ.get("AUTH_OIDC_CLIENT_SECRET_NAME", ""),
         "oidc_use_pkce": os.environ.get("AUTH_OIDC_USE_PKCE", "true").lower() == "true",
         "oidc_verify_ssl": os.environ.get("AUTH_OIDC_VERIFY_SSL", "true").lower() == "true",
+        "oidc_verify_signature": os.environ.get("AUTH_OIDC_VERIFY_SIGNATURE", "true").lower() == "true",
         "state_encryption_key_secret_name": os.environ.get("AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME", ""),
         "token_encryption_key_secret_name": os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME", ""),
         "session_table_name": os.environ.get("AUTH_SESSION_TABLE_NAME", ""),
@@ -203,6 +204,8 @@ def _create_auth_handler(config: Dict[str, str]) -> OIDCHandler:
         client_secret=client_secret,
         scopes=["openid", "profile", "email"],
         use_pkce=config["oidc_use_pkce"],
+        verify_ssl=config["oidc_verify_ssl"],
+        verify_signature=config["oidc_verify_signature"],
     )
 
     return OIDCHandler(oidc_config)

@@ -39,13 +39,6 @@ TEST_ENV_CONFIG = {
     "AUTH_SESSION_TABLE_NAME": "test-sessions",
     "AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME": "test-secret-arn",
 }
-MOCK_OIDC_ENV = {
-    "AWS_DEFAULT_REGION": "us-east-1",
-    "OIDC_URL": "https://example-oidc.com/realms/mlspace",
-    "OIDC_CLIENT_NAME": "web-client",
-    # We're using a self signed cert for dev
-    "OIDC_VERIFY_SSL": "False",
-}
 
 
 with mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True):

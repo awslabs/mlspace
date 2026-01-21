@@ -50,6 +50,8 @@ class OIDCConfig(BaseModel):
     client_secret: Optional[str] = Field(None, description="OIDC client secret (for confidential clients)")
     scopes: List[str] = Field(default=["openid", "profile", "email"], description="OAuth2 scopes to request")
     use_pkce: bool = Field(default=True, description="Whether to use PKCE flow (recommended even with client_secret)")
+    verify_ssl: bool = Field(default=True, description="Whether to verify SSL certificates for OIDC requests")
+    verify_signature: bool = Field(default=True, description="Whether to verify JWT token signatures")
 
 
 class OIDCHandler:
@@ -98,7 +100,7 @@ class OIDCHandler:
         try:
             # Use authlib's get_well_known_url and OpenIDProviderMetadata
             well_known_url = get_well_known_url(self.config.issuer_url, external=True)
-            response = requests.get(well_known_url, timeout=10)
+            response = requests.get(well_known_url, timeout=10, verify=self.config.verify_ssl)
             response.raise_for_status()
 
             # Create OpenIDProviderMetadata object using authlib
@@ -125,6 +127,10 @@ class OIDCHandler:
         """
         Create OAuth2 session for token operations using authlib.
         """
+        # Create a requests session with SSL verification setting
+        session = requests.Session()
+        session.verify = self.config.verify_ssl
+
         self.oauth_session = OAuth2Session(
             client_id=self.config.client_id,
             client_secret=self.config.client_secret,
@@ -132,6 +138,8 @@ class OIDCHandler:
             token_endpoint=self.token_endpoint,
             token_endpoint_auth_method="client_secret_post" if self.config.client_secret else None,
         )
+        # Set the session on the OAuth2Session to use our configured session
+        self.oauth_session.session = session
 
     def get_authorization_url(self, state: str, redirect_uri: str, code_verifier: Optional[str] = None) -> str:
         """
@@ -276,6 +284,9 @@ class OIDCHandler:
 
             # Create a temporary session with the token
             session = OAuth2Session(client_id=self.config.client_id, token=oauth_token)
+            # Apply SSL verification setting
+            session.session = requests.Session()
+            session.session.verify = self.config.verify_ssl
 
             # Get user info using authlib
             resp = session.get(self.userinfo_endpoint)
@@ -501,9 +512,10 @@ class OIDCHandler:
         id_token = oauth_token.get("id_token")
         if id_token:
             try:
-                # Use authlib's JWT to decode ID token (without signature verification for now)
-                # In production, should verify signature using JWKS from discovery
-                id_claims = self.jwt.decode(id_token, options={"verify_signature": False})
+                # Use authlib's JWT to decode ID token
+                # Verify signature based on configuration
+                decode_options = {"verify_signature": self.config.verify_signature}
+                id_claims = self.jwt.decode(id_token, options=decode_options)
                 user_data.update(id_claims)
                 logger.debug("Successfully extracted claims from ID token using authlib")
             except Exception as e:
@@ -515,6 +527,9 @@ class OIDCHandler:
             try:
                 # Use authlib's OAuth2Session to get user info
                 session = OAuth2Session(client_id=self.config.client_id, token=oauth_token)
+                # Apply SSL verification setting
+                session.session = requests.Session()
+                session.session.verify = self.config.verify_ssl
 
                 resp = session.get(self.userinfo_endpoint)
                 if resp.status_code == 200:
