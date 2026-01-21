@@ -243,11 +243,6 @@ export class RestApiConstruct extends Construct {
             StringParameter.valueForStringParameter(scope, props.mlspaceConfig.COMMON_LAYER_ARN_PARAM)
         );
 
-        let ssmIdPEndpoint;
-        if (props.mlspaceConfig.IDP_ENDPOINT_SSM_PARAM) {
-            ssmIdPEndpoint = StringParameter.valueForStringParameter(scope, props.mlspaceConfig.IDP_ENDPOINT_SSM_PARAM);
-        }
-
         const authorizerLambda = new Function(scope, 'MLSpaceAuthorizerLambda', {
             runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
             architecture: props.mlspaceConfig.LAMBDA_ARCHITECTURE,
@@ -278,9 +273,6 @@ export class RestApiConstruct extends Construct {
 
         // Dynamic config relies on api URL and we don't want to do this in a separate stack
         const appEnvironmentConfig = {
-            OIDC_URL: ssmIdPEndpoint ||  props.mlspaceConfig.OIDC_URL,
-            OIDC_REDIRECT_URI:  props.mlspaceConfig.OIDC_REDIRECT_URI || mlSpaceRestApi.url,
-            OIDC_CLIENT_NAME:  props.mlspaceConfig.OIDC_CLIENT_NAME,
             LAMBDA_ENDPOINT: props.mlspaceConfig.WEB_CUSTOM_DOMAIN_NAME || mlSpaceRestApi.url,
             MANAGE_IAM_ROLES:  props.mlspaceConfig.MANAGE_IAM_ROLES,
             SHOW_MIGRATION_OPTIONS: props.mlspaceConfig.SHOW_MIGRATION_OPTIONS,
