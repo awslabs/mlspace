@@ -76,6 +76,11 @@ async function advancedConfigPrompts () {
     // List of other advanced settings which don't fit into a category
     const otherAdvancedSettings = [
         {
+            type: 'input',
+            name: 'WEB_CUSTOM_DOMAIN_NAME',
+            message: 'Custom Domain Name: optional custom domain name for the MLSpace web application (leave empty to use default API Gateway domain)',
+        },
+        {
             type: 'confirm',
             name: 'NEW_USERS_SUSPENDED',
             message: 'New Users Suspended: whether or not new user accounts will be created in a suspended state by default',
@@ -102,16 +107,6 @@ async function basicConfigPrompts () {
         },
         {
             type: 'input',
-            name: 'OIDC_URL',
-            message: 'OIDC URL: the OIDC endpoint that will be used for MLSpace authentication',
-        },
-        {
-            type: 'input',
-            name: 'OIDC_CLIENT_NAME',
-            message: 'OIDC Client Name: the OIDC client name that should be used by MLSpace for authentication',
-        },
-        {
-            type: 'input',
             name: 'KEY_MANAGER_ROLE_NAME',
             message: 'Key Manager Role Name: name of the IAM role with permissions to manage the KMS Key. This could be something like Admin or a dedicated role for KMS Key Management'
         }
@@ -120,6 +115,42 @@ async function basicConfigPrompts () {
     const basicPromptAnswers = await prompt(basicQuestions);
     answers = {...answers, ...basicPromptAnswers};
 
+    // Ask OIDC questions after basic AWS configuration
+    await askOidcQuestions();
+}
+
+async function askOidcQuestions () {
+    const oidcQuestions = [
+        {
+            type: 'input',
+            name: 'AUTH_OIDC_URL',
+            message: 'OIDC URL: the OIDC endpoint that will be used for MLSpace authentication',
+        },
+        {
+            type: 'input',
+            name: 'AUTH_OIDC_CLIENT_ID',
+            message: 'OIDC Client ID: the OIDC client ID that should be used by MLSpace for authentication',
+        },
+    ];
+
+    const oidcPromptAnswers = await prompt(oidcQuestions);
+    answers = {...answers, ...oidcPromptAnswers};
+
+    // Ask if using confidential client
+    const confidentialClientResponse = await prompt({
+        type: 'confirm',
+        name: 'isConfidentialClient',
+        message: 'Are you using a confidential OIDC client? (requires client secret)',
+    });
+
+    if (confidentialClientResponse.isConfidentialClient) {
+        const clientSecretResponse = await prompt({
+            type: 'password',
+            name: 'AUTH_OIDC_CLIENT_SECRET',
+            message: 'OIDC Client Secret: the client secret for your confidential OIDC client',
+        });
+        answers = {...answers, ...clientSecretResponse};
+    }
 }
 
 async function askVpcQuestions () {
