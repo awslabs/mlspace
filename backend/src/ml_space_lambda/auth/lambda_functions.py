@@ -324,13 +324,14 @@ def _get_base_url(event: Dict) -> str:
     """
     Get base URL for building redirect URIs.
 
-    Uses WEB_CUSTOM_DOMAIN_NAME if configured, otherwise falls back to Host header.
+    Uses WEB_CUSTOM_DOMAIN_NAME if configured, otherwise falls back to Host header
+    with stage path from requestContext.
 
     Args:
         event: Lambda event
 
     Returns:
-        Base URL (e.g., "https://mlspace.example.com" or "https://api-id.execute-api.region.amazonaws.com/stage")
+        Base URL (e.g., "https://mlspace.example.com" or "https://api-id.execute-api.region.amazonaws.com/Prod")
     """
     # Check for custom domain configuration
     custom_domain = os.environ.get("WEB_CUSTOM_DOMAIN_NAME", "").strip()
@@ -338,7 +339,7 @@ def _get_base_url(event: Dict) -> str:
         # Remove trailing slash if present
         return custom_domain.rstrip("/")
 
-    # Fall back to Host header
+    # Fall back to Host header with stage path
     host = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
 
     # Determine protocol
@@ -346,7 +347,16 @@ def _get_base_url(event: Dict) -> str:
     if host.startswith("localhost") or "127.0.0.1" in host:
         protocol = "http"
 
-    return f"{protocol}://{host}"
+    # Get stage from requestContext (API Gateway includes this)
+    request_context = event.get("requestContext", {})
+    stage = request_context.get("stage", "")
+
+    # Build base URL with stage if present
+    base_url = f"{protocol}://{host}"
+    if stage:
+        base_url = f"{base_url}/{stage}"
+
+    return base_url
 
 
 def _get_redirect_uri(event: Dict) -> str:
@@ -1314,10 +1324,10 @@ def _validate_requesting_domain(event, config) -> Tuple[Optional[str], Optional[
 
     requesting_domain = normalize_domain(host_header)
 
-    # Build allowed domains list (current domain + sync domains)
-    # The host header represents the primary domain where the request is being made
-    sync_domains = build_domain_list(requesting_domain, config.get("sync_domains", ""))
-    allowed_domains = [requesting_domain] + sync_domains
+    # Build allowed domains list (primary + sync domains)
+    primary_domain = normalize_domain(config.get("primary_domain", "") or host_header)
+    sync_domains = build_domain_list(primary_domain, config.get("sync_domains", ""))
+    allowed_domains = [primary_domain] + sync_domains
 
     # Validate requesting domain is in allowed list
     if requesting_domain not in allowed_domains:
