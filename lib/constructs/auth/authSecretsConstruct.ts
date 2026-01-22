@@ -122,6 +122,7 @@ export class AuthSecretsConstruct extends Construct {
         this.stateKeyRotationSchedule = this.stateEncryptionSecret.addRotationSchedule('StateKeyRotationSchedule', {
             rotationLambda: this.stateKeyRotationFunction,
             automaticallyAfter: Duration.days(props.stateKeyRotationDays || 90),
+            rotateImmediatelyOnUpdate: true,
         });
     }
     
@@ -162,6 +163,7 @@ export class AuthSecretsConstruct extends Construct {
         this.tokenKeyRotationSchedule = this.tokenEncryptionSecret.addRotationSchedule('TokenKeyRotationSchedule', {
             rotationLambda: this.tokenKeyRotationFunction,
             automaticallyAfter: Duration.days(props.tokenKeyRotationDays || 90),
+            rotateImmediatelyOnUpdate: true,
         });
     }
     
