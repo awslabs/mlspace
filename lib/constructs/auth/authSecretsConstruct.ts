@@ -89,7 +89,7 @@ export class AuthSecretsConstruct extends Construct {
         // Create state key rotation Lambda function
         this.stateKeyRotationFunction = new Function(this, 'StateKeyRotationFunction', {
             functionName: 'mls-lambda-state-key-rotation',
-            runtime: Runtime.PYTHON_3_11,
+            runtime: props.config.LAMBDA_RUNTIME,
             code: Code.fromAsset(props.lambdaSourcePath),
             handler: 'ml_space_lambda.auth.utils.rotation_handlers.state_key_secrets_manager_rotation_handler',
             timeout: Duration.minutes(5),
@@ -129,7 +129,7 @@ export class AuthSecretsConstruct extends Construct {
         // Create token key rotation Lambda function
         this.tokenKeyRotationFunction = new Function(this, 'TokenKeyRotationFunction', {
             functionName: 'mls-lambda-token-key-rotation',
-            runtime: Runtime.PYTHON_3_11,
+            runtime: props.config.LAMBDA_RUNTIME,
             code: Code.fromAsset(props.lambdaSourcePath),
             handler: 'ml_space_lambda.auth.utils.rotation_handlers.token_key_secrets_manager_rotation_handler',
             timeout: Duration.minutes(5),

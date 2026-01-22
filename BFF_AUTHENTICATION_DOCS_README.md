@@ -111,7 +111,7 @@ frontend/docs/admin-guide/
 - **AUTH_SYNC_DOMAINS**: Multi-domain cookie synchronization
 
 ### SSM Parameter Setup
-- Client secret storage in `/mlspace/auth/oidc-client-secret`
+- Client secret storage in `mlspace/auth/oidc-client-secret`
 - Encryption key management
 - IAM permissions for Lambda access
 - Security best practices

@@ -162,14 +162,14 @@ If your OIDC provider requires a client secret:
 ```bash
 # For development environment
 aws ssm put-parameter \
-  --name "/mlspace/auth/oidc-client-secret" \
+  --name "mlspace/auth/oidc-client-secret" \
   --value "your-dev-client-secret" \
   --type "SecureString" \
   --description "OIDC client secret for MLSpace development"
 
 # For production environment
 aws ssm put-parameter \
-  --name "/mlspace/auth/oidc-client-secret" \
+  --name "mlspace/auth/oidc-client-secret" \
   --value "your-prod-client-secret" \
   --type "SecureString" \
   --description "OIDC client secret for MLSpace production"
@@ -180,11 +180,11 @@ aws ssm put-parameter \
 ```bash
 # Verify parameter exists
 aws ssm describe-parameters \
-  --parameter-filters "Key=Name,Values=/mlspace/auth/oidc-client-secret"
+  --parameter-filters "Key=Name,Values=mlspace/auth/oidc-client-secret"
 
 # Test parameter access (will show encrypted value)
 aws ssm get-parameter \
-  --name "/mlspace/auth/oidc-client-secret" \
+  --name "mlspace/auth/oidc-client-secret" \
   --with-decryption
 ```
 
@@ -424,7 +424,7 @@ aws logs filter-log-events \
 ```bash
 # Check SSM parameter access
 aws ssm get-parameter \
-  --name "/mlspace/auth/oidc-client-secret" \
+  --name "mlspace/auth/oidc-client-secret" \
   --with-decryption
 
 # Check Lambda execution role permissions

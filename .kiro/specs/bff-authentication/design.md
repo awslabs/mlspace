@@ -1482,14 +1482,14 @@ const authCommonEnv = {
   PRIMARY_DOMAIN: mlspaceConfig.AUTH_PRIMARY_DOMAIN || '',
   SYNC_DOMAINS: mlspaceConfig.AUTH_SYNC_DOMAINS || '',
   SESSION_TTL_HOURS: mlspaceConfig.AUTH_SESSION_TTL_HOURS.toString(),
-  ENCRYPTION_KEY_PARAM: '/mlspace/auth/encryption-key',
+  ENCRYPTION_KEY_PARAM: 'mlspace/auth/encryption-key',
 };
 
 // OIDC-specific environment variables
 const oidcEnv = {
   OIDC_URL: mlspaceConfig.AUTH_OIDC_URL,
   OIDC_CLIENT_ID: mlspaceConfig.AUTH_OIDC_CLIENT_ID,
-  OIDC_CLIENT_SECRET_PARAM: '/mlspace/auth/oidc-client-secret',
+  OIDC_CLIENT_SECRET_PARAM: 'mlspace/auth/oidc-client-secret',
 };
 
 // Define auth endpoint functions
@@ -1677,7 +1677,7 @@ export class AuthorizerConstruct extends Construct {
 
     // Updated authorizer Lambda
     const authorizerFunction = new Function(this, 'AuthorizerFunction', {
-      runtime: Runtime.PYTHON_3_11,
+      runtime: props.mlspaceConfig.LAMBDA_RUNTIME,
       code: Code.fromAsset(props.lambdaSourcePath),
       handler: 'ml_space_lambda.authorizer.lambda_functions.handler',
       timeout: Duration.seconds(10),
@@ -1859,11 +1859,11 @@ const authEnvironment = {
   IDP_TYPE: config.BFF_IDP_TYPE || 'oidc', // 'oidc', 'saml', or 'custom'
   OIDC_URL: config.OIDC_URL,
   OIDC_CLIENT_NAME: config.OIDC_CLIENT_NAME,
-  OIDC_CLIENT_SECRET_PARAM: '/mlspace/auth/oidc-client-secret', // SSM Parameter
+  OIDC_CLIENT_SECRET_PARAM: 'mlspace/auth/oidc-client-secret', // SSM Parameter
   PRIMARY_DOMAIN: config.BFF_PRIMARY_DOMAIN || '', // Defaults to API Gateway domain
   SYNC_DOMAINS: config.BFF_SYNC_DOMAINS || '', // Comma-separated
   SESSION_TTL_HOURS: config.BFF_SESSION_TTL_HOURS.toString(),
-  ENCRYPTION_KEY_PARAM: '/mlspace/auth/encryption-key', // SSM Parameter
+  ENCRYPTION_KEY_PARAM: 'mlspace/auth/encryption-key', // SSM Parameter
 };
 ```
 
@@ -1949,7 +1949,7 @@ Configuration is managed through `lib/config.json` per environment:
 - `AUTH_IDP_TYPE`: Defaults to `'oidc'` (currently only OIDC is supported)
 - `AUTH_OIDC_URL`: OIDC issuer URL (replaces legacy `OIDC_URL`)
 - `AUTH_OIDC_CLIENT_ID`: OIDC client ID (replaces legacy `OIDC_CLIENT_NAME`)
-- `AUTH_OIDC_CLIENT_SECRET`: Actual secret stored in SSM Parameter Store at `/mlspace/auth/oidc-client-secret`
+- `AUTH_OIDC_CLIENT_SECRET`: Actual secret stored in SSM Parameter Store at `mlspace/auth/oidc-client-secret`
 - `AUTH_PRIMARY_DOMAIN`: Leave empty to use API Gateway domain automatically
 - `AUTH_SYNC_DOMAINS`: Leave empty for single-domain deployments (typical for MLSpace)
 
@@ -1994,7 +1994,7 @@ Configuration is managed through `lib/config.json` per environment:
 3. **Store OIDC client secret in SSM Parameter Store** (if using confidential client flow):
    ```bash
    aws ssm put-parameter \
-     --name /mlspace/auth/oidc-client-secret \
+     --name mlspace/auth/oidc-client-secret \
      --value "your-client-secret" \
      --type SecureString \
      --description "OIDC client secret for BFF authentication"

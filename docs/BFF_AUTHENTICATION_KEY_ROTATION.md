@@ -73,7 +73,7 @@ aws lambda invoke \
   --function-name mlspace-key-rotation \
   --payload '{
     "action": "rotate_token_key",
-    "secret_arn": "/mlspace/auth/token-encryption-keys"
+    "secret_arn": "mlspace/auth/token-encryption-keys"
   }' \
   response.json
 
@@ -91,7 +91,7 @@ aws lambda invoke \
   --function-name mlspace-key-rotation \
   --payload '{
     "action": "cleanup_old_versions",
-    "secret_arn": "/mlspace/auth/token-encryption-keys",
+    "secret_arn": "mlspace/auth/token-encryption-keys",
     "keep_versions": 3
   }' \
   response.json
@@ -105,7 +105,7 @@ aws lambda invoke \
   --function-name mlspace-key-rotation \
   --payload '{
     "action": "get_status",
-    "secret_arn": "/mlspace/auth/token-encryption-keys"
+    "secret_arn": "mlspace/auth/token-encryption-keys"
   }' \
   response.json
 ```
@@ -218,7 +218,7 @@ AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME=mlspace/auth/state-encryption-key
         "secretsmanager:UpdateSecret"
       ],
       "Resource": [
-        "arn:aws:secretsmanager:*:*:secret:/mlspace/auth/*"
+        "arn:aws:secretsmanager:*:*:secret:mlspace/auth/*"
       ]
     }
   ]
@@ -271,14 +271,14 @@ aws logs filter-log-events \
 **Verify Token Key Structure**:
 ```bash
 aws secretsmanager get-secret-value \
-  --secret-id /mlspace/auth/token-encryption-keys \
+  --secret-id mlspace/auth/token-encryption-keys \
   --query SecretString --output text | jq .
 ```
 
 **Verify State Key**:
 ```bash
 aws secretsmanager get-secret-value \
-  --secret-id /mlspace/auth/state-encryption-key \
+  --secret-id mlspace/auth/state-encryption-key \
   --query SecretString --output text | jq .
 ```
 
@@ -291,7 +291,7 @@ If migrating from non-versioned keys:
 1. **Backup existing keys**:
 ```bash
 aws secretsmanager get-secret-value \
-  --secret-id /mlspace/auth/token-encryption-key \
+  --secret-id mlspace/auth/token-encryption-key \
   --query SecretString --output text > token-key-backup.json
 ```
 
@@ -301,7 +301,7 @@ aws lambda invoke \
   --function-name mlspace-key-rotation \
   --payload '{
     "action": "initialize_versioned_secret",
-    "secret_arn": "/mlspace/auth/token-encryption-keys",
+    "secret_arn": "mlspace/auth/token-encryption-keys",
     "key_type": "token"
   }' \
   response.json
@@ -356,7 +356,7 @@ If keys are compromised:
 ```bash
 aws lambda invoke \
   --function-name mlspace-key-rotation \
-  --payload '{"action": "rotate_token_key", "secret_arn": "/mlspace/auth/token-encryption-keys"}' \
+  --payload '{"action": "rotate_token_key", "secret_arn": "mlspace/auth/token-encryption-keys"}' \
   response.json
 ```
 

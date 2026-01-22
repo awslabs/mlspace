@@ -63,19 +63,19 @@ This page provides a quick reference for all AUTH_* configuration parameters use
 
 ## SSM Parameters
 
-### /mlspace/auth/oidc-client-secret
+### mlspace/auth/oidc-client-secret
 - **Type**: SecureString
 - **Required**: No (only for confidential OIDC clients)
 - **Description**: OIDC client secret for confidential client flow
 - **Creation**: 
   ```bash
   aws ssm put-parameter \
-    --name "/mlspace/auth/oidc-client-secret" \
+    --name "mlspace/auth/oidc-client-secret" \
     --value "your-client-secret" \
     --type "SecureString"
   ```
 
-### /mlspace/auth/encryption-key
+### mlspace/auth/encryption-key
 - **Type**: SecureString
 - **Required**: No (auto-generated if not provided)
 - **Description**: AES-256 key for token encryption
@@ -247,11 +247,11 @@ curl -s "https://your-oidc-url/.well-known/openid-configuration" | \
 ```bash
 # Verify client secret parameter exists
 aws ssm describe-parameters \
-  --parameter-filters "Key=Name,Values=/mlspace/auth/oidc-client-secret"
+  --parameter-filters "Key=Name,Values=mlspace/auth/oidc-client-secret"
 
 # Test parameter access (requires appropriate IAM permissions)
 aws ssm get-parameter \
-  --name "/mlspace/auth/oidc-client-secret" \
+  --name "mlspace/auth/oidc-client-secret" \
   --with-decryption \
   --query 'Parameter.Value' \
   --output text
@@ -275,7 +275,7 @@ aws ssm get-parameter \
 ### Monitoring
 
 1. **Configuration Changes**: Monitor changes to AUTH_* parameters
-2. **SSM Access**: Monitor access to `/mlspace/auth/*` parameters
+2. **SSM Access**: Monitor access to `mlspace/auth/*` parameters
 3. **Failed Authentication**: Monitor authentication failures for configuration issues
 
 ## Related Documentation

@@ -6,7 +6,7 @@
 ```bash
 aws lambda invoke \
   --function-name mlspace-key-rotation \
-  --payload '{"action": "rotate_token_key", "secret_arn": "/mlspace/auth/token-encryption-keys"}' \
+  --payload '{"action": "rotate_token_key", "secret_arn": "mlspace/auth/token-encryption-keys"}' \
   response.json
 ```
 
@@ -14,7 +14,7 @@ aws lambda invoke \
 ```bash
 aws lambda invoke \
   --function-name mlspace-key-rotation \
-  --payload '{"action": "get_status", "secret_arn": "/mlspace/auth/token-encryption-keys"}' \
+  --payload '{"action": "get_status", "secret_arn": "mlspace/auth/token-encryption-keys"}' \
   response.json && cat response.json
 ```
 
@@ -22,7 +22,7 @@ aws lambda invoke \
 ```bash
 aws lambda invoke \
   --function-name mlspace-key-rotation \
-  --payload '{"action": "cleanup_old_versions", "secret_arn": "/mlspace/auth/token-encryption-keys", "keep_versions": 3}' \
+  --payload '{"action": "cleanup_old_versions", "secret_arn": "mlspace/auth/token-encryption-keys", "keep_versions": 3}' \
   response.json
 ```
 
@@ -40,7 +40,7 @@ cdk deploy
 # Rotate immediately (zero user impact)
 aws lambda invoke \
   --function-name mlspace-key-rotation \
-  --payload '{"action": "rotate_token_key", "secret_arn": "/mlspace/auth/token-encryption-keys"}' \
+  --payload '{"action": "rotate_token_key", "secret_arn": "mlspace/auth/token-encryption-keys"}' \
   response.json
 ```
 
@@ -55,14 +55,14 @@ cdk deploy --exclusively
 ### Check Token Key Structure
 ```bash
 aws secretsmanager get-secret-value \
-  --secret-id /mlspace/auth/token-encryption-keys \
+  --secret-id mlspace/auth/token-encryption-keys \
   --query SecretString --output text | jq .
 ```
 
 ### Check State Key
 ```bash
 aws secretsmanager get-secret-value \
-  --secret-id /mlspace/auth/state-encryption-key \
+  --secret-id mlspace/auth/state-encryption-key \
   --query SecretString --output text | jq .
 ```
 

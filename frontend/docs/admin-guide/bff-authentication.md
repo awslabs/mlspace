@@ -27,7 +27,7 @@ The BFF authentication system uses new `AUTH_*` configuration parameters that re
 |-----------|-------------|---------|----------|
 | `AUTH_PRIMARY_DOMAIN` | Override API Gateway domain for cookies | `"api.mlspace.com"` | No |
 | `AUTH_SYNC_DOMAINS` | Comma-separated list of additional domains for cookie sync | `"notebooks.mlspace.com,admin.mlspace.com"` | No |
-| `AUTH_OIDC_CLIENT_SECRET_PARAM` | SSM parameter path for OIDC client secret | `"/mlspace/auth/oidc-client-secret"` | No |
+| `AUTH_OIDC_CLIENT_SECRET_PARAM` | SSM parameter path for OIDC client secret | `"mlspace/auth/oidc-client-secret"` | No |
 
 ## Configuration Setup
 
@@ -106,7 +106,7 @@ Using AWS CLI:
 
 ```bash
 aws ssm put-parameter \
-  --name "/mlspace/auth/oidc-client-secret" \
+  --name "mlspace/auth/oidc-client-secret" \
   --value "your-client-secret-here" \
   --type "SecureString" \
   --description "OIDC client secret for MLSpace authentication"
@@ -115,7 +115,7 @@ aws ssm put-parameter \
 Using AWS Console:
 1. Navigate to AWS Systems Manager → Parameter Store
 2. Click "Create parameter"
-3. Set Name: `/mlspace/auth/oidc-client-secret`
+3. Set Name: `mlspace/auth/oidc-client-secret`
 4. Set Type: `SecureString`
 5. Set Value: Your OIDC client secret
 6. Click "Create parameter"
@@ -262,7 +262,7 @@ If your OIDC provider requires a client secret:
 ```bash
 # Store client secret in SSM Parameter Store
 aws ssm put-parameter \
-  --name "/mlspace/auth/oidc-client-secret" \
+  --name "mlspace/auth/oidc-client-secret" \
   --value "your-client-secret" \
   --type "SecureString"
 ```
@@ -352,7 +352,7 @@ If issues occur during migration, you can rollback:
 **Symptoms:** Authentication fails with "invalid_client" error
 
 **Solution:**
-- Verify SSM parameter `/mlspace/auth/oidc-client-secret` exists
+- Verify SSM parameter `mlspace/auth/oidc-client-secret` exists
 - Check Lambda execution role has SSM read permissions
 - Ensure client secret value is correct
 
