@@ -408,7 +408,7 @@ class OIDCHandler:
         }
 
         attributes = {
-            key: value for key, value in raw_user_data.items() if key not in standard_claims and not key.startswith("_")
+            key: str(value) for key, value in raw_user_data.items() if key not in standard_claims and not key.startswith("_")
         }
 
         # Store the sub claim in attributes for reference

@@ -142,6 +142,29 @@ def _get_secret_value(secret_arn: str, key: str = "key") -> str:
     """
     Get secret value from AWS Secrets Manager.
 
+    Args:
+        secret_arn: Secret ARN or name
+        key: JSON key to extract from the secret (default: "key")
+
+    Returns:
+        Secret value for the specified key
+
+    Raises:
+        Exception: If secret retrieval fails
+    """
+    try:
+        response = secrets_client.get_secret_value(SecretId=secret_arn)
+        return json.loads(response["SecretString"])[key]
+
+    except Exception as e:
+        logger.error(f"Failed to get secret {secret_arn}: {e}")
+        raise Exception(f"Configuration error: Unable to retrieve secret {secret_arn}")
+
+
+def _get_versioned_secret_value(secret_arn: str, key: str = "key") -> str:
+    """
+    Get secret value from AWS Secrets Manager.
+
     Expects the new versioned format (VersionedKeyData structure).
 
     Args:
@@ -226,7 +249,7 @@ def _create_state_manager(config: Dict[str, str]) -> StateManager:
     """
     try:
         # Get state encryption key from Secrets Manager
-        encoded_key = _get_secret_value(config["state_encryption_key_secret_name"], key="client_secret")
+        encoded_key = _get_versioned_secret_value(config["state_encryption_key_secret_name"])
         encryption_key = decode_state_key_from_storage(encoded_key)
 
         return StateManager(encryption_key)
