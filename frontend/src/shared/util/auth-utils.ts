@@ -14,17 +14,17 @@
   limitations under the License.
 */
 
-import { useAuth } from 'react-oidc-context';
+import { useAuth } from '../auth/hooks';
 
 /**
  * React hook to get username of current signed in user.
  * 
  * @returns {string}
  */
-export const useUsername = (): string => {
+export const  useUsername = (): string => {
     const auth = useAuth();
     
-    const username = auth.user?.profile.preferred_username;
+    const username = auth.user?.displayName;
     if (!username) {
         throw new Error('No username available.');
     }

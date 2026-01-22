@@ -15,7 +15,6 @@
 #
 
 import json
-import re
 from urllib.parse import unquote
 
 import boto3
@@ -48,8 +47,6 @@ group_user_dao = GroupUserDAO()
 group_dataset_dao = GroupDatasetDAO()
 iam = boto3.client("iam", config=retry_config)
 iam_manager = IAMManager(iam)
-
-dataset_description_regex = re.compile(r"[^ -~]")
 
 
 def get_dataset_prefix(scope, dataset_name):
@@ -106,8 +103,6 @@ def edit(event, context):
     if "description" in body:
         if len(body["description"]) > 254:
             raise Exception("Dataset description is over the max length of 254 characters.")
-        if dataset_description_regex.search(body["description"]):
-            raise Exception("Dataset description contains invalid character.")
     if dataset.type == DatasetType.GROUP:
         # get the new list of groups that have this dataset shared with them.
         # this list may be adding or removing existing groups from this dataset

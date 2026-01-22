@@ -54,16 +54,6 @@ export class AdminApiConstruct extends Construct {
                 method: 'DELETE',
             },
             {
-                name: 'create',
-                resource: 'user',
-                description: 'Creates a user for the system',
-                path: 'user',
-                method: 'POST',
-                environment: {
-                    NEW_USER_SUSPENSION_DEFAULT: props.mlspaceConfig.NEW_USERS_SUSPENDED ? 'True' : 'False',
-                },
-            },
-            {
                 name: 'get',
                 resource: 'user',
                 description: 'Get an MLSpace user',

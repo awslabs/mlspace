@@ -19,8 +19,8 @@ import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import App from './App';
 import getStore, { persistor } from './config/store';
-import { AuthProvider } from 'react-oidc-context';
-import { oidcConfig } from './config/oidc.config';
+import { AuthProvider } from './contexts/AuthContext';
+import { AuthErrorBoundary } from './shared/auth/components';
 import { PersistGate } from 'redux-persist/integration/react';
 import { I18nProvider } from '@cloudscape-design/components/i18n';
 // Only import English
@@ -34,13 +34,15 @@ root.render(
     <React.StrictMode>
         <Provider store={store}>
             <PersistGate persistor={persistor}>
-                <AuthProvider {...oidcConfig}>
-                    <div>
-                        <I18nProvider messages={[enMessages]}>
-                            <App />
-                        </I18nProvider>
-                    </div>
-                </AuthProvider>
+                <AuthErrorBoundary>
+                    <AuthProvider>
+                        <div>
+                            <I18nProvider messages={[enMessages]}>
+                                <App />
+                            </I18nProvider>
+                        </div>
+                    </AuthProvider>
+                </AuthErrorBoundary>
             </PersistGate>
         </Provider>
     </React.StrictMode>

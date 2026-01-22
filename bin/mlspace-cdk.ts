@@ -20,6 +20,7 @@ import { App, Aspects, Tags } from 'aws-cdk-lib';
 import { LogGroup } from 'aws-cdk-lib/aws-logs';
 import 'source-map-support/register';
 import { AdminApiStack } from '../lib/stacks/api/admin';
+import { AuthApiStack } from '../lib/stacks/api/auth';
 import { DatasetsApiStack } from '../lib/stacks/api/datasets';
 import { EmrApiStack } from '../lib/stacks/api/emr';
 import { InferenceApiStack } from '../lib/stacks/api/inference';
@@ -150,7 +151,6 @@ const restStack = new RestApiStack(app, 'mlspace-web-tier', {
     mlSpaceAppRole,
     lambdaSourcePath,
     frontEndAssetsPath,
-    verifyOIDCTokenSignature: config.OIDC_VERIFY_SIGNATURE,
     mlSpaceVPC,
     lambdaSecurityGroups: [vpcStack.vpcSecurityGroup],
     isIso,
@@ -191,6 +191,7 @@ const apiStackProperties: ApiStackProperties = {
 
 const apiStacks = [
     new AdminApiStack(app, 'mlspace-admin-apis', apiStackProperties),
+    new AuthApiStack(app, 'mlspace-auth-apis', apiStackProperties),
     new DatasetsApiStack(app, 'mlspace-dataset-apis', apiStackProperties),
     new InferenceApiStack(app, 'mlspace-inference-apis', apiStackProperties),
     new JobsApiStack(app, 'mlspace-jobs-apis', apiStackProperties),

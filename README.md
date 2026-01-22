@@ -35,7 +35,7 @@ In order to build and deploy MLSpace to your AWS account you will need the follo
 In addition to the required software you will also need to have the following information:
 
 - AWS account Id and region you'll be deploying MLSpace into (you'll need admin credentials or similar)
-- Identity provider (IdP) information including the OIDC endpoint and client name
+- Identity provider (IdP) information including the OIDC endpoint, client ID, and client secret
 
 ## Configuring MLSpace
 
@@ -70,8 +70,9 @@ If selecting Basic Config, the properties you will be prompted for are:
 
 - AWS account ID: the AWS account ID for the account MLSpace will be deployed into
 - AWS region: the region that MLSpace resources will be deployed into
-- OIDC URL: the OIDC endpoint that will be used for MLSpace authentication
-- OIDC Client Name: the OIDC client name that should be used by MLSpace for authentication
+- AUTH_OIDC_URL: the OIDC endpoint that will be used for MLSpace authentication
+- AUTH_OIDC_CLIENT_ID: the OIDC client ID that should be used by MLSpace for authentication
+- AUTH_OIDC_CLIENT_SECRET_VALUE: (optional) the OIDC client secret value for confidential clients
 
 If selecting Advanced Config you will be prompted for the same properties Basic Config prompts for, as well as other optional values. Anything not specified will use the defaults in `constants.ts` and/or provisioned by MLSpace.
 
@@ -110,9 +111,9 @@ Configure MLSpace using Option 2 if:
 - you wish to have your configuration changes in a file that's committed to git
 - will have to resolve conflicts when upgrading MLSpace
 
-If you are pre-creating roles you will need to ensure that the required role ARNs (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`, and `SYSTSTEM_ROLE_ARN`), policy ARNs ( `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN`, `JOB_INSTANCE_CONSTRAINT_POLICY_ARN`, and `KMS_INSTANCE_CONDITIONS_POLICY_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
+If you are pre-creating roles you will need to ensure that the required role ARNs (`APP_ROLE_ARN`, `NOTEBOOK_ROLE_ARN`, and `SYSTEM_ROLE_ARN`), policy ARNs ( `ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN`, `JOB_INSTANCE_CONSTRAINT_POLICY_ARN`, and `KMS_INSTANCE_CONDITIONS_POLICY_ARN`), role names (`KEY_MANAGER_ROLE_NAME` if `EXISTING_KMS_MASTER_KEY_ARN` is not set), and `AWS_ACCOUNT` (used to ensure unique S3 bucket names) have been properly set in `lib/constants.ts`.
 
-You will also need to set `OIDC_URL` and `OIDC_CLIENT_NAME` with the correct values based on your chosen IdP. These property must be set prior to deploying MLSpace.
+You will also need to set `AUTH_OIDC_URL` and `AUTH_OIDC_CLIENT_ID` with the correct values based on your chosen IdP. If using a confidential client, you should also set `AUTH_OIDC_CLIENT_SECRET_VALUE`. These properties must be set prior to deploying MLSpace.
 
 To see the full list of configurable properties and their descriptions, see the [Configurable deployment parameters section](Configurable deployment parameters).
 
@@ -157,8 +158,8 @@ If the config-helper doesn't provide the level of customization you need for you
 | AWS_ACCOUNT | The account number that MLSpace is being deployed into. Used to disambiguated S3 buckets within a region. | - |
 | AWS_REGION | The region that MLSpace is being deployed into. This is only needed when you are using an existing VPC or KMS key and `EXISTING_KMS_MASTER_KEY_ARN` or `EXISTING_VPC_ID` is set. | - |
 | KEY_MANAGER_ROLE_NAME | Name of the IAM role with permissions to manage the KMS Key. If this property is set you _do not_ need to set `EXISTING_KMS_MASTER_KEY_ARN`. | - |
-| OIDC_URL | The OIDC endpoint that will be used for MLSpace authentication | - |
-| OIDC_CLIENT_NAME | The OIDC client name that should be used by MLSpace for authentication | - |
+| AUTH_OIDC_URL | The OIDC endpoint that will be used for MLSpace authentication | - |
+| AUTH_OIDC_CLIENT_ID | The OIDC client ID that should be used by MLSpace for authentication | - |
 
 <details>
 <summary>
@@ -169,10 +170,12 @@ If the config-helper doesn't provide the level of customization you need for you
 
 | Variable                                       |                                                                                                                                                                                       Description                                                                                                                                                                                        |                             Default |
 |------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|------------------------------------:|
-| IDP_ENDPOINT_SSM_PARAM                         |                                                                                        If set, MLSpace will use the value of this parameter as the `OIDC_URL`. During deployment the value of this parameter will be read from SSM. This value takes precedence over `OIDC_URL` if both are set.                                                                                         |                                   - |
-| OIDC_REDIRECT_URL                              |                                                                                The redirect URL that should be used after succesfully authenticating with the OIDC provider. This will default to the API gateway URL generated by the CDK deployment but can be manually set if you're using custom DNS                                                                                 |                                   - |
-| OIDC_VERIFY_SSL                                |                                                                                                                            Whether or not calls to the OIDC endpoint specified in the `OIDC_URL` environment variable should validate the server certificate                                                                                                                             |                              `true` |
-| OIDC_VERIFY_SIGNATURE                          |                                                                                                                                                        Whether or not the lambda authorizer should verify the JWT token signature                                                                                                                                                        |                              `true` |
+| AUTH_OIDC_CLIENT_SECRET_VALUE                  |                                                                                                                            The OIDC client secret value for confidential clients. If not set, MLSpace will use PKCE for public clients                                                                                                                             |                                   - |
+| AUTH_OIDC_VERIFY_SSL                           |                                                                                                                            Whether or not calls to the OIDC endpoint specified in the `AUTH_OIDC_URL` environment variable should validate the server certificate                                                                                                                             |                              `true` |
+| AUTH_OIDC_VERIFY_SIGNATURE                     |                                                                                                                                                        Whether or not the lambda authorizer should verify the JWT token signature                                                                                                                                                        |                              `true` |
+| AUTH_OIDC_USE_PKCE                             |                                                                                                                                                        Whether to use PKCE (Proof Key for Code Exchange) for OIDC authentication                                                                                                                                                        |                             `false` |
+| AUTH_SESSION_TTL_HOURS                         |                                                                                                                                                        The time-to-live (TTL) in hours for authentication sessions                                                                                                                                                        |                                `24` |
+| AUTH_SYNC_DOMAINS                              |                                                                                                                                                        Comma-separated list of domains to sync authentication state across                                                                                                                                                        |                                   - |
 | ADDITIONAL_LAMBDA_ENVIRONMENT_VARS             |                                                                                                                                               A map of key value pairs which will be set as environment variables on every MLSpace lambda                                                                                                                                                |                                `{}` |
 | RESOURCE_TERMINATION_INTERVAL                  |                                                                                                                                                           Interval (in minutes) to run the resource termination cleanup lambda                                                                                                                                                           |                                `60` |
 | BACKGROUND_REFRESH_INTERVAL                    |                                                                                                                                                              Interval (in seconds) to run background resource data updates                                                                                                                                                               |                                `60` |

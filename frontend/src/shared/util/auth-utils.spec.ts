@@ -16,41 +16,36 @@
 
 import { describe, test, expect } from '@jest/globals';
 import { useUsername } from './auth-utils';
-import { useAuth } from 'react-oidc-context';
+import { useAuth } from '../auth/hooks';
 
 // Mocking library for useAuth which is used in the auth-util
-jest.mock('react-oidc-context');
+jest.mock('../auth/hooks');
 
 // Mocked user authentication object
 const validUserAuth = {
-    'user': {
-        'id_token': 'id.token.simulated-for-unit-testing-functions',
-        'session_state': null,
-        'access_token': 'simulated.access.token-for-unit-test--q-sim-functions',
-        'refresh_token': 'refresh.token-simulated-for-unit.tests.and-demonstration-of-how-this-would-work-but-it-is-it-valid-nor-does-it-have-the-real-proper-number-of.characters',
-        'token_type': 'Bearer',
-        'scope': 'openid profile email',
-        'profile': {
-            'sub': '12345678-1234-1234-1234-1234567890ab',
-            'iss': 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_asdfghjk',
-            'cognito:username': 'co',
-            'preferred_username': 'co',
-            'origin_jti': '12345678-1234-1234-1234-1234567890ab',
-            'aud': '1234567890asdfghjklzxcvbnm',
-            'event_id': '12345678-1234-1234-1234-1234567890ab',
-            'token_use': 'id',
-            'name': 'co',
-            'exp': 1715199886,
-            'iat': 1715196286,
-            'email': 'co@amazon.com'
-        },
-        'expires_at': 1715199886
-    }
+    status: 'authenticated' as const,
+    user: {
+        id: 'co',
+        displayName: 'co',
+        email: 'co@amazon.com',
+        groups: [],
+        attributes: {}
+    },
+    session: {
+        expiresAt: '2024-01-15T10:30:00Z',
+        refreshAt: '2024-01-15T09:30:00Z',
+        provider: 'oidc'
+    },
+    error: null,
+    login: jest.fn(),
+    logout: jest.fn(),
+    refresh: jest.fn(),
+    clearError: jest.fn()
 };
 
 describe('Test useUsername', () => {
     test.concurrent('Valid user', async () => {
-        useAuth.mockImplementation(() => {
+        (useAuth as jest.Mock).mockImplementation(() => {
             return validUserAuth;
         });
 
@@ -58,8 +53,11 @@ describe('Test useUsername', () => {
     });
 
     test.concurrent('Invalid user', async () => {
-        useAuth.mockImplementation(() => {
-            return {};
+        (useAuth as jest.Mock).mockImplementation(() => {
+            return {
+                ...validUserAuth,
+                user: null
+            };
         });
 
         expect(() => {

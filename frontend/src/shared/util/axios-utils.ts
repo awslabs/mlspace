@@ -50,15 +50,7 @@ class AxiosHelper {
 
 const config = (requestConfig: AxiosRequestConfig = {}) => {
     requestConfig.baseURL = `${window.env.LAMBDA_ENDPOINT}`;
-    const oidcString = sessionStorage.getItem(
-        `oidc.user:${window.env.OIDC_URL}:${window.env.OIDC_CLIENT_NAME}`
-    );
-    const token = oidcString ? JSON.parse(oidcString).id_token : '';
-
-    if (requestConfig.headers === undefined) {
-        requestConfig.headers = {};
-    }
-    requestConfig.headers['Authorization'] = `Bearer ${token}`;
+    requestConfig.withCredentials = true;
 
     return requestConfig;
 };

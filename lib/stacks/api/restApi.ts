@@ -56,7 +56,6 @@ export type RestApiStackProperties = {
     readonly websiteBucketName: string;
     readonly websiteS3ReaderRole: IRole;
     readonly mlSpaceAppRole: IRole;
-    readonly verifyOIDCTokenSignature: boolean;
     readonly mlSpaceVPC: IVpc;
     readonly lambdaSecurityGroups: ISecurityGroup[];
     readonly isIso?: boolean;

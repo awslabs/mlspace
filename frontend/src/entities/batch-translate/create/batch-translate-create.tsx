@@ -43,7 +43,6 @@ import {
     defaultEncryptionKey,
 } from '../../../shared/model/translate.model';
 import { enumToOptions } from '../../../shared/util/enum-utils';
-import { useAuth } from 'react-oidc-context';
 import { OptionDefinition } from '@cloudscape-design/components/internal/components/option/interfaces';
 import {
     getCustomTerminologyList,
@@ -57,6 +56,7 @@ import { isFulfilled } from '@reduxjs/toolkit';
 import { AUTO_SOURCE_LANGUAGE_UNSUPPORTED } from '..';
 import ContentLayout from '../../../shared/layout/content-layout';
 import { useNotificationService } from '../../../shared/util/hooks';
+import { useUsername } from '../../../shared/util/auth-utils';
 
 export function BatchTranslateCreate () {
     const [errorText] = useState('');
@@ -68,7 +68,7 @@ export function BatchTranslateCreate () {
     const dispatch = useAppDispatch();
     const notificationService = useNotificationService(dispatch);
     const navigate = useNavigate();
-    const auth = useAuth();
+    const userName = useUsername();
     const plainTextOption: OptionDefinition = {
         label: 'Plain text (.txt)',
         value: 'text/plain',
@@ -94,7 +94,6 @@ export function BatchTranslateCreate () {
         }
     ];
     const [docType, setDocType] = useState<OptionDefinition>(plainTextOption);
-    const userName = auth.user!.profile.preferred_username;
     const nameConstraintText =
         'Maximum of 255 alphanumeric characters. Can include hyphens (-), but not spaces. Must be unique within your account in an AWS Region.';
     scrollToPageHeader();
