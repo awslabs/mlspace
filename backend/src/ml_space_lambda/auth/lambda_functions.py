@@ -89,7 +89,6 @@ def _get_auth_config() -> Dict[str, str]:
         "state_encryption_key_secret_name": os.environ.get("AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME", ""),
         "token_encryption_key_secret_name": os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME", ""),
         "session_table_name": os.environ.get("AUTH_SESSION_TABLE_NAME", ""),
-        "primary_domain": os.environ.get("AUTH_PRIMARY_DOMAIN", ""),
         "sync_domains": os.environ.get("AUTH_SYNC_DOMAINS", ""),
     }
 
@@ -1315,10 +1314,10 @@ def _validate_requesting_domain(event, config) -> Tuple[Optional[str], Optional[
 
     requesting_domain = normalize_domain(host_header)
 
-    # Build allowed domains list (primary + sync domains)
-    primary_domain = normalize_domain(config.get("primary_domain", "") or host_header)
-    sync_domains = build_domain_list(primary_domain, config.get("sync_domains", ""))
-    allowed_domains = [primary_domain] + sync_domains
+    # Build allowed domains list (current domain + sync domains)
+    # The host header represents the primary domain where the request is being made
+    sync_domains = build_domain_list(requesting_domain, config.get("sync_domains", ""))
+    allowed_domains = [requesting_domain] + sync_domains
 
     # Validate requesting domain is in allowed list
     if requesting_domain not in allowed_domains:

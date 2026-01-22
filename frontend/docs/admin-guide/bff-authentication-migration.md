@@ -95,7 +95,6 @@ export const AUTH_IDP_TYPE = 'oidc';
 export const AUTH_OIDC_URL = 'https://auth.example.com';
 export const AUTH_OIDC_CLIENT_ID = 'mlspace-client';
 export const AUTH_SESSION_TTL_HOURS = 24;
-export const AUTH_PRIMARY_DOMAIN = '';
 export const AUTH_SYNC_DOMAINS = '';
 ```
 
@@ -124,7 +123,6 @@ export const AUTH_SYNC_DOMAINS = '';
     "AUTH_OIDC_URL": "https://auth.example.com",
     "AUTH_OIDC_CLIENT_ID": "mlspace-prod-client",
     "AUTH_SESSION_TTL_HOURS": 24,
-    "AUTH_PRIMARY_DOMAIN": "api.mlspace.com",
     "AUTH_SYNC_DOMAINS": "notebooks.mlspace.com"
   }
 }
@@ -148,7 +146,6 @@ export interface MLSpaceConfig {
   AUTH_OIDC_URL?: string;
   AUTH_OIDC_CLIENT_ID?: string;
   AUTH_SESSION_TTL_HOURS: number;
-  AUTH_PRIMARY_DOMAIN?: string;
   AUTH_SYNC_DOMAINS?: string;
 }
 ```
@@ -412,9 +409,8 @@ aws logs filter-log-events \
 ```
 
 **Solution:**
-1. Verify `AUTH_PRIMARY_DOMAIN` configuration
-2. Check cookie domain settings in browser
-3. Ensure HTTPS is used (cookies won't set over HTTP)
+1. Check cookie domain settings in browser
+2. Ensure HTTPS is used (cookies won't set over HTTP)
 
 ### Issue: Client Secret Authentication Fails
 

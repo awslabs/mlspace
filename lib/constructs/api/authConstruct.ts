@@ -42,7 +42,6 @@ export class AuthApiConstruct extends Construct {
         const authCommonEnv = {
             AUTH_SESSION_TABLE_NAME: props.mlspaceConfig.AUTH_SESSION_TABLE_NAME,
             AUTH_IDP_TYPE: props.mlspaceConfig.AUTH_IDP_TYPE,
-            AUTH_PRIMARY_DOMAIN: props.mlspaceConfig.AUTH_PRIMARY_DOMAIN,
             AUTH_SYNC_DOMAINS: props.mlspaceConfig.AUTH_SYNC_DOMAINS,
             AUTH_SESSION_TTL_HOURS: props.mlspaceConfig.AUTH_SESSION_TTL_HOURS.toString(),
             AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,

@@ -134,7 +134,6 @@ export const AUTH_OIDC_VERIFY_SSL = true; // Whether to verify SSL certificates 
 export const AUTH_OIDC_VERIFY_SIGNATURE = true; // Whether to verify OIDC token signatures
 
 // Domain configuration for cross-domain cookie sync
-export const AUTH_PRIMARY_DOMAIN = ''; // Optional: Override API Gateway domain for cookies
 export const AUTH_SYNC_DOMAINS = ''; // Optional: Comma-separated list of additional domains for cookie sync
 
 // Session configuration

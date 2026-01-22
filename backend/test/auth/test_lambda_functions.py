@@ -41,7 +41,6 @@ class TestAuthLambdaFunctions:
             "AUTH_SESSION_TABLE_NAME": "test-session-table",
             "AUTH_OIDC_VERIFY_SSL": "true",
             "AUTH_OIDC_VERIFY_SIGNATURE": "true",
-            "AUTH_PRIMARY_DOMAIN": "",
             "AUTH_SYNC_DOMAINS": "",
             "WEB_CUSTOM_DOMAIN_NAME": "",
             "AWS_REGION": "us-east-1",
@@ -1400,19 +1399,23 @@ class TestAuthLambdaFunctions:
 
     @patch.dict("os.environ")
     def test_sync_unauthorized_domain(self):
-        """Test sync request from unauthorized domain."""
+        """Test sync request from unauthorized domain.
+
+        With the removal of AUTH_PRIMARY_DOMAIN, the requesting domain (from Host header)
+        is always considered authorized. This test now verifies that the sync endpoint
+        validates OTAC properly when called from any domain.
+        """
         # Set up environment with specific sync domains
         env_vars = self.env_vars.copy()
         env_vars["AUTH_SYNC_DOMAINS"] = "api.example.com,notebooks.example.com"
-        env_vars["AUTH_PRIMARY_DOMAIN"] = "app.example.com"
 
         for key, value in env_vars.items():
             os.environ[key] = value
 
         event = {
-            "headers": {"Host": "unauthorized.example.com"},  # Not in allowed domains
+            "headers": {"Host": "app.example.com"},  # Any domain can receive sync requests
             "queryStringParameters": {
-                "otac": "otac:valid-otac-code",
+                "otac": "otac:invalid-otac-code",  # Invalid OTAC
                 "final": "/dashboard",
             },
         }
@@ -1421,9 +1424,9 @@ class TestAuthLambdaFunctions:
 
         response = sync(event, self.mock_context)
 
-        # Should redirect with error
+        # Should redirect with error due to invalid OTAC
         assert response["statusCode"] == 302
-        assert "error=unauthorized_domain" in response["headers"]["Location"]
+        assert "error=invalid_otac" in response["headers"]["Location"]
 
     @patch.dict("os.environ")
     @patch("ml_space_lambda.auth.lambda_functions.ssm_client")

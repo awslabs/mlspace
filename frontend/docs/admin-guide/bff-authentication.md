@@ -29,7 +29,6 @@ The BFF authentication system uses new `AUTH_*` configuration parameters that re
 
 | Parameter | Description | Example | Default |
 |-----------|-------------|---------|---------|
-| `AUTH_PRIMARY_DOMAIN` | Override API Gateway domain for cookies | `"api.mlspace.com"` | API Gateway domain |
 | `AUTH_SYNC_DOMAINS` | Comma-separated list of additional domains for cookie sync | `"notebooks.mlspace.com,admin.mlspace.com"` | None |
 | `AUTH_OIDC_CLIENT_SECRET_NAME` | Secrets Manager secret name for OIDC client secret | `"mlspace/auth/oidc-client-secret"` | `"mlspace/auth/oidc-client-secret"` |
 | `AUTH_OIDC_CLIENT_SECRET_VALUE` | Optional OIDC client secret value for deployment-time configuration | `"your-secret-here"` | None |
@@ -61,7 +60,6 @@ export const AUTH_OIDC_USE_PKCE = true;
 export const AUTH_OIDC_VERIFY_SSL = true;
 export const AUTH_OIDC_VERIFY_SIGNATURE = true;
 export const AUTH_SESSION_TTL_HOURS = 24;
-export const AUTH_PRIMARY_DOMAIN = '';
 export const AUTH_SYNC_DOMAINS = '';
 export const AUTH_SESSION_TABLE_NAME = 'mlspace-auth-sessions';
 export const AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/token-encryption-keys';
@@ -83,7 +81,6 @@ Update your environment-specific configuration file:
     "AUTH_OIDC_VERIFY_SSL": true,
     "AUTH_OIDC_VERIFY_SIGNATURE": true,
     "AUTH_SESSION_TTL_HOURS": 8,
-    "AUTH_PRIMARY_DOMAIN": "",
     "AUTH_SYNC_DOMAINS": ""
   },
   "prod": {
@@ -95,7 +92,6 @@ Update your environment-specific configuration file:
     "AUTH_OIDC_VERIFY_SSL": true,
     "AUTH_OIDC_VERIFY_SIGNATURE": true,
     "AUTH_SESSION_TTL_HOURS": 24,
-    "AUTH_PRIMARY_DOMAIN": "api.mlspace.com",
     "AUTH_SYNC_DOMAINS": "notebooks.mlspace.com,admin.mlspace.com"
   }
 }
@@ -123,7 +119,6 @@ export interface MLSpaceConfig {
   AUTH_OIDC_VERIFY_SSL?: boolean;
   AUTH_OIDC_VERIFY_SIGNATURE?: boolean;
   AUTH_SESSION_TTL_HOURS?: number;
-  AUTH_PRIMARY_DOMAIN?: string;
   AUTH_SYNC_DOMAINS?: string;
   AUTH_SESSION_TABLE_NAME?: string;
   AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME?: string;
@@ -234,14 +229,17 @@ Set the `AUTH_SYNC_DOMAINS` parameter with a comma-separated list of additional 
 
 ```json
 {
-  "AUTH_PRIMARY_DOMAIN": "api.mlspace.com",
   "AUTH_SYNC_DOMAINS": "notebooks.mlspace.com,admin.mlspace.com"
 }
 ```
 
+::: tip Domain Detection
+The system automatically uses the Host header to determine the primary domain where authentication is initiated.
+:::
+
 ### How It Works
 
-1. **Primary Authentication**: User authenticates on the primary domain (API Gateway)
+1. **Primary Authentication**: User authenticates on the current domain (detected from Host header)
 2. **OTAC Generation**: System generates One-Time Authentication Code (OTAC)
 3. **Domain Chain**: Browser is redirected through each sync domain in sequence
 4. **Cookie Setting**: Each domain validates the OTAC and sets its own session cookie
@@ -300,7 +298,6 @@ export const AUTH_OIDC_USE_PKCE = true;
 export const AUTH_OIDC_VERIFY_SSL = true;
 export const AUTH_OIDC_VERIFY_SIGNATURE = true;
 export const AUTH_SESSION_TTL_HOURS = 24;
-export const AUTH_PRIMARY_DOMAIN = '';
 export const AUTH_SYNC_DOMAINS = '';
 ```
 
@@ -422,7 +419,7 @@ If issues occur during migration, you can rollback:
 **Solution:**
 - Verify cookies are being set with correct domain
 - Check browser developer tools for cookie presence
-- Ensure `AUTH_PRIMARY_DOMAIN` is correctly configured
+- Ensure HTTPS is being used (cookies won't set over HTTP in production)
 
 #### Issue: Client Secret Errors
 

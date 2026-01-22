@@ -49,21 +49,13 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 - **Example**: `8` (for 8-hour sessions)
 - **Notes**: Affects both session cookies and DynamoDB TTL
 
-### AUTH_PRIMARY_DOMAIN
-- **Type**: String
-- **Required**: No
-- **Default**: API Gateway domain
-- **Description**: Override domain for session cookies
-- **Example**: `"api.mlspace.com"`
-- **Notes**: Used for custom domain deployments
-
 ### AUTH_SYNC_DOMAINS
 - **Type**: String (comma-separated)
 - **Required**: No
 - **Default**: None
 - **Description**: Additional domains for cross-domain cookie sync
 - **Example**: `"notebooks.mlspace.com,admin.mlspace.com"`
-- **Notes**: Enables seamless authentication across multiple domains
+- **Notes**: Enables seamless authentication across multiple domains. The primary domain is automatically detected from the Host header.
 
 ### AUTH_OIDC_CLIENT_SECRET_NAME
 - **Type**: String
@@ -183,7 +175,6 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
   "AUTH_OIDC_CLIENT_ID": "mlspace-prod-client",
   "AUTH_OIDC_CLIENT_SECRET_VALUE": "prod-client-secret-here",
   "AUTH_SESSION_TTL_HOURS": 24,
-  "AUTH_PRIMARY_DOMAIN": "api.mlspace.com",
   "AUTH_SYNC_DOMAINS": "notebooks.mlspace.com,admin.mlspace.com",
   "AUTH_OIDC_USE_PKCE": true,
   "AUTH_OIDC_VERIFY_SSL": true,
@@ -199,7 +190,6 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
   "AUTH_OIDC_CLIENT_ID": "mlspace-enterprise",
   "AUTH_OIDC_CLIENT_SECRET_VALUE": "enterprise-client-secret-here",
   "AUTH_SESSION_TTL_HOURS": 12,
-  "AUTH_PRIMARY_DOMAIN": "mlspace-api.company.com",
   "AUTH_SYNC_DOMAINS": "mlspace-notebooks.company.com,mlspace-admin.company.com",
   "AUTH_OIDC_USE_PKCE": true,
   "AUTH_OIDC_VERIFY_SSL": true,
@@ -218,9 +208,8 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 
 ### Optional Validation Rules
 
-1. **AUTH_PRIMARY_DOMAIN**: Must be valid domain name if specified
-2. **AUTH_SYNC_DOMAINS**: Must be comma-separated list of valid domain names if specified
-3. **AUTH_OIDC_USE_PKCE**: Must be boolean (true/false)
+1. **AUTH_SYNC_DOMAINS**: Must be comma-separated list of valid domain names if specified
+2. **AUTH_OIDC_USE_PKCE**: Must be boolean (true/false)
 4. **AUTH_OIDC_VERIFY_SSL**: Must be boolean (true/false); should be true in production
 5. **AUTH_OIDC_VERIFY_SIGNATURE**: Must be boolean (true/false); should be true in production
 6. **AUTH_OIDC_CLIENT_SECRET_NAME**: Must be valid Secrets Manager secret name if specified
@@ -287,7 +276,6 @@ All `OIDC_*` parameters listed below are **deprecated and no longer supported**.
 | _(none)_ | `AUTH_OIDC_CLIENT_SECRET_VALUE` | **New** - Optional deployment-time secret value |
 | _(none)_ | `AUTH_OIDC_USE_PKCE` | **New** - Enable PKCE flow (default: true) |
 | _(none)_ | `AUTH_SESSION_TTL_HOURS` | **New** - Session duration configuration |
-| _(none)_ | `AUTH_PRIMARY_DOMAIN` | **New** - Custom domain for cookies |
 | _(none)_ | `AUTH_SYNC_DOMAINS` | **New** - Multi-domain cookie sync |
 | _(none)_ | `AUTH_SESSION_TABLE_NAME` | **New** - DynamoDB session table name |
 | _(none)_ | `AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME` | **New** - Token encryption keys (rotatable) |
@@ -380,7 +368,7 @@ aws secretsmanager describe-secret \
 
 1. **Client Secrets**: Always store in Secrets Manager (not SSM Parameter Store)
 2. **URLs**: Use HTTPS for all AUTH_OIDC_URL values
-3. **Domains**: Ensure AUTH_PRIMARY_DOMAIN and AUTH_SYNC_DOMAINS use HTTPS
+3. **Domains**: Ensure AUTH_SYNC_DOMAINS use HTTPS
 4. **TTL**: Set appropriate AUTH_SESSION_TTL_HOURS based on security requirements
 5. **SSL Verification**: Keep AUTH_OIDC_VERIFY_SSL=true in production
 6. **Signature Verification**: Keep AUTH_OIDC_VERIFY_SIGNATURE=true in production
