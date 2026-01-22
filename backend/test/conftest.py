@@ -28,6 +28,9 @@ from ml_space_lambda.enums import DatasetType
 def pytest_generate_tests(metafunc):
     # Provides the location of the LAMBDA_TASK_ROOT which is used by the 'retrieve' function to identify built-in training algorithms
     os.environ["LAMBDA_TASK_ROOT"] = "./src/"
+    # Set AWS region for boto3 clients initialized at module level
+    if "AWS_DEFAULT_REGION" not in os.environ:
+        os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
 
 @pytest.fixture
