@@ -321,6 +321,35 @@ def _create_otac_manager(config: Dict[str, str]) -> OTACManager:
         raise Exception("Configuration error: Unable to initialize OTAC management")
 
 
+def _get_base_url(event: Dict) -> str:
+    """
+    Get base URL for building redirect URIs.
+
+    Uses WEB_CUSTOM_DOMAIN_NAME if configured, otherwise falls back to Host header.
+
+    Args:
+        event: Lambda event
+
+    Returns:
+        Base URL (e.g., "https://mlspace.example.com" or "https://api-id.execute-api.region.amazonaws.com/stage")
+    """
+    # Check for custom domain configuration
+    custom_domain = os.environ.get("WEB_CUSTOM_DOMAIN_NAME", "").strip()
+    if custom_domain:
+        # Remove trailing slash if present
+        return custom_domain.rstrip("/")
+
+    # Fall back to Host header
+    host = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+
+    # Determine protocol
+    protocol = "https"
+    if host.startswith("localhost") or "127.0.0.1" in host:
+        protocol = "http"
+
+    return f"{protocol}://{host}"
+
+
 def _get_redirect_uri(event: Dict) -> str:
     """
     Build redirect URI for OIDC callback.
@@ -331,15 +360,8 @@ def _get_redirect_uri(event: Dict) -> str:
     Returns:
         Callback redirect URI
     """
-    # Get host from headers
-    host = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
-
-    # Determine protocol
-    protocol = "https"
-    if host.startswith("localhost") or "127.0.0.1" in host:
-        protocol = "http"
-
-    return f"{protocol}://{host}/auth/callback"
+    base_url = _get_base_url(event)
+    return f"{base_url}/auth/callback"
 
 
 def _validate_redirect_url(redirect_url: str, host_header: str) -> bool:
@@ -877,13 +899,13 @@ def _delete_user_session(session_id: str, session_manager: SessionManager) -> bo
     return deletion_success
 
 
-def _get_idp_logout_url(config: Dict[str, str], host_header: str) -> Optional[str]:
+def _get_idp_logout_url(config: Dict[str, str], event: Dict) -> Optional[str]:
     """
     Generate IdP logout URL for single sign-out.
 
     Args:
         config: Authentication configuration
-        host_header: Host header from request
+        event: Lambda event for building base URL
 
     Returns:
         IdP logout URL if available, None otherwise
@@ -893,10 +915,8 @@ def _get_idp_logout_url(config: Dict[str, str], host_header: str) -> Optional[st
         auth_handler = _create_auth_handler(config)
 
         # Build post-logout redirect URI (back to login page)
-        protocol = "https"
-        if host_header.startswith("localhost") or "127.0.0.1" in host_header:
-            protocol = "http"
-        post_logout_redirect_uri = f"{protocol}://{host_header}/"
+        base_url = _get_base_url(event)
+        post_logout_redirect_uri = f"{base_url}/"
 
         idp_logout_url = auth_handler.get_logout_url(post_logout_redirect_uri)
 
@@ -989,7 +1009,7 @@ def logout(event, context):
 
         # Get IdP logout URL if requested
         if logout_from_idp:
-            idp_logout_url = _get_idp_logout_url(config, host_header)
+            idp_logout_url = _get_idp_logout_url(config, event)
             if idp_logout_url:
                 response_body["idpLogoutUrl"] = idp_logout_url
 

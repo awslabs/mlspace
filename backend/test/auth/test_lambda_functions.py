@@ -43,6 +43,7 @@ class TestAuthLambdaFunctions:
             "AUTH_OIDC_VERIFY_SIGNATURE": "true",
             "AUTH_PRIMARY_DOMAIN": "",
             "AUTH_SYNC_DOMAINS": "",
+            "WEB_CUSTOM_DOMAIN_NAME": "",
         }
 
         # Mock SSM responses (legacy - keeping for backward compatibility tests)
@@ -149,6 +150,61 @@ class TestAuthLambdaFunctions:
         assert "test-nonce" in state_cookie
         assert "HttpOnly" in state_cookie
         assert "Secure" in state_cookie
+
+    @patch.dict("os.environ")
+    @patch("ml_space_lambda.auth.lambda_functions.secrets_client")
+    @patch("ml_space_lambda.auth.lambda_functions.ssm_client")
+    @patch("ml_space_lambda.auth.lambda_functions.OIDCHandler")
+    @patch("ml_space_lambda.auth.lambda_functions.StateManager")
+    def test_login_with_custom_domain(
+        self, mock_state_manager_class, mock_oidc_handler_class, mock_ssm_client, mock_secrets_client
+    ):
+        """Test login flow uses WEB_CUSTOM_DOMAIN_NAME when configured."""
+        # Set up environment with custom domain
+        env_vars = self.env_vars.copy()
+        env_vars["WEB_CUSTOM_DOMAIN_NAME"] = "https://mlspace.example.com"
+
+        for key, value in env_vars.items():
+            os.environ[key] = value
+
+        # Mock SSM client
+        def mock_get_parameter(Name, WithDecryption=True):
+            return {"Parameter": {"Value": self.mock_ssm_responses[Name]}}
+
+        mock_ssm_client.get_parameter.side_effect = mock_get_parameter
+
+        # Mock Secrets Manager client
+        def mock_get_secret_value(SecretId):
+            secret_data = self.mock_secrets_responses[SecretId]
+            return {"SecretString": json.dumps(secret_data)}
+
+        mock_secrets_client.get_secret_value.side_effect = mock_get_secret_value
+
+        # Mock state manager
+        mock_state_manager = Mock()
+        mock_state_manager.generate_nonce.return_value = "test-nonce"
+        mock_state_manager.create_state.return_value = "encrypted-state"
+        mock_state_manager_class.return_value = mock_state_manager
+
+        # Mock OIDC handler
+        mock_oidc_handler = Mock()
+        mock_oidc_handler.get_authorization_url.return_value = "https://idp.example.com/auth?state=encrypted-state"
+        mock_oidc_handler_class.return_value = mock_oidc_handler
+
+        event = {
+            "headers": {"Host": "api-gateway-id.execute-api.us-east-1.amazonaws.com"},
+            "queryStringParameters": {"redirectUrl": "/dashboard"},
+        }
+
+        response = login(event, self.mock_context)
+
+        # Verify response
+        assert response["statusCode"] == 302
+
+        # Verify OIDC handler was called with custom domain in redirect_uri
+        mock_oidc_handler.get_authorization_url.assert_called_once()
+        call_kwargs = mock_oidc_handler.get_authorization_url.call_args[1]
+        assert call_kwargs["redirect_uri"] == "https://mlspace.example.com/auth/callback"
 
     @patch.dict("os.environ")
     @patch("ml_space_lambda.auth.lambda_functions.secrets_client")
