@@ -9,7 +9,7 @@ outline: deep
 This page provides a quick reference for all AUTH_* configuration parameters used in the enhanced authentication system.
 
 ::: danger OIDC_* PARAMETERS NOT SUPPORTED
-The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, etc.) are **deprecated and no longer supported**. You must use the `AUTH_*` parameters documented on this page. See the [Migration Mapping](#migration-mapping) section below for the complete mapping from legacy to new parameters.
+The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, etc.) are **no longer supported**. You must use the `AUTH_*` parameters documented on this page. See the [Migration Mapping](#migration-mapping) section below for the complete mapping from deprecated to new parameters.
 :::
 
 ## Required Parameters
@@ -28,7 +28,7 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 - **Default**: None
 - **Description**: OIDC issuer URL for authentication
 - **Example**: `"https://auth.example.com"`
-- **Notes**: Replaces legacy `OIDC_URL` parameter
+- **Notes**: Replaces deprecated `OIDC_URL` parameter
 
 ### AUTH_OIDC_CLIENT_ID
 - **Type**: String
@@ -36,7 +36,7 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 - **Default**: None
 - **Description**: OIDC client identifier
 - **Example**: `"mlspace-client"`
-- **Notes**: Replaces legacy `OIDC_CLIENT_NAME` parameter
+- **Notes**: Replaces deprecated `OIDC_CLIENT_NAME` parameter
 
 ## Optional Parameters
 
@@ -257,13 +257,13 @@ echo "✅ Configuration validation passed for environment: $ENV"
 
 ## Migration Mapping
 
-::: danger LEGACY PARAMETERS NOT SUPPORTED
-All `OIDC_*` parameters listed below are **deprecated and no longer supported**. You must migrate to the corresponding `AUTH_*` parameters. Attempting to use legacy parameters will result in configuration errors.
+::: danger DEPRECATED PARAMETERS NOT SUPPORTED
+All `OIDC_*` parameters listed below are **no longer supported**. You must migrate to the corresponding `AUTH_*` parameters. Attempting to use deprecated parameters will result in configuration errors.
 :::
 
-### Legacy to New Parameter Mapping
+### Deprecated to New Parameter Mapping
 
-| Legacy Parameter | New Parameter | Migration Notes |
+| Deprecated Parameter | New Parameter | Migration Notes |
 |------------------|---------------|-----------------|
 | `OIDC_URL` | `AUTH_OIDC_URL` | Direct replacement - use the same OIDC issuer URL |
 | `OIDC_CLIENT_NAME` | `AUTH_OIDC_CLIENT_ID` | Direct replacement - use the same client identifier |
@@ -283,7 +283,7 @@ All `OIDC_*` parameters listed below are **deprecated and no longer supported**.
 
 ### Configuration File Migration
 
-**Before (legacy):**
+**Before (deprecated):**
 ```typescript
 // lib/constants.ts
 export const OIDC_URL = 'https://auth.example.com';

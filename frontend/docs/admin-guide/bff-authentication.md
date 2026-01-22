@@ -8,15 +8,15 @@ outline: deep
 
 The enhanced authentication system provides improved security and enterprise Identity Provider (IdP) integration. Authentication is handled server-side, enabling support for enterprise IdPs that require client secrets, while providing better security through secure cookies (HttpOnly cookies that can't be accessed by JavaScript and are only sent to the server with requests) and simplified application code.
 
-::: danger LEGACY OIDC_* PARAMETERS NOT SUPPORTED
-The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, `OIDC_REDIRECT_URL`, etc.) are **deprecated and no longer supported**. You must use the `AUTH_*` parameters documented below. See the [Migration from Legacy OIDC Configuration](#migration-from-legacy-oidc-configuration) section for migration instructions.
+::: danger DEPRECATED OIDC_* PARAMETERS NOT SUPPORTED
+The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, `OIDC_REDIRECT_URL`, etc.) are **no longer supported**. You must use the `AUTH_*` parameters documented below. See the [Migration from Deprecated OIDC Configuration](#migration-from-deprecated-oidc-configuration) section for migration instructions.
 :::
 
 ## Configuration Parameters
 
 ### Required AUTH_* Parameters
 
-The enhanced authentication system uses `AUTH_*` configuration parameters that replace the legacy `OIDC_*` parameters:
+The enhanced authentication system uses `AUTH_*` configuration parameters that replace the deprecated `OIDC_*` parameters:
 
 | Parameter | Description | Example | Required |
 |-----------|-------------|---------|----------|
@@ -43,10 +43,10 @@ The enhanced authentication system uses `AUTH_*` configuration parameters that r
 
 ### 1. Update lib/constants.ts
 
-Replace the legacy OIDC constants with new AUTH constants:
+Replace the deprecated OIDC constants with new AUTH constants:
 
 ```typescript
-// Remove these legacy constants:
+// Remove these deprecated constants:
 // export const OIDC_URL = '';
 // export const OIDC_CLIENT_NAME = '';
 
@@ -105,7 +105,7 @@ Add the new AUTH properties to the MLSpaceConfig interface:
 export interface MLSpaceConfig {
   // ... existing properties ...
   
-  // Remove legacy OIDC properties:
+  // Remove deprecated OIDC properties:
   // OIDC_URL?: string;
   // OIDC_CLIENT_NAME?: string;
   
@@ -263,7 +263,7 @@ The system automatically uses the Host header to determine the primary domain wh
 6. Final redirect: https://app.mlspace.com/dashboard
 ```
 
-## Migration from Legacy OIDC Configuration
+## Migration from Deprecated OIDC Configuration
 
 ### Pre-Migration Checklist
 
@@ -281,7 +281,7 @@ Before migrating to the enhanced authentication system, ensure you have:
 
 **lib/constants.ts changes:**
 ```typescript
-// BEFORE (Legacy OIDC)
+// BEFORE (Deprecated OIDC)
 export const OIDC_URL = 'https://auth.example.com';
 export const OIDC_CLIENT_NAME = 'mlspace-client';
 export const OIDC_REDIRECT_URL = undefined;
@@ -345,7 +345,7 @@ aws secretsmanager create-secret \
 
 Update your OIDC provider's redirect URI configuration:
 
-**Before (Legacy):**
+**Before (Deprecated):**
 - Redirect URI: `https://your-api-gateway.execute-api.region.amazonaws.com/Prod/`
 
 **After (Enhanced Authentication):**

@@ -33,7 +33,7 @@ aws secretsmanager update-secret \
 
 ## Complete AUTH_* Parameter List
 
-All authentication configuration now uses `AUTH_*` parameters. **Legacy `OIDC_*` parameters are deprecated and not supported.**
+All authentication configuration now uses `AUTH_*` parameters. **Deprecated `OIDC_*` parameters are no longer supported.**
 
 ### Required Parameters
 - **AUTH_IDP_TYPE**: Identity Provider type (currently only `"oidc"` is supported)
@@ -63,7 +63,7 @@ All authentication configuration now uses `AUTH_*` parameters. **Legacy `OIDC_*`
 - Configuration setup instructions
 - SSM parameter setup for client secrets
 - Multi-domain cookie synchronization configuration
-- Migration instructions from legacy OIDC
+- Migration instructions from deprecated OIDC
 - Troubleshooting guide
 - Security considerations
 - Performance monitoring
@@ -97,7 +97,7 @@ All authentication configuration now uses `AUTH_*` parameters. **Legacy `OIDC_*`
 **File**: `frontend/docs/admin-guide/install.md` (updated)
 **Changes**:
 - Added warning about enhanced authentication for new deployments
-- Updated OIDC parameter descriptions to indicate legacy status
+- Updated OIDC parameter descriptions to indicate deprecated status
 - Added references to enhanced authentication documentation
 - Maintained backward compatibility information
 
@@ -143,7 +143,7 @@ frontend/docs/admin-guide/
 - Security best practices
 
 ### Deprecated Parameters
-**All legacy `OIDC_*` parameters are deprecated and not supported:**
+**All deprecated `OIDC_*` parameters are no longer supported:**
 - `OIDC_URL` → Use `AUTH_OIDC_URL`
 - `OIDC_CLIENT_NAME` → Use `AUTH_OIDC_CLIENT_ID`
 - `OIDC_REDIRECT_URL` → No longer needed (automatic `/auth/callback`)
@@ -222,7 +222,7 @@ This documentation satisfies all requirements from task 19:
 - Environment-specific configuration examples
 - Validation rules and scripts
 
-✅ **Document migration steps from legacy OIDC configuration**
+✅ **Document migration steps from deprecated OIDC configuration**
 - Detailed step-by-step migration guide
 - Pre-migration assessment procedures
 - Configuration file update instructions

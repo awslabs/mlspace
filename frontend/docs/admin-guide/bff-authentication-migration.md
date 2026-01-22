@@ -6,7 +6,7 @@ outline: deep
 
 ## Overview
 
-This guide provides detailed step-by-step instructions for migrating from the legacy OIDC authentication system to the enhanced authentication system. The new system provides improved security, better enterprise IdP support, and simplified application code.
+This guide provides detailed step-by-step instructions for migrating from the deprecated OIDC authentication system to the enhanced authentication system. The new system provides improved security, better enterprise IdP support, and simplified application code.
 
 ## Migration Benefits
 
@@ -83,7 +83,7 @@ git push origin pre-bff-migration
 #### 1.1 Update lib/constants.ts
 
 ```typescript
-// REMOVE these legacy constants:
+// REMOVE these deprecated constants:
 export const OIDC_URL = 'https://auth.example.com';
 export const OIDC_CLIENT_NAME = 'mlspace-client';
 export const OIDC_REDIRECT_URL = undefined;
@@ -103,7 +103,7 @@ export const AUTH_SYNC_DOMAINS = '';
 ```json
 {
   "dev": {
-    // REMOVE legacy OIDC config:
+    // REMOVE deprecated OIDC config:
     // "OIDC_URL": "https://auth.dev.example.com",
     // "OIDC_CLIENT_NAME": "mlspace-dev-client",
     
@@ -114,7 +114,7 @@ export const AUTH_SYNC_DOMAINS = '';
     "AUTH_SESSION_TTL_HOURS": 8
   },
   "prod": {
-    // REMOVE legacy OIDC config:
+    // REMOVE deprecated OIDC config:
     // "OIDC_URL": "https://auth.example.com",
     // "OIDC_CLIENT_NAME": "mlspace-prod-client",
     
@@ -134,7 +134,7 @@ export const AUTH_SYNC_DOMAINS = '';
 export interface MLSpaceConfig {
   // ... existing properties ...
   
-  // REMOVE legacy OIDC properties:
+  // REMOVE deprecated OIDC properties:
   // OIDC_URL?: string;
   // OIDC_CLIENT_NAME?: string;
   // OIDC_REDIRECT_URL?: string;
@@ -309,12 +309,12 @@ curl -b "mlspace_session=your-session-id" \
 
 ### Step 6: Post-Migration Cleanup
 
-#### 6.1 Remove Legacy Code References
+#### 6.1 Remove Deprecated Code References
 
-Search for and remove any remaining legacy OIDC references:
+Search for and remove any remaining deprecated OIDC references:
 
 ```bash
-# Search for legacy OIDC usage
+# Search for deprecated OIDC usage
 grep -r "OIDC_URL\|OIDC_CLIENT_NAME" --exclude-dir=node_modules .
 grep -r "oidc.user:" frontend/src/
 grep -r "sessionStorage.*oidc" frontend/src/
@@ -323,7 +323,7 @@ grep -r "sessionStorage.*oidc" frontend/src/
 #### 6.2 Update Documentation
 
 Update any internal documentation that references:
-- Legacy OIDC configuration
+- Deprecated OIDC configuration
 - Frontend token management
 - Authentication troubleshooting procedures
 
@@ -365,7 +365,7 @@ https://your-api-gateway.execute-api.region.amazonaws.com/Prod/
 ### Step 3: Rebuild and Redeploy
 
 ```bash
-# Rebuild frontend with legacy configuration
+# Rebuild frontend with deprecated configuration
 cd frontend/
 npm run clean && npm run build
 
@@ -376,7 +376,7 @@ cdk deploy --all --require-approval never
 
 ### Step 4: Verify Rollback
 
-Test the legacy authentication flow to ensure it's working correctly.
+Test the deprecated authentication flow to ensure it's working correctly.
 
 ## Troubleshooting Common Issues
 
@@ -578,7 +578,7 @@ Use this checklist to track migration progress:
 - [ ] Test logout functionality
 
 ### Post-Migration
-- [ ] Remove legacy code references
+- [ ] Remove deprecated code references
 - [ ] Update internal documentation
 - [ ] Monitor CloudWatch logs
 - [ ] Set up performance monitoring
@@ -589,7 +589,7 @@ Use this checklist to track migration progress:
 - [ ] Revert configuration files
 - [ ] Revert OIDC provider settings
 - [ ] Rebuild and redeploy
-- [ ] Verify legacy functionality
+- [ ] Verify deprecated functionality
 
 ## Support and Next Steps
 
