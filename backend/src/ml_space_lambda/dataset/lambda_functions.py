@@ -49,7 +49,7 @@ group_dataset_dao = GroupDatasetDAO()
 iam = boto3.client("iam", config=retry_config)
 iam_manager = IAMManager(iam)
 
-dataset_description_regex = re.compile(r"[^\w\-\s'.]")
+dataset_description_regex = re.compile(r"[^ -~]")
 
 
 def get_dataset_prefix(scope, dataset_name):
