@@ -193,7 +193,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     const login = (redirectUrl?: string) => {
         // For login redirect, we need to construct the full URL since it's a page redirect
         const baseUrl = (window as any).env?.LAMBDA_ENDPOINT || window.location.origin;
-        const loginUrl = new URL('/auth/login', baseUrl);
+        const loginUrl = new URL('auth/login', baseUrl);
         if (redirectUrl) {
             loginUrl.searchParams.set('redirectUrl', redirectUrl);
         }

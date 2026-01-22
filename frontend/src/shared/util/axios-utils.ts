@@ -49,7 +49,7 @@ class AxiosHelper {
 }
 
 const config = (requestConfig: AxiosRequestConfig = {}) => {
-    requestConfig.baseURL = `${window.env.LAMBDA_ENDPOINT}`;
+    requestConfig.baseURL = (window as any).env?.LAMBDA_ENDPOINT || window.location.origin;
     requestConfig.withCredentials = true;
 
     return requestConfig;
