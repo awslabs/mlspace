@@ -9,8 +9,8 @@ const docItems = [
             { text: 'Install Guide', link: '/admin-guide/install' },
             { text: 'Getting Started', link: '/admin-guide/getting-started' },
             { text: 'Setting Initial Admin', link: '/admin-guide/initial-admin' },
-            { text: 'BFF Authentication Configuration', link: '/admin-guide/bff-authentication' },
-            { text: 'BFF Authentication Migration', link: '/admin-guide/bff-authentication-migration' },
+            { text: 'Enhanced Authentication Configuration', link: '/admin-guide/bff-authentication' },
+            { text: 'Enhanced Authentication Migration', link: '/admin-guide/bff-authentication-migration' },
             { text: `Configure AWS Cognito for ${APPLICATION_NAME}`, link: '/admin-guide/configure-cognito' },
             { text: `Create a Ground Truth Workforce using Keycloak`, link: '/admin-guide/gt-workforce-keycloak' },
             { text: `Security`, link: '/admin-guide/security/intro', items: [

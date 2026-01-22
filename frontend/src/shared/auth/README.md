@@ -1,6 +1,6 @@
 # Authentication Hooks and Utilities
 
-This directory contains authentication hooks, components, and utilities for the MLSpace BFF (Backend for Frontend) authentication system.
+This directory contains authentication hooks, components, and utilities for the MLSpace enhanced authentication system.
 
 ## Overview
 

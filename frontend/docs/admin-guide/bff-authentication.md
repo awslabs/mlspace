@@ -2,11 +2,11 @@
 outline: deep
 ---
 
-# BFF Authentication Configuration
+# Enhanced Authentication Configuration
 
 ## Overview
 
-The Backend for Frontend (BFF) authentication pattern abstracts authentication complexity from the frontend and centralizes all Identity Provider integration in the backend. This enables support for enterprise IdPs that require client secrets or use SAML protocol, while providing better security and simplified frontend code.
+The enhanced authentication system provides improved security and enterprise Identity Provider (IdP) integration. Authentication is handled server-side, enabling support for enterprise IdPs that require client secrets, while providing better security through secure cookies (HttpOnly cookies that can't be accessed by JavaScript and are only sent to the server with requests) and simplified application code.
 
 ::: danger LEGACY OIDC_* PARAMETERS NOT SUPPORTED
 The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, `OIDC_REDIRECT_URL`, etc.) are **deprecated and no longer supported**. You must use the `AUTH_*` parameters documented below. See the [Migration from Legacy OIDC Configuration](#migration-from-legacy-oidc-configuration) section for migration instructions.
@@ -16,7 +16,7 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 
 ### Required AUTH_* Parameters
 
-The BFF authentication system uses new `AUTH_*` configuration parameters that replace the legacy `OIDC_*` parameters:
+The enhanced authentication system uses `AUTH_*` configuration parameters that replace the legacy `OIDC_*` parameters:
 
 | Parameter | Description | Example | Required |
 |-----------|-------------|---------|----------|
@@ -267,7 +267,7 @@ The system automatically uses the Host header to determine the primary domain wh
 
 ### Pre-Migration Checklist
 
-Before migrating to BFF authentication, ensure you have:
+Before migrating to the enhanced authentication system, ensure you have:
 
 - [ ] Backup of current `lib/constants.ts` and `lib/config.json`
 - [ ] OIDC client secret (if using confidential client flow)
@@ -288,7 +288,7 @@ export const OIDC_REDIRECT_URL = undefined;
 export const OIDC_VERIFY_SSL = true;
 export const OIDC_VERIFY_SIGNATURE = true;
 
-// AFTER (BFF Authentication)
+// AFTER (Enhanced Authentication)
 export const AUTH_IDP_TYPE = 'oidc';
 export const AUTH_OIDC_URL = 'https://auth.example.com';
 export const AUTH_OIDC_CLIENT_ID = 'mlspace-client';
@@ -348,7 +348,7 @@ Update your OIDC provider's redirect URI configuration:
 **Before (Legacy):**
 - Redirect URI: `https://your-api-gateway.execute-api.region.amazonaws.com/Prod/`
 
-**After (BFF):**
+**After (Enhanced Authentication):**
 - Redirect URI: `https://your-api-gateway.execute-api.region.amazonaws.com/Prod/auth/callback`
 
 #### 4. Deploy Updated Configuration

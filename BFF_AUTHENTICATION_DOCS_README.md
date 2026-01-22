@@ -1,6 +1,6 @@
-# BFF Authentication Documentation
+# Enhanced Authentication Documentation
 
-This document summarizes the deployment documentation created for the BFF authentication feature.
+This document summarizes the deployment documentation created for the enhanced authentication feature.
 
 ## OIDC Client Secret Configuration
 
@@ -54,11 +54,11 @@ All authentication configuration now uses `AUTH_*` parameters. **Legacy `OIDC_*`
 
 ## Created Documentation Files
 
-### 1. BFF Authentication Configuration Guide
+### 1. Enhanced Authentication Configuration Guide
 **File**: `frontend/docs/admin-guide/bff-authentication.md`
-**Purpose**: Comprehensive configuration guide for BFF authentication
+**Purpose**: Comprehensive configuration guide for enhanced authentication
 **Contents**:
-- Overview of BFF authentication benefits
+- Overview of enhanced authentication benefits
 - Complete AUTH_* parameter reference
 - Configuration setup instructions
 - SSM parameter setup for client secrets
@@ -68,7 +68,7 @@ All authentication configuration now uses `AUTH_*` parameters. **Legacy `OIDC_*`
 - Security considerations
 - Performance monitoring
 
-### 2. BFF Authentication Migration Guide
+### 2. Enhanced Authentication Migration Guide
 **File**: `frontend/docs/admin-guide/bff-authentication-migration.md`
 **Purpose**: Detailed step-by-step migration instructions
 **Contents**:
@@ -96,16 +96,16 @@ All authentication configuration now uses `AUTH_*` parameters. **Legacy `OIDC_*`
 ### 4. Updated Install Guide
 **File**: `frontend/docs/admin-guide/install.md` (updated)
 **Changes**:
-- Added warning about BFF authentication for new deployments
+- Added warning about enhanced authentication for new deployments
 - Updated OIDC parameter descriptions to indicate legacy status
-- Added references to BFF authentication documentation
+- Added references to enhanced authentication documentation
 - Maintained backward compatibility information
 
 ### 5. Updated VitePress Navigation
 **File**: `frontend/docs/.vitepress/config.mts` (updated)
 **Changes**:
-- Added "BFF Authentication Configuration" to System Administrator Guide
-- Added "BFF Authentication Migration" to System Administrator Guide  
+- Added "Enhanced Authentication Configuration" to System Administrator Guide
+- Added "Enhanced Authentication Migration" to System Administrator Guide  
 - Added "AUTH_* Configuration Reference" to Advanced Configuration
 
 ## Documentation Structure
@@ -150,7 +150,7 @@ frontend/docs/admin-guide/
 - `OIDC_VERIFY_SSL` → Use `AUTH_OIDC_VERIFY_SSL`
 - `OIDC_VERIFY_SIGNATURE` → Use `AUTH_OIDC_VERIFY_SIGNATURE`
 - `IDP_ENDPOINT_SSM_PARAM` → No longer needed
-- `INTERNAL_OIDC_URL` → No longer needed with BFF pattern
+- `INTERNAL_OIDC_URL` → No longer needed with server-side authentication
 
 ### Multi-Domain Cookie Synchronization
 - OTAC (One-Time Authentication Code) flow
@@ -175,11 +175,11 @@ frontend/docs/admin-guide/
 ## Usage Instructions
 
 ### For New Deployments
-1. Follow the [BFF Authentication Configuration Guide](frontend/docs/admin-guide/bff-authentication.md)
+1. Follow the [Enhanced Authentication Configuration Guide](frontend/docs/admin-guide/bff-authentication.md)
 2. Use the [AUTH_* Configuration Reference](frontend/docs/admin-guide/auth-configuration-reference.md) for parameter details
 
 ### For Existing Deployments
-1. Review the [BFF Authentication Migration Guide](frontend/docs/admin-guide/bff-authentication-migration.md)
+1. Review the [Enhanced Authentication Migration Guide](frontend/docs/admin-guide/bff-authentication-migration.md)
 2. Follow the step-by-step migration process
 3. Use the troubleshooting sections for common issues
 
@@ -240,4 +240,4 @@ This documentation satisfies all requirements from task 19:
 - Security considerations
 - Troubleshooting sync issues
 
-The documentation is comprehensive, well-structured, and provides both high-level guidance and detailed technical instructions for all aspects of BFF authentication configuration and deployment.
+The documentation is comprehensive, well-structured, and provides both high-level guidance and detailed technical instructions for all aspects of enhanced authentication configuration and deployment.

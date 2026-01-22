@@ -287,4 +287,4 @@ https://mlspace.mycompany.com
 - [AWS API Gateway Custom Domain Names](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-custom-domains.html)
 - [AWS Certificate Manager User Guide](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html)
 - [Route 53 Developer Guide](https://docs.aws.amazon.com/route53/index.html)
-- [{{ $params.APPLICATION_NAME }} Authentication Configuration](./bff-authentication.md)
+- [{{ $params.APPLICATION_NAME }} Enhanced Authentication Configuration](./bff-authentication.md)

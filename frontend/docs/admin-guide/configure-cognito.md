@@ -70,7 +70,7 @@ export const AUTH_OIDC_URL = 'https://cognito-idp.us-east-2.amazonaws.com/us-eas
 ```
 
 ::: warning LEGACY OIDC_* PARAMETERS NOT SUPPORTED
-The legacy `OIDC_URL` and `OIDC_CLIENT_NAME` parameters are deprecated and no longer supported. You must use the new `AUTH_OIDC_URL` and `AUTH_OIDC_CLIENT_ID` parameters instead. See the [BFF Authentication Configuration Guide](./bff-authentication.md) for complete details on all AUTH_* parameters.
+The legacy `OIDC_URL` and `OIDC_CLIENT_NAME` parameters are deprecated and no longer supported. You must use the new `AUTH_OIDC_URL` and `AUTH_OIDC_CLIENT_ID` parameters instead. See the [Enhanced Authentication Configuration Guide](./bff-authentication.md) for complete details on all AUTH_* parameters.
 :::
 
 Once both values have been updated, you can build and deploy {{ $params.APPLICATION_NAME }}, and it will use Cognito as the IdP. Once {{ $params.APPLICATION_NAME }} is deployed, you will have to update your Cognito app client to add the {{ $params.APPLICATION_NAME }} API Gateway endpoint to the list of "Allowed callback URLs". You can do this by navigating to the App Client details page, scrolling down to the hosted UI, and clicking the edit button. From there, you will need to add your custom domain or the {{ $params.APPLICATION_NAME }} API Gateway endpoint with the `/auth/callback` path to the URL list. If you aren't using a custom domain, that value should be something similar to `https://<api id>.execute-api.<region>.amazonaws.com/Prod/auth/callback`.

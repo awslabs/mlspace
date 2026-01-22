@@ -1,10 +1,10 @@
-# BFF Authentication Key Rotation Guide
+# Enhanced Authentication Key Rotation Guide
 
-This document provides comprehensive guidance for managing encryption key rotation in the MLSpace Backend for Frontend (BFF) authentication system.
+This document provides comprehensive guidance for managing encryption key rotation in the MLSpace enhanced authentication system.
 
 ## Overview
 
-The BFF authentication system uses two types of encryption keys:
+The enhanced authentication system uses two types of encryption keys:
 
 1. **Token Encryption Keys** - Encrypt IdP tokens stored in sessions (high impact)
 2. **State Encryption Keys** - Encrypt CSRF state parameters during login flow (low impact)

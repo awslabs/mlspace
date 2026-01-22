@@ -6,7 +6,7 @@ outline: deep
 
 ## Quick Reference
 
-This page provides a quick reference for all AUTH_* configuration parameters used in the BFF authentication system.
+This page provides a quick reference for all AUTH_* configuration parameters used in the enhanced authentication system.
 
 ::: danger OIDC_* PARAMETERS NOT SUPPORTED
 The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, etc.) are **deprecated and no longer supported**. You must use the `AUTH_*` parameters documented on this page. See the [Migration Mapping](#migration-mapping) section below for the complete mapping from legacy to new parameters.
@@ -271,7 +271,7 @@ All `OIDC_*` parameters listed below are **deprecated and no longer supported**.
 | `OIDC_VERIFY_SSL` | `AUTH_OIDC_VERIFY_SSL` | Now configurable (default: true); should be true in production |
 | `OIDC_VERIFY_SIGNATURE` | `AUTH_OIDC_VERIFY_SIGNATURE` | Now configurable (default: true); should be true in production |
 | `IDP_ENDPOINT_SSM_PARAM` | _(removed)_ | No longer needed - use `AUTH_OIDC_URL` directly |
-| `INTERNAL_OIDC_URL` | _(removed)_ | No longer needed with BFF pattern |
+| `INTERNAL_OIDC_URL` | _(removed)_ | No longer needed with server-side authentication |
 | _(none)_ | `AUTH_OIDC_CLIENT_SECRET_NAME` | **New** - Secrets Manager name for client secret |
 | _(none)_ | `AUTH_OIDC_CLIENT_SECRET_VALUE` | **New** - Optional deployment-time secret value |
 | _(none)_ | `AUTH_OIDC_USE_PKCE` | **New** - Enable PKCE flow (default: true) |
@@ -292,7 +292,7 @@ export const OIDC_VERIFY_SSL = true;
 export const OIDC_VERIFY_SIGNATURE = true;
 ```
 
-**After (BFF):**
+**After (Enhanced Authentication):**
 ```typescript
 // lib/constants.ts
 export const AUTH_IDP_TYPE = 'oidc';
@@ -390,7 +390,7 @@ aws secretsmanager describe-secret \
 
 ## Related Documentation
 
-- [BFF Authentication Configuration Guide](./bff-authentication.md)
-- [BFF Authentication Migration Guide](./bff-authentication-migration.md)
+- [Enhanced Authentication Configuration Guide](./bff-authentication.md)
+- [Enhanced Authentication Migration Guide](./bff-authentication-migration.md)
 - [Install Guide](./install.md)
 - [Security Documentation](./security/intro.md)

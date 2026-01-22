@@ -2,19 +2,19 @@
 outline: deep
 ---
 
-# BFF Authentication Migration Guide
+# Enhanced Authentication Migration Guide
 
 ## Overview
 
-This guide provides detailed step-by-step instructions for migrating from the legacy OIDC authentication system to the new Backend for Frontend (BFF) authentication pattern. The BFF pattern provides enhanced security, better enterprise IdP support, and simplified frontend code.
+This guide provides detailed step-by-step instructions for migrating from the legacy OIDC authentication system to the enhanced authentication system. The new system provides improved security, better enterprise IdP support, and simplified application code.
 
 ## Migration Benefits
 
-- **Enhanced Security**: Session-based authentication with HttpOnly cookies
-- **Enterprise IdP Support**: Support for OIDC with client secrets and SAML
-- **Simplified Frontend**: No token management in browser JavaScript
+- **Enhanced Security**: Session-based authentication with HttpOnly cookies prevents token exposure in browser
+- **Enterprise IdP Support**: Support for OIDC with client secrets and SAML protocol
+- **Simplified Application**: No token management in browser JavaScript
 - **Cross-Domain Support**: Seamless authentication across multiple domains
-- **Automatic Token Refresh**: Server-side token management and refresh
+- **Automatic Token Refresh**: Server-side token management and automatic refresh
 
 ## Pre-Migration Assessment
 
@@ -44,7 +44,7 @@ Before starting the migration, document your current configuration:
 
 ### Compatibility Check
 
-Verify your OIDC provider supports the BFF authentication requirements:
+Verify your OIDC provider supports the enhanced authentication requirements:
 
 - ✅ Authorization Code flow
 - ✅ Client secret support (for confidential clients)
@@ -602,6 +602,6 @@ After successful migration:
 5. **Future Enhancements**: Consider SAML integration or additional IdP support
 
 For additional support, refer to:
-- [BFF Authentication Configuration Guide](./bff-authentication.md)
+- [Enhanced Authentication Configuration Guide](./bff-authentication.md)
 - [MLSpace Security Documentation](./security/intro.md)
 - CloudWatch logs for detailed troubleshooting
