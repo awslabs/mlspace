@@ -266,7 +266,7 @@ export class RestApiConstruct extends Construct {
         this.mlspaceRequestAuthorizer = new RequestAuthorizer(scope, 'MLSpaceAPIGWAuthorizer', {
             handler: authorizerLambda,
             resultsCacheTtl: Duration.seconds(0),
-            identitySources: [IdentitySource.header('Authorization')],
+            identitySources: [IdentitySource.header('Cookie')]
         });
 
         this.mlspaceRequestAuthorizer._attachToApi(mlSpaceRestApi);

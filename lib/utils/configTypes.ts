@@ -327,17 +327,19 @@ export function generateConfig (accountId?: string) {
     
     const foundDeprecatedVars = deprecatedOidcVars.filter ((varName) => {
         const envValue = process.env[varName];
-        return envValue !== undefined && envValue !== '';
+        const configValue = config[varName as keyof MLSpaceConfig];
+        const value = (envValue || configValue);
+        return value !== undefined && value !== '';
     });
 
     if (foundDeprecatedVars.length > 0) {
         throw new Error(
             `\n${'='.repeat(80)}\n` +
-            'ERROR: Deprecated OIDC_* environment variables detected!\n' +
+            'ERROR: Deprecated OIDC_* configuration variables detected!\n' +
             `${'='.repeat(80)}\n\n` +
-            'The following deprecated environment variables are still set:\n' +
+            'The following deprecated configuration variables are still set:\n' +
             `  ${foundDeprecatedVars.map ((v) => `- ${v}`).join('\n  ')}\n\n` +
-            'These have been replaced with AUTH_* settings for the new BFF authentication.\n\n' +
+            'These have been replaced with AUTH_* settings for the new enhanced authentication.\n\n' +
             'Please update your configuration:\n' +
             '  1. Remove the deprecated OIDC_* environment variables\n' +
             '  2. Set the new AUTH_* environment variables instead:\n' +

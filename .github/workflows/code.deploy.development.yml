@@ -37,7 +37,6 @@ jobs:
             {
               "AWS_ACCOUNT": "${{ vars.AWS_ACCOUNT }}",
               "AWS_REGION": "${{ vars.AWS_REGION }}",
-              "AUTH_IDP_TYPE": "${{ vars.AUTH_IDP_TYPE }}",
               "AUTH_OIDC_CLIENT_ID": "${{ vars.AUTH_OIDC_CLIENT_ID }}",
               "AUTH_OIDC_URL": "${{ vars.AUTH_OIDC_URL }}",
               "KEY_MANAGER_ROLE_NAME": "${{ vars.KEY_MANAGER_ROLE_NAME }}"
