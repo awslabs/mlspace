@@ -67,6 +67,7 @@
                 "skipWords": [
                     "azs",
                     "aud",
+                    "bff",
                     "fullname",
                     "isob",
                     "localhost",
@@ -110,6 +111,7 @@
                     "cardinality",
                     "cbow",
                     "centroids",
+                    "cdk",
                     "cfn",
                     "cidr",
                     "checkbox",

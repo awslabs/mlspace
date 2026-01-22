@@ -8,6 +8,10 @@ outline: deep
 
 The Backend for Frontend (BFF) authentication pattern abstracts authentication complexity from the frontend and centralizes all Identity Provider integration in the backend. This enables support for enterprise IdPs that require client secrets or use SAML protocol, while providing better security and simplified frontend code.
 
+::: danger LEGACY OIDC_* PARAMETERS NOT SUPPORTED
+The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, `OIDC_REDIRECT_URL`, etc.) are **deprecated and no longer supported**. You must use the `AUTH_*` parameters documented below. See the [Migration from Legacy OIDC Configuration](#migration-from-legacy-oidc-configuration) section for migration instructions.
+:::
+
 ## Configuration Parameters
 
 ### Required AUTH_* Parameters
@@ -23,11 +27,18 @@ The BFF authentication system uses new `AUTH_*` configuration parameters that re
 
 ### Optional AUTH_* Parameters
 
-| Parameter | Description | Example | Required |
-|-----------|-------------|---------|----------|
-| `AUTH_PRIMARY_DOMAIN` | Override API Gateway domain for cookies | `"api.mlspace.com"` | No |
-| `AUTH_SYNC_DOMAINS` | Comma-separated list of additional domains for cookie sync | `"notebooks.mlspace.com,admin.mlspace.com"` | No |
-| `AUTH_OIDC_CLIENT_SECRET_PARAM` | SSM parameter path for OIDC client secret | `"mlspace/auth/oidc-client-secret"` | No |
+| Parameter | Description | Example | Default |
+|-----------|-------------|---------|---------|
+| `AUTH_PRIMARY_DOMAIN` | Override API Gateway domain for cookies | `"api.mlspace.com"` | API Gateway domain |
+| `AUTH_SYNC_DOMAINS` | Comma-separated list of additional domains for cookie sync | `"notebooks.mlspace.com,admin.mlspace.com"` | None |
+| `AUTH_OIDC_CLIENT_SECRET_NAME` | Secrets Manager secret name for OIDC client secret | `"mlspace/auth/oidc-client-secret"` | `"mlspace/auth/oidc-client-secret"` |
+| `AUTH_OIDC_CLIENT_SECRET_VALUE` | Optional OIDC client secret value for deployment-time configuration | `"your-secret-here"` | None |
+| `AUTH_OIDC_USE_PKCE` | Whether to use PKCE flow (recommended) | `true` | `true` |
+| `AUTH_OIDC_VERIFY_SSL` | Whether to verify SSL certificates for OIDC requests | `true` | `true` |
+| `AUTH_OIDC_VERIFY_SIGNATURE` | Whether to verify OIDC token signatures | `true` | `true` |
+| `AUTH_SESSION_TABLE_NAME` | DynamoDB table name for authentication sessions | `"mlspace-auth-sessions"` | `"mlspace-auth-sessions"` |
+| `AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME` | Secrets Manager secret name for token encryption keys (versioned) | `"mlspace/auth/token-encryption-keys"` | `"mlspace/auth/token-encryption-keys"` |
+| `AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME` | Secrets Manager secret name for state encryption key | `"mlspace/auth/state-encryption-key"` | `"mlspace/auth/state-encryption-key"` |
 
 ## Configuration Setup
 
@@ -44,9 +55,17 @@ Replace the legacy OIDC constants with new AUTH constants:
 export const AUTH_IDP_TYPE = 'oidc';
 export const AUTH_OIDC_URL = '';
 export const AUTH_OIDC_CLIENT_ID = '';
+export const AUTH_OIDC_CLIENT_SECRET_NAME = 'mlspace/auth/oidc-client-secret';
+export const AUTH_OIDC_CLIENT_SECRET_VALUE = ''; // Optional: set during deployment
+export const AUTH_OIDC_USE_PKCE = true;
+export const AUTH_OIDC_VERIFY_SSL = true;
+export const AUTH_OIDC_VERIFY_SIGNATURE = true;
 export const AUTH_SESSION_TTL_HOURS = 24;
 export const AUTH_PRIMARY_DOMAIN = '';
 export const AUTH_SYNC_DOMAINS = '';
+export const AUTH_SESSION_TABLE_NAME = 'mlspace-auth-sessions';
+export const AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/token-encryption-keys';
+export const AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/state-encryption-key';
 ```
 
 ### 2. Update lib/config.json
@@ -59,6 +78,10 @@ Update your environment-specific configuration file:
     "AUTH_IDP_TYPE": "oidc",
     "AUTH_OIDC_URL": "https://auth.dev.example.com",
     "AUTH_OIDC_CLIENT_ID": "mlspace-dev-client",
+    "AUTH_OIDC_CLIENT_SECRET_VALUE": "dev-client-secret-here",
+    "AUTH_OIDC_USE_PKCE": true,
+    "AUTH_OIDC_VERIFY_SSL": true,
+    "AUTH_OIDC_VERIFY_SIGNATURE": true,
     "AUTH_SESSION_TTL_HOURS": 8,
     "AUTH_PRIMARY_DOMAIN": "",
     "AUTH_SYNC_DOMAINS": ""
@@ -67,6 +90,10 @@ Update your environment-specific configuration file:
     "AUTH_IDP_TYPE": "oidc",
     "AUTH_OIDC_URL": "https://auth.example.com",
     "AUTH_OIDC_CLIENT_ID": "mlspace-prod-client",
+    "AUTH_OIDC_CLIENT_SECRET_VALUE": "prod-client-secret-here",
+    "AUTH_OIDC_USE_PKCE": true,
+    "AUTH_OIDC_VERIFY_SSL": true,
+    "AUTH_OIDC_VERIFY_SIGNATURE": true,
     "AUTH_SESSION_TTL_HOURS": 24,
     "AUTH_PRIMARY_DOMAIN": "api.mlspace.com",
     "AUTH_SYNC_DOMAINS": "notebooks.mlspace.com,admin.mlspace.com"
@@ -90,39 +117,72 @@ export interface MLSpaceConfig {
   AUTH_IDP_TYPE: string;
   AUTH_OIDC_URL?: string;
   AUTH_OIDC_CLIENT_ID?: string;
-  AUTH_SESSION_TTL_HOURS: number;
+  AUTH_OIDC_CLIENT_SECRET_NAME?: string;
+  AUTH_OIDC_CLIENT_SECRET_VALUE?: string;
+  AUTH_OIDC_USE_PKCE?: boolean;
+  AUTH_OIDC_VERIFY_SSL?: boolean;
+  AUTH_OIDC_VERIFY_SIGNATURE?: boolean;
+  AUTH_SESSION_TTL_HOURS?: number;
   AUTH_PRIMARY_DOMAIN?: string;
   AUTH_SYNC_DOMAINS?: string;
+  AUTH_SESSION_TABLE_NAME?: string;
+  AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME?: string;
+  AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME?: string;
 }
 ```
 
-## SSM Parameter Setup for Client Secret
+## Secrets Manager Setup for Client Secret
 
-For OIDC deployments that require client secrets (confidential client flow), you must store the client secret in AWS Systems Manager Parameter Store.
+For OIDC deployments that require client secrets (confidential client flow), you can configure the client secret in two ways:
 
-### 1. Create SSM Parameter
+### Option 1: Deployment-Time Configuration (Recommended)
+
+Add the client secret to your `lib/config.json` file:
+
+```json
+{
+  "AUTH_OIDC_CLIENT_SECRET_VALUE": "your-client-secret-here"
+}
+```
+
+The secret will be automatically created in AWS Secrets Manager during deployment.
+
+### Option 2: Manual Secrets Manager Configuration
+
+If you prefer to manage the secret manually:
 
 Using AWS CLI:
 
 ```bash
-aws ssm put-parameter \
+# Create new secret
+aws secretsmanager create-secret \
   --name "mlspace/auth/oidc-client-secret" \
-  --value "your-client-secret-here" \
-  --type "SecureString" \
+  --secret-string '{"client_secret":"your-client-secret-here","configured":true}' \
   --description "OIDC client secret for MLSpace authentication"
+
+# Or update existing secret
+aws secretsmanager update-secret \
+  --secret-id "mlspace/auth/oidc-client-secret" \
+  --secret-string '{"client_secret":"your-new-secret-here","configured":true}'
 ```
 
 Using AWS Console:
-1. Navigate to AWS Systems Manager → Parameter Store
-2. Click "Create parameter"
-3. Set Name: `mlspace/auth/oidc-client-secret`
-4. Set Type: `SecureString`
-5. Set Value: Your OIDC client secret
-6. Click "Create parameter"
+1. Navigate to AWS Secrets Manager
+2. Click "Store a new secret"
+3. Select "Other type of secret"
+4. Add key-value pairs:
+   - Key: `client_secret`, Value: Your OIDC client secret
+   - Key: `configured`, Value: `true`
+5. Set Secret name: `mlspace/auth/oidc-client-secret`
+6. Click "Store"
 
-### 2. Grant Lambda Access
+::: info SECRETS MANAGER VS SSM PARAMETER STORE
+MLSpace uses AWS Secrets Manager (not SSM Parameter Store) for authentication secrets. Secrets Manager provides better support for secret rotation, versioning, and automatic generation.
+:::
 
-The MLSpace Lambda execution role needs permission to read the SSM parameter:
+### Lambda Access Permissions
+
+The MLSpace Lambda execution role needs permission to read secrets:
 
 ```json
 {
@@ -131,20 +191,20 @@ The MLSpace Lambda execution role needs permission to read the SSM parameter:
     {
       "Effect": "Allow",
       "Action": [
-        "ssm:GetParameter",
-        "ssm:GetParameters"
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
       ],
       "Resource": [
-        "arn:aws:ssm:{AWS_REGION}:{AWS_ACCOUNT}:parameter/mlspace/auth/*"
+        "arn:aws:secretsmanager:{AWS_REGION}:{AWS_ACCOUNT}:secret:mlspace/auth/*"
       ]
     }
   ]
 }
 ```
 
-### 3. Encryption Key Access
+### Encryption Key Access
 
-If using a custom KMS key for SSM parameter encryption, ensure the Lambda execution role has decrypt permissions:
+If using a custom KMS key for Secrets Manager encryption, ensure the Lambda execution role has decrypt permissions:
 
 ```json
 {
@@ -153,7 +213,8 @@ If using a custom KMS key for SSM parameter encryption, ensure the Lambda execut
     {
       "Effect": "Allow",
       "Action": [
-        "kms:Decrypt"
+        "kms:Decrypt",
+        "kms:DescribeKey"
       ],
       "Resource": [
         "arn:aws:kms:{AWS_REGION}:{AWS_ACCOUNT}:key/{KMS_KEY_ID}"
@@ -233,6 +294,11 @@ export const OIDC_VERIFY_SIGNATURE = true;
 export const AUTH_IDP_TYPE = 'oidc';
 export const AUTH_OIDC_URL = 'https://auth.example.com';
 export const AUTH_OIDC_CLIENT_ID = 'mlspace-client';
+export const AUTH_OIDC_CLIENT_SECRET_NAME = 'mlspace/auth/oidc-client-secret';
+export const AUTH_OIDC_CLIENT_SECRET_VALUE = ''; // Optional: set in config.json
+export const AUTH_OIDC_USE_PKCE = true;
+export const AUTH_OIDC_VERIFY_SSL = true;
+export const AUTH_OIDC_VERIFY_SIGNATURE = true;
 export const AUTH_SESSION_TTL_HOURS = 24;
 export const AUTH_PRIMARY_DOMAIN = '';
 export const AUTH_SYNC_DOMAINS = '';
@@ -251,20 +317,31 @@ export const AUTH_SYNC_DOMAINS = '';
   "AUTH_IDP_TYPE": "oidc",
   "AUTH_OIDC_URL": "https://auth.example.com",
   "AUTH_OIDC_CLIENT_ID": "mlspace-client",
+  "AUTH_OIDC_CLIENT_SECRET_VALUE": "your-client-secret-here",
+  "AUTH_OIDC_USE_PKCE": true,
+  "AUTH_OIDC_VERIFY_SSL": true,
+  "AUTH_OIDC_VERIFY_SIGNATURE": true,
   "AUTH_SESSION_TTL_HOURS": 24
 }
 ```
 
 #### 2. Set Up Client Secret (If Required)
 
-If your OIDC provider requires a client secret:
+If your OIDC provider requires a client secret, add it to your `lib/config.json`:
+
+```json
+{
+  "AUTH_OIDC_CLIENT_SECRET_VALUE": "your-client-secret"
+}
+```
+
+Or create it manually in Secrets Manager:
 
 ```bash
-# Store client secret in SSM Parameter Store
-aws ssm put-parameter \
+# Store client secret in Secrets Manager
+aws secretsmanager create-secret \
   --name "mlspace/auth/oidc-client-secret" \
-  --value "your-client-secret" \
-  --type "SecureString"
+  --secret-string '{"client_secret":"your-client-secret","configured":true}'
 ```
 
 #### 3. Update OIDC Provider Configuration

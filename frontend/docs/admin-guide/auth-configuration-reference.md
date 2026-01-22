@@ -8,6 +8,10 @@ outline: deep
 
 This page provides a quick reference for all AUTH_* configuration parameters used in the BFF authentication system.
 
+::: danger OIDC_* PARAMETERS NOT SUPPORTED
+The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, etc.) are **deprecated and no longer supported**. You must use the `AUTH_*` parameters documented on this page. See the [Migration Mapping](#migration-mapping) section below for the complete mapping from legacy to new parameters.
+:::
+
 ## Required Parameters
 
 ### AUTH_IDP_TYPE
@@ -61,7 +65,71 @@ This page provides a quick reference for all AUTH_* configuration parameters use
 - **Example**: `"notebooks.mlspace.com,admin.mlspace.com"`
 - **Notes**: Enables seamless authentication across multiple domains
 
-## SSM Parameters
+### AUTH_OIDC_CLIENT_SECRET_NAME
+- **Type**: String
+- **Required**: No
+- **Default**: `"mlspace/auth/oidc-client-secret"`
+- **Description**: AWS Secrets Manager secret name for OIDC client secret
+- **Example**: `"mlspace/auth/oidc-client-secret"`
+- **Notes**: Used for confidential OIDC client flow; secret is stored in Secrets Manager
+
+### AUTH_OIDC_CLIENT_SECRET_VALUE
+- **Type**: String
+- **Required**: No
+- **Default**: None
+- **Description**: Optional OIDC client secret value for deployment-time configuration
+- **Example**: `"your-client-secret-here"`
+- **Notes**: If provided in config.json, the secret will be created/updated during deployment
+
+### AUTH_OIDC_USE_PKCE
+- **Type**: Boolean
+- **Required**: No
+- **Default**: `true`
+- **Description**: Whether to use PKCE (Proof Key for Code Exchange) flow
+- **Example**: `true`
+- **Notes**: Recommended to keep enabled even when using client_secret for enhanced security
+
+### AUTH_OIDC_VERIFY_SSL
+- **Type**: Boolean
+- **Required**: No
+- **Default**: `true`
+- **Description**: Whether to verify SSL certificates for OIDC requests
+- **Example**: `true`
+- **Notes**: Should only be set to false for development/testing with self-signed certificates
+
+### AUTH_OIDC_VERIFY_SIGNATURE
+- **Type**: Boolean
+- **Required**: No
+- **Default**: `true`
+- **Description**: Whether to verify OIDC token signatures
+- **Example**: `true`
+- **Notes**: Should always be true in production for security
+
+### AUTH_SESSION_TABLE_NAME
+- **Type**: String
+- **Required**: No
+- **Default**: `"mlspace-auth-sessions"`
+- **Description**: DynamoDB table name for storing authentication sessions
+- **Example**: `"mlspace-auth-sessions"`
+- **Notes**: Automatically created during deployment
+
+### AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME
+- **Type**: String
+- **Required**: No
+- **Default**: `"mlspace/auth/token-encryption-keys"`
+- **Description**: AWS Secrets Manager secret name for versioned token encryption keys
+- **Example**: `"mlspace/auth/token-encryption-keys"`
+- **Notes**: Supports key rotation; automatically created during deployment
+
+### AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME
+- **Type**: String
+- **Required**: No
+- **Default**: `"mlspace/auth/state-encryption-key"`
+- **Description**: AWS Secrets Manager secret name for state encryption key
+- **Example**: `"mlspace/auth/state-encryption-key"`
+- **Notes**: Used for encrypting OAuth state parameter; automatically created during deployment
+
+## Secrets Manager Configuration
 
 ### mlspace/auth/oidc-client-secret
 - **Type**: SecureString
@@ -83,7 +151,7 @@ This page provides a quick reference for all AUTH_* configuration parameters use
 
 ## Environment-Specific Examples
 
-### Development Environment
+### Development Environment (Minimal)
 ```json
 {
   "AUTH_IDP_TYPE": "oidc",
@@ -93,15 +161,33 @@ This page provides a quick reference for all AUTH_* configuration parameters use
 }
 ```
 
+### Development Environment (With Client Secret)
+```json
+{
+  "AUTH_IDP_TYPE": "oidc",
+  "AUTH_OIDC_URL": "https://auth.dev.example.com",
+  "AUTH_OIDC_CLIENT_ID": "mlspace-dev-client",
+  "AUTH_OIDC_CLIENT_SECRET_VALUE": "dev-client-secret-here",
+  "AUTH_SESSION_TTL_HOURS": 8,
+  "AUTH_OIDC_USE_PKCE": true,
+  "AUTH_OIDC_VERIFY_SSL": true,
+  "AUTH_OIDC_VERIFY_SIGNATURE": true
+}
+```
+
 ### Production Environment
 ```json
 {
   "AUTH_IDP_TYPE": "oidc",
   "AUTH_OIDC_URL": "https://auth.example.com",
   "AUTH_OIDC_CLIENT_ID": "mlspace-prod-client",
+  "AUTH_OIDC_CLIENT_SECRET_VALUE": "prod-client-secret-here",
   "AUTH_SESSION_TTL_HOURS": 24,
   "AUTH_PRIMARY_DOMAIN": "api.mlspace.com",
-  "AUTH_SYNC_DOMAINS": "notebooks.mlspace.com,admin.mlspace.com"
+  "AUTH_SYNC_DOMAINS": "notebooks.mlspace.com,admin.mlspace.com",
+  "AUTH_OIDC_USE_PKCE": true,
+  "AUTH_OIDC_VERIFY_SSL": true,
+  "AUTH_OIDC_VERIFY_SIGNATURE": true
 }
 ```
 
@@ -111,9 +197,13 @@ This page provides a quick reference for all AUTH_* configuration parameters use
   "AUTH_IDP_TYPE": "oidc",
   "AUTH_OIDC_URL": "https://sso.company.com",
   "AUTH_OIDC_CLIENT_ID": "mlspace-enterprise",
+  "AUTH_OIDC_CLIENT_SECRET_VALUE": "enterprise-client-secret-here",
   "AUTH_SESSION_TTL_HOURS": 12,
   "AUTH_PRIMARY_DOMAIN": "mlspace-api.company.com",
-  "AUTH_SYNC_DOMAINS": "mlspace-notebooks.company.com,mlspace-admin.company.com"
+  "AUTH_SYNC_DOMAINS": "mlspace-notebooks.company.com,mlspace-admin.company.com",
+  "AUTH_OIDC_USE_PKCE": true,
+  "AUTH_OIDC_VERIFY_SSL": true,
+  "AUTH_OIDC_VERIFY_SIGNATURE": true
 }
 ```
 
@@ -130,6 +220,12 @@ This page provides a quick reference for all AUTH_* configuration parameters use
 
 1. **AUTH_PRIMARY_DOMAIN**: Must be valid domain name if specified
 2. **AUTH_SYNC_DOMAINS**: Must be comma-separated list of valid domain names if specified
+3. **AUTH_OIDC_USE_PKCE**: Must be boolean (true/false)
+4. **AUTH_OIDC_VERIFY_SSL**: Must be boolean (true/false); should be true in production
+5. **AUTH_OIDC_VERIFY_SIGNATURE**: Must be boolean (true/false); should be true in production
+6. **AUTH_OIDC_CLIENT_SECRET_NAME**: Must be valid Secrets Manager secret name if specified
+7. **AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME**: Must be valid Secrets Manager secret name if specified
+8. **AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME**: Must be valid Secrets Manager secret name if specified
 
 ### Validation Script
 
@@ -172,16 +268,30 @@ echo "✅ Configuration validation passed for environment: $ENV"
 
 ## Migration Mapping
 
+::: danger LEGACY PARAMETERS NOT SUPPORTED
+All `OIDC_*` parameters listed below are **deprecated and no longer supported**. You must migrate to the corresponding `AUTH_*` parameters. Attempting to use legacy parameters will result in configuration errors.
+:::
+
 ### Legacy to New Parameter Mapping
 
-| Legacy Parameter | New Parameter | Notes |
-|------------------|---------------|-------|
-| `OIDC_URL` | `AUTH_OIDC_URL` | Direct replacement |
-| `OIDC_CLIENT_NAME` | `AUTH_OIDC_CLIENT_ID` | Direct replacement |
-| `OIDC_REDIRECT_URL` | _(automatic)_ | Now handled automatically as `/auth/callback` |
-| `OIDC_VERIFY_SSL` | _(removed)_ | SSL verification always enabled |
-| `OIDC_VERIFY_SIGNATURE` | _(removed)_ | Signature verification always enabled |
-| `IDP_ENDPOINT_SSM_PARAM` | _(removed)_ | Use `AUTH_OIDC_URL` directly |
+| Legacy Parameter | New Parameter | Migration Notes |
+|------------------|---------------|-----------------|
+| `OIDC_URL` | `AUTH_OIDC_URL` | Direct replacement - use the same OIDC issuer URL |
+| `OIDC_CLIENT_NAME` | `AUTH_OIDC_CLIENT_ID` | Direct replacement - use the same client identifier |
+| `OIDC_REDIRECT_URL` | _(automatic)_ | No longer needed - redirect is automatically `/auth/callback` |
+| `OIDC_VERIFY_SSL` | `AUTH_OIDC_VERIFY_SSL` | Now configurable (default: true); should be true in production |
+| `OIDC_VERIFY_SIGNATURE` | `AUTH_OIDC_VERIFY_SIGNATURE` | Now configurable (default: true); should be true in production |
+| `IDP_ENDPOINT_SSM_PARAM` | _(removed)_ | No longer needed - use `AUTH_OIDC_URL` directly |
+| `INTERNAL_OIDC_URL` | _(removed)_ | No longer needed with BFF pattern |
+| _(none)_ | `AUTH_OIDC_CLIENT_SECRET_NAME` | **New** - Secrets Manager name for client secret |
+| _(none)_ | `AUTH_OIDC_CLIENT_SECRET_VALUE` | **New** - Optional deployment-time secret value |
+| _(none)_ | `AUTH_OIDC_USE_PKCE` | **New** - Enable PKCE flow (default: true) |
+| _(none)_ | `AUTH_SESSION_TTL_HOURS` | **New** - Session duration configuration |
+| _(none)_ | `AUTH_PRIMARY_DOMAIN` | **New** - Custom domain for cookies |
+| _(none)_ | `AUTH_SYNC_DOMAINS` | **New** - Multi-domain cookie sync |
+| _(none)_ | `AUTH_SESSION_TABLE_NAME` | **New** - DynamoDB session table name |
+| _(none)_ | `AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME` | **New** - Token encryption keys (rotatable) |
+| _(none)_ | `AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME` | **New** - State encryption key |
 
 ### Configuration File Migration
 
@@ -243,40 +353,52 @@ curl -s "https://your-oidc-url/.well-known/openid-configuration" | \
   jq -r '.authorization_endpoint, .token_endpoint, .userinfo_endpoint'
 ```
 
-#### Test SSM Parameter Access
+#### Test Secrets Manager Access
 ```bash
-# Verify client secret parameter exists
-aws ssm describe-parameters \
-  --parameter-filters "Key=Name,Values=mlspace/auth/oidc-client-secret"
+# Verify client secret exists
+aws secretsmanager describe-secret \
+  --secret-id "mlspace/auth/oidc-client-secret"
 
-# Test parameter access (requires appropriate IAM permissions)
-aws ssm get-parameter \
-  --name "mlspace/auth/oidc-client-secret" \
-  --with-decryption \
-  --query 'Parameter.Value' \
+# Test secret access (requires appropriate IAM permissions)
+aws secretsmanager get-secret-value \
+  --secret-id "mlspace/auth/oidc-client-secret" \
+  --query 'SecretString' \
   --output text
+
+# Verify token encryption keys secret
+aws secretsmanager describe-secret \
+  --secret-id "mlspace/auth/token-encryption-keys"
+
+# Verify state encryption key secret
+aws secretsmanager describe-secret \
+  --secret-id "mlspace/auth/state-encryption-key"
 ```
 
 ## Security Considerations
 
 ### Parameter Security
 
-1. **Client Secrets**: Always store in SSM Parameter Store as SecureString
+1. **Client Secrets**: Always store in Secrets Manager (not SSM Parameter Store)
 2. **URLs**: Use HTTPS for all AUTH_OIDC_URL values
 3. **Domains**: Ensure AUTH_PRIMARY_DOMAIN and AUTH_SYNC_DOMAINS use HTTPS
 4. **TTL**: Set appropriate AUTH_SESSION_TTL_HOURS based on security requirements
+5. **SSL Verification**: Keep AUTH_OIDC_VERIFY_SSL=true in production
+6. **Signature Verification**: Keep AUTH_OIDC_VERIFY_SIGNATURE=true in production
+7. **PKCE**: Keep AUTH_OIDC_USE_PKCE=true for enhanced security
 
 ### Access Control
 
-1. **SSM Permissions**: Limit SSM parameter access to MLSpace Lambda execution role
-2. **KMS Keys**: Use appropriate KMS keys for SSM parameter encryption
+1. **Secrets Manager Permissions**: Limit secret access to MLSpace Lambda execution role only
+2. **KMS Keys**: Use appropriate KMS keys for Secrets Manager encryption
 3. **Domain Validation**: Ensure sync domains are under your control
+4. **Secret Rotation**: Use versioned secrets (token encryption keys) for rotation support
 
 ### Monitoring
 
-1. **Configuration Changes**: Monitor changes to AUTH_* parameters
-2. **SSM Access**: Monitor access to `mlspace/auth/*` parameters
+1. **Configuration Changes**: Monitor changes to AUTH_* parameters in constants.ts and config.json
+2. **Secrets Access**: Monitor access to `mlspace/auth/*` secrets in CloudTrail
 3. **Failed Authentication**: Monitor authentication failures for configuration issues
+4. **Secret Rotation**: Monitor secret rotation events and ensure smooth transitions
 
 ## Related Documentation
 

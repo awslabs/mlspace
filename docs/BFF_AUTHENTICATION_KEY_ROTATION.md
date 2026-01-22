@@ -65,62 +65,17 @@ Token encryption uses a **versioned key system** that supports graceful rotation
 
 **Zero Impact**: Users experience no disruption during rotation.
 
-### Manual Token Key Rotation
-
-```bash
-# Rotate token keys immediately
-aws lambda invoke \
-  --function-name mlspace-key-rotation \
-  --payload '{
-    "action": "rotate_token_key",
-    "secret_arn": "mlspace/auth/token-encryption-keys"
-  }' \
-  response.json
-
-# Check rotation status
-cat response.json
-```
-
 ### Key Cleanup
 
-Old key versions are automatically retained for backward compatibility. Clean up old versions periodically:
-
-```bash
-# Keep only the last 3 key versions
-aws lambda invoke \
-  --function-name mlspace-key-rotation \
-  --payload '{
-    "action": "cleanup_old_versions",
-    "secret_arn": "mlspace/auth/token-encryption-keys",
-    "keep_versions": 3
-  }' \
-  response.json
-```
+Old key versions are automatically retained for backward compatibility and cleaned up during rotation based on the configured retention policy (default: 3 versions).
 
 ### Monitoring Token Key Rotation
 
-```bash
-# Get key rotation status
-aws lambda invoke \
-  --function-name mlspace-key-rotation \
-  --payload '{
-    "action": "get_status",
-    "secret_arn": "mlspace/auth/token-encryption-keys"
-  }' \
-  response.json
-```
+Monitor rotation through CloudWatch Logs and AWS Secrets Manager console:
 
-**Response Example**:
-```json
-{
-  "success": true,
-  "current_version": 2,
-  "total_versions": 2,
-  "available_versions": ["1", "2"],
-  "key_type": "token",
-  "last_rotation": "2024-01-15T10:30:00Z"
-}
-```
+- **CloudWatch Logs**: Check `/aws/lambda/mlspace-key-rotation` log group
+- **Secrets Manager Console**: View rotation configuration and history
+- **CloudWatch Metrics**: Monitor rotation success/failure rates
 
 ## State Key Rotation (Deploy-Time)
 
@@ -132,18 +87,7 @@ State encryption uses a **simple Fernet key** that can be regenerated as needed:
 - **Storage**: AWS Secrets Manager (simple string value)
 - **Rotation**: Regenerate via initialization script
 - **Impact**: Only affects users actively logging in (1-2 minutes)
-
-### Manual State Key Rotation
-
-```bash
-# Method 1: Re-run initialization script (recommended)
-python3 scripts/initialize-auth-keys.py
-
-# Method 2: Rotate via CDK deployment (also regenerates)
-cdk deploy
-```
-
-**Impact**: Users in the middle of authentication flow will need to retry login.
+- **Rotation**: Automatic via configured rotation schedule
 
 ## Deployment Configuration
 
@@ -236,15 +180,9 @@ AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME=mlspace/auth/state-encryption-key
 ### Token Key Rotation Issues
 
 **Problem**: Rotation Lambda fails
-```bash
-# Check Lambda logs
-aws logs describe-log-groups --log-group-name-prefix /aws/lambda/mlspace-key-rotation
-
-# Check specific error
-aws logs filter-log-events \
-  --log-group-name /aws/lambda/mlspace-key-rotation \
-  --start-time $(date -d '1 hour ago' +%s)000
-```
+- Check CloudWatch Logs for the `/aws/lambda/mlspace-key-rotation` log group
+- Review CloudWatch metrics for rotation failures
+- Verify IAM permissions for the rotation Lambda function
 
 **Problem**: Sessions become invalid after rotation
 - This should not happen with versioned keys
@@ -259,74 +197,36 @@ aws logs filter-log-events \
 - Check that new state key was generated properly
 
 **Problem**: State key generation fails
-```bash
-# Check custom resource logs
-aws logs filter-log-events \
-  --log-group-name /aws/lambda/mlspace-state-key-init \
-  --start-time $(date -d '1 hour ago' +%s)000
-```
+- Check CloudWatch logs for the rotation Lambda function
+- Verify the rotation schedule is configured correctly in AWS Secrets Manager
 
 ### Key Validation
 
-**Verify Token Key Structure**:
-```bash
-aws secretsmanager get-secret-value \
-  --secret-id mlspace/auth/token-encryption-keys \
-  --query SecretString --output text | jq .
-```
-
-**Verify State Key**:
-```bash
-aws secretsmanager get-secret-value \
-  --secret-id mlspace/auth/state-encryption-key \
-  --query SecretString --output text | jq .
-```
+Verify key structure using AWS Secrets Manager console or by checking CloudWatch logs for the rotation Lambda function.
 
 ## Migration from Legacy Keys
 
-### Pre-Rotation Setup
+The system now uses versioned keys by default. If migrating from a legacy deployment:
 
-If migrating from non-versioned keys:
-
-1. **Backup existing keys**:
-```bash
-aws secretsmanager get-secret-value \
-  --secret-id mlspace/auth/token-encryption-key \
-  --query SecretString --output text > token-key-backup.json
-```
-
-2. **Initialize versioned structure**:
-```bash
-aws lambda invoke \
-  --function-name mlspace-key-rotation \
-  --payload '{
-    "action": "initialize_versioned_secret",
-    "secret_arn": "mlspace/auth/token-encryption-keys",
-    "key_type": "token"
-  }' \
-  response.json
-```
-
-3. **Deploy updated Lambda functions** that use `VersionedTokenEncryption`
-
-4. **Verify compatibility** with existing sessions
+1. **Backup existing keys** using AWS Secrets Manager console or CLI
+2. **Deploy updated infrastructure** with versioned key support
+3. **Initialize secrets** using the initialization script
+4. **Verify rotation schedule** is configured correctly
 
 ### Rollback Plan
 
 If issues occur during migration:
 
-1. **Revert Lambda functions** to use legacy `TokenEncryption`
-2. **Restore backup keys** to original secret names
-3. **Investigate and fix** versioned key implementation
-4. **Retry migration** after fixes
+1. **Check CloudWatch logs** for rotation Lambda errors
+2. **Verify secret structure** matches expected versioned format
+3. **Contact support** if issues persist
 
 ## Best Practices
 
 ### Rotation Schedule
 
-- **Token Keys**: Every 90 days (automated)
-- **State Keys**: Every deployment (automatic)
-- **Emergency Rotation**: On-demand via Lambda invocation
+- **Token Keys**: Every 90 days (automated via AWS Secrets Manager)
+- **State Keys**: Every 90 days (automated via AWS Secrets Manager)
 
 ### Monitoring
 
@@ -348,28 +248,13 @@ If issues occur during migration:
 
 ## Emergency Procedures
 
-### Immediate Key Rotation
+### Key Compromise Response
 
 If keys are compromised:
 
-1. **Rotate token keys immediately**:
-```bash
-aws lambda invoke \
-  --function-name mlspace-key-rotation \
-  --payload '{"action": "rotate_token_key", "secret_arn": "mlspace/auth/token-encryption-keys"}' \
-  response.json
-```
-
-2. **Rotate state keys via deployment**:
-```bash
-cdk deploy --exclusively
-```
-
-3. **Invalidate all sessions** (if necessary):
-```bash
-# This would require a custom Lambda function to clear the session table
-# Consider implementing if needed for security incidents
-```
+1. **Trigger immediate rotation**: Use AWS Secrets Manager console to trigger rotation immediately
+2. **Monitor rotation completion**: Check CloudWatch logs for rotation Lambda execution
+3. **Invalidate sessions if necessary**: Consider clearing the session table for critical security incidents
 
 ### Key Recovery
 
@@ -398,11 +283,7 @@ All key operations are logged:
 
 ### Reporting
 
-Generate rotation reports:
-```bash
-# Get rotation history
-aws logs filter-log-events \
-  --log-group-name /aws/lambda/mlspace-key-rotation \
-  --filter-pattern "Token encryption key rotated" \
-  --start-time $(date -d '90 days ago' +%s)000
-```
+Monitor rotation history through:
+- **CloudWatch Logs Insights**: Query rotation events in the Lambda log group
+- **AWS Secrets Manager Console**: View rotation history for each secret
+- **CloudTrail**: Audit all Secrets Manager API calls

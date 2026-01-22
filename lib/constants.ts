@@ -146,20 +146,20 @@ export const AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/state-encrypt
 
 // Legacy OIDC configuration (deprecated - maintained for backward compatibility during migration)
 // Use AUTH_OIDC_URL, AUTH_OIDC_CLIENT_ID, and other AUTH_* constants instead
-export const IDP_ENDPOINT_SSM_PARAM = ''; // Deprecated: Use AUTH_OIDC_URL instead
-export const OIDC_URL = ''; // Deprecated: Use AUTH_OIDC_URL instead
+export const IDP_ENDPOINT_SSM_PARAM = undefined; // Deprecated: Use AUTH_OIDC_URL instead
+export const OIDC_URL = undefined; // Deprecated: Use AUTH_OIDC_URL instead
 // OIDC URL that can be hit by authorizer lambda for token validation. If the OIDC endpoint is
 // exposed publicly and can be hit by from the MLSpace VPC this value does not need to be set.
 // If the OIDC endpoint is not accessible directly from VPC and requires peering or some other
 // proxy, this can be set to something which the lambda can traverse in order to reach the OIDC
 // instance.
-export const INTERNAL_OIDC_URL = ''; // Deprecated: No longer needed with BFF pattern
-export const OIDC_CLIENT_NAME = ''; // Deprecated: Use AUTH_OIDC_CLIENT_ID instead
+export const INTERNAL_OIDC_URL = undefined; // Deprecated: No longer needed with BFF pattern
+export const OIDC_CLIENT_NAME = undefined; // Deprecated: Use AUTH_OIDC_CLIENT_ID instead
 // If your OIDC server is using a self signed cert set this to false
-export const OIDC_VERIFY_SSL = true; // Deprecated: Use AUTH_OIDC_VERIFY_SSL instead
-export const OIDC_VERIFY_SIGNATURE = true; // Deprecated: Use AUTH_OIDC_VERIFY_SIGNATURE instead
+export const OIDC_VERIFY_SSL = undefined; // Deprecated: Use AUTH_OIDC_VERIFY_SSL instead
+export const OIDC_VERIFY_SIGNATURE = undefined; // Deprecated: Use AUTH_OIDC_VERIFY_SIGNATURE instead
 // This defaults to the APIGW url but if you're using custom DNS you should set this to that
-export const OIDC_REDIRECT_URI = ''; // Deprecated: No longer needed with BFF pattern
+export const OIDC_REDIRECT_URI = undefined; // Deprecated: No longer needed with BFF pattern
 // Interval (in minutes) to run the resource termination cleanup lambda
 export const RESOURCE_TERMINATION_INTERVAL = 60;
 // Interval (in minutes) to run background resource data updates

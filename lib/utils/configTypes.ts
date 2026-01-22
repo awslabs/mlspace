@@ -124,11 +124,11 @@ export type MLSpaceConfig = {
     EMR_SECURITY_CONFIG_NAME: string,
     EMR_EC2_SSH_KEY: string,
     // OIDC settings (legacy - deprecated, use AUTH_OIDC_URL instead)
-    IDP_ENDPOINT_SSM_PARAM: string,
-    INTERNAL_OIDC_URL: string,
-    OIDC_VERIFY_SSL: boolean,
-    OIDC_VERIFY_SIGNATURE: boolean,
-    OIDC_REDIRECT_URI: string,
+    IDP_ENDPOINT_SSM_PARAM: string | undefined,
+    INTERNAL_OIDC_URL: string | undefined,
+    OIDC_VERIFY_SSL: boolean | undefined,
+    OIDC_VERIFY_SIGNATURE: boolean | undefined,
+    OIDC_REDIRECT_URI: string | undefined,
     // BFF Authentication settings
     AUTH_SESSION_TABLE_NAME: string,
     AUTH_IDP_TYPE: string,
@@ -169,8 +169,9 @@ export type MLSpaceConfig = {
     //Properties that can optionally be set in config.json
     AWS_ACCOUNT: string,
     AWS_REGION: string,
-    OIDC_URL:  string,
-    OIDC_CLIENT_NAME: string,
+    OIDC_URL:  string | undefined,
+    OIDC_CLIENT_NAME: string | undefined
+    ,
     EXISTING_VPC_NAME: string,
     EXISTING_VPC_ID: string,
     EXISTING_VPC_DEFAULT_SECURITY_GROUP: string,
@@ -316,14 +317,49 @@ export function generateConfig (accountId?: string) {
     validateRequiredProperty(config.AWS_ACCOUNT, 'AWS_ACCOUNT');
     validateRequiredProperty(config.AWS_REGION, 'AWS_REGION');
 
+    // Check for deprecated OIDC_* environment variables
+    const deprecatedOidcVars = [
+        'OIDC_URL',
+        'OIDC_CLIENT_NAME',
+        'OIDC_VERIFY_SSL',
+        'OIDC_VERIFY_SIGNATURE',
+        'OIDC_REDIRECT_URI',
+        'INTERNAL_OIDC_URL',
+        'IDP_ENDPOINT_SSM_PARAM'
+    ];
+    
+    const foundDeprecatedVars = deprecatedOidcVars.filter ((varName) => {
+        const envValue = process.env[varName];
+        return envValue !== undefined && envValue !== '';
+    });
+
+    if (foundDeprecatedVars.length > 0) {
+        throw new Error(
+            `\n${'='.repeat(80)}\n` +
+            'ERROR: Deprecated OIDC_* environment variables detected!\n' +
+            `${'='.repeat(80)}\n\n` +
+            'The following deprecated environment variables are still set:\n' +
+            `  ${foundDeprecatedVars.map ((v) => `- ${v}`).join('\n  ')}\n\n` +
+            'These have been replaced with AUTH_* settings for the new BFF authentication.\n\n' +
+            'Please update your configuration:\n' +
+            '  1. Remove the deprecated OIDC_* environment variables\n' +
+            '  2. Set the new AUTH_* environment variables instead:\n' +
+            '     - AUTH_OIDC_URL (replaces OIDC_URL)\n' +
+            '     - AUTH_OIDC_CLIENT_ID (replaces OIDC_CLIENT_NAME)\n' +
+            '     - AUTH_OIDC_CLIENT_SECRET_NAME\n' +
+            '     - AUTH_OIDC_VERIFY_SSL (replaces OIDC_VERIFY_SSL)\n' +
+            '     - AUTH_OIDC_VERIFY_SIGNATURE (replaces OIDC_VERIFY_SIGNATURE)\n\n' +
+            'For migration guidance, see:\n' +
+            '  - docs/BFF_AUTHENTICATION_KEY_ROTATION.md\n' +
+            '  - frontend/docs/admin-guide/bff-authentication-migration.md\n' +
+            `${'='.repeat(80)}\n`
+        );
+    }
+
     // Validate BFF authentication configuration
     validateRequiredProperty(config.AUTH_OIDC_URL, 'AUTH_OIDC_URL');
     validateRequiredProperty(config.AUTH_OIDC_CLIENT_ID, 'AUTH_OIDC_CLIENT_ID');
     validateRequiredProperty(config.AUTH_OIDC_CLIENT_SECRET_NAME, 'AUTH_OIDC_CLIENT_SECRET_NAME');
-    
-    // Legacy OIDC properties are still validated for backward compatibility during migration
-    // validateRequiredProperty(config.OIDC_URL, 'OIDC_URL');
-    // validateRequiredProperty(config.OIDC_CLIENT_NAME, 'OIDC_CLIENT_NAME');
 
     if (!config.EXISTING_KMS_MASTER_KEY_ARN) {
         validateRequiredProperty(config.KEY_MANAGER_ROLE_NAME, 'KEY_MANAGER_ROLE_NAME');

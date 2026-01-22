@@ -25,6 +25,7 @@ const docItems = [
           text: 'Advanced Configuration',
           items: [
             { text: 'AUTH_* Configuration Reference', link: '/admin-guide/auth-configuration-reference' },
+            { text: 'Custom Domain Configuration', link: '/admin-guide/custom-domain' },
             { text: `Enabling Access To S3 Buckets In ${APPLICATION_NAME}`, link: '/admin-guide/manual-s3-permissions' },
             { text: `Custom Algorithm Containers In ${APPLICATION_NAME}`, link: '/admin-guide/byom-permissions' },
             { text: 'Branding', link: '/admin-guide/branding' },

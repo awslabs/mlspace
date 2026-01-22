@@ -8,7 +8,7 @@ This document summarizes the deployment documentation created for the BFF authen
 The OIDC client secret is now stored in AWS Secrets Manager instead of Systems Manager Parameter Store for enhanced security:
 
 - **Secret Name**: `mlspace/auth/oidc-client-secret`
-- **Configuration Parameter**: `AUTH_OIDC_CLIENT_SECRET_NAME` (replaces `AUTH_OIDC_CLIENT_SECRET_SSM_PARAM`)
+- **Configuration Parameter**: `AUTH_OIDC_CLIENT_SECRET_NAME` (default: `mlspace/auth/oidc-client-secret`)
 - **Optional Deployment Configuration**: `AUTH_OIDC_CLIENT_SECRET_VALUE`
 
 ### Deployment-Time Configuration
@@ -31,8 +31,27 @@ aws secretsmanager update-secret \
   --secret-string '{"client_secret":"your-new-secret","configured":true}'
 ```
 
-## Key Rotation Integration
-The OIDC client secret is managed alongside other authentication secrets in the `AuthSecretsConstruct` with proper encryption and access controls.
+## Complete AUTH_* Parameter List
+
+All authentication configuration now uses `AUTH_*` parameters. **Legacy `OIDC_*` parameters are deprecated and not supported.**
+
+### Required Parameters
+- **AUTH_IDP_TYPE**: Identity Provider type (currently only `"oidc"` is supported)
+- **AUTH_OIDC_URL**: OIDC issuer URL (replaces `OIDC_URL`)
+- **AUTH_OIDC_CLIENT_ID**: OIDC client identifier (replaces `OIDC_CLIENT_NAME`)
+
+### Optional Parameters
+- **AUTH_OIDC_CLIENT_SECRET_NAME**: Secrets Manager secret name for OIDC client secret (default: `mlspace/auth/oidc-client-secret`)
+- **AUTH_OIDC_CLIENT_SECRET_VALUE**: Optional OIDC client secret value for deployment-time configuration
+- **AUTH_OIDC_USE_PKCE**: Whether to use PKCE flow (default: `true`)
+- **AUTH_OIDC_VERIFY_SSL**: Whether to verify SSL certificates for OIDC requests (default: `true`)
+- **AUTH_OIDC_VERIFY_SIGNATURE**: Whether to verify OIDC token signatures (default: `true`)
+- **AUTH_SESSION_TTL_HOURS**: Session duration in hours (default: `24`)
+- **AUTH_PRIMARY_DOMAIN**: Optional custom domain for cookies (default: API Gateway domain)
+- **AUTH_SYNC_DOMAINS**: Optional comma-separated list of additional domains for cookie sync
+- **AUTH_SESSION_TABLE_NAME**: DynamoDB table name for authentication sessions (default: `mlspace-auth-sessions`)
+- **AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME**: Secrets Manager secret name for token encryption keys (default: `mlspace/auth/token-encryption-keys`)
+- **AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME**: Secrets Manager secret name for state encryption key (default: `mlspace/auth/state-encryption-key`)
 
 ## Created Documentation Files
 
@@ -103,18 +122,37 @@ frontend/docs/admin-guide/
 ## Key Features Documented
 
 ### Configuration Parameters
-- **AUTH_IDP_TYPE**: Identity Provider type selection
-- **AUTH_OIDC_URL**: OIDC issuer URL (replaces OIDC_URL)
-- **AUTH_OIDC_CLIENT_ID**: OIDC client identifier (replaces OIDC_CLIENT_NAME)
-- **AUTH_SESSION_TTL_HOURS**: Session duration configuration
+- **AUTH_IDP_TYPE**: Identity Provider type selection (currently only `"oidc"` is supported)
+- **AUTH_OIDC_URL**: OIDC issuer URL (replaces deprecated `OIDC_URL`)
+- **AUTH_OIDC_CLIENT_ID**: OIDC client identifier (replaces deprecated `OIDC_CLIENT_NAME`)
+- **AUTH_OIDC_CLIENT_SECRET_NAME**: Secrets Manager secret name for OIDC client secret
+- **AUTH_OIDC_CLIENT_SECRET_VALUE**: Optional deployment-time client secret configuration
+- **AUTH_OIDC_USE_PKCE**: Whether to use PKCE flow (default: `true`)
+- **AUTH_OIDC_VERIFY_SSL**: Whether to verify SSL certificates (default: `true`)
+- **AUTH_OIDC_VERIFY_SIGNATURE**: Whether to verify OIDC token signatures (default: `true`)
+- **AUTH_SESSION_TTL_HOURS**: Session duration configuration (default: `24`)
 - **AUTH_PRIMARY_DOMAIN**: Custom domain configuration
 - **AUTH_SYNC_DOMAINS**: Multi-domain cookie synchronization
+- **AUTH_SESSION_TABLE_NAME**: DynamoDB table name for sessions
+- **AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME**: Versioned token encryption keys (rotatable)
+- **AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME**: State encryption key
 
-### SSM Parameter Setup
+### Secrets Manager Setup
 - Client secret storage in `mlspace/auth/oidc-client-secret`
-- Encryption key management
+- Token encryption keys in `mlspace/auth/token-encryption-keys` (versioned for rotation)
+- State encryption key in `mlspace/auth/state-encryption-key`
 - IAM permissions for Lambda access
 - Security best practices
+
+### Deprecated Parameters
+**All legacy `OIDC_*` parameters are deprecated and not supported:**
+- `OIDC_URL` → Use `AUTH_OIDC_URL`
+- `OIDC_CLIENT_NAME` → Use `AUTH_OIDC_CLIENT_ID`
+- `OIDC_REDIRECT_URL` → No longer needed (automatic `/auth/callback`)
+- `OIDC_VERIFY_SSL` → Use `AUTH_OIDC_VERIFY_SSL`
+- `OIDC_VERIFY_SIGNATURE` → Use `AUTH_OIDC_VERIFY_SIGNATURE`
+- `IDP_ENDPOINT_SSM_PARAM` → No longer needed
+- `INTERNAL_OIDC_URL` → No longer needed with BFF pattern
 
 ### Multi-Domain Cookie Synchronization
 - OTAC (One-Time Authentication Code) flow
