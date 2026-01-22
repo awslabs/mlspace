@@ -42,7 +42,7 @@ mock_group_name = "TestGroup1"
 event_body = {
     "scope": mock_ds_scope,
     "name": mock_ds_name,
-    "description": "This is an updated description for the existing dataset.",
+    "description": "ThisIsAnUpdatedDescriptionForTheExistingDataset.",
     "groups": [mock_group_name],
 }
 mock_event = {
@@ -57,7 +57,7 @@ def generate_dataset():
         DatasetType.GROUP,
         DatasetType.GROUP,
         "sample-group-dataset",
-        "Dataset for testing edit.",
+        "DatasetForTestingEdit.",
         "s3://mlspace-datasets-123456789/group/datasets/sample-group-dataset",
         "testUser",
     )
@@ -158,7 +158,7 @@ def test_edit_dataset_missing_parameters(mock_dataset_dao):
 def test_edit_dataset_invalid_description(mock_dataset_dao, mock_global_dataset):
     expected_response = generate_html_response(400, "Bad Request: Dataset description contains invalid character.")
     update_event = {
-        "body": json.dumps({"description": "!!! $$$ ####"}),
+        "body": json.dumps({"description": "!!! ~ ####"}),
         "pathParameters": {"scope": mock_ds_scope, "datasetName": mock_ds_name},
     }
     mock_dataset_dao.get.return_value = mock_global_dataset

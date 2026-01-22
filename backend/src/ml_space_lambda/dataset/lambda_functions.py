@@ -49,7 +49,7 @@ group_dataset_dao = GroupDatasetDAO()
 iam = boto3.client("iam", config=retry_config)
 iam_manager = IAMManager(iam)
 
-dataset_description_regex = re.compile(r"[^ -~]")
+dataset_description_regex = re.compile(r"^[^ \-~']+$")
 
 
 def get_dataset_prefix(scope, dataset_name):
@@ -106,7 +106,7 @@ def edit(event, context):
     if "description" in body:
         if len(body["description"]) > 254:
             raise Exception("Dataset description is over the max length of 254 characters.")
-        if dataset_description_regex.search(body["description"]):
+        if dataset_description_regex.match(body["description"]) is None:
             raise Exception("Dataset description contains invalid character.")
     if dataset.type == DatasetType.GROUP:
         # get the new list of groups that have this dataset shared with them.
