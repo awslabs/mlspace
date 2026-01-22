@@ -71,10 +71,8 @@ const formSchema = z.object({
         }),
     description: z
         .string()
-        .regex(/^[\w\-\s'.]+$/, {
-            message: 'Dataset description can contain only alphanumeric characters.',
-        })
         .max(254)
+        .default('')
 });
 
 export function DatasetCreate () {

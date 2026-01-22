@@ -50,9 +50,7 @@ import { IGroup } from '../../../shared/model/group.model';
 import { DatasetProperties } from '../dataset';
 
 const formSchema = z.object({
-    description: z.string().regex(/^[\w\-\s']+$/, {
-        message: 'Dataset description can contain only alphanumeric characters.',
-    }),
+    description: z.string().max(254).default('')
 });
 
 export function DatasetUpdate ({isAdmin}: DatasetProperties) {
