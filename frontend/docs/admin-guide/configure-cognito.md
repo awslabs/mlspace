@@ -79,4 +79,3 @@ Once both values have been updated, you can build and deploy {{ $params.APPLICAT
 
 - If you log in to Cognito but it doesn’t redirect you to {{ $params.APPLICATION_NAME }} but rather to a Cognito hosted error page, you can check if the URL includes a reason for the failure (typically `redirect_mismatch`).
 - If you log in to Cognito and get redirected to {{ $params.APPLICATION_NAME }} but do not see your name in the top right on the `Greetings !` button, then you’re missing a required `name` parameter in your OIDC profile.
-- You can use your browser's dev tools to check if the `POST /user` request is failing. Failing calls to `GET /currentUser` are expected until the user exists.
