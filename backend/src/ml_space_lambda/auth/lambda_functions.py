@@ -485,13 +485,14 @@ def login(event, context):
 
         # Get redirect URL from query parameters
         query_params = event.get("queryStringParameters") or {}
-        redirect_url = query_params.get("redirectUrl", "/")
+        root_path = _get_root_path(event)
+        redirect_url = query_params.get("redirectUrl", root_path)
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
 
         # Validate redirect URL
         if not _validate_redirect_url(redirect_url, host_header):
             logger.warning(f"Invalid redirect URL: {redirect_url}")
-            redirect_url = "/"
+            redirect_url = root_path
 
         # Get domain for state and cookies
         domain = extract_domain_from_host(host_header)
@@ -570,17 +571,18 @@ def _validate_callback_parameters(event):
     encrypted_state = query_params.get("state")
     error_param = query_params.get("error")
     error_description = query_params.get("error_description", "")
+    root_path = _get_root_path(event)
 
     # Check for IdP error response
     if error_param:
         logger.warning(f"IdP returned error: {error_param} - {error_description}")
-        error_url = f"/?error=authentication_failed&message={error_param}"
+        error_url = f"{root_path}?error=authentication_failed&message={error_param}"
         return None, None, create_redirect_response(location=error_url, status_code=302)
 
     # Validate required parameters
     if not auth_code or not encrypted_state:
         logger.warning("Missing required callback parameters")
-        error_url = "/?error=invalid_request&message=Missing required parameters"
+        error_url = f"{root_path}?error=invalid_request&message=Missing required parameters"
         return None, None, create_redirect_response(location=error_url, status_code=302)
 
     return auth_code, encrypted_state, None
@@ -602,12 +604,13 @@ def _validate_state_parameter(event, state_manager, encrypted_state):
     # Extract state cookie
     cookie_header = event.get("headers", {}).get("Cookie") or event.get("headers", {}).get("cookie", "")
     state_nonce = get_cookie_value(cookie_header, "mlspace_auth_state")
+    root_path = _get_root_path(event)
 
     # Validate state parameter
     state_data = state_manager.validate_state(encrypted_state, state_nonce)
     if not state_data:
         logger.warning("Invalid or expired state parameter")
-        error_url = "/?error=invalid_state&message=Authentication request expired or invalid"
+        error_url = f"{root_path}?error=invalid_state&message=Authentication request expired or invalid"
         return None, create_redirect_response(location=error_url, status_code=302)
 
     return state_data, None
@@ -629,6 +632,7 @@ def _exchange_code_for_tokens(auth_handler, auth_code, state_data, event):
     """
     # Get redirect URI for token exchange
     redirect_uri = _get_redirect_uri(event)
+    root_path = _get_root_path(event)
 
     # Extract code_verifier from protocol_data if present (for PKCE flow)
     protocol_data = state_data.get("protocol_data", {})
@@ -639,7 +643,7 @@ def _exchange_code_for_tokens(auth_handler, auth_code, state_data, event):
 
     if not auth_result.success:
         logger.error(f"Token exchange failed: {auth_result.error}")
-        error_url = f"/?error=token_exchange_failed&message={auth_result.error}"
+        error_url = f"{root_path}?error=token_exchange_failed&message={auth_result.error}"
         return None, create_redirect_response(location=error_url, status_code=302)
 
     return auth_result, None
@@ -864,8 +868,9 @@ def callback(event, context):
 
         # Clear state cookie on error
         auth_path = _get_auth_path(event)
+        root_path = _get_root_path(event)
         clear_state = clear_state_cookie(path=auth_path)
-        error_url = "/?error=internal_error&message=Authentication processing failed"
+        error_url = f"{root_path}?error=internal_error&message=Authentication processing failed"
 
         return create_redirect_response(location=error_url, cookies=[clear_state], status_code=302)
 
@@ -887,11 +892,12 @@ def callback_post(event, context):
     try:
         # Get authentication configuration
         config = _get_auth_config()
+        root_path = _get_root_path(event)
 
         # Currently only OIDC is supported, which uses GET callbacks
         if config["idp_type"] != IdPType.SAML:
             logger.warning(f"POST callback not supported for IdP type: {config['idp_type']}")
-            error_url = "/?error=unsupported_callback&message=POST callback not supported for this IdP type"
+            error_url = f"{root_path}?error=unsupported_callback&message=POST callback not supported for this IdP type"
             return create_redirect_response(location=error_url, status_code=302)
 
         # TODO: Implement SAML POST callback handling
@@ -903,12 +909,13 @@ def callback_post(event, context):
         # 5. Handle multi-domain sync if configured
 
         logger.error("SAML POST callback not yet implemented")
-        error_url = "/?error=not_implemented&message=SAML authentication not yet supported"
+        error_url = f"{root_path}?error=not_implemented&message=SAML authentication not yet supported"
         return create_redirect_response(location=error_url, status_code=302)
 
     except Exception as e:
         logger.error(f"POST callback processing failed: {e}")
-        error_url = "/?error=internal_error&message=Authentication processing failed"
+        root_path = _get_root_path(event)
+        error_url = f"{root_path}?error=internal_error&message=Authentication processing failed"
         return create_redirect_response(location=error_url, status_code=302)
 
 
@@ -1352,6 +1359,7 @@ def _validate_sync_parameters(event) -> Tuple[Optional[str], List[str], Optional
     from ml_space_lambda.auth.utils.otac import parse_sync_request, validate_otac_format
 
     query_params = event.get("queryStringParameters") or {}
+    root_path = _get_root_path(event)
 
     # Parse sync parameters
     otac, remaining_domains, final_redirect_url = parse_sync_request(query_params)
@@ -1359,13 +1367,13 @@ def _validate_sync_parameters(event) -> Tuple[Optional[str], List[str], Optional
     # Validate OTAC format
     if not otac or not validate_otac_format(otac):
         logger.warning("Invalid or missing OTAC in sync request")
-        error_url = "/?error=invalid_otac&message=Invalid or missing authentication code"
+        error_url = f"{root_path}?error=invalid_otac&message=Invalid or missing authentication code"
         return None, [], None, create_redirect_response(location=error_url, status_code=302)
 
     # Validate final redirect URL
     if not final_redirect_url:
         logger.warning("Missing final redirect URL in sync request")
-        error_url = "/?error=invalid_request&message=Missing final redirect URL"
+        error_url = f"{root_path}?error=invalid_request&message=Missing final redirect URL"
         return None, [], None, create_redirect_response(location=error_url, status_code=302)
 
     return otac, remaining_domains, final_redirect_url, None
@@ -1386,9 +1394,11 @@ def _validate_requesting_domain(event, config) -> Tuple[Optional[str], Optional[
     from ml_space_lambda.auth.utils.otac import build_domain_list, normalize_domain
 
     host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+    root_path = _get_root_path(event)
+
     if not host_header:
         logger.warning("Missing Host header in sync request")
-        error_url = "/?error=invalid_request&message=Invalid request"
+        error_url = f"{root_path}?error=invalid_request&message=Invalid request"
         return None, create_redirect_response(location=error_url, status_code=302)
 
     requesting_domain = normalize_domain(host_header)
@@ -1401,19 +1411,20 @@ def _validate_requesting_domain(event, config) -> Tuple[Optional[str], Optional[
     # Validate requesting domain is in allowed list
     if requesting_domain not in allowed_domains:
         logger.warning(f"Unauthorized domain in sync request: {requesting_domain}")
-        error_url = "/?error=unauthorized_domain&message=Domain not authorized for sync"
+        error_url = f"{root_path}?error=unauthorized_domain&message=Domain not authorized for sync"
         return None, create_redirect_response(location=error_url, status_code=302)
 
     return requesting_domain, None
 
 
-def _validate_and_consume_otac(otac_manager, otac) -> Tuple[Optional[Dict], Optional[Dict]]:
+def _validate_and_consume_otac(otac_manager, otac, event) -> Tuple[Optional[Dict], Optional[Dict]]:
     """
     Validate OTAC and mark it as used.
 
     Args:
         otac_manager: OTACManager instance
         otac: OTAC identifier to validate
+        event: Lambda event for building error URLs
 
     Returns:
         Tuple of (otac_data, error_response)
@@ -1423,7 +1434,8 @@ def _validate_and_consume_otac(otac_manager, otac) -> Tuple[Optional[Dict], Opti
 
     if not otac_data:
         logger.warning(f"Invalid or expired OTAC: {otac}")
-        error_url = "/?error=invalid_otac&message=Authentication code is invalid or expired"
+        root_path = _get_root_path(event)
+        error_url = f"{root_path}?error=invalid_otac&message=Authentication code is invalid or expired"
         return None, create_redirect_response(location=error_url, status_code=302)
 
     return otac_data, None
@@ -1501,7 +1513,8 @@ def _handle_sync_chain_continuation(
 
     except Exception as e:
         logger.error(f"Failed to create OTAC for sync chain continuation: {e}")
-        error_url = "/?error=sync_failed&message=Failed to continue synchronization"
+        root_path = _get_root_path(event)
+        error_url = f"{root_path}?error=sync_failed&message=Failed to continue synchronization"
         return False, None, create_redirect_response(location=error_url, status_code=302)
 
 
@@ -1537,7 +1550,7 @@ def sync(event, context):
             return error_response
 
         # Validate OTAC and mark as used (strong consistency)
-        otac_data, error_response = _validate_and_consume_otac(otac_manager, otac)
+        otac_data, error_response = _validate_and_consume_otac(otac_manager, otac, event)
         if error_response:
             return error_response
 
@@ -1568,5 +1581,6 @@ def sync(event, context):
         logger.error(f"Sync processing failed: {e}")
 
         # Return error redirect
-        error_url = "/?error=sync_failed&message=Cross-domain synchronization failed"
+        root_path = _get_root_path(event)
+        error_url = f"{root_path}?error=sync_failed&message=Cross-domain synchronization failed"
         return create_redirect_response(location=error_url, status_code=302)
