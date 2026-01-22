@@ -373,6 +373,66 @@ def _get_redirect_uri(event: Dict) -> str:
     return f"{base_url}/auth/callback"
 
 
+def _get_root_path(event: Dict) -> str:
+    """
+    Get the root path for session cookie configuration.
+
+    For custom domains, returns "/".
+    For stage-based deployments, returns "/{stage}".
+
+    Args:
+        event: Lambda event
+
+    Returns:
+        Root path for session cookies (e.g., "/" or "/Prod")
+    """
+    # Check for custom domain configuration
+    custom_domain = os.environ.get("WEB_CUSTOM_DOMAIN_NAME", "").strip()
+    if custom_domain:
+        # Custom domain doesn't include stage in path
+        return "/"
+
+    # Get stage from requestContext (API Gateway includes this)
+    request_context = event.get("requestContext", {})
+    stage = request_context.get("stage", "")
+
+    # Build root path with stage if present
+    if stage:
+        return f"/{stage}"
+
+    return "/"
+
+
+def _get_auth_path(event: Dict) -> str:
+    """
+    Get the auth path for state cookie configuration.
+
+    For custom domains, returns "/auth".
+    For stage-based deployments, returns "/{stage}/auth".
+
+    Args:
+        event: Lambda event
+
+    Returns:
+        Auth path for state cookies (e.g., "/auth" or "/Prod/auth")
+    """
+    # Check for custom domain configuration
+    custom_domain = os.environ.get("WEB_CUSTOM_DOMAIN_NAME", "").strip()
+    if custom_domain:
+        # Custom domain doesn't include stage in path
+        return "/auth"
+
+    # Get stage from requestContext (API Gateway includes this)
+    request_context = event.get("requestContext", {})
+    stage = request_context.get("stage", "")
+
+    # Build auth path with stage if present
+    if stage:
+        return f"/{stage}/auth"
+
+    return "/auth"
+
+
 def _validate_redirect_url(redirect_url: str, host_header: str) -> bool:
     """
     Validate that redirect URL is safe and belongs to the same origin.
@@ -460,7 +520,10 @@ def login(event, context):
 
         # Create state cookie
         secure_flag = should_set_secure_flag(host_header)
-        state_cookie = create_state_cookie(nonce=nonce, max_age_seconds=600, secure=secure_flag, same_site="Lax")  # 10 minutes
+        auth_path = _get_auth_path(event)
+        state_cookie = create_state_cookie(
+            nonce=nonce, max_age_seconds=600, secure=secure_flag, same_site="Lax", path=auth_path
+        )  # 10 minutes
 
         logger.info(f"Login initiated for domain: {domain}, redirecting to IdP")
 
@@ -772,13 +835,15 @@ def callback(event, context):
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
         secure_flag = should_set_secure_flag(host_header)
         domain = extract_domain_from_host(host_header)
+        root_path = _get_root_path(event)
 
         session_cookie = create_session_cookie(
-            session_id=session_id, max_age_seconds=int(expires_at), domain=domain, secure=secure_flag
+            session_id=session_id, max_age_seconds=int(expires_at), domain=domain, secure=secure_flag, path=root_path
         )
 
         # Clear state cookie
-        clear_state = clear_state_cookie()
+        auth_path = _get_auth_path(event)
+        clear_state = clear_state_cookie(path=auth_path)
 
         # Handle multi-domain synchronization
         should_sync, sync_response = _handle_multi_domain_sync(
@@ -798,7 +863,8 @@ def callback(event, context):
         logger.error(f"Callback processing failed: {e}")
 
         # Clear state cookie on error
-        clear_state = clear_state_cookie()
+        auth_path = _get_auth_path(event)
+        clear_state = clear_state_cookie(path=auth_path)
         error_url = "/?error=internal_error&message=Authentication processing failed"
 
         return create_redirect_response(location=error_url, cookies=[clear_state], status_code=302)
@@ -956,7 +1022,8 @@ def _create_logout_error_response(context, event) -> Dict:
     try:
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
         domain = extract_domain_from_host(host_header)
-        clear_session = clear_session_cookie(domain=domain)
+        root_path = _get_root_path(event)
+        clear_session = clear_session_cookie(domain=domain, path=root_path)
         cookies = [clear_session]
     except Exception:
         cookies = None
@@ -1011,7 +1078,8 @@ def logout(event, context):
         # Get host header and clear session cookie
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
         domain = extract_domain_from_host(host_header)
-        clear_session = clear_session_cookie(domain=domain)
+        root_path = _get_root_path(event)
+        clear_session = clear_session_cookie(domain=domain, path=root_path)
 
         # Prepare response
         response_body = {"status": "LOGGED_OUT"}
@@ -1146,9 +1214,10 @@ def _attempt_token_refresh(
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
         secure_flag = should_set_secure_flag(host_header)
         domain = extract_domain_from_host(host_header)
+        root_path = _get_root_path(event)
 
         new_session_cookie = create_session_cookie(
-            session_id=session_id, max_age_seconds=int(access_expires), domain=domain, secure=secure_flag
+            session_id=session_id, max_age_seconds=int(access_expires), domain=domain, secure=secure_flag, path=root_path
         )
 
         logger.info(f"Token refresh successful for session: {session_id}")
@@ -1375,11 +1444,14 @@ def _set_session_cookie_for_domain(session_id, event, config) -> str:
     host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
     secure_flag = should_set_secure_flag(host_header)
     domain = extract_domain_from_host(host_header)
+    root_path = _get_root_path(event)
 
     # Use default session TTL (24 hours) for sync cookies
     session_ttl = int(config.get("session_ttl_hours", "24")) * 3600
 
-    return create_session_cookie(session_id=session_id, max_age_seconds=session_ttl, domain=domain, secure=secure_flag)
+    return create_session_cookie(
+        session_id=session_id, max_age_seconds=session_ttl, domain=domain, secure=secure_flag, path=root_path
+    )
 
 
 def _handle_sync_chain_continuation(

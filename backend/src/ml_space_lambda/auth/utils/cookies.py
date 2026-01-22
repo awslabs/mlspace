@@ -26,7 +26,12 @@ from typing import Dict, Optional
 
 
 def create_session_cookie(
-    session_id: str, max_age_seconds: int = 86400, domain: Optional[str] = None, secure: bool = True, same_site: str = "Strict"
+    session_id: str,
+    max_age_seconds: int = 86400,
+    domain: Optional[str] = None,
+    secure: bool = True,
+    same_site: str = "Strict",
+    path: str = "/",
 ) -> str:
     """
     Create a secure session cookie.
@@ -37,6 +42,7 @@ def create_session_cookie(
         domain: Cookie domain (optional)
         secure: Whether to set Secure flag (default True)
         same_site: SameSite attribute value (default "Strict")
+        path: Cookie path (default "/", should be "/{stage}" for stage-based deployments)
 
     Returns:
         Set-Cookie header value
@@ -45,7 +51,7 @@ def create_session_cookie(
     cookie["mlspace_session"] = session_id
     cookie["mlspace_session"]["httponly"] = True
     cookie["mlspace_session"]["max-age"] = max_age_seconds
-    cookie["mlspace_session"]["path"] = "/"
+    cookie["mlspace_session"]["path"] = path
     cookie["mlspace_session"]["samesite"] = same_site
 
     if secure:
@@ -57,7 +63,9 @@ def create_session_cookie(
     return cookie.output(header="").strip()
 
 
-def create_state_cookie(nonce: str, max_age_seconds: int = 600, secure: bool = True, same_site: str = "Strict") -> str:
+def create_state_cookie(
+    nonce: str, max_age_seconds: int = 600, secure: bool = True, same_site: str = "Strict", path: str = "/auth"
+) -> str:
     """
     Create a state cookie for CSRF protection.
 
@@ -66,6 +74,7 @@ def create_state_cookie(nonce: str, max_age_seconds: int = 600, secure: bool = T
         max_age_seconds: Cookie lifetime in seconds (default 10 minutes)
         secure: Whether to set Secure flag (default True)
         same_site: SameSite attribute value (default "Strict")
+        path: Cookie path (default "/auth", should include stage if not using custom domain)
 
     Returns:
         Set-Cookie header value
@@ -74,7 +83,7 @@ def create_state_cookie(nonce: str, max_age_seconds: int = 600, secure: bool = T
     cookie["mlspace_auth_state"] = nonce
     cookie["mlspace_auth_state"]["httponly"] = True
     cookie["mlspace_auth_state"]["max-age"] = max_age_seconds
-    cookie["mlspace_auth_state"]["path"] = "/auth"
+    cookie["mlspace_auth_state"]["path"] = path
     cookie["mlspace_auth_state"]["samesite"] = same_site
 
     if secure:
@@ -83,12 +92,13 @@ def create_state_cookie(nonce: str, max_age_seconds: int = 600, secure: bool = T
     return cookie.output(header="").strip()
 
 
-def clear_session_cookie(domain: Optional[str] = None) -> str:
+def clear_session_cookie(domain: Optional[str] = None, path: str = "/") -> str:
     """
     Create a cookie header to clear the session cookie.
 
     Args:
         domain: Cookie domain (optional)
+        path: Cookie path (default "/", should match the path used when creating the cookie)
 
     Returns:
         Set-Cookie header value to clear the session cookie
@@ -97,7 +107,7 @@ def clear_session_cookie(domain: Optional[str] = None) -> str:
     cookie["mlspace_session"] = ""
     cookie["mlspace_session"]["httponly"] = True
     cookie["mlspace_session"]["max-age"] = 0
-    cookie["mlspace_session"]["path"] = "/"
+    cookie["mlspace_session"]["path"] = path
     cookie["mlspace_session"]["samesite"] = "Strict"
     cookie["mlspace_session"]["secure"] = True
 
@@ -107,9 +117,12 @@ def clear_session_cookie(domain: Optional[str] = None) -> str:
     return cookie.output(header="").strip()
 
 
-def clear_state_cookie() -> str:
+def clear_state_cookie(path: str = "/auth") -> str:
     """
     Create a cookie header to clear the state cookie.
+
+    Args:
+        path: Cookie path (default "/auth", should include stage if not using custom domain)
 
     Returns:
         Set-Cookie header value to clear the state cookie
@@ -118,7 +131,7 @@ def clear_state_cookie() -> str:
     cookie["mlspace_auth_state"] = ""
     cookie["mlspace_auth_state"]["httponly"] = True
     cookie["mlspace_auth_state"]["max-age"] = 0
-    cookie["mlspace_auth_state"]["path"] = "/auth"
+    cookie["mlspace_auth_state"]["path"] = path
     cookie["mlspace_auth_state"]["samesite"] = "Strict"
     cookie["mlspace_auth_state"]["secure"] = True
 
