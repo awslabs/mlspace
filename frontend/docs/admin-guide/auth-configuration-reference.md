@@ -9,7 +9,7 @@ outline: deep
 This page provides a quick reference for all AUTH_* configuration parameters used in the enhanced authentication system.
 
 ::: danger OIDC_* PARAMETERS NOT SUPPORTED
-The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, etc.) are **deprecated and no longer supported**. You must use the `AUTH_*` parameters documented on this page. See the [Migration Mapping](#migration-mapping) section below for the complete mapping from legacy to new parameters.
+The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, etc.) are **no longer supported**. You must use the `AUTH_*` parameters documented on this page. See the [Migration Mapping](#migration-mapping) section below for the complete mapping from deprecated to new parameters.
 :::
 
 ## Required Parameters
@@ -28,7 +28,7 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 - **Default**: None
 - **Description**: OIDC issuer URL for authentication
 - **Example**: `"https://auth.example.com"`
-- **Notes**: Replaces legacy `OIDC_URL` parameter
+- **Notes**: Replaces deprecated `OIDC_URL` parameter
 
 ### AUTH_OIDC_CLIENT_ID
 - **Type**: String
@@ -36,7 +36,7 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 - **Default**: None
 - **Description**: OIDC client identifier
 - **Example**: `"mlspace-client"`
-- **Notes**: Replaces legacy `OIDC_CLIENT_NAME` parameter
+- **Notes**: Replaces deprecated `OIDC_CLIENT_NAME` parameter
 
 ## Optional Parameters
 
@@ -121,79 +121,35 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 - **Example**: `"mlspace/auth/state-encryption-key"`
 - **Notes**: Used for encrypting OAuth state parameter; automatically created during deployment
 
-## Secrets Manager Configuration
-
-### mlspace/auth/oidc-client-secret
-- **Type**: SecureString
-- **Required**: No (only for confidential OIDC clients)
-- **Description**: OIDC client secret for confidential client flow
-- **Creation**: 
-  ```bash
-  aws ssm put-parameter \
-    --name "mlspace/auth/oidc-client-secret" \
-    --value "your-client-secret" \
-    --type "SecureString"
-  ```
-
-### mlspace/auth/encryption-key
-- **Type**: SecureString
-- **Required**: No (auto-generated if not provided)
-- **Description**: AES-256 key for token encryption
-- **Notes**: Automatically generated during deployment if not specified
-
 ## Environment-Specific Examples
 
 ### Development Environment (Minimal)
 ```json
 {
-  "AUTH_IDP_TYPE": "oidc",
   "AUTH_OIDC_URL": "https://auth.dev.example.com",
   "AUTH_OIDC_CLIENT_ID": "mlspace-dev-client",
-  "AUTH_SESSION_TTL_HOURS": 8
 }
 ```
 
 ### Development Environment (With Client Secret)
 ```json
 {
-  "AUTH_IDP_TYPE": "oidc",
   "AUTH_OIDC_URL": "https://auth.dev.example.com",
   "AUTH_OIDC_CLIENT_ID": "mlspace-dev-client",
   "AUTH_OIDC_CLIENT_SECRET_VALUE": "dev-client-secret-here",
   "AUTH_SESSION_TTL_HOURS": 8,
-  "AUTH_OIDC_USE_PKCE": true,
-  "AUTH_OIDC_VERIFY_SSL": true,
-  "AUTH_OIDC_VERIFY_SIGNATURE": true
+  "AUTH_OIDC_VERIFY_SSL": false,
+  "AUTH_OIDC_VERIFY_SIGNATURE": false
 }
 ```
 
 ### Production Environment
 ```json
 {
-  "AUTH_IDP_TYPE": "oidc",
   "AUTH_OIDC_URL": "https://auth.example.com",
   "AUTH_OIDC_CLIENT_ID": "mlspace-prod-client",
   "AUTH_OIDC_CLIENT_SECRET_VALUE": "prod-client-secret-here",
   "AUTH_SESSION_TTL_HOURS": 24,
-  "AUTH_SYNC_DOMAINS": "notebooks.mlspace.com,admin.mlspace.com",
-  "AUTH_OIDC_USE_PKCE": true,
-  "AUTH_OIDC_VERIFY_SSL": true,
-  "AUTH_OIDC_VERIFY_SIGNATURE": true
-}
-```
-
-### Multi-Domain Production Environment
-```json
-{
-  "AUTH_IDP_TYPE": "oidc",
-  "AUTH_OIDC_URL": "https://sso.company.com",
-  "AUTH_OIDC_CLIENT_ID": "mlspace-enterprise",
-  "AUTH_OIDC_CLIENT_SECRET_VALUE": "enterprise-client-secret-here",
-  "AUTH_SESSION_TTL_HOURS": 12,
-  "AUTH_SYNC_DOMAINS": "mlspace-notebooks.company.com,mlspace-admin.company.com",
-  "AUTH_OIDC_USE_PKCE": true,
-  "AUTH_OIDC_VERIFY_SSL": true,
-  "AUTH_OIDC_VERIFY_SIGNATURE": true
 }
 ```
 
@@ -201,10 +157,9 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 
 ### Required Validation Rules
 
-1. **AUTH_IDP_TYPE**: Must be `"oidc"` (case-sensitive)
-2. **AUTH_OIDC_URL**: Must be valid HTTPS URL when `AUTH_IDP_TYPE` is `"oidc"`
-3. **AUTH_OIDC_CLIENT_ID**: Must be non-empty string when `AUTH_IDP_TYPE` is `"oidc"`
-4. **AUTH_SESSION_TTL_HOURS**: Must be positive integer between 1 and 168
+1. **AUTH_OIDC_URL**: Must be valid HTTPS URL when `AUTH_IDP_TYPE` is `"oidc"`
+2. **AUTH_OIDC_CLIENT_ID**: Must be non-empty string when `AUTH_IDP_TYPE` is `"oidc"`
+3. **AUTH_SESSION_TTL_HOURS**: Must be positive integer between 1 and 168
 
 ### Optional Validation Rules
 
@@ -216,54 +171,16 @@ The legacy `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_N
 7. **AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME**: Must be valid Secrets Manager secret name if specified
 8. **AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME**: Must be valid Secrets Manager secret name if specified
 
-### Validation Script
-
-```bash
-#!/bin/bash
-# validate-auth-config.sh
-
-CONFIG_FILE="lib/config.json"
-ENV=${1:-"dev"}
-
-# Extract configuration for environment
-AUTH_IDP_TYPE=$(jq -r ".${ENV}.AUTH_IDP_TYPE // empty" "$CONFIG_FILE")
-AUTH_OIDC_URL=$(jq -r ".${ENV}.AUTH_OIDC_URL // empty" "$CONFIG_FILE")
-AUTH_OIDC_CLIENT_ID=$(jq -r ".${ENV}.AUTH_OIDC_CLIENT_ID // empty" "$CONFIG_FILE")
-AUTH_SESSION_TTL_HOURS=$(jq -r ".${ENV}.AUTH_SESSION_TTL_HOURS // 24" "$CONFIG_FILE")
-
-# Validate required parameters
-if [ "$AUTH_IDP_TYPE" != "oidc" ]; then
-  echo "ERROR: AUTH_IDP_TYPE must be 'oidc'"
-  exit 1
-fi
-
-if [ -z "$AUTH_OIDC_URL" ]; then
-  echo "ERROR: AUTH_OIDC_URL is required when AUTH_IDP_TYPE is 'oidc'"
-  exit 1
-fi
-
-if [ -z "$AUTH_OIDC_CLIENT_ID" ]; then
-  echo "ERROR: AUTH_OIDC_CLIENT_ID is required when AUTH_IDP_TYPE is 'oidc'"
-  exit 1
-fi
-
-if [ "$AUTH_SESSION_TTL_HOURS" -lt 1 ] || [ "$AUTH_SESSION_TTL_HOURS" -gt 168 ]; then
-  echo "ERROR: AUTH_SESSION_TTL_HOURS must be between 1 and 168"
-  exit 1
-fi
-
-echo "✅ Configuration validation passed for environment: $ENV"
-```
 
 ## Migration Mapping
 
-::: danger LEGACY PARAMETERS NOT SUPPORTED
-All `OIDC_*` parameters listed below are **deprecated and no longer supported**. You must migrate to the corresponding `AUTH_*` parameters. Attempting to use legacy parameters will result in configuration errors.
+::: danger DEPRECATED PARAMETERS NOT SUPPORTED
+All `OIDC_*` parameters listed below are **no longer supported**. You must migrate to the corresponding `AUTH_*` parameters. Attempting to use deprecated parameters will result in configuration errors.
 :::
 
-### Legacy to New Parameter Mapping
+### Deprecated to New Parameter Mapping
 
-| Legacy Parameter | New Parameter | Migration Notes |
+| Deprecated Parameter | New Parameter | Migration Notes |
 |------------------|---------------|-----------------|
 | `OIDC_URL` | `AUTH_OIDC_URL` | Direct replacement - use the same OIDC issuer URL |
 | `OIDC_CLIENT_NAME` | `AUTH_OIDC_CLIENT_ID` | Direct replacement - use the same client identifier |
@@ -281,87 +198,6 @@ All `OIDC_*` parameters listed below are **deprecated and no longer supported**.
 | _(none)_ | `AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME` | **New** - Token encryption keys (rotatable) |
 | _(none)_ | `AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME` | **New** - State encryption key |
 
-### Configuration File Migration
-
-**Before (legacy):**
-```typescript
-// lib/constants.ts
-export const OIDC_URL = 'https://auth.example.com';
-export const OIDC_CLIENT_NAME = 'mlspace-client';
-export const OIDC_VERIFY_SSL = true;
-export const OIDC_VERIFY_SIGNATURE = true;
-```
-
-**After (Enhanced Authentication):**
-```typescript
-// lib/constants.ts
-export const AUTH_IDP_TYPE = 'oidc';
-export const AUTH_OIDC_URL = 'https://auth.example.com';
-export const AUTH_OIDC_CLIENT_ID = 'mlspace-client';
-export const AUTH_SESSION_TTL_HOURS = 24;
-```
-
-## Troubleshooting Configuration Issues
-
-### Common Configuration Errors
-
-#### Error: "Invalid AUTH_IDP_TYPE"
-```
-Cause: AUTH_IDP_TYPE is not set to "oidc"
-Solution: Set AUTH_IDP_TYPE to "oidc" (case-sensitive)
-```
-
-#### Error: "OIDC URL not configured"
-```
-Cause: AUTH_OIDC_URL is missing or empty
-Solution: Set AUTH_OIDC_URL to your OIDC issuer URL
-```
-
-#### Error: "OIDC Client ID not configured"
-```
-Cause: AUTH_OIDC_CLIENT_ID is missing or empty
-Solution: Set AUTH_OIDC_CLIENT_ID to your OIDC client identifier
-```
-
-#### Error: "Invalid session TTL"
-```
-Cause: AUTH_SESSION_TTL_HOURS is outside valid range (1-168)
-Solution: Set AUTH_SESSION_TTL_HOURS to a value between 1 and 168
-```
-
-### Configuration Testing
-
-#### Test OIDC Connectivity
-```bash
-# Test OIDC discovery endpoint
-curl -s "https://your-oidc-url/.well-known/openid-configuration" | jq .
-
-# Verify required endpoints are available
-curl -s "https://your-oidc-url/.well-known/openid-configuration" | \
-  jq -r '.authorization_endpoint, .token_endpoint, .userinfo_endpoint'
-```
-
-#### Test Secrets Manager Access
-```bash
-# Verify client secret exists
-aws secretsmanager describe-secret \
-  --secret-id "mlspace/auth/oidc-client-secret"
-
-# Test secret access (requires appropriate IAM permissions)
-aws secretsmanager get-secret-value \
-  --secret-id "mlspace/auth/oidc-client-secret" \
-  --query 'SecretString' \
-  --output text
-
-# Verify token encryption keys secret
-aws secretsmanager describe-secret \
-  --secret-id "mlspace/auth/token-encryption-keys"
-
-# Verify state encryption key secret
-aws secretsmanager describe-secret \
-  --secret-id "mlspace/auth/state-encryption-key"
-```
-
 ## Security Considerations
 
 ### Parameter Security
@@ -377,16 +213,8 @@ aws secretsmanager describe-secret \
 ### Access Control
 
 1. **Secrets Manager Permissions**: Limit secret access to MLSpace Lambda execution role only
-2. **KMS Keys**: Use appropriate KMS keys for Secrets Manager encryption
-3. **Domain Validation**: Ensure sync domains are under your control
-4. **Secret Rotation**: Use versioned secrets (token encryption keys) for rotation support
-
-### Monitoring
-
-1. **Configuration Changes**: Monitor changes to AUTH_* parameters in constants.ts and config.json
-2. **Secrets Access**: Monitor access to `mlspace/auth/*` secrets in CloudTrail
-3. **Failed Authentication**: Monitor authentication failures for configuration issues
-4. **Secret Rotation**: Monitor secret rotation events and ensure smooth transitions
+2. **Domain Validation**: Ensure sync domains are under your control
+3. **Secret Rotation**: Use versioned secrets (token encryption keys) for rotation support
 
 ## Related Documentation
 
