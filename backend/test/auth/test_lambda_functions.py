@@ -44,6 +44,7 @@ class TestAuthLambdaFunctions:
             "AUTH_PRIMARY_DOMAIN": "",
             "AUTH_SYNC_DOMAINS": "",
             "WEB_CUSTOM_DOMAIN_NAME": "",
+            "AWS_REGION": "us-east-1",
         }
 
         # Mock SSM responses (legacy - keeping for backward compatibility tests)
