@@ -9,8 +9,8 @@ const docItems = [
             { text: 'Install Guide', link: '/admin-guide/install' },
             { text: 'Getting Started', link: '/admin-guide/getting-started' },
             { text: 'Setting Initial Admin', link: '/admin-guide/initial-admin' },
-            { text: 'Enhanced Authentication Configuration', link: '/admin-guide/bff-authentication' },
-            { text: 'Enhanced Authentication Migration', link: '/admin-guide/bff-authentication-migration' },
+            { text: 'Authentication Configuration', link: '/admin-guide/bff-authentication' },
+            { text: 'Authentication Migration', link: '/admin-guide/bff-authentication-migration' },
             { text: `Configure AWS Cognito for ${APPLICATION_NAME}`, link: '/admin-guide/configure-cognito' },
             { text: `Create a Ground Truth Workforce using Keycloak`, link: '/admin-guide/gt-workforce-keycloak' },
             { text: `Security`, link: '/admin-guide/security/intro', items: [
@@ -24,7 +24,7 @@ const docItems = [
       {
           text: 'Advanced Configuration',
           items: [
-            { text: 'AUTH_* Configuration Reference', link: '/admin-guide/auth-configuration-reference' },
+            { text: 'Authentication Configuration Reference', link: '/admin-guide/auth-configuration-reference' },
             { text: 'Custom Domain Configuration', link: '/admin-guide/custom-domain' },
             { text: `Enabling Access To S3 Buckets In ${APPLICATION_NAME}`, link: '/admin-guide/manual-s3-permissions' },
             { text: `Custom Algorithm Containers In ${APPLICATION_NAME}`, link: '/admin-guide/byom-permissions' },

@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# AUTH_* Configuration Reference
+# Authentication Configuration Reference
 
 ## Quick Reference
 
