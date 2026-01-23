@@ -6,7 +6,7 @@ outline: deep
 
 ## Quick Reference
 
-This page provides a quick reference for all AUTH_* configuration parameters used in the enhanced authentication system.
+This page provides a quick reference for all AUTH_* configuration parameters used in the authentication system.
 
 ::: danger OIDC_* PARAMETERS NOT SUPPORTED
 The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, etc.) are **no longer supported**. You must use the `AUTH_*` parameters documented on this page. See the [Migration Mapping](#migration-mapping) section below for the complete mapping from deprecated to new parameters.
@@ -53,9 +53,9 @@ The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIE
 - **Type**: String (comma-separated)
 - **Required**: No
 - **Default**: None
-- **Description**: Additional domains for cross-domain cookie sync
+- **Description**: **Not currently needed.** Reserved for future multi-domain cookie sync functionality
 - **Example**: `"notebooks.mlspace.com,admin.mlspace.com"`
-- **Notes**: Enables seamless authentication across multiple domains. The primary domain is automatically detected from the Host header.
+- **Notes**: This parameter is not currently used or expected to be set. It is reserved for future functionality to enable seamless authentication across multiple domains.
 
 ### AUTH_OIDC_CLIENT_SECRET_NAME
 - **Type**: String
@@ -163,7 +163,7 @@ The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIE
 
 ### Optional Validation Rules
 
-1. **AUTH_SYNC_DOMAINS**: Must be comma-separated list of valid domain names if specified
+1. **AUTH_SYNC_DOMAINS**: Not currently used; reserved for future functionality
 2. **AUTH_OIDC_USE_PKCE**: Must be boolean (true/false)
 4. **AUTH_OIDC_VERIFY_SSL**: Must be boolean (true/false); should be true in production
 5. **AUTH_OIDC_VERIFY_SIGNATURE**: Must be boolean (true/false); should be true in production
@@ -193,7 +193,7 @@ All `OIDC_*` parameters listed below are **no longer supported**. You must migra
 | _(none)_ | `AUTH_OIDC_CLIENT_SECRET_VALUE` | **New** - Optional deployment-time secret value |
 | _(none)_ | `AUTH_OIDC_USE_PKCE` | **New** - Enable PKCE flow (default: true) |
 | _(none)_ | `AUTH_SESSION_TTL_HOURS` | **New** - Session duration configuration |
-| _(none)_ | `AUTH_SYNC_DOMAINS` | **New** - Multi-domain cookie sync |
+| _(none)_ | `AUTH_SYNC_DOMAINS` | **New** - Reserved for future multi-domain cookie sync (not currently used) |
 | _(none)_ | `AUTH_SESSION_TABLE_NAME` | **New** - DynamoDB session table name |
 | _(none)_ | `AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME` | **New** - Token encryption keys (rotatable) |
 | _(none)_ | `AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME` | **New** - State encryption key |
@@ -204,8 +204,7 @@ All `OIDC_*` parameters listed below are **no longer supported**. You must migra
 
 1. **Client Secrets**: Always store in Secrets Manager (not SSM Parameter Store)
 2. **URLs**: Use HTTPS for all AUTH_OIDC_URL values
-3. **Domains**: Ensure AUTH_SYNC_DOMAINS use HTTPS
-4. **TTL**: Set appropriate AUTH_SESSION_TTL_HOURS based on security requirements
+3. **TTL**: Set appropriate AUTH_SESSION_TTL_HOURS based on security requirements
 5. **SSL Verification**: Keep AUTH_OIDC_VERIFY_SSL=true in production
 6. **Signature Verification**: Keep AUTH_OIDC_VERIFY_SIGNATURE=true in production
 7. **PKCE**: Keep AUTH_OIDC_USE_PKCE=true for enhanced security
@@ -218,7 +217,7 @@ All `OIDC_*` parameters listed below are **no longer supported**. You must migra
 
 ## Related Documentation
 
-- [Enhanced Authentication Configuration Guide](./bff-authentication.md)
-- [Enhanced Authentication Migration Guide](./bff-authentication-migration.md)
+- [Authentication Configuration Guide](./bff-authentication.md)
+- [Authentication Migration Guide](./bff-authentication-migration.md)
 - [Install Guide](./install.md)
 - [Security Documentation](./security/intro.md)

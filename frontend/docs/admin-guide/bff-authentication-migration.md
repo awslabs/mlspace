@@ -2,11 +2,11 @@
 outline: deep
 ---
 
-# Enhanced Authentication Migration Guide
+# Authentication Migration Guide
 
 ## Overview
 
-This guide provides detailed step-by-step instructions for migrating from the deprecated OIDC authentication system to the enhanced authentication system. The new system provides improved security, better enterprise IdP support, and simplified application code.
+This guide provides detailed step-by-step instructions for migrating from the deprecated OIDC authentication system to the current authentication system.
 
 ## Migration Benefits
 
@@ -24,7 +24,7 @@ Before starting the migration, ensure you have:
 - [ ] OIDC client secret (if using confidential client flow)
 - [ ] Understanding of your current OIDC configuration
 - [ ] Planned maintenance window for deployment
-- [ ] Reviewed the [Enhanced Authentication Configuration Guide](./bff-authentication.md)
+- [ ] Reviewed the [Authentication Configuration Guide](./bff-authentication.md)
 
 ## Pre-Migration Assessment
 
@@ -53,7 +53,7 @@ Before starting the migration, document your current configuration:
 
 ### Compatibility Check
 
-Verify your OIDC provider supports the enhanced authentication requirements:
+Verify your OIDC provider supports the authentication requirements:
 
 - ✅ Authorization Code flow
 - ✅ Client secret support (for confidential clients)

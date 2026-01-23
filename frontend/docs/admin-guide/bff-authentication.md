@@ -2,11 +2,11 @@
 outline: deep
 ---
 
-# Enhanced Authentication Configuration
+# Authentication Configuration
 
 ## Overview
 
-The enhanced authentication system provides improved security and enterprise Identity Provider (IdP) integration. Authentication is handled server-side, enabling support for enterprise IdPs that require client secrets, while providing better security through secure cookies (HttpOnly cookies that can't be accessed by JavaScript and are only sent to the server with requests) and simplified application code.
+Authentication is handled server-side, enabling support for enterprise IdPs that require client secrets, while providing better security through secure cookies (HttpOnly cookies that can't be accessed by JavaScript and are only sent to the server with requests) and simplified application code.
 
 ::: danger DEPRECATED OIDC_* PARAMETERS NOT SUPPORTED
 The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIENT_NAME`, `OIDC_VERIFY_SSL`, `OIDC_REDIRECT_URL`, etc.) are **no longer supported**. You must use the `AUTH_*` parameters documented below. See the [Migration from Deprecated OIDC Configuration](#migration-from-deprecated-oidc-configuration) section for migration instructions.
@@ -16,20 +16,20 @@ The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIE
 
 ### Required AUTH_* Parameters
 
-The enhanced authentication system uses `AUTH_*` configuration parameters that replace the deprecated `OIDC_*` parameters:
+The authentication system uses `AUTH_*` configuration parameters that replace the deprecated `OIDC_*` parameters:
 
 | Parameter | Description | Example | Required |
 |-----------|-------------|---------|----------|
-| `AUTH_IDP_TYPE` | Identity Provider type | `"oidc"` | Yes |
 | `AUTH_OIDC_URL` | OIDC issuer URL (replaces `OIDC_URL`) | `"https://auth.example.com"` | Yes (for OIDC) |
 | `AUTH_OIDC_CLIENT_ID` | OIDC client identifier (replaces `OIDC_CLIENT_NAME`) | `"mlspace-client"` | Yes (for OIDC) |
-| `AUTH_SESSION_TTL_HOURS` | Session duration in hours | `24` | No (default: 24) |
 
 ### Optional AUTH_* Parameters
 
 | Parameter | Description | Example | Default |
 |-----------|-------------|---------|---------|
-| `AUTH_SYNC_DOMAINS` | Comma-separated list of additional domains for cookie sync | `"notebooks.mlspace.com,admin.mlspace.com"` | None |
+| `AUTH_IDP_TYPE` | Identity Provider type | `"oidc"` | No |
+| `AUTH_SESSION_TTL_HOURS` | Session duration in hours | `24` | No (default: 24) |
+| `AUTH_SYNC_DOMAINS` | **Not currently needed.** Reserved for future multi-domain cookie sync functionality | `"notebooks.mlspace.com,admin.mlspace.com"` | None |
 | `AUTH_OIDC_CLIENT_SECRET_NAME` | Secrets Manager secret name for OIDC client secret | `"mlspace/auth/oidc-client-secret"` | `"mlspace/auth/oidc-client-secret"` |
 | `AUTH_OIDC_CLIENT_SECRET_VALUE` | Optional OIDC client secret value for deployment-time configuration | `"your-secret-here"` | None |
 | `AUTH_OIDC_USE_PKCE` | Whether to use PKCE flow (recommended) | `true` | `true` |
@@ -41,7 +41,7 @@ The enhanced authentication system uses `AUTH_*` configuration parameters that r
 
 ## Configuration Setup
 
-### Update lib/config.json
+### Update lib/config.json or lib/constants.ts
 
 Update your environment-specific configuration file:
 
@@ -60,4 +60,4 @@ Update your environment-specific configuration file:
 
 ## Migration from Deprecated OIDC Configuration
 
-If you're migrating from the deprecated `OIDC_*` parameters, see the [Enhanced Authentication Migration Guide](./bff-authentication-migration.md) for detailed step-by-step instructions.
+If you're migrating from the deprecated `OIDC_*` parameters, see the [Authentication Migration Guide](./bff-authentication-migration.md) for detailed step-by-step instructions.
