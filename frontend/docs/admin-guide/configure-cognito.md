@@ -57,22 +57,25 @@ In order to connect {{ $params.APPLICATION_NAME }} to an existing Cognito user p
 
 ![Cognito App Integration properties](../img/cognito/app-integration.png)
 
-Once you have these two values, you can update the `constants.ts` file in the `lib/` application source directory. The Cognito Client ID value will need to be used for `OIDC_CLIENT_NAME`, i.e.:
+Once you have these two values, you can update the `constants.ts` file in the `lib/` application source directory. The Cognito Client ID value will need to be used for `AUTH_OIDC_CLIENT_ID`, i.e.:
 
 ```javascript
-export const OIDC_CLIENT_NAME = '7sm0a9nvvurn0guite1f2jgqi9';
+export const AUTH_OIDC_CLIENT_ID = '7sm0a9nvvurn0guite1f2jgqi9';
 ```
 
-The value for User Pool ID should be combined with the correct region endpoint from [AWS Cognito Identity Documentation](https://docs.aws.amazon.com/general/latest/gr/cognito_identity.html) to form the `OIDC_URL`. In the example above, the User Pool exists in the `us-east-2` region, so the full endpoint would be `https://cognito-idp.us-east-2.amazonaws.com/us-east-2_oUmWoN1YP`. In the `constants.ts` file, this endpoint should be assigned to the `OIDC_URL` variable:
+The value for User Pool ID should be combined with the correct region endpoint from [AWS Cognito Identity Documentation](https://docs.aws.amazon.com/general/latest/gr/cognito_identity.html) to form the `AUTH_OIDC_URL`. In the example above, the User Pool exists in the `us-east-2` region, so the full endpoint would be `https://cognito-idp.us-east-2.amazonaws.com/us-east-2_oUmWoN1YP`. In the `constants.ts` file, this endpoint should be assigned to the `AUTH_OIDC_URL` variable:
 
 ```javascript
-export const OIDC_URL = 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_oUmWoN1YP';
+export const AUTH_OIDC_URL = 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_oUmWoN1YP';
 ```
 
-Once both values have been updated, you can build and deploy {{ $params.APPLICATION_NAME }}, and it will use Cognito as the IdP. Once {{ $params.APPLICATION_NAME }} is deployed, you will have to update your Cognito app client to add the {{ $params.APPLICATION_NAME }} API Gateway endpoint to the list of "Allowed callback URLs". You can do this by navigating to the App Client details page, scrolling down to the hosted UI, and clicking the edit button. From there, you will need to add your custom domain or the {{ $params.APPLICATION_NAME }} API Gateway endpoint to the URL list. If you aren't using a custom domain, that value should be something similar to `https://<api id>.execute-api.<region>.amazonaws.com/Prod/`.
+::: warning DEPRECATED OIDC_* PARAMETERS NOT SUPPORTED
+The deprecated `OIDC_URL` and `OIDC_CLIENT_NAME` parameters are no longer supported. You must use the new `AUTH_OIDC_URL` and `AUTH_OIDC_CLIENT_ID` parameters instead. See the [Authentication Configuration Guide](./bff-authentication.md) for complete details on all AUTH_* parameters.
+:::
+
+Once both values have been updated, you can build and deploy {{ $params.APPLICATION_NAME }}, and it will use Cognito as the IdP. Once {{ $params.APPLICATION_NAME }} is deployed, you will have to update your Cognito app client to add the {{ $params.APPLICATION_NAME }} API Gateway endpoint to the list of "Allowed callback URLs". You can do this by navigating to the App Client details page, scrolling down to the hosted UI, and clicking the edit button. From there, you will need to add your custom domain or the {{ $params.APPLICATION_NAME }} API Gateway endpoint with the `/auth/callback` path to the URL list. If you aren't using a custom domain, that value should be something similar to `https://<api id>.execute-api.<region>.amazonaws.com/Prod/auth/callback`.
 
 ## Troubleshooting
 
 - If you log in to Cognito but it doesn’t redirect you to {{ $params.APPLICATION_NAME }} but rather to a Cognito hosted error page, you can check if the URL includes a reason for the failure (typically `redirect_mismatch`).
 - If you log in to Cognito and get redirected to {{ $params.APPLICATION_NAME }} but do not see your name in the top right on the `Greetings !` button, then you’re missing a required `name` parameter in your OIDC profile.
-- You can use your browser's dev tools to check if the `POST /user` request is failing. Failing calls to `GET /currentUser` are expected until the user exists.

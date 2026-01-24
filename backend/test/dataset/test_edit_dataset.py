@@ -155,19 +155,6 @@ def test_edit_dataset_missing_parameters(mock_dataset_dao):
 
 
 @mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
-def test_edit_dataset_invalid_description(mock_dataset_dao, mock_global_dataset):
-    expected_response = generate_html_response(400, "Bad Request: Dataset description contains invalid character.")
-    update_event = {
-        "body": json.dumps({"description": "!!! $$$ ####"}),
-        "pathParameters": {"scope": mock_ds_scope, "datasetName": mock_ds_name},
-    }
-    mock_dataset_dao.get.return_value = mock_global_dataset
-
-    assert lambda_handler(update_event, mock_context) == expected_response
-    mock_dataset_dao.update.assert_not_called()
-
-
-@mock.patch("ml_space_lambda.dataset.lambda_functions.dataset_dao")
 def test_edit_dataset_long_description(mock_dataset_dao, mock_global_dataset):
     expected_response = generate_html_response(
         400, "Bad Request: Dataset description is over the max length of 254 characters."

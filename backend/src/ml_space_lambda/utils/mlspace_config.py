@@ -44,7 +44,7 @@ ENV_DEFAULTS = {
     EnvVariable.KMS_INSTANCE_CONDITIONS_POLICY_ARN: "",
     EnvVariable.LOG_BUCKET: "mlspace-log-bucket",
     EnvVariable.MANAGE_IAM_ROLES: "",
-    EnvVariable.NEW_USER_SUSPENSION_DEFAULT: "True",
+    EnvVariable.NEW_USERS_SUSPENDED: "False",
     EnvVariable.NOTEBOOK_ROLE_NAME: "",
     EnvVariable.RESOURCE_METADATA_TABLE: "mlspace-resource-metadata",
     EnvVariable.RESOURCE_SCHEDULE_TABLE: "mlspace-resource-schedule",

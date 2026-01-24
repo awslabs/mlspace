@@ -21,7 +21,7 @@ import ErrorBoundary from './shared/error/error-boundary';
 import SideNavigation from './shared/layout/navigation/side-navigation';
 
 import React from 'react';
-import { useAuth } from 'react-oidc-context';
+import { useAuth } from './shared/auth/hooks';
 import { useAppSelector } from './config/store';
 import DeleteModal, { DeleteModalProps } from './modules/modal/delete-modal';
 import ResourceScheduleModal, {
@@ -69,7 +69,7 @@ export default function App () {
                     contentHeader={<Header />}
                     headerSelector='#topBanner'
                     footerSelector='#bottomBanner'
-                    navigationHide={!auth.isAuthenticated}
+                    navigationHide={auth.status !== 'authenticated'}
                     navigation={<SideNavigation />}
                     content={<AppRoutes />}
                     notifications={<NotificationBanner />}

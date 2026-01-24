@@ -21,7 +21,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict
 from unittest import mock
 
-import jwt
 import pytest
 from botocore.exceptions import ClientError
 
@@ -35,13 +34,10 @@ from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetada
 from ml_space_lambda.data_access_objects.user import UserModel
 from ml_space_lambda.enums import DatasetType, Permission, ResourceType, ServiceType
 
-TEST_ENV_CONFIG = {"AWS_DEFAULT_REGION": "us-east-1", "OIDC_VERIFY_SIGNATURE": "False"}
-MOCK_OIDC_ENV = {
+TEST_ENV_CONFIG = {
     "AWS_DEFAULT_REGION": "us-east-1",
-    "OIDC_URL": "https://example-oidc.com/realms/mlspace",
-    "OIDC_CLIENT_NAME": "web-client",
-    # We're using a self signed cert for dev
-    "OIDC_VERIFY_SSL": "False",
+    "AUTH_SESSION_TABLE_NAME": "test-sessions",
+    "AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME": "test-secret-arn",
 }
 
 
@@ -74,6 +70,67 @@ MOCK_REGULAR_GROUP_USER = GroupUserModel(MOCK_USER.username, MOCK_GROUP_NAME)
 
 MOCK_GROUP_NAME = "UnitTestGroup"
 MOCK_GROUP = GroupModel(MOCK_GROUP_NAME, "Group used for unit tests", MOCK_USER.username)
+
+
+@pytest.fixture(autouse=True)
+def mock_session_manager(request):
+    """
+    Automatically mock the session manager for all tests.
+    By default, sets up valid sessions for common test users.
+    Tests can override by calling setup_mock_session or configuring the mock directly.
+    """
+    with mock.patch("ml_space_lambda.authorizer.lambda_function._get_session_manager") as mock_get_session_manager:
+        mock_session_manager_instance = mock.Mock()
+
+        # Create a mapping of users to their session data
+        user_sessions = {
+            MOCK_ADMIN_USER.username: mock_session_data(MOCK_ADMIN_USER),
+            MOCK_SUSPENDED_USER.username: mock_session_data(MOCK_SUSPENDED_USER),
+            MOCK_OWNER_USER.username: mock_session_data(MOCK_OWNER_USER),
+            MOCK_USER.username: mock_session_data(MOCK_USER),
+        }
+
+        # Default behavior: return session based on common test users or test parameters
+        def default_get_session(session_id):
+            # If session_id is None or empty, no session cookie was provided
+            if not session_id:
+                return None
+
+            # Try to infer which user from test parameters
+            if hasattr(request, "node") and hasattr(request.node, "callspec"):
+                params = request.node.callspec.params
+                if "user" in params:
+                    user = params["user"]
+                    if hasattr(user, "username"):
+                        # For custom users not in our mapping, create session data on the fly
+                        if user.username not in user_sessions:
+                            return mock_session_data(user)
+                        return user_sessions.get(user.username)
+            # Return None if we can't determine the user
+            return None
+
+        mock_session_manager_instance.get_session.side_effect = default_get_session
+        mock_get_session_manager.return_value = mock_session_manager_instance
+        yield mock_session_manager_instance
+
+
+def setup_mock_session(mock_session_manager, user: UserModel = None, username: str = MOCK_USERNAME, expired: bool = False):
+    """
+    Helper to configure the mock session manager with session data.
+
+    Args:
+        mock_session_manager: The mock session manager fixture
+        user: User model to create session for
+        username: Username if no user model provided
+        expired: Whether session should be expired
+    """
+    # Clear any side_effect to allow return_value to work
+    mock_session_manager.get_session.side_effect = None
+
+    if expired:
+        mock_session_manager.get_session.return_value = None
+    else:
+        mock_session_manager.get_session.return_value = mock_session_data(user, username, expired)
 
 
 def policy_response(
@@ -109,6 +166,50 @@ def policy_response(
     }
 
 
+def mock_session_data(user: UserModel = None, username: str = MOCK_USERNAME, expired: bool = False) -> Dict:
+    """
+    Create mock session data for testing.
+
+    Args:
+        user: User model to create session for
+        username: Username if no user model provided
+        expired: Whether session should be expired
+
+    Returns:
+        Mock session data structure
+    """
+    now = datetime.now(timezone.utc)
+    expires_at = now - timedelta(hours=1) if expired else now + timedelta(hours=1)
+    refresh_at = now - timedelta(minutes=30) if expired else now + timedelta(minutes=30)
+
+    session_user = user if user else UserModel(username, f"{username}@example.com", username, False, [])
+
+    return {
+        "pk": "session:test-session-id",
+        "ttl": int(expires_at.timestamp()) + 3600,
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+        "data": {
+            "user": {
+                "id": session_user.username,
+                "displayName": session_user.display_name,
+                "email": session_user.email,
+                "groups": [],
+                "attributes": {},
+            },
+            "session": {
+                "provider": "oidc",
+                "expiresAt": expires_at.isoformat(),
+                "refreshAt": refresh_at.isoformat(),
+                "accessToken": "encrypted_access_token",
+                "refreshToken": "encrypted_refresh_token",
+                "idToken": "encrypted_id_token",
+            },
+            "metadata": {"loginDomain": "app.example.com", "syncedDomains": []},
+        },
+    }
+
+
 def mock_event(
     method: str = "GET",
     path_params: Dict[str, str] = {},
@@ -118,23 +219,33 @@ def mock_event(
     headers: Dict[str, str] = {},
     username: str = MOCK_USERNAME,
     kid: str = "GLptrSDjXhtLZfjbgEjpmZy4r6CtwWnNg6k-Oyfd864",
+    valid_session: bool = True,
 ):
-    now = datetime.now(tz=timezone.utc)
-    exp_time = now if expired_token else now + timedelta(minutes=60)
-    with open("test/authorizer/jwtRS256.key") as rsa_key:
-        encoded_jwt = jwt.encode(
-            {
-                "aud": "web-client",
-                "exp": exp_time,
-                "preferred_username": user.username if user else username,
-                "email": user.email if user else username,
-            },
-            rsa_key.read(),
-            algorithm="RS256",
-            headers={"kid": kid},
-        )
+    """
+    Create mock Lambda event for testing with session cookie.
 
-    headers["authorization"] = f"Bearer {encoded_jwt}"
+    Args:
+        method: HTTP method
+        path_params: Path parameters
+        resource: Resource path
+        expired_token: Whether session should be expired (legacy param name)
+        user: User model for session
+        headers: Additional headers
+        username: Username if no user model
+        kid: Legacy parameter (unused)
+        valid_session: Whether to include valid session cookie
+
+    Returns:
+        Mock Lambda event
+    """
+    if valid_session:
+        # Add session cookie to headers
+        session_id = "session:test-session-id"
+        if "cookie" in headers:
+            headers["cookie"] += f"; mlspace_session={session_id}"
+        else:
+            headers["cookie"] = f"mlspace_session={session_id}"
+
     return {
         "resource": resource,
         "pathParameters": path_params,
@@ -220,42 +331,50 @@ def test_missing_auth_header():
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 def test_invalid_auth_header():
+    # Test with invalid session cookie
     assert lambda_handler(
         {
             "resource": "/fake-resource",
             "pathParameters": {},
             "httpMethod": "GET",
             "methodArn": "fakeArn",
-            "headers": {"authorization": "Bearer "},
+            "headers": {"cookie": "mlspace_session=invalid"},
         },
         {},
     ) == policy_response(allow=False, valid_token=False)
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.jwt")
-def test_malformed_token(mock_jwt):
-    mock_jwt.decode.side_effect = Exception("DecodeError")
+def test_malformed_token(mock_session_manager):
+    # Mock session manager to raise exception
+    mock_session_manager.get_session.side_effect = Exception("Session error")
+
     assert lambda_handler(
         {
             "resource": "/fake-resource",
             "pathParameters": {},
             "httpMethod": "GET",
             "methodArn": "fakeArn",
-            "headers": {"authorization": "Bearer asdf"},
+            "headers": {"cookie": "mlspace_session=session:test"},
         },
         {},
     ) == policy_response(allow=False, valid_token=False)
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
-def test_expired_token():
-    assert lambda_handler(mock_event(expired_token=True), {}) == policy_response(allow=False)
+def test_expired_token(mock_session_manager):
+    # Mock session manager to return expired session
+    mock_session_manager.get_session.return_value = None  # Expired sessions return None
+
+    assert lambda_handler(mock_event(expired_token=True), {}) == policy_response(allow=False, valid_token=False)
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_initcap_header(mock_user_dao):
+def test_initcap_header(mock_user_dao, mock_session_manager):
+    # Mock session manager to return valid session
+    setup_mock_session(mock_session_manager, MOCK_ADMIN_USER)
+
     mock_user_dao.get.return_value = MOCK_ADMIN_USER
     mock_event_body = copy.deepcopy(
         mock_event(
@@ -264,8 +383,7 @@ def test_initcap_header(mock_user_dao):
             method="GET",
         )
     )
-    mock_event_body["headers"]["Authorization"] = mock_event_body["headers"]["authorization"]
-    del mock_event_body["headers"]["authorization"]
+    # Remove the old authorization header test - we're using cookies now
 
     assert lambda_handler(
         mock_event_body,
@@ -276,14 +394,30 @@ def test_initcap_header(mock_user_dao):
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_nonexistent_user(mock_user_dao):
+def test_nonexistent_user(mock_user_dao, mock_session_manager):
+    # Mock session manager to return valid session but user doesn't exist in DB
+    setup_mock_session(mock_session_manager, username="nonexistent")
+
     mock_user_dao.get.return_value = None
-    assert lambda_handler(mock_event(), {}) == policy_response(allow=False)
+
+    # When user is in session but not in DB, authorizer creates a minimal user object
+    # So we expect the user in the context, not an empty context
+    result = lambda_handler(mock_event(username="nonexistent"), {})
+
+    # Check that access is denied
+    assert result["policyDocument"]["Statement"][0]["Effect"] == "Deny"
+    # Check that principalId is set to the username
+    assert result["principalId"] == "nonexistent"
+    # Check that user is in context (minimal user object created by authorizer)
+    assert "user" in result["context"]
 
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_suspended_user(mock_user_dao):
+def test_suspended_user(mock_user_dao, mock_session_manager):
+    # Mock session manager to return valid session
+    setup_mock_session(mock_session_manager, MOCK_SUSPENDED_USER)
+
     mock_user_dao.get.return_value = MOCK_SUSPENDED_USER
     assert lambda_handler(mock_event(user=MOCK_SUSPENDED_USER), {}) == policy_response(allow=False, user=MOCK_SUSPENDED_USER)
     mock_user_dao.get.assert_called_with(MOCK_SUSPENDED_USER.username)
@@ -291,18 +425,27 @@ def test_suspended_user(mock_user_dao):
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_create_user(mock_user_dao):
+def test_create_user(mock_user_dao, mock_session_manager):
+    # User creation is now part of the login process and requires a session
+    # Without a session, access should be denied
     mock_user_dao.get.return_value = None
     new_username = "new-user"
-    assert lambda_handler(
+
+    result = lambda_handler(
         mock_event(
             resource="/user",
             method="POST",
             username=new_username,
+            valid_session=False,  # No session
         ),
         {},
-    ) == policy_response(username=new_username)
-    mock_user_dao.get.assert_called_with(new_username)
+    )
+
+    # Should deny access without session
+    assert result["principalId"] == "Unknown"
+    assert result["policyDocument"]["Statement"][0]["Effect"] == "Deny"
+    assert result["context"] == {}
+    # User DAO should not be called for user creation endpoint
 
 
 @pytest.mark.parametrize(
@@ -326,7 +469,10 @@ def test_create_user(mock_user_dao):
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_user_management(mock_user_dao, user: UserModel, method: str, allow: bool):
+def test_user_management(mock_user_dao, mock_session_manager, user: UserModel, method: str, allow: bool):
+    # Configure session manager to return valid session
+    setup_mock_session(mock_session_manager, user)
+
     mock_user_dao.get.return_value = user
     assert lambda_handler(
         mock_event(
@@ -1439,7 +1585,8 @@ def test_unauthenticated_endpoint_post(mock_user_dao, resource: str, path_params
 
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_unhandled_route(mock_user_dao):
+def test_unhandled_route(mock_user_dao, mock_session_manager):
+    setup_mock_session(mock_session_manager, MOCK_USER)
     mock_user_dao.get.return_value = MOCK_USER
     assert lambda_handler(mock_event(user=MOCK_USER, resource="/secret/super-backdoor"), {}) == policy_response(
         user=MOCK_USER, allow=False
@@ -1729,7 +1876,10 @@ def test_dataset_routes(
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.dataset_dao")
-def test_dataset_adversarial(mock_dataset_dao, mock_user_dao, mock_project_user_dao, mock_group_user_dao):
+def test_dataset_adversarial(
+    mock_dataset_dao, mock_user_dao, mock_project_user_dao, mock_group_user_dao, mock_session_manager
+):
+    setup_mock_session(mock_session_manager, MOCK_USER)
     method = "GET"
     allow = False
 
@@ -1776,7 +1926,9 @@ def test_get_nonexistent_dataset(
     mock_dataset_dao,
     mock_user_dao,
     mock_project_user_dao,
+    mock_session_manager,
 ):
+    setup_mock_session(mock_session_manager, MOCK_USER)
     mock_scope = "fakeScope"
     mock_name = "fakeName"
     mock_dataset_dao.get.return_value = None
@@ -1898,7 +2050,16 @@ def test_app_config_routes(
     method: str,
     path_params: dict,
     allow: bool,
+    mock_session_manager,
 ):
+    # Setup session only if user is provided
+    if user:
+        setup_mock_session(mock_session_manager, user)
+    else:
+        # No session for non-user test case
+        mock_session_manager.get_session.side_effect = None
+        mock_session_manager.get_session.return_value = None
+
     mock_user_dao.get.return_value = user
     mock_project_user_dao.get.return_value = project_user
 
@@ -1912,10 +2073,15 @@ def test_app_config_routes(
             resource="/app-config",
             method=method,
             path_params=path_params,
+            valid_session=user is not None,  # Only add session cookie if user is provided
         ),
         {},
     ) == policy_response(
-        allow=allow, user=user, username="Unknown" if method == "GET" else MOCK_USERNAME, default_to_username=method == "GET"
+        allow=allow,
+        user=user,
+        username="Unknown" if (method == "GET" or user is None) else MOCK_USERNAME,
+        default_to_username=method == "GET",
+        valid_token=user is not None,  # No valid token when user is None
     )
     if user and method != "GET":
         mock_user_dao.get.assert_called_with(user.username)
@@ -2196,7 +2362,8 @@ def test_create_project(mock_user_dao, mock_app_configuration_dao, user: UserMod
 )
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_presigned_url_missing_headers(mock_user_dao, resource: str):
+def test_presigned_url_missing_headers(mock_user_dao, mock_session_manager, resource: str):
+    setup_mock_session(mock_session_manager, MOCK_USER)
     mock_user_dao.get.return_value = MOCK_USER
     assert lambda_handler(
         mock_event(
@@ -2212,7 +2379,8 @@ def test_presigned_url_missing_headers(mock_user_dao, resource: str):
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.project_user_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_stop_job_missing_header(mock_user_dao, mock_project_user_dao):
+def test_stop_job_missing_header(mock_user_dao, mock_project_user_dao, mock_session_manager):
+    setup_mock_session(mock_session_manager, MOCK_USER)
     mock_user_dao.get.return_value = MOCK_USER
     assert lambda_handler(
         mock_event(
@@ -2280,99 +2448,6 @@ def test_stop_batch_translate_job(
         mock_project_user_dao.get.assert_called_with(MOCK_PROJECT_NAME, user.username)
 
     mock_user_dao.get.assert_called_with(user.username)
-
-
-@mock.patch.dict("os.environ", MOCK_OIDC_ENV, clear=True)
-@mock.patch("ml_space_lambda.utils.app_config_utils.app_configuration_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.http")
-def test_verified_token(mock_http, mock_user_dao, mock_app_config, mock_well_known_config, mock_oidc_jwks_keys):
-    mock_http.request.side_effect = [
-        mock_well_known_config,
-        mock_oidc_jwks_keys,
-    ]
-    mock_user_dao.get.return_value = MOCK_USER
-    mock_app_config.get.return_value = [generate_test_config()]
-    get_app_config.cache_clear()
-    assert lambda_handler(mock_event(user=MOCK_USER, resource="/project", method="POST"), {}) == policy_response(
-        allow=True, user=MOCK_USER
-    )
-    mock_user_dao.get.assert_called_with(MOCK_USER.username)
-    mock_http.request.assert_has_calls(
-        [
-            mock.call("GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration"),
-            mock.call("GET", "https://example-oidc.com/realms/mlspace/protocol/openid-connect/certs"),
-        ]
-    )
-
-
-@mock.patch.dict("os.environ", MOCK_OIDC_ENV, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.http")
-def test_verified_token_bad_well_known_config(mock_http, mock_user_dao, mock_oidc_jwks_keys):
-    mock_http.request.side_effect = [
-        mock_oidc_jwks_keys,
-    ]
-    mock_user_dao.get.return_value = MOCK_USER
-    assert lambda_handler(
-        mock_event(user=MOCK_USER, resource="/project", method="POST", kid="fake-cert-kid"), {}
-    ) == policy_response(allow=False, valid_token=False)
-    mock_user_dao.get.assert_not_called()
-    mock_http.request.assert_called_once()
-    mock_http.request.assert_called_with("GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration")
-
-
-@mock.patch.dict("os.environ", MOCK_OIDC_ENV, clear=True)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.http")
-def test_verified_token_bad_unrecognized_key(mock_http, mock_user_dao, mock_well_known_config, mock_oidc_jwks_keys):
-    mock_http.request.side_effect = [
-        mock_well_known_config,
-        mock_oidc_jwks_keys,
-    ]
-    mock_user_dao.get.return_value = MOCK_USER
-    assert lambda_handler(
-        mock_event(user=MOCK_USER, resource="/project", method="POST", kid="fake-cert-kid"), {}
-    ) == policy_response(allow=False, valid_token=False)
-    mock_user_dao.get.assert_not_called()
-    mock_http.request.assert_has_calls(
-        [
-            mock.call("GET", "https://example-oidc.com/realms/mlspace/.well-known/openid-configuration"),
-            mock.call("GET", "https://example-oidc.com/realms/mlspace/protocol/openid-connect/certs"),
-        ]
-    )
-
-
-@mock.patch.dict(
-    "os.environ",
-    {"AWS_DEFAULT_REGION": "us-east-1", "OIDC_URL": "https://example-oidc.com/realms/mlspace"},
-    clear=True,
-)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.http")
-def test_verified_token_missing_client_name(mock_http, mock_user_dao):
-    mock_user_dao.get.return_value = MOCK_USER
-    assert lambda_handler(
-        mock_event(user=MOCK_USER, resource="/project", method="POST", kid="fake-cert-kid"), {}
-    ) == policy_response(allow=False, valid_token=False)
-    mock_user_dao.get.assert_not_called()
-    mock_http.request.assert_not_called()
-
-
-@mock.patch.dict(
-    "os.environ",
-    {"AWS_DEFAULT_REGION": "us-east-1", "OIDC_CLIENT_NAME": "web-client"},
-    clear=True,
-)
-@mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-@mock.patch("ml_space_lambda.authorizer.lambda_function.http")
-def test_verified_token_missing_oidc_endpoint(mock_http, mock_user_dao):
-    mock_user_dao.get.return_value = MOCK_USER
-    assert lambda_handler(
-        mock_event(user=MOCK_USER, resource="/project", method="POST", kid="fake-cert-kid"), {}
-    ) == policy_response(allow=False, valid_token=False)
-    mock_user_dao.get.assert_not_called()
-    mock_http.request.assert_not_called()
 
 
 def is_owner_of_project(username: str, project_name: str) -> bool:
@@ -2491,10 +2566,12 @@ def test_manage_project_sagemaker_resource_boto_error(
     mock_project_dao,
     mock_user_dao,
     mock_resource_metadata_dao,
+    mock_session_manager,
     method: str,
     resource: str,
     path_param_key: str,
 ):
+    setup_mock_session(mock_session_manager, MOCK_OWNER_USER)
     path_params = {}
     path_params[path_param_key] = "fakeResourceName"
 
@@ -2533,7 +2610,9 @@ def test_manage_project_sagemaker_resource_boto_error(
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 @mock.patch("ml_space_lambda.authorizer.lambda_function.resource_metadata_dao")
 @mock.patch("ml_space_lambda.authorizer.lambda_function.user_dao")
-def test_emr_cluster_missing_metadata_entry(mock_user_dao, mock_resource_metadata_dao):
+def test_emr_cluster_missing_metadata_entry(mock_user_dao, mock_resource_metadata_dao, mock_session_manager):
+    setup_mock_session(mock_session_manager, MOCK_OWNER_USER)
+
     mock_cluster_id = "clusterId"
     mock_resource_metadata_dao.get.return_value = None
 

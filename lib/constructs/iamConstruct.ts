@@ -760,6 +760,16 @@ export class IAMConstruct extends Construct {
                         `arn:${scope.partition}:dynamodb:${Aws.REGION}:${scope.account}:table/mlspace-*`,
                     ],
                 }),
+                // General Permissions - Secrets Manager permissions for authentication encryption keys
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions: [
+                        'secretsmanager:GetSecretValue',
+                    ],
+                    resources: [
+                        `arn:${scope.partition}:secretsmanager:${Aws.REGION}:${scope.account}:secret:mlspace/auth/*`,
+                    ],
+                }),
                 /**
                  * EMR Permissions
                  * EMR specific permission to allow communication between notebook instances and

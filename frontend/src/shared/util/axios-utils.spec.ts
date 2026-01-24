@@ -30,7 +30,7 @@
   limitations under the License.
 */
 
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { default as Axios } from 'axios';
 import { default as axios } from './axios-utils';
 
@@ -43,9 +43,7 @@ const mockOidcSessionStorageName = `oidc.user:${mockOidcUrl}:${mockOidcClientNam
 const mockOidcSessionStorageValue = `{"id_token":"${mockToken}"}`;
 const expectedRequestConfig = {
     baseURL: mockLambdaEndpoint,
-    headers: {
-        Authorization: `Bearer ${mockToken}`
-    }
+    withCredentials: true
 };
 
 // When mocking with jest, target the library, not the class
@@ -99,8 +97,13 @@ describe('Test AxiosHelper', () => {
     test('Test Post Request With Config', () => {
         Axios.post.mockResolvedValue(Promise.resolve({data: {dummy: 'data'}}));
 
+        const expectedConfigWithHeaders = {
+            ...expectedRequestConfig,
+            headers: {}
+        };
+
         expect(axios.post(dummyUrl, {dummyPostData: 'postValue'}, {headers:{}})).toEqual(Promise.resolve({data: {dummy: 'data'}}));
-        expect(Axios.post).toHaveBeenCalledWith(dummyUrl, {dummyPostData: 'postValue'}, expectedRequestConfig);
+        expect(Axios.post).toHaveBeenCalledWith(dummyUrl, {dummyPostData: 'postValue'}, expectedConfigWithHeaders);
     });
 
     test('Test Put Request', () => {

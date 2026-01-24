@@ -37,8 +37,8 @@ jobs:
             {
               "AWS_ACCOUNT": "${{ secrets.AWS_ACCOUNT }}",
               "AWS_REGION": "${{ secrets.AWS_REGION }}",
-              "OIDC_URL": "${{ secrets.OIDC_URL }}",
-              "OIDC_CLIENT_NAME": "${{ secrets.OIDC_CLIENT_NAME }}",
+              "AUTH_OIDC_CLIENT_ID": "${{ vars.AUTH_OIDC_CLIENT_ID }}",
+              "AUTH_OIDC_URL": "${{ vars.AUTH_OIDC_URL }}",
               "KEY_MANAGER_ROLE_NAME": "${{ secrets.KEY_MANAGER_ROLE_NAME }}"
             }
           dir: './lib/'

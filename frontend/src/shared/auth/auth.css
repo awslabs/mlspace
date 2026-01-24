@@ -1,0 +1,231 @@
+/**
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/* Authentication Loading States */
+.auth-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+}
+
+.auth-loading .spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073bb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Access Denied */
+.auth-access-denied {
+    padding: 2rem;
+    text-align: center;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 0.5rem;
+    color: #991b1b;
+}
+
+.auth-access-denied h3 {
+    margin: 0 0 1rem 0;
+    color: #dc2626;
+}
+
+/* Session Expiration Notice */
+.session-expiration-notice {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background-color: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-width: 400px;
+}
+
+.session-expiration-content p {
+    margin: 0 0 1rem 0;
+    color: #92400e;
+}
+
+.session-expiration-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.session-extend-button {
+    background-color: #0073bb;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.session-extend-button:hover {
+    background-color: #005a94;
+}
+
+.session-dismiss-button {
+    background-color: #6b7280;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.session-dismiss-button:hover {
+    background-color: #4b5563;
+}
+
+/* Authentication Error */
+.auth-error {
+    padding: 2rem;
+    text-align: center;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 0.5rem;
+    color: #991b1b;
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.auth-error h2 {
+    margin: 0 0 1rem 0;
+    color: #dc2626;
+}
+
+.auth-error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.auth-error-actions button {
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.auth-error-actions button:hover {
+    background-color: #b91c1c;
+}
+
+.auth-error-details {
+    margin-top: 1rem;
+    text-align: left;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    padding: 1rem;
+}
+
+.auth-error-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.auth-error-details pre {
+    font-size: 0.75rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* User Info Component */
+.user-info {
+    padding: 1rem;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+}
+
+.user-display-name {
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.user-email {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.user-groups {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.user-attributes {
+    font-size: 0.875rem;
+}
+
+.user-attribute {
+    display: flex;
+    margin-bottom: 0.25rem;
+}
+
+.attribute-key {
+    font-weight: 500;
+    margin-right: 0.5rem;
+    min-width: 100px;
+}
+
+.attribute-value {
+    color: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .session-expiration-notice {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin: 1rem;
+        max-width: none;
+    }
+    
+    .session-expiration-actions {
+        flex-direction: column;
+    }
+    
+    .auth-error-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+}

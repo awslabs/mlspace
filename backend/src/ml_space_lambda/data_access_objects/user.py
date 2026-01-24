@@ -41,6 +41,7 @@ class UserModel:
         created_at: Optional[float] = None,
         last_login: Optional[float] = None,
         preferences: Optional[dict] = {},
+        id: Optional[str] = None,
     ):
         now = int(time.time())
         self.username = username
@@ -51,9 +52,10 @@ class UserModel:
         self.created_at = created_at if created_at else now
         self.last_login = last_login if last_login else now
         self.preferences = preferences
+        self.id = id  # Durable IdP identifier (e.g., OIDC "sub" claim)
 
     def to_dict(self) -> dict:
-        return {
+        result = {
             "username": self.username,
             "email": self.email,
             "displayName": self.display_name,
@@ -63,6 +65,10 @@ class UserModel:
             "lastLogin": self.last_login,
             "preferences": self.preferences,
         }
+        # Only include id if it's set
+        if self.id is not None:
+            result["id"] = self.id
+        return result
 
     @staticmethod
     def from_dict(dict_object: dict) -> UserModel:
@@ -75,6 +81,7 @@ class UserModel:
             dict_object.get("createdAt", None),
             dict_object.get("lastLogin", None),
             dict_object.get("preferences", {}),
+            dict_object.get("id", None),  # Gracefully handle missing id field
         )
 
 
@@ -91,23 +98,27 @@ class UserDAO(DynamoDBObjectStore):
         json_key = {"username": username}
         # Only a subset of fields can be modified
         update_exp = "SET #p = :permissions, suspended = :suspended, lastLogin = :lastLogin, preferences = :preferences"
-        exp_values = json.loads(
-            dynamodb_json.dumps(
-                {
-                    ":permissions": serialize_permissions(user.permissions),
-                    ":suspended": user.suspended,
-                    ":lastLogin": user.last_login,
-                    ":preferences": user.preferences,
-                    ":username": username,
-                }
-            )
-        )
+        exp_values = {
+            ":permissions": serialize_permissions(user.permissions),
+            ":suspended": user.suspended,
+            ":lastLogin": user.last_login,
+            ":preferences": user.preferences,
+            ":username": username,
+        }
+
+        # Add id to update if it's set (for backfilling existing users)
+        if user.id is not None:
+            update_exp += ", id = :id"
+            exp_values[":id"] = user.id
+
+        exp_values_json = json.loads(dynamodb_json.dumps(exp_values))
         exp_names = {"#p": "permissions"}
+
         self._update(
             json_key=json_key,
             update_expression=update_exp,
             expression_names=exp_names,
-            expression_values=exp_values,
+            expression_values=exp_values_json,
             condition_expression="username = :username",
         )
         return self._retrieve(json_key)

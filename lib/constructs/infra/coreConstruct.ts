@@ -36,12 +36,13 @@ import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
 import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
-import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
+import { AuthSecretsConstruct } from '../auth/authSecretsConstruct';
 import { createLambdaLayer } from '../../utils/layers';
 import { MLSpaceConfig } from '../../utils/configTypes';
 import { AwsCustomResource, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { generateAppConfig } from '../../utils/initialAppConfig';
 import { Construct } from 'constructs';
+import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
 
 export type CoreStackProps = {
     readonly lambdaSourcePath: string;
@@ -602,6 +603,28 @@ export class CoreConstruct extends Construct {
             partitionKey: { name: 'configScope', type: AttributeType.STRING },
             sortKey: { name: 'versionId', type: AttributeType.NUMBER },
             billingMode: BillingMode.PAY_PER_REQUEST,
+            ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
+        });
+
+        // Create authentication secrets with key rotation support
+        new AuthSecretsConstruct(scope, 'AuthSecrets', {
+            config: props.mlspaceConfig,
+            lambdaSourcePath: props.lambdaSourcePath,
+            layers: [commonLambdaLayer.layerVersion],
+            vpc: props.mlSpaceVPC,
+            securityGroups: props.lambdaSecurityGroups,
+            enableTokenKeyRotation: true, // Enable automated token key rotation
+            enableStateKeyRotation: true,
+            mlSpaceAppRole: props.mlSpaceAppRole,
+            oidcClientSecret: props.mlspaceConfig.AUTH_OIDC_CLIENT_SECRET_VALUE || undefined,
+        });
+
+        // Authentication Sessions Table
+        new Table(scope, 'mlspace-ddb-auth-sessions', {
+            tableName: props.mlspaceConfig.AUTH_SESSION_TABLE_NAME,
+            partitionKey: { name: 'pk', type: AttributeType.STRING },
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            timeToLiveAttribute: 'ttl',
             ...(props.mlspaceConfig.EXISTING_KMS_MASTER_KEY_ARN && props.mlspaceConfig.ENABLE_DDB_KMS_CMK_ENCRYPTION) ? {encryptionKey: props.encryptionKey} : {encryption: TableEncryption.AWS_MANAGED},
         });
 

@@ -22,9 +22,6 @@ declare global {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     interface Window {
         env: {
-            OIDC_URL: string;
-            OIDC_REDIRECT_URI: string;
-            OIDC_CLIENT_NAME: string;
             LAMBDA_ENDPOINT: string;
             DATASET_BUCKET: string;
             MANAGE_IAM_ROLES?: boolean;

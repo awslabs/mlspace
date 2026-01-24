@@ -21,8 +21,8 @@ from typing import List, Optional
 
 from ml_space_lambda.data_access_objects.group_user import GroupUserDAO
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
-from ml_space_lambda.data_access_objects.user import TIMEZONE_PREFERENCE_KEY, UserDAO, UserModel
-from ml_space_lambda.enums import EnvVariable, Permission, TimezonePreference
+from ml_space_lambda.data_access_objects.user import UserDAO, UserModel
+from ml_space_lambda.enums import EnvVariable, Permission
 from ml_space_lambda.utils.common_functions import api_wrapper, serialize_permissions, total_project_owners
 from ml_space_lambda.utils.exceptions import ResourceNotFound
 from ml_space_lambda.utils.iam_manager import IAMManager
@@ -32,29 +32,6 @@ project_user_dao = ProjectUserDAO()
 group_user_dao = GroupUserDAO()
 user_dao = UserDAO()
 iam_manager = IAMManager()
-
-
-@api_wrapper
-def create(event, context):
-    entity = json.loads(event["body"])
-    username = entity["username"]
-    suspended_state = get_environment_variables().get("NEW_USER_SUSPENSION_DEFAULT") == "True"
-    preferences = {TIMEZONE_PREFERENCE_KEY: TimezonePreference.LOCAL}
-
-    existing_user = user_dao.get(username)
-    if existing_user:
-        raise ValueError("Username in use.")
-
-    new_user = UserModel(
-        username=username,
-        email=entity["email"],
-        display_name=entity["name"],
-        suspended=suspended_state,
-        preferences=preferences,
-    )
-    user_dao.create(new_user)
-
-    return new_user.to_dict()
 
 
 @api_wrapper

@@ -310,9 +310,7 @@ describe('Entities reducer tests', () => {
         const mockOidcSessionStorageValue = `{"id_token":"${mockToken}"}`;
         const expectedRequestConfig = {
             baseURL: mockLambdaEndpoint,
-            headers: {
-                Authorization: `Bearer ${mockToken}`
-            }
+            withCredentials: true
         };
 
         const resolvedObject = { data: [{ id: 1 }, { id: 2 }] };
@@ -405,7 +403,6 @@ describe('Entities reducer tests', () => {
             expect(mockAxios.post).toHaveBeenCalledWith('/notebook/42666/start', undefined, {
                 ... expectedRequestConfig,
                 headers: {
-                    ...expectedRequestConfig.headers,
                     'x-mlspace-project': 'testProject'
                 },
             });
@@ -428,7 +425,6 @@ describe('Entities reducer tests', () => {
             expect(mockAxios.post).toHaveBeenCalledWith('/notebook/42666/stop', undefined, {
                 ... expectedRequestConfig,
                 headers: {
-                    ...expectedRequestConfig.headers,
                     'x-mlspace-project': 'testProject'
                 },
             });
@@ -482,7 +478,6 @@ describe('Entities reducer tests', () => {
             expect(mockAxios.post).toHaveBeenCalledWith('/notebook', createdNotebook, {
                 ... expectedRequestConfig,
                 headers: {
-                    ...expectedRequestConfig.headers,
                     'x-mlspace-project': 'testProject'
                 },
             });
