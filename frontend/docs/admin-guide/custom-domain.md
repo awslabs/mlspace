@@ -16,7 +16,7 @@ Before configuring a custom domain, ensure you have:
 
 - A registered domain name
 - An SSL/TLS certificate in AWS Certificate Manager (ACM) for your domain
-  - For CloudFront distributions or edge-optimized API Gateway endpoints, the certificate must be in the `us-east-1` region
+  - For CloudFront distributions or edge-optimized API Gateway endpoints
   - For regional API Gateway endpoints, the certificate must be in the same region as your API
 - Appropriate DNS access to create CNAME or A records
 - Admin access to your AWS account
@@ -25,14 +25,14 @@ Before configuring a custom domain, ensure you have:
 
 ### Step 1: Update CDK Configuration
 
-1. Open `lib/constants.ts` in your {{ $params.APPLICATION_NAME }} deployment directory.
+1. Open `lib/config.json` in your {{ $params.APPLICATION_NAME }} deployment directory.
 
 2. Set the `WEB_CUSTOM_DOMAIN_NAME` constant to your custom domain URL:
 
 ```typescript
 // An optional custom domain name to use in place of the default API Gateway URL
 // eg: 'https://mlspace.mycompany.com'
-export const WEB_CUSTOM_DOMAIN_NAME = 'https://mlspace.mycompany.com';
+  "WEB_CUSTOM_DOMAIN_NAME": 'https://mlspace.mycompany.com'
 ```
 
 ::: warning
@@ -279,7 +279,6 @@ https://mlspace.mycompany.com
 - Use TLS 1.2 or higher for API Gateway security policy
 - Regularly rotate SSL/TLS certificates before expiration
 - Update your identity provider configuration to only allow redirects to your custom domain
-- Consider using AWS WAF with your API Gateway for additional protection
 - Enable API Gateway access logging to monitor traffic to your custom domain
 
 ## Additional Resources
@@ -287,4 +286,4 @@ https://mlspace.mycompany.com
 - [AWS API Gateway Custom Domain Names](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-custom-domains.html)
 - [AWS Certificate Manager User Guide](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html)
 - [Route 53 Developer Guide](https://docs.aws.amazon.com/route53/index.html)
-- [{{ $params.APPLICATION_NAME }} Enhanced Authentication Configuration](./bff-authentication.md)
+- [{{ $params.APPLICATION_NAME }} Authentication Configuration](./bff-authentication.md)
