@@ -97,6 +97,7 @@ export class AuthSecretsConstruct extends Construct {
             layers: props.layers,
             environment: {
                 STATE_ENCRYPTION_SECRET_ARN: this.stateEncryptionSecret.secretArn,
+                AUTH_KEY_VERSIONS_TO_KEEP: String(props.config.AUTH_KEY_VERSIONS_TO_KEEP),
             },
             vpc: props.vpc,
             securityGroups: props.securityGroups,
@@ -138,6 +139,7 @@ export class AuthSecretsConstruct extends Construct {
             layers: props.layers,
             environment: {
                 TOKEN_ENCRYPTION_SECRET_ARN: this.tokenEncryptionSecret.secretArn,
+                AUTH_KEY_VERSIONS_TO_KEEP: String(props.config.AUTH_KEY_VERSIONS_TO_KEEP),
             },
             vpc: props.vpc,
             securityGroups: props.securityGroups,
@@ -171,7 +173,7 @@ export class AuthSecretsConstruct extends Construct {
     * Create manual initialization functions for secrets.
     * These can be invoked on-demand to initialize secrets with proper key structures.
     */
-    public createManualInitializationFunctions (): { stateInit: IFunction; tokenInit: IFunction } {
+    public createManualInitializationFunctions (config: MLSpaceConfig): { stateInit: IFunction; tokenInit: IFunction } {
         const stateInitFunction = new Function(this, 'ManualStateInitFunction', {
             runtime: Runtime.PYTHON_3_11,
             code: Code.fromAsset('backend/src'),
@@ -180,6 +182,7 @@ export class AuthSecretsConstruct extends Construct {
             memorySize: 256,
             environment: {
                 STATE_ENCRYPTION_SECRET_ARN: this.stateEncryptionSecret.secretArn,
+                AUTH_KEY_VERSIONS_TO_KEEP: String(config.AUTH_KEY_VERSIONS_TO_KEEP),
             },
         });
         
@@ -191,6 +194,7 @@ export class AuthSecretsConstruct extends Construct {
             memorySize: 256,
             environment: {
                 TOKEN_ENCRYPTION_SECRET_ARN: this.tokenEncryptionSecret.secretArn,
+                AUTH_KEY_VERSIONS_TO_KEEP: String(config.AUTH_KEY_VERSIONS_TO_KEEP),
             },
         });
         
