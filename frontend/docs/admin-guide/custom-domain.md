@@ -69,9 +69,50 @@ If you're keeping the stage name in your path (e.g., `https://mlspace.mycompany.
 The `homepage` value should match the base path where your application will be served. This affects how static assets are referenced.
 :::
 
-### Step 3: Deploy CDK Changes
+### Step 3: Configure Documentation Base Path (Optional)
 
-Deploy your updated {{ $params.APPLICATION_NAME }} stack:
+If you're changing the base path for your application, you should also update the documentation site configuration:
+
+1. Open `frontend/docs/.vitepress/config.mts`
+
+2. Update the `base` parameter (around line 65):
+
+```typescript
+export default defineConfig({
+    title: `${APPLICATION_NAME} Documentation`,
+    description: 'A collaborative data science environment',
+    outDir: '../public/docs',
+    base: process.env.DOCS_BASE_PATH || '/docs/',  // Update this line
+    themeConfig: {
+        // ...
+    }
+})
+```
+
+**Examples**:
+- For root path: `base: '/docs/'` (default)
+- For stage path: `base: '/Prod/docs/'`
+- Using environment variable: `base: process.env.DOCS_BASE_PATH || '/docs/'`
+
+::: tip
+The `base` value determines where the documentation site assets are served from. It should match your application's base path plus `/docs/`.
+:::
+
+### Step 4: Build Frontend and Deploy CDK Changes
+
+After making configuration changes, you need to rebuild the frontend application before deploying:
+
+1. Navigate to the frontend directory and build the application:
+
+```bash
+cd frontend
+npm run build
+cd ..
+```
+
+This will generate a production-optimized build of the web application with your updated configuration.
+
+2. Deploy your updated {{ $params.APPLICATION_NAME }} stack:
 
 ```bash
 cdk deploy --all
@@ -82,7 +123,7 @@ This will update the application configuration to use your custom domain for:
 - API endpoint references in the frontend
 - Session management
 
-### Step 4: Create API Gateway Custom Domain
+### Step 5: Create API Gateway Custom Domain
 
 After deploying the CDK changes, you must manually configure the API Gateway custom domain and API mapping.
 
@@ -129,7 +170,7 @@ aws apigateway create-base-path-mapping \
   --base-path ''  # Leave empty for root path, or use 'Prod' for /Prod path
 ```
 
-### Step 5: Configure DNS
+### Step 6: Configure DNS
 
 Create a DNS record pointing your custom domain to the API Gateway domain name:
 
@@ -171,7 +212,7 @@ If using Route 53, you can create an A record with an alias:
    - **API Gateway endpoint**: Select your custom domain
 5. Click **Create records**
 
-### Step 6: Verify Configuration
+### Step 7: Verify Configuration
 
 1. Wait for DNS propagation (typically 5-15 minutes, but can take up to 48 hours)
 

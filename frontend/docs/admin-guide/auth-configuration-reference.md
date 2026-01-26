@@ -121,6 +121,15 @@ The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIE
 - **Example**: `"mlspace/auth/state-encryption-key"`
 - **Notes**: Used for encrypting OAuth state parameter; automatically created during deployment
 
+### AUTH_KEY_VERSIONS_TO_KEEP
+- **Type**: Number
+- **Required**: No
+- **Default**: `3`
+- **Range**: `1` to `10` (recommended)
+- **Description**: Number of encryption key versions to retain during key rotation
+- **Example**: `3`
+- **Notes**: Ensures backward compatibility for active sessions during key rotation. Should be set such that `AUTH_KEY_VERSIONS_TO_KEEP × rotation_interval > AUTH_SESSION_TTL_HOURS`. For example, with 90-day rotation and 24-hour sessions, keeping 3 versions provides 270 days of backward compatibility.
+
 ## Environment-Specific Examples
 
 ### Development Environment (Minimal)
@@ -165,6 +174,7 @@ The deprecated `OIDC_*` configuration parameters (such as `OIDC_URL`, `OIDC_CLIE
 
 1. **AUTH_SYNC_DOMAINS**: Not currently used; reserved for future functionality
 2. **AUTH_OIDC_USE_PKCE**: Must be boolean (true/false)
+3. **AUTH_KEY_VERSIONS_TO_KEEP**: Must be positive integer between 1 and 10 (recommended)
 4. **AUTH_OIDC_VERIFY_SSL**: Must be boolean (true/false); should be true in production
 5. **AUTH_OIDC_VERIFY_SIGNATURE**: Must be boolean (true/false); should be true in production
 6. **AUTH_OIDC_CLIENT_SECRET_NAME**: Must be valid Secrets Manager secret name if specified
