@@ -4,7 +4,8 @@
     "main": "index.ts",
     "version": "1.0.0",
     "dependencies": {
-        "cypress-file-upload": "^5.0.8"
+        "cypress-file-upload": "^5.0.8",
+        "lodash": "^4.17.23"
     },
     "devDependencies": {
         "@cloudscape-design/components": "^3.0.886",
