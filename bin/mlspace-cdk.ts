@@ -211,6 +211,11 @@ const apiDeploymentStack = new ApiDeploymentStack(app, 'mlspace-api-deployment',
     restApiId: restStack.mlSpaceRestApiId,
 });
 
+// add ADCLambdaCABundleAspect to core in ADC regions
+if (isIso) {
+    Aspects.of(coreStack).add(new ADCLambdaCABundleAspect());
+}
+
 apiStacks.forEach((stack) => {
     stack.addDependency(coreStack);
     stack.addDependency(iamStack);
