@@ -16,7 +16,7 @@
   limitations under the License.
 */
 
-import { App, Aspects, Tags } from 'aws-cdk-lib';
+import { App, Aspects, Tags, DefaultStackSynthesizer, CliCredentialsStackSynthesizer, LegacyStackSynthesizer } from 'aws-cdk-lib';
 import { LogGroup } from 'aws-cdk-lib/aws-logs';
 import 'source-map-support/register';
 import { AdminApiStack } from '../lib/stacks/api/admin';
@@ -51,6 +51,37 @@ const envProperties = {
 };
 
 const app = new App();
+
+// Read synthesizer configuration from cdk.json
+const synthesizerConfig = app.node.tryGetContext('synthesizer') || {};
+const synthesizerType = synthesizerConfig.type || 'default';
+
+// Create synthesizer based on configuration
+function createSynthesizer () {
+    // Extract type and pass remaining config as parameters
+    const { ...synthesizerParams } = synthesizerConfig;
+    
+    // Convert empty strings to undefined for optional parameters
+    const cleanParams = Object.fromEntries(
+        Object.entries(synthesizerParams).map(([key, value]) => [
+            key,
+            value === '' ? undefined : value
+        ])
+    );
+    
+    switch (synthesizerType) {
+        case 'default':
+            return new DefaultStackSynthesizer(cleanParams);
+        case 'cli':
+            return new CliCredentialsStackSynthesizer(cleanParams);
+        case 'legacy':
+            return new LegacyStackSynthesizer();
+        default:
+            return undefined; // Use CDK default
+    }
+}
+
+const synthesizer = createSynthesizer();
 const stacks = [];
 const isIso = ['us-iso-east-1', 'us-isob-east-1'].includes(config.AWS_REGION);
 
@@ -59,6 +90,7 @@ const enableTranslate = !['us-isob-east-1'].includes(config.AWS_REGION);
 
 const vpcStack = new VPCStack(app, 'mlspace-vpc', {
     env: envProperties,
+    synthesizer,
     deployCFNEndpoint: true,
     deployCWEndpoint: true,
     deployCWLEndpoint: true,
@@ -74,6 +106,7 @@ const mlSpaceVPC = vpcStack.vpc;
 
 const kmsStack = new KMSStack(app, 'mlspace-kms', {
     env: envProperties,
+    synthesizer,
     keyManagerRoleName: config.KEY_MANAGER_ROLE_NAME,
     mlspaceConfig: config
 });
@@ -87,6 +120,7 @@ const accessLogsBucketName = `${config.ACCESS_LOGS_BUCKET_NAME}-${config.AWS_ACC
 
 const iamStack = new IAMStack(app, 'mlspace-iam', {
     env: envProperties,
+    synthesizer,
     dataBucketName,
     configBucketName,
     websiteBucketName,
@@ -114,6 +148,7 @@ const frontEndAssetsPath = './frontend/build/';
 
 const coreStack = new CoreStack(app, 'mlspace-core', {
     env: envProperties,
+    synthesizer,
     dataBucketName,
     configBucketName,
     websiteBucketName,
@@ -139,12 +174,14 @@ stacks.push(coreStack);
 
 stacks.push(new SagemakerStack(app, 'mlspace-sagemaker', {
     env: envProperties,
+    synthesizer,
     dataBucketName,
     mlspaceConfig: config
 }));
 
 const restStack = new RestApiStack(app, 'mlspace-web-tier', {
     env: envProperties,
+    synthesizer,
     dataBucketName,
     websiteBucketName,
     websiteS3ReaderRole,
@@ -166,6 +203,7 @@ stacks.push(restStack);
 
 const apiStackProperties: ApiStackProperties = {
     env: envProperties,
+    synthesizer,
     restApiId: restStack.mlSpaceRestApiId,
     rootResourceId: restStack.mlSpaceRestApiRootResourceId,
     dataBucketName,
@@ -208,6 +246,7 @@ if (enableTranslate) {
 }
 const apiDeploymentStack = new ApiDeploymentStack(app, 'mlspace-api-deployment', {
     env: envProperties,
+    synthesizer,
     restApiId: restStack.mlSpaceRestApiId,
 });
 
