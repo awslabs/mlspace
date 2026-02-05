@@ -23,6 +23,7 @@ domain-driven design using Pydantic models.
 
 import json
 import logging
+import os
 from typing import Dict, Optional
 
 import boto3
@@ -39,6 +40,20 @@ from ml_space_lambda.auth.utils.state import create_state_encryption_key, encode
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
+
+
+def _get_default_keep_versions() -> int:
+    """
+    Get the default number of key versions to keep from environment variable.
+
+    Returns:
+        Number of versions to keep (default: 3)
+    """
+    try:
+        return int(os.environ.get("AUTH_KEY_VERSIONS_TO_KEEP", "3"))
+    except ValueError:
+        logger.warning("Invalid AUTH_KEY_VERSIONS_TO_KEEP value, using default: 3")
+        return 3
 
 
 def initialize_state_encryption_key(secret_arn: str) -> Dict:
@@ -129,7 +144,7 @@ def rotate_state_encryption_key(
     secret_arn: str,
     version_stage: str = SecretsManagerStage.PENDING,
     version_token: Optional[str] = None,
-    keep_versions: int = 3,
+    keep_versions: Optional[int] = None,
 ) -> KeyRotationResult:
     """
     Rotate state encryption key for AWS Secrets Manager rotation protocol.
@@ -139,8 +154,9 @@ def rotate_state_encryption_key(
 
     Args:
         secret_arn: AWS Secrets Manager ARN for state encryption key
-        token: Version stage (AWSPENDING for new version)
-        keep_versions: Number of recent versions to keep after rotation
+        version_stage: Version stage (AWSPENDING for new version)
+        version_token: Version token for the rotation
+        keep_versions: Number of recent versions to keep after rotation (uses AUTH_KEY_VERSIONS_TO_KEEP env var if not specified)
 
     Returns:
         KeyRotationResult with rotation details
@@ -148,6 +164,8 @@ def rotate_state_encryption_key(
     Raises:
         Exception: If rotation fails
     """
+    if keep_versions is None:
+        keep_versions = _get_default_keep_versions()
     try:
         secrets_client = boto3.client("secretsmanager")
 
@@ -205,7 +223,7 @@ def rotate_token_encryption_key(
     secret_arn: str,
     version_stage: str = SecretsManagerStage.PENDING,
     version_token: Optional[str] = None,
-    keep_versions: int = 3,
+    keep_versions: Optional[int] = None,
 ) -> KeyRotationResult:
     """
     Rotate token encryption key for AWS Secrets Manager rotation protocol.
@@ -217,7 +235,7 @@ def rotate_token_encryption_key(
         secret_arn: AWS Secrets Manager ARN for token encryption key
         version_stage: Version stage (AWSPENDING for new version)
         version_token: Version token (normally from ClientRequestToken)
-        keep_versions: Number of recent versions to keep after rotation
+        keep_versions: Number of recent versions to keep after rotation (uses AUTH_KEY_VERSIONS_TO_KEEP env var if not specified)
 
     Returns:
         KeyRotationResult with rotation details
@@ -225,6 +243,8 @@ def rotate_token_encryption_key(
     Raises:
         Exception: If rotation fails
     """
+    if keep_versions is None:
+        keep_versions = _get_default_keep_versions()
     try:
         secrets_client = boto3.client("secretsmanager")
 

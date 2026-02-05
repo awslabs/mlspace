@@ -36,7 +36,6 @@ import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { ADCLambdaCABundleAspect } from '../../utils/adcCertBundleAspect';
-import { createLambdaLayer } from '../../utils/layers';
 import { MLSpaceConfig } from '../../utils/configTypes';
 import { Construct } from 'constructs';
 
@@ -235,7 +234,6 @@ export class RestApiConstruct extends Construct {
             }
         );
 
-        const jwtDependencyLayer = createLambdaLayer(scope, 'jwt', undefined, props.mlspaceConfig.JWT_LAYER_PATH);
         // Get common layer based on arn from SSM due to issues with cross stack references
         const commonLambdaLayer = LayerVersion.fromLayerVersionArn(
             scope,
@@ -253,7 +251,7 @@ export class RestApiConstruct extends Construct {
             timeout: Duration.seconds(30),
             memorySize: 512,
             role: props.mlSpaceAppRole,
-            layers: [jwtDependencyLayer.layerVersion, commonLambdaLayer],
+            layers: [commonLambdaLayer],
             environment: {
                 AUTH_SESSION_TABLE_NAME: props.mlspaceConfig.AUTH_SESSION_TABLE_NAME,
                 AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,

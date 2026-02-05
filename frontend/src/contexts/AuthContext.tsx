@@ -123,7 +123,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     const checkAuthStatusRef = useRef<() => void>();
     
     const checkAuthStatus = useCallback(async () => {
-        console.log('checking auth status');
         const wasAuthenticated = state.status === 'authenticated';
 
         try {
@@ -183,7 +182,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     
     // Periodic session validation
     useEffect(() => {
-        console.log('reset periodic refresh');
         const interval = setInterval(checkAuthStatus, checkInterval);
         return () => clearInterval(interval);
     }, [checkInterval, checkAuthStatus]);
