@@ -15,8 +15,9 @@ By default, {{ $params.APPLICATION_NAME }} uses the auto-generated API Gateway U
 Before configuring a custom domain, ensure you have:
 
 - A registered domain name
-- An SSL/TLS certificate in AWS Certificate Manager (ACM) for your domain
-  - For CloudFront distributions or edge-optimized API Gateway endpoints
+- A valid SSL/TLS certificate for your domain
+  - AWS Certificate Manager (ACM) is commonly used, but any valid certificate method supported by API Gateway will work
+  - For CloudFront distributions or edge-optimized API Gateway endpoints, the certificate must be in us-east-1
   - For regional API Gateway endpoints, the certificate must be in the same region as your API
 - Appropriate DNS access to create CNAME or A records
 - Admin access to your AWS account
@@ -135,7 +136,7 @@ After deploying the CDK changes, you must manually configure the API Gateway cus
 4. Configure the custom domain:
    - **Domain name**: Enter your domain (e.g., `mlspace.mycompany.com`)
    - **Endpoint type**: Choose **Regional** (recommended) or **Edge optimized**
-   - **ACM certificate**: Select your SSL/TLS certificate from the dropdown
+   - **Certificate**: Select your SSL/TLS certificate from the dropdown (e.g., from ACM or imported certificate)
    - **Security policy**: Choose **TLS 1.2** (recommended)
 5. Click **Create domain name**
 6. Note the **API Gateway domain name** (e.g., `d-abc123xyz.execute-api.us-east-1.amazonaws.com`) - you'll need this for DNS configuration
@@ -154,8 +155,10 @@ After deploying the CDK changes, you must manually configure the API Gateway cus
 
 #### Using AWS CLI
 
+The following example uses an ACM certificate, but you can use any valid certificate method supported by API Gateway:
+
 ```bash
-# Create custom domain
+# Create custom domain (example using ACM certificate)
 aws apigateway create-domain-name \
   --domain-name mlspace.mycompany.com \
   --regional-certificate-arn arn:aws:acm:us-east-1:123456789012:certificate/abc-123 \
@@ -238,12 +241,14 @@ https://mlspace.mycompany.com
 
 ### Certificate Validation Errors
 
-**Problem**: API Gateway cannot validate your ACM certificate.
+**Problem**: API Gateway cannot validate your certificate.
 
 **Solution**:
 - Ensure the certificate is in the correct region (us-east-1 for edge-optimized, same region as API for regional)
-- Verify the certificate status is "Issued" in ACM
+- Verify the certificate status is valid and issued
 - Check that the certificate covers your domain (wildcard certificates like `*.mycompany.com` work for subdomains)
+- If using ACM, ensure the certificate status shows as "Issued"
+- If using an imported certificate, verify it's properly formatted and includes the full certificate chain
 
 ### DNS Not Resolving
 
