@@ -26,6 +26,7 @@ const docItems = [
           items: [
             { text: 'Authentication Configuration Reference', link: '/admin-guide/auth-configuration-reference' },
             { text: 'Custom Domain Configuration', link: '/admin-guide/custom-domain' },
+            { text: 'Custom CDK Synthesizer', link: '/admin-guide/custom-synthesizer' },
             { text: `Enabling Access To S3 Buckets In ${APPLICATION_NAME}`, link: '/admin-guide/manual-s3-permissions' },
             { text: `Custom Algorithm Containers In ${APPLICATION_NAME}`, link: '/admin-guide/byom-permissions' },
             { text: 'Branding', link: '/admin-guide/branding' },

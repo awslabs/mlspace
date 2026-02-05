@@ -1,7 +1,7 @@
 {
   "name": "@amzn/mlspace",
   "homepage": "/Prod",
-  "version": "1.7",
+  "version": "1.7.1",
   "main": "dist/lib/index.js",
   "types": "dist/types/index.d.ts",
   "private": true,
@@ -18,12 +18,13 @@
     "@tiptap/pm": "^2.11.5",
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
-    "@uiw/react-markdown-preview": "^5.1.3",
+    "@uiw/react-markdown-preview": "^5.1.5",
     "ace-builds": "^1.37.5",
     "axios": "^1.7.9",
     "git-repo-info": "^2.1.1",
     "jest-mock-axios": "^4.8.0",
-    "lodash": "4.17.21",
+    "js-yaml": "^4.1.1",
+    "lodash": "^4.17.23",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-redux": "^8.1.3",
@@ -83,8 +84,8 @@
     "react-scripts": "5.0.1",
     "redux-mock-store": "^1.5.5",
     "typescript": "^4.9.5",
-    "vitepress": "^1.6.3",
-    "vitepress-plugin-tabs": "^0.5.0"
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-tabs": "^0.7.3"
   },
   "overrides": {
     "react-scripts": {

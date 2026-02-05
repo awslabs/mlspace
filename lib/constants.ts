@@ -142,6 +142,7 @@ export const AUTH_SESSION_TTL_HOURS = 24; // Session duration in hours
 // Encryption configuration
 export const AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/token-encryption-keys'; // Versioned secret for token encryption keys (rotatable)
 export const AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/state-encryption-key'; // Simple secret for state encryption key (deploy-time generated)
+export const AUTH_KEY_VERSIONS_TO_KEEP = 3; // Number of key versions to retain during rotation
 
 // Legacy OIDC configuration (deprecated - maintained for backward compatibility during migration)
 // Use AUTH_OIDC_URL, AUTH_OIDC_CLIENT_ID, and other AUTH_* constants instead

@@ -47,6 +47,7 @@ All authentication configuration now uses `AUTH_*` parameters. **Deprecated `OID
 - **AUTH_OIDC_VERIFY_SSL**: Whether to verify SSL certificates for OIDC requests (default: `true`)
 - **AUTH_OIDC_VERIFY_SIGNATURE**: Whether to verify OIDC token signatures (default: `true`)
 - **AUTH_SESSION_TTL_HOURS**: Session duration in hours (default: `24`)
+- **AUTH_KEY_VERSIONS_TO_KEEP**: Number of encryption key versions to retain during rotation (default: `3`)
 - **AUTH_SYNC_DOMAINS**: Optional comma-separated list of additional domains for cookie sync
 - **AUTH_SESSION_TABLE_NAME**: DynamoDB table name for authentication sessions (default: `mlspace-auth-sessions`)
 - **AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME**: Secrets Manager secret name for token encryption keys (default: `mlspace/auth/token-encryption-keys`)
@@ -130,6 +131,7 @@ frontend/docs/admin-guide/
 - **AUTH_OIDC_VERIFY_SSL**: Whether to verify SSL certificates (default: `true`)
 - **AUTH_OIDC_VERIFY_SIGNATURE**: Whether to verify OIDC token signatures (default: `true`)
 - **AUTH_SESSION_TTL_HOURS**: Session duration configuration (default: `24`)
+- **AUTH_KEY_VERSIONS_TO_KEEP**: Number of encryption key versions to retain during rotation (default: `3`)
 - **AUTH_SYNC_DOMAINS**: Multi-domain cookie synchronization
 - **AUTH_SESSION_TABLE_NAME**: DynamoDB table name for sessions
 - **AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME**: Versioned token encryption keys (rotatable)

@@ -22,6 +22,7 @@ standard AWS rotation protocol with steps: createSecret, setSecret, testSecret, 
 """
 
 import logging
+import os
 from enum import StrEnum
 from typing import Any, Dict, Optional
 
@@ -37,6 +38,20 @@ from ml_space_lambda.auth.utils.key_rotation import (
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
+
+
+def _get_keep_versions() -> int:
+    """
+    Get the number of key versions to keep from environment variable.
+
+    Returns:
+        Number of versions to keep (default: 3)
+    """
+    try:
+        return int(os.environ.get("AUTH_KEY_VERSIONS_TO_KEEP", "3"))
+    except ValueError:
+        logger.warning("Invalid AUTH_KEY_VERSIONS_TO_KEEP value, using default: 3")
+        return 3
 
 
 class RotationStep(StrEnum):
@@ -86,12 +101,15 @@ def _handle_create_secret_step(secret_name: str, key_type: str, version_token: O
     Args:
         secret_name: Secret ARN
         key_type: Type of key being rotated
+        version_token: Version token for the rotation
     """
+    keep_versions = _get_keep_versions()
+
     # Create new key version
     if key_type == KeyType.STATE:
-        result = rotate_state_encryption_key(secret_name, version_token=version_token, keep_versions=3)
+        result = rotate_state_encryption_key(secret_name, version_token=version_token, keep_versions=keep_versions)
     else:  # token
-        result = rotate_token_encryption_key(secret_name, version_token=version_token, keep_versions=3)
+        result = rotate_token_encryption_key(secret_name, version_token=version_token, keep_versions=keep_versions)
 
 
 def _handle_set_secret_step(secret_name: str) -> None:
