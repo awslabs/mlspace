@@ -20,7 +20,7 @@
     "@tiptap/starter-kit": "^2.11.5",
     "@uiw/react-markdown-preview": "^5.1.5",
     "ace-builds": "^1.37.5",
-    "axios": "^1.7.9",
+    "axios": "^1.13.5",
     "git-repo-info": "^2.1.1",
     "jest-mock-axios": "^4.8.0",
     "js-yaml": "^4.1.1",
