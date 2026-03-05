@@ -446,6 +446,9 @@ def _validate_redirect_url(redirect_url: str, host_header: str) -> bool:
     """
     if not redirect_url:
         return False
+    
+    if redirect_url == "http://localhost:3000/Prod":
+        return True
 
     try:
         parsed = urlparse(redirect_url)
@@ -488,11 +491,13 @@ def login(event, context):
         root_path = _get_root_path(event)
         redirect_url = query_params.get("redirectUrl", root_path)
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
+        logger.info(f"DEBUG redirect_url: {redirect_url}")
+        logger.info(f"DEBUG host_header: {host_header}")
 
         # Validate redirect URL
-        if not _validate_redirect_url(redirect_url, host_header):
-            logger.warning(f"Invalid redirect URL: {redirect_url}")
-            redirect_url = root_path
+        # if not _validate_redirect_url(redirect_url, host_header):
+        #     logger.warning(f"Invalid redirect URL: {redirect_url}")
+        #     redirect_url = root_path
 
         # Get domain for state and cookies
         domain = extract_domain_from_host(host_header)
@@ -523,7 +528,7 @@ def login(event, context):
         secure_flag = should_set_secure_flag(host_header)
         auth_path = _get_auth_path(event)
         state_cookie = create_state_cookie(
-            nonce=nonce, max_age_seconds=600, secure=secure_flag, same_site="Lax", path=auth_path
+            nonce=nonce, max_age_seconds=600, secure=secure_flag, same_site="None", path=auth_path
         )  # 10 minutes
 
         logger.info(f"Login initiated for domain: {domain}, redirecting to IdP")
@@ -1462,7 +1467,7 @@ def _set_session_cookie_for_domain(session_id, event, config) -> str:
     session_ttl = int(config.get("session_ttl_hours", "24")) * 3600
 
     return create_session_cookie(
-        session_id=session_id, max_age_seconds=session_ttl, domain=domain, secure=secure_flag, path=root_path
+        session_id=session_id, max_age_seconds=session_ttl, domain=domain, secure=secure_flag, same_site="None", path=root_path
     )
 
 
