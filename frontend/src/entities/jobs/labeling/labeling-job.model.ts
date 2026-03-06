@@ -33,6 +33,7 @@ export type ILabelingJob = {
     LabelingJobName: string;
     LabelingJobArn: string;
     LabelAttributeName: string;
+    InputLabelAttributeName?: string;
     InputConfig: {
         DataSource: {
             S3DataSource: {
