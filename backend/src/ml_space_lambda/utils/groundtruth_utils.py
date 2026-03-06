@@ -63,6 +63,7 @@ class LambdaTypes(str, Enum):
 
 class TaskTypes(str, Enum):
     BoundingBox = auto()
+    VerificationBoundingBox = auto()
     ImageMultiClass = auto()
     ImageMultiClassMultiLabel = auto()
     SemanticSegmentation = auto()
@@ -74,6 +75,7 @@ class TaskTypes(str, Enum):
 
 _auto_labeling_task_arn_map = {
     TaskTypes.BoundingBox: "image-classification",
+    TaskTypes.VerificationBoundingBox: "image-classification",
     TaskTypes.ImageMultiClass: "image-classification",
     TaskTypes.ImageMultiClassMultiLabel: "image-classification",
     TaskTypes.SemanticSegmentation: "semantic-segmentation",
@@ -133,6 +135,7 @@ def generate_ui_template(
     short_instructions: str,
     data_bucket_name: str,
     output_dir_key: str,
+    label_attribute_name: str = None,
 ) -> str:
     template_key = None
     template_path = os.path.join(
@@ -159,6 +162,8 @@ def generate_ui_template(
                     file_content.append(short_instructions)
                 elif "DESCRIPTION_STUB" in line:
                     file_content.append(line.replace("DESCRIPTION_STUB", description))
+                elif "label-attribute-name-from-prior-job" in line and label_attribute_name:
+                    file_content.append(line.replace("label-attribute-name-from-prior-job", label_attribute_name))
                 else:
                     file_content.append(line)
 

@@ -167,13 +167,13 @@ export const TASK_TYPE_CONFIG: {
             keywords: ['Images', 'semantic segmentation', 'object detection'],
             autoLabeling: true,
         },
-        LabelVerification: {
-            enabled: false,
-            label: 'Label verification',
+        VerificationBoundingBox: {
+            enabled: true,
+            label: 'Bounding box verification',
             maxLabelCount: 10,
             minLabelCount: 2,
-            description: 'Get workers to verify existing labels in your dataset.',
-            value: LabelingJobTypes.LabelVerification,
+            description: 'Get workers to verify existing bounding box labels in your dataset.',
+            value: LabelingJobTypes.VerificationBoundingBox,
             image: (
                 <img
                     src={TaskTypeImageLabelVerification}

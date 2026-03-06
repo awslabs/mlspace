@@ -101,13 +101,25 @@ export function LabelingJobCreate () {
                 .regex(/[a-zA-Z0-9]$/),
             LabelAttributeName: z
                 .string()
-                .min(1)
                 .max(59)
                 .regex(/^[a-zA-Z0-9-]+(?<!-metadata)$/, { message: 'Must not end with -metadata' })
                 .regex(/^[a-zA-Z0-9-]+(?<!-ref)$/, { message: 'Must not end with -ref' })
                 .regex(/^[a-zA-Z0-9]/)
                 .regex(/[a-zA-Z0-9]$/)
-                .optional(),
+                .optional()
+                .or(z.literal('')),
+            InputLabelAttributeName: z
+                .string()
+                .max(59)
+                .regex(/^[a-zA-Z0-9-]+$/, {
+                    message: 'Name can only contain alphanumeric characters and hyphens (-)',
+                })
+                .regex(/^[a-zA-Z0-9-]+(?<!-metadata)$/, { message: 'Must not end with -metadata' })
+                .regex(/^[a-zA-Z0-9-]+(?<!-ref)$/, { message: 'Must not end with -ref' })
+                .regex(/^[a-zA-Z0-9]/)
+                .regex(/[a-zA-Z0-9]$/)
+                .optional()
+                .or(z.literal('')),
             InputConfig: z.object({
                 DataSource: z.object({
                     S3DataSource: z.object({

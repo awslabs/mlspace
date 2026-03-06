@@ -77,12 +77,57 @@ def create(event, context):
     env_variables = get_environment_variables()
     data_bucket_name = param_file["pSMSDataBucketName"]
     task_type = TaskTypes[labeling_job_request["TaskType"]]
-    labeling_job = labeling_job_request["JobDefinition"]
+    labeling_job: dict = labeling_job_request["JobDefinition"]
     description = labeling_job["HumanTaskConfig"]["TaskDescription"]
     full_instructions = labeling_job_request["FullInstruction"]
     short_instructions = labeling_job_request["ShortInstruction"]
     labeling_job_name = labeling_job["LabelingJobName"]
     labeling_job["LabelingJobName"] = labeling_job_name
+
+    #  Check to see if InputLabelAttributeName was included in the request.
+    label_attr = labeling_job.pop("InputLabelAttributeName", None)  # pop removes it from the dict, needed for clean sagemaker api call
+    if task_type == TaskTypes.VerificationBoundingBox:
+        logger.info("VerificationBoundingBox job - Locating LabelAttributeName for the input manifest")
+
+        # If the label_attr was found, dont search the manifest file
+        if label_attr and label_attr != "":
+            logger.info(f"Found InputLabelAttributeName in request: {label_attr}")
+
+        else:  # If not provided, look in the manfiest file
+
+            logger.warning(f"No InputLabelAttributeName found in request event.  Searching input manifest")
+
+            # Pull the input manifest file
+            manifest_s3_uri = labeling_job["InputConfig"]["DataSource"]["S3DataSource"]["ManifestS3Uri"]
+
+            # Parse S3 URI
+            s3_uri_parts = manifest_s3_uri.replace("s3://", "").split("/", 1)
+            bucket = s3_uri_parts[0]
+            key = s3_uri_parts[1]
+
+            # Read first line from S3 manifest file
+            s3_client = boto3.client("s3", config=retry_config)
+            logger.info("Reading manifest file from S3...")
+            response = s3_client.get_object(Bucket=bucket, Key=key)
+            first_line = response['Body'].read().decode('utf-8').split('\n')[0]
+
+            # Parse JSON and get the second key
+            manifest_entry = json.loads(first_line)
+            keys = list(manifest_entry.keys())
+
+            # Check the 2nd item in the keys, this should be the LabelAttributeName
+            if len(keys) >= 2:
+                label_attr = keys[1]
+                logger.info(f"Extracted LabelAttributeName: {label_attr}")
+            else:
+                label_attr = None
+                logger.warning(f"Manifest entry has fewer than 2 keys. Keys: {keys}")
+
+        if not label_attr or not label_attr.strip():
+            logger.error("The input manifest's LabelAttributeName is missing or empty for VerificationBoundingBox job")
+            raise ValueError("The input manifest's LabelAttributeName is required for VerificationBoundingBox jobs")
+
+        logger.info(f"Successfully found the LabelAttributeName for the input manifest: {label_attr}")
 
     # Generate labels config file and store in S3 bucket
     stripped_protocol_output_path = labeling_job["OutputConfig"]["S3OutputPath"].removeprefix("s3://")
@@ -111,6 +156,7 @@ def create(event, context):
         short_instructions,
         data_bucket_name,
         output_path,
+        label_attr,
     )
 
     if template_uri is not None:
@@ -129,6 +175,9 @@ def create(event, context):
 
     labeling_job["Tags"] = generate_tags(username, project_name, env_variables[EnvVariable.SYSTEM_TAG])
 
+    # Print the labeling job configuration for debugging purposes
+    logger.info(f"Creating labeling job with configuration: {json.dumps(labeling_job, indent=4)}")
+                                                                        
     response = sagemaker.create_labeling_job(**labeling_job)
 
     # Create the record in the resource_metadata table
