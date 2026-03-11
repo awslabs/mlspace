@@ -32,7 +32,7 @@ export function LabelingJobInputLabelAttributeName (props: LabelingJobWorkersPro
     const { item, formErrors, setFields, touchFields } = props;
 
     return (
-        <Condition condition={item.taskSelection === LabelingJobTypes.VerificationBoundingBox}>
+        <Condition condition={item.taskSelection === LabelingJobTypes.VerificationBoundingBox || item.taskSelection === LabelingJobTypes.VerificationSemanticSegmentation}>
             <Container header={<Header>Display existing labels</Header>}>
                 <SpaceBetween direction='vertical' size='m'>
                     <FormField

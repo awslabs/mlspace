@@ -19,6 +19,7 @@ import { ILabelingJob } from './labeling-job.model';
 export enum LabelingJobTypes {
     BoundingBox = 'BoundingBox',
     VerificationBoundingBox = 'VerificationBoundingBox',
+    VerificationSemanticSegmentation = 'VerificationSemanticSegmentation',
     ImageMultiClass = 'ImageMultiClass',
     ImageMultiClassMultiLabel = 'ImageMultiClassMultiLabel',
     SemanticSegmentation = 'SemanticSegmentation',
@@ -46,7 +47,7 @@ const jobTypeMap = new Map<string, string>([
     ['3DPointCloudSemanticSegmentation', '3D Point Cloud Semantic Segmentation'],
     [LabelingJobTypes.VerificationBoundingBox, 'Bounding box verification'],
     ['AdjustmentBoundingBox', 'Bounding box adjustment'],
-    ['VerificationSemanticSegmentation', 'Semantic segmentation verification'],
+    [LabelingJobTypes.VerificationSemanticSegmentation, 'Semantic segmentation verification'],
     ['AdjustmentSemanticSegmentation', 'Semantic segmentation adjustment'],
     ['AdjustmentVideoObjectDetection', 'Video Frame Object Detection Adjustment'],
     ['AdjustmentVideoObjectTracking', 'Video Frame Object Tracking Adjustment'],

@@ -86,8 +86,8 @@ def create(event, context):
 
     #  Check to see if InputLabelAttributeName was included in the request.
     label_attr = labeling_job.pop("InputLabelAttributeName", None)  # pop removes it from the dict, needed for clean sagemaker api call
-    if task_type == TaskTypes.VerificationBoundingBox:
-        logger.info("VerificationBoundingBox job - Locating LabelAttributeName for the input manifest")
+    if task_type == TaskTypes.VerificationBoundingBox or task_type == TaskTypes.VerificationSemanticSegmentation:
+        logger.info("Verification job - Locating LabelAttributeName for the input manifest")
 
         # If the label_attr was found, dont search the manifest file
         if label_attr and label_attr != "":
