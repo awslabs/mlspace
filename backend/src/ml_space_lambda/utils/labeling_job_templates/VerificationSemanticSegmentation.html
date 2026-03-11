@@ -1,0 +1,50 @@
+<script src="{ASSET_JS}"></script>
+<crowd-form>
+
+    <!-- Note the overlay is specific to semantic segmentation -->
+    <!-- Review if quotations are needed wrapped around keys or not -->
+    <!-- Following example here https://docs.aws.amazon.com/sagemaker/latest/dg/general-topiclist.html#crowd-classifier-regions-classification-target -->
+    <crowd-image-classifier
+      id="image-classifier"
+      name="imageClassifier"
+      src="{{ task.input.taskObject | grant_read_access }}"
+      header="DESCRIPTION_STUB"
+      categories="{{ task.input.labels | to_json | escape }}"
+      
+      overlay='{
+        "semanticSegmentation": {
+
+          {% assign data = task.input.manifestLine.label-attribute-name-from-prior-job-metadata.internal-color-map %}
+          {% assign class_labels = "" %}
+          
+          "labelMappings": {
+            {% for class in data %}
+
+              {% if forloop.first %}
+                {% assign class_labels = '"' | append: class[1].class-name | append: '"' %}
+              {% else %}
+                {% assign class_labels = class_labels | append: ',"' | append: class[1].class-name | append: '"' %}
+              {% endif %}
+
+              "{{class[1].class-name}}":{
+                "color": "{{class[1].hex-color}}"
+              },
+            {% endfor %}
+          },
+          {% assign label_array = class_labels | split: "," %}
+          labels: [{{ label_array | uniq | join: ", " }}],
+          "src": "{{ task.input.manifestLine.label-attribute-name-from-prior-job | grant_read_access}}",
+        }
+      }'
+    >
+      <full-instructions header="Verify bounding box labels">
+        <!-- full-instructions start marker -->
+        <!-- full-instructions end marker -->
+      </full-instructions>
+
+      <short-instructions>
+        <!-- short-instructions start marker -->
+        <!-- short-instructions end marker -->
+      </short-instructions>
+    </crowd-image-classifier>
+</crowd-form>

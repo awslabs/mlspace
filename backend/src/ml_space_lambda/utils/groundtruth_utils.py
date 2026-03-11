@@ -64,6 +64,7 @@ class LambdaTypes(str, Enum):
 class TaskTypes(str, Enum):
     BoundingBox = auto()
     VerificationBoundingBox = auto()
+    VerificationSemanticSegmentation = auto()
     ImageMultiClass = auto()
     ImageMultiClassMultiLabel = auto()
     SemanticSegmentation = auto()
@@ -76,6 +77,7 @@ class TaskTypes(str, Enum):
 _auto_labeling_task_arn_map = {
     TaskTypes.BoundingBox: "image-classification",
     TaskTypes.VerificationBoundingBox: "image-classification",
+    TaskTypes.VerificationSemanticSegmentation: "image-classification",
     TaskTypes.ImageMultiClass: "image-classification",
     TaskTypes.ImageMultiClassMultiLabel: "image-classification",
     TaskTypes.SemanticSegmentation: "semantic-segmentation",
