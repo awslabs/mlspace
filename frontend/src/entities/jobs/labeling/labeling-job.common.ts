@@ -27,6 +27,7 @@ export enum LabelingJobTypes {
     TextMultiClass = 'TextMultiClass',
     TextMultiClassMultiLabel = 'TextMultiClassMultiLabel',
     NamedEntityRecognition = 'NamedEntityRecognition',
+    PassThrough = 'PassThrough'
 }
 
 // a map of task types mapped to the name provided in these docs:
@@ -57,6 +58,7 @@ const jobTypeMap = new Map<string, string>([
         'Adjustment3DPointCloudSemanticSegmentation',
         '3D point cloud semantic segmentation adjustment',
     ],
+    [LabelingJobTypes.PassThrough, 'Generative AI/Custom'],
 ]);
 
 export function getTotalLabelingObjectCount (labelingJob: ILabelingJob): number {

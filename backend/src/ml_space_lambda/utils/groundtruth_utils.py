@@ -72,6 +72,7 @@ class TaskTypes(str, Enum):
     TextMultiClass = auto()
     TextMultiClassMultiLabel = auto()
     NamedEntityRecognition = auto()
+    PassThrough = auto()
 
 
 _auto_labeling_task_arn_map = {

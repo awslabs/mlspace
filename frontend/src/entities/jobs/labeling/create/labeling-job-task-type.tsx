@@ -71,11 +71,18 @@ export function LabelingJobTaskType (props: LabelingJobTaskTypeProps) {
                                 label: LabelingJobCategory.Text,
                                 value: LabelingJobCategory.Text,
                             },
+                            {
+                                label: LabelingJobCategory.Custom,
+                                value: LabelingJobCategory.Custom,
+                            },
                         ]}
                         onChange={({ detail }) => {
                             let taskSelection = LabelingJobTypes.ImageMultiClass;
                             if (detail.selectedOption.value === LabelingJobCategory.Text) {
                                 taskSelection = LabelingJobTypes.TextMultiClass;
+                            }
+                            if (detail.selectedOption.value === LabelingJobCategory.Custom) {
+                                taskSelection = LabelingJobTypes.PassThrough;
                             }
 
                             const newTaskConfig =

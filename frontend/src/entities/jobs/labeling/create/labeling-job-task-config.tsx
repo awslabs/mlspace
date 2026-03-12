@@ -25,6 +25,7 @@ import TaskTypeTextClassification from '../../../../content/images/console/groun
 import TaskTypeTextClassificationMulti from '../../../../content/images/console/groundtruth/tasktype-text-classification-multilabel.png';
 import TaskTypeTextEntityRecognition from '../../../../content/images/console/groundtruth/tasktype-named-entity-recognition.png';
 import QuickInstructionsExamplePlaceholder from '../../../../content/images/console/groundtruth/quick-instructions-example-placeholder.png';
+import TaskTypeCustom from '../../../../content/images/console/groundtruth/tasktype-custom.png';
 import { LabelingJobCategory } from '../labeling-job.model';
 import { LabelingJobTypes } from '../labeling-job.common';
 
@@ -331,4 +332,37 @@ export const TASK_TYPE_CONFIG: {
             autoLabeling: false,
         },
     },
+    Custom: {
+        PassThrough: {
+            enabled: true,
+            label: 'Custom',
+            maxLabelCount: 10,
+            minLabelCount: 2,
+            description: 'Custom Labeling Job',
+            value: LabelingJobTypes.PassThrough,
+            image: (
+                <img
+                    src={TaskTypeCustom}
+                    alt='A screen with various code and characters angled slightly'
+                />
+            ),
+            shortInstruction: `
+                <h3>About existing labels</h3>
+                <p>Provide instructions to help workers understand the original task. E.g. Workers were asked to create boxes around objects.</p>
+                <h3><span style="color: rgb(0, 134, 0);">Good example</span></h3>
+                <p>Provide instructions to help workers understand how the task was supposed to be done.</p>
+                <p><img src="${QuickInstructionsExamplePlaceholder}" style="max-width:100%" alt="Add image here"></p>
+                <h3><span style="color: rgb(230, 0, 0);">Bad example</span></h3>
+                <p>Provide examples of mislabeled items that should be rejected.</p>
+                <p><img src="${QuickInstructionsExamplePlaceholder}" style="max-width:100%" alt="Add image here"></p>`,
+            fullInstruction: `
+                <ol>
+                    <li><strong>Read</strong> the task carefully and inspect the image.</li>
+                    <li><strong>Read</strong> the options and review the examples provided to understand more about the labels.</li>
+                    <li><strong>Choose</strong> the appropriate label that best suits the image.</li>
+                </ol>`,
+            keywords: ['Images', 'categorization', 'classification', 'verification'],
+            autoLabeling: false,
+        }
+    }
 };
