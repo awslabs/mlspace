@@ -108,8 +108,7 @@ function getOrCreateResource (stack: Stack, parentResource: IResource, path: str
     if (!resource) {
         resource = parentResource.addResource(path[0]);
         resource.addCorsPreflight({
-            allowOrigins: ['http://localhost:3000'],
-            allowCredentials: true,
+            allowOrigins: Cors.ALL_ORIGINS,
             allowHeaders: [
                 ...Cors.DEFAULT_HEADERS,
                 'x-mlspace-dataset-scope',

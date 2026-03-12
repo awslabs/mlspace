@@ -200,8 +200,7 @@ def generate_html_response(status_code, response_body):
         "statusCode": status_code,
         "body": json.dumps(response_body, default=str),
         "headers": {
-            "Access-Control-Allow-Origin": "http://localhost:3000",
-            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Origin": "*",
             "Content-Type": "application/json",
             "Cache-Control": "no-store, no-cache",
             "Pragma": "no-cache",

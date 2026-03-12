@@ -30,7 +30,7 @@ def create_session_cookie(
     max_age_seconds: int = 86400,
     domain: Optional[str] = None,
     secure: bool = True,
-    same_site: str = "None",
+    same_site: str = "Strict",
     path: str = "/",
 ) -> str:
     """
@@ -185,16 +185,7 @@ def create_redirect_response(location: str, cookies: Optional[list] = None, stat
     Returns:
         Lambda response dictionary
     """
-    headers = {
-        "Location": location,
-        "Cache-Control": "no-store, no-cache",
-        "Pragma": "no-cache",
-        # CORS headers for localhost development
-        "Access-Control-Allow-Origin": "http://localhost:3000",
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    }
+    headers = {"Location": location, "Cache-Control": "no-store, no-cache", "Pragma": "no-cache"}
 
     # Add security headers
     security_headers = get_security_headers()
@@ -224,16 +215,7 @@ def create_json_response(body: dict, status_code: int = 200, cookies: Optional[l
     """
     import json
 
-    headers = {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store, no-cache",
-        "Pragma": "no-cache",
-        # CORS headers for localhost development
-        "Access-Control-Allow-Origin": "http://localhost:3000",
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    }
+    headers = {"Content-Type": "application/json", "Cache-Control": "no-store, no-cache", "Pragma": "no-cache"}
 
     # Add security headers
     security_headers = get_security_headers()
@@ -296,7 +278,10 @@ def should_set_secure_flag(host_header: Optional[str]) -> bool:
         host_header: Host header value
 
     Returns:
-        True for SameSite=None (required by browsers)
+        True if Secure flag should be set, False for localhost development
     """
-    # SameSite=None REQUIRES Secure=true (browser requirement)
-    return True
+    if not host_header:
+        return True
+
+    # Don't set Secure flag for localhost development
+    return not host_header.lower().startswith("localhost")
