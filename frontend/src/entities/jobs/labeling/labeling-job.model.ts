@@ -105,7 +105,7 @@ export type ILabelingJobCreate = Omit<
 export enum LabelingJobCategory {
     Image = 'Image',
     Text = 'Text',
-    Custom = "Custom"
+    Custom = 'Custom'
 }
 
 export type ILabelingJobWorkteam = {
