@@ -188,13 +188,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     
 
     
-    const login = (redirectUrl?: string) => {
+    const login = () => {
         // For login redirect, we need to construct the full URL since it's a page redirect
-        const baseUrl = (window as any).env?.LAMBDA_ENDPOINT || window.location.origin;
-        const loginUrl = new URL('auth/login', baseUrl);
-        if (redirectUrl) {
-            loginUrl.searchParams.set('redirectUrl', redirectUrl);
+        const baseUrl: string | undefined = (window as any).env?.LAMBDA_ENDPOINT || undefined;
+        if (!baseUrl) {
+            throw new Error('LAMBDA_ENDPOINT is not defined');
         }
+
+        // Remove trailing slashes and extract the stage
+        const stage = baseUrl.replace(/\/+$/, '').split('/').at(-1);
+        const loginUrl = new URL(`${stage}/auth/login`, baseUrl.split(stage || '')[0]);
+        
+        loginUrl.searchParams.set('redirectUrl', `${window.location.origin}/${stage}`);
+
         window.location.href = loginUrl.toString();
     };
     

@@ -90,6 +90,7 @@ def _get_auth_config() -> Dict[str, str]:
         "token_encryption_key_secret_name": os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME", ""),
         "session_table_name": os.environ.get("AUTH_SESSION_TABLE_NAME", ""),
         "sync_domains": os.environ.get("AUTH_SYNC_DOMAINS", ""),
+        "ALLOW_LOCALHOST": os.environ.get("ALLOW_LOCALHOST", "false").lower() == "true"    
     }
 
     # Validate IdP type first
@@ -111,6 +112,9 @@ def _get_auth_config() -> Dict[str, str]:
 
     if not config["session_table_name"]:
         raise Exception("AUTH_SESSION_TABLE_NAME environment variable is required")
+
+    if config["ALLOW_LOCALHOST"]:
+        logger.warning("ALLOW_LOCALHOST enabled; please disable for production deployments")
 
     return config
 
@@ -433,7 +437,7 @@ def _get_auth_path(event: Dict) -> str:
     return "/auth"
 
 
-def _validate_redirect_url(redirect_url: str, host_header: str) -> bool:
+def _validate_redirect_url(redirect_url: str, host_header: str, allow_localhost: bool = False) -> bool:
     """
     Validate that redirect URL is safe and belongs to the same origin.
 
@@ -446,6 +450,10 @@ def _validate_redirect_url(redirect_url: str, host_header: str) -> bool:
     """
     if not redirect_url:
         return False
+
+    if allow_localhost:
+        if redirect_url == "http://localhost:3000" or redirect_url == "http://localhost:3000/Prod":
+            return True
 
     try:
         parsed = urlparse(redirect_url)
@@ -490,7 +498,7 @@ def login(event, context):
         host_header = event.get("headers", {}).get("Host") or event.get("headers", {}).get("host", "")
 
         # Validate redirect URL
-        if not _validate_redirect_url(redirect_url, host_header):
+        if not _validate_redirect_url(redirect_url, host_header, config["ALLOW_LOCALHOST"]):
             logger.warning(f"Invalid redirect URL: {redirect_url}")
             redirect_url = root_path
 
@@ -840,9 +848,14 @@ def callback(event, context):
         secure_flag = should_set_secure_flag(host_header)
         domain = extract_domain_from_host(host_header)
         root_path = _get_root_path(event)
+        same_site = "Strict"
+
+        # For localhost development: use None for cross-site requests
+        if config["ALLOW_LOCALHOST"]:
+            same_site = "None"  # Allows cross-site requests (localhost -> AWS)
 
         session_cookie = create_session_cookie(
-            session_id=session_id, max_age_seconds=int(expires_at), domain=domain, secure=secure_flag, path=root_path
+            session_id=session_id, max_age_seconds=int(expires_at), domain=domain, secure=secure_flag, path=root_path, same_site=same_site
         )
 
         # Clear state cookie
@@ -1222,9 +1235,14 @@ def _attempt_token_refresh(
         secure_flag = should_set_secure_flag(host_header)
         domain = extract_domain_from_host(host_header)
         root_path = _get_root_path(event)
+        same_site = "Strict"
+
+        # For localhost development: use None for cross-site requests
+        if config.get("ALLOW_LOCALHOST"):
+            same_site = "None"  # Allows cross-site requests (localhost -> AWS)
 
         new_session_cookie = create_session_cookie(
-            session_id=session_id, max_age_seconds=int(access_expires), domain=domain, secure=secure_flag, path=root_path
+            session_id=session_id, max_age_seconds=int(access_expires), domain=domain, secure=secure_flag, path=root_path, same_site=same_site
         )
 
         logger.info(f"Token refresh successful for session: {session_id}")
@@ -1457,12 +1475,17 @@ def _set_session_cookie_for_domain(session_id, event, config) -> str:
     secure_flag = should_set_secure_flag(host_header)
     domain = extract_domain_from_host(host_header)
     root_path = _get_root_path(event)
+    same_site = "Strict"
+
+    # For localhost development: use None for cross-site requests
+    if config.get("ALLOW_LOCALHOST"):
+        same_site = "None"  # Allows cross-site requests (localhost -> AWS)
 
     # Use default session TTL (24 hours) for sync cookies
     session_ttl = int(config.get("session_ttl_hours", "24")) * 3600
 
     return create_session_cookie(
-        session_id=session_id, max_age_seconds=session_ttl, domain=domain, secure=secure_flag, path=root_path
+        session_id=session_id, max_age_seconds=session_ttl, domain=domain, secure=secure_flag, path=root_path, same_site=same_site
     )
 
 
