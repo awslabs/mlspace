@@ -146,6 +146,7 @@ export const AUTH_KEY_VERSIONS_TO_KEEP = 3; // Number of key versions to retain 
 
 // DEVELOPMENT ONLY - allow localhost specific configuration for auth cookie
 // To disable CORS use the following command to run chrome without CORS *DEVELOPMENT ONLY*
+// eslint-disable-next-line spellcheck/spell-checker
 // "C:\Program Files\Google\Chrome\Application\chrome.exe" --user-data-dir=C:\chrome-dev-data\ --disable-web-security
 // Without setting this to true, localhost login will redirect to the deployed frontend, not the locally hosted react app.
 export const ALLOW_LOCALHOST = undefined; // Allow localhost:3000 redirects for local development (SECURITY: set to false in production)

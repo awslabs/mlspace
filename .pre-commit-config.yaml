@@ -30,6 +30,7 @@ repos:
     - id: eslint
       files: \.[jt]sx?$  # *.js, *.jsx, *.ts and *.tsx
       types: [file]
+      language_version: system
 
 - repo: https://github.com/Lucas-C/pre-commit-hooks
   rev: v1.5.5
