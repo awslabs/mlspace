@@ -34,6 +34,8 @@ export type ILabelingJob = {
     LabelingJobArn: string;
     LabelAttributeName: string;
     InputLabelAttributeName?: string;
+    CustomTaskTemplate?: string;
+    CustomTaskTitle?: string;
     InputConfig: {
         DataSource: {
             S3DataSource: {

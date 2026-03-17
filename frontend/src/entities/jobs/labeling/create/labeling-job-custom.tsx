@@ -46,7 +46,10 @@ export function LabelingJobCustom (props: LabelingJobCustomProps) {
                             value={item.custom_task_title || ''}
                             placeholder='Enter a title for your custom task'
                             onChange={(event) => {
-                                setFields({ custom_task_title: event.detail.value, labels: [{ label: 'custom-label-job-dummy-label-1' }, {label: 'custom-label-job-dummy-label-2'}]});
+                                setFields({
+                                    custom_task_title: event.detail.value,
+                                    labels: [{ label: 'custom-label-job-dummy-label-1' }, {label: 'custom-label-job-dummy-label-2'}]
+                                });
                             }}
                             onBlur={() => touchFields(['custom_task_title'])}
                             data-cy='custom_task_title'
@@ -62,7 +65,10 @@ export function LabelingJobCustom (props: LabelingJobCustomProps) {
                             value={item.description || ''}
                             placeholder='Enter a description for your custom task'
                             onChange={(event) => {
-                                setFields({ description: event.detail.value, labels: [{ label: 'custom-label-job-dummy-label-1' }, {label: 'custom-label-job-dummy-label-2'}]});
+                                setFields({
+                                    description: event.detail.value,
+                                    labels: [{ label: 'custom-label-job-dummy-label-1' }, {label: 'custom-label-job-dummy-label-2'}]
+                                });
                             }}
                             onBlur={() => touchFields(['description'])}
                             data-cy='description'

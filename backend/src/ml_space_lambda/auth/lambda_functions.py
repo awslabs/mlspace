@@ -90,7 +90,7 @@ def _get_auth_config() -> Dict[str, str]:
         "token_encryption_key_secret_name": os.environ.get("AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME", ""),
         "session_table_name": os.environ.get("AUTH_SESSION_TABLE_NAME", ""),
         "sync_domains": os.environ.get("AUTH_SYNC_DOMAINS", ""),
-        "ALLOW_LOCALHOST": os.environ.get("ALLOW_LOCALHOST", "false").lower() == "true"    
+        "ALLOW_LOCALHOST": os.environ.get("ALLOW_LOCALHOST", "false").lower() == "true",
     }
 
     # Validate IdP type first
@@ -855,7 +855,12 @@ def callback(event, context):
             same_site = "None"  # Allows cross-site requests (localhost -> AWS)
 
         session_cookie = create_session_cookie(
-            session_id=session_id, max_age_seconds=int(expires_at), domain=domain, secure=secure_flag, path=root_path, same_site=same_site
+            session_id=session_id,
+            max_age_seconds=int(expires_at),
+            domain=domain,
+            secure=secure_flag,
+            path=root_path,
+            same_site=same_site,
         )
 
         # Clear state cookie
@@ -1242,7 +1247,12 @@ def _attempt_token_refresh(
             same_site = "None"  # Allows cross-site requests (localhost -> AWS)
 
         new_session_cookie = create_session_cookie(
-            session_id=session_id, max_age_seconds=int(access_expires), domain=domain, secure=secure_flag, path=root_path, same_site=same_site
+            session_id=session_id,
+            max_age_seconds=int(access_expires),
+            domain=domain,
+            secure=secure_flag,
+            path=root_path,
+            same_site=same_site,
         )
 
         logger.info(f"Token refresh successful for session: {session_id}")
@@ -1485,7 +1495,12 @@ def _set_session_cookie_for_domain(session_id, event, config) -> str:
     session_ttl = int(config.get("session_ttl_hours", "24")) * 3600
 
     return create_session_cookie(
-        session_id=session_id, max_age_seconds=session_ttl, domain=domain, secure=secure_flag, path=root_path, same_site=same_site
+        session_id=session_id,
+        max_age_seconds=session_ttl,
+        domain=domain,
+        secure=secure_flag,
+        path=root_path,
+        same_site=same_site,
     )
 
 

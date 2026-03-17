@@ -272,6 +272,8 @@ export function LabelingJobCreate () {
                 Description: state.form.description,
                 JobDefinition: {
                     ...state.form.job,
+                    CustomTaskTemplate: state.form.custom_task_template,
+                    CustomTaskTitle: state.form.custom_task_title,
                     LabelAttributeName: labelAttributeNameComponents.join(''),
                 },
             })

@@ -27,6 +27,7 @@ from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, q
 from ml_space_lambda.utils.groundtruth_utils import (
     LambdaTypes,
     TaskTypes,
+    generate_custom_ui_template,
     generate_labels_configuration_file,
     generate_ui_template,
     get_auto_labeling_arn,
@@ -85,7 +86,9 @@ def create(event, context):
     labeling_job["LabelingJobName"] = labeling_job_name
 
     #  Check to see if InputLabelAttributeName was included in the request.
-    label_attr = labeling_job.pop("InputLabelAttributeName", None)  # pop removes it from the dict, needed for clean sagemaker api call
+    label_attr = labeling_job.pop(
+        "InputLabelAttributeName", None
+    )  # pop removes it from the dict, needed for clean sagemaker api call
     if task_type == TaskTypes.VerificationBoundingBox or task_type == TaskTypes.VerificationSemanticSegmentation:
         logger.info("Verification job - Locating LabelAttributeName for the input manifest")
 
@@ -109,7 +112,7 @@ def create(event, context):
             s3_client = boto3.client("s3", config=retry_config)
             logger.info("Reading manifest file from S3...")
             response = s3_client.get_object(Bucket=bucket, Key=key)
-            first_line = response['Body'].read().decode('utf-8').split('\n')[0]
+            first_line = response["Body"].read().decode("utf-8").split("\n")[0]
 
             # Parse JSON and get the second key
             manifest_entry = json.loads(first_line)
@@ -144,20 +147,43 @@ def create(event, context):
 
     labeling_job["HumanTaskConfig"]["PreHumanTaskLambdaArn"] = get_groundtruth_lambda_arn(LambdaTypes.PRE, task_type)
 
+    logging.info(f"task_type: {task_type}")
+    logging.info(f"PreHumanTaskLambdaArn: {labeling_job['HumanTaskConfig']['PreHumanTaskLambdaArn']}")
+
     labeling_job["HumanTaskConfig"]["AnnotationConsolidationConfig"]["AnnotationConsolidationLambdaArn"] = (
         get_groundtruth_lambda_arn(LambdaTypes.ACS, task_type)
     )
 
-    template_uri = generate_ui_template(
-        labeling_job_name,
-        task_type,
-        description,
-        full_instructions,
-        short_instructions,
-        data_bucket_name,
-        output_path,
-        label_attr,
-    )
+    # Check if custom template is provided, pop unused labels otherwise
+    custom_template_html = labeling_job.pop("CustomTaskTemplate", None)
+    labeling_job.pop("CustomTaskTitle", None)
+
+    # Create a custom liquid template if a Custom Job
+    if task_type == TaskTypes.PassThrough and custom_template_html:
+        logger.info("PassThrough task type, using custom UI template")
+        # Use custom template
+        template_uri = generate_custom_ui_template(
+            custom_template_html,
+            labeling_job_name,
+            description,
+            full_instructions,
+            short_instructions,
+            data_bucket_name,
+            output_path,
+            label_attr,
+        )
+    else:
+        # Use standard template based on task type
+        template_uri = generate_ui_template(
+            labeling_job_name,
+            task_type,
+            description,
+            full_instructions,
+            short_instructions,
+            data_bucket_name,
+            output_path,
+            label_attr,
+        )
 
     if template_uri is not None:
         labeling_job["HumanTaskConfig"]["UiConfig"]["UiTemplateS3Uri"] = template_uri
@@ -177,7 +203,7 @@ def create(event, context):
 
     # Print the labeling job configuration for debugging purposes
     logger.info(f"Creating labeling job with configuration: {json.dumps(labeling_job, indent=4)}")
-                                                                        
+
     response = sagemaker.create_labeling_job(**labeling_job)
 
     # Create the record in the resource_metadata table

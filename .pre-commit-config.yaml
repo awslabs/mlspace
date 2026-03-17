@@ -30,6 +30,7 @@ repos:
     - id: eslint
       files: \.[jt]sx?$  # *.js, *.jsx, *.ts and *.tsx
       types: [file]
+      language_version: "16.20.2"  # Node 16 compatible with GLIBC 2.26 (Amazon Linux 2)
 
 - repo: https://github.com/Lucas-C/pre-commit-hooks
   rev: v1.5.5
