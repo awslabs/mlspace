@@ -144,6 +144,13 @@ export const AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/token-encrypt
 export const AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/state-encryption-key'; // Simple secret for state encryption key (deploy-time generated)
 export const AUTH_KEY_VERSIONS_TO_KEEP = 3; // Number of key versions to retain during rotation
 
+// DEVELOPMENT ONLY - allow localhost specific configuration for auth cookie
+// To disable CORS use the following command to run chrome without CORS *DEVELOPMENT ONLY*
+// eslint-disable-next-line spellcheck/spell-checker
+// "C:\Program Files\Google\Chrome\Application\chrome.exe" --user-data-dir=C:\chrome-dev-data\ --disable-web-security
+// Without setting this to true, localhost login will redirect to the deployed frontend, not the locally hosted react app.
+export const ALLOW_LOCALHOST = undefined; // Allow localhost:3000 redirects for local development (SECURITY: set to false in production)
+
 // Legacy OIDC configuration (deprecated - maintained for backward compatibility during migration)
 // Use AUTH_OIDC_URL, AUTH_OIDC_CLIENT_ID, and other AUTH_* constants instead
 export const IDP_ENDPOINT_SSM_PARAM = undefined; // Deprecated: Use AUTH_OIDC_URL instead

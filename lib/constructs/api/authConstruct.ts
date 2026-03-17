@@ -48,7 +48,8 @@ export class AuthApiConstruct extends Construct {
             AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME: props.mlspaceConfig.AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME,
             AUTH_KEY_VERSIONS_TO_KEEP: String(props.mlspaceConfig.AUTH_KEY_VERSIONS_TO_KEEP),
             NEW_USERS_SUSPENDED: props.mlspaceConfig.NEW_USERS_SUSPENDED ? 'True' : 'False',
-            WEB_CUSTOM_DOMAIN_NAME: props.mlspaceConfig.WEB_CUSTOM_DOMAIN_NAME || ''
+            WEB_CUSTOM_DOMAIN_NAME: props.mlspaceConfig.WEB_CUSTOM_DOMAIN_NAME || '',
+            ALLOW_LOCALHOST: props.mlspaceConfig.ALLOW_LOCALHOST ? 'True' : 'False'
         };
 
         // OIDC-specific environment variables
