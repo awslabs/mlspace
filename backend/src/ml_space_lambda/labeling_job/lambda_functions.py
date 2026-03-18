@@ -19,6 +19,7 @@ import logging
 import os
 
 import boto3
+from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -27,6 +28,7 @@ from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, q
 from ml_space_lambda.utils.groundtruth_utils import (
     LambdaTypes,
     TaskTypes,
+    generate_custom_ui_template,
     generate_labels_configuration_file,
     generate_ui_template,
     get_auto_labeling_arn,
@@ -85,7 +87,9 @@ def create(event, context):
     labeling_job["LabelingJobName"] = labeling_job_name
 
     #  Check to see if InputLabelAttributeName was included in the request.
-    label_attr = labeling_job.pop("InputLabelAttributeName", None)  # pop removes it from the dict, needed for clean sagemaker api call
+    label_attr = labeling_job.pop(
+        "InputLabelAttributeName", None
+    )  # pop removes it from the dict, needed for clean sagemaker api call
     if task_type == TaskTypes.VerificationBoundingBox or task_type == TaskTypes.VerificationSemanticSegmentation:
         logger.info("Verification job - Locating LabelAttributeName for the input manifest")
 
@@ -108,11 +112,26 @@ def create(event, context):
             # Read first line from S3 manifest file
             s3_client = boto3.client("s3", config=retry_config)
             logger.info("Reading manifest file from S3...")
-            response = s3_client.get_object(Bucket=bucket, Key=key)
-            first_line = response['Body'].read().decode('utf-8').split('\n')[0]
 
-            # Parse JSON and get the second key
-            manifest_entry = json.loads(first_line)
+            try:
+                response = s3_client.get_object(Bucket=bucket, Key=key)
+                first_line = response["Body"].read().decode("utf-8").split("\n")[0]
+
+                # Parse JSON and get the second key
+                manifest_entry = json.loads(first_line)
+
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code", "Unknown")
+                logger.error(f"S3 error reading manifest file {manifest_s3_uri}: {error_code} - {e}")
+                raise ValueError(f"Could not read manifest file from {manifest_s3_uri}. Error: {error_code}")
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in manifest file {manifest_s3_uri}: {e}")
+                raise ValueError(f"Manifest file contains invalid JSON at {manifest_s3_uri}: {str(e)}")
+
+            except Exception as e:
+                logger.error(f"Unexpected error reading manifest file {manifest_s3_uri}: {e}")
+                raise ValueError(f"Failed to process manifest file from {manifest_s3_uri}: {str(e)}")
             keys = list(manifest_entry.keys())
 
             # Check the 2nd item in the keys, this should be the LabelAttributeName
@@ -148,16 +167,37 @@ def create(event, context):
         get_groundtruth_lambda_arn(LambdaTypes.ACS, task_type)
     )
 
-    template_uri = generate_ui_template(
-        labeling_job_name,
-        task_type,
-        description,
-        full_instructions,
-        short_instructions,
-        data_bucket_name,
-        output_path,
-        label_attr,
-    )
+    # Check for custom labeling job fields
+    custom_labeling_job_fields = labeling_job_request.get("CustomLabelingJobVars")
+
+    if custom_labeling_job_fields and task_type == TaskTypes.PassThrough:
+
+        custom_template_html = custom_labeling_job_fields.get("CustomTaskTemplate")
+
+        logger.info("PassThrough task type, using custom UI template")
+        # Use custom template
+        template_uri = generate_custom_ui_template(
+            custom_template_html,
+            labeling_job_name,
+            description,
+            full_instructions,
+            short_instructions,
+            data_bucket_name,
+            output_path,
+            label_attr,
+        )
+    else:
+        # Use standard template based on task type
+        template_uri = generate_ui_template(
+            labeling_job_name,
+            task_type,
+            description,
+            full_instructions,
+            short_instructions,
+            data_bucket_name,
+            output_path,
+            label_attr,
+        )
 
     if template_uri is not None:
         labeling_job["HumanTaskConfig"]["UiConfig"]["UiTemplateS3Uri"] = template_uri
@@ -175,9 +215,6 @@ def create(event, context):
 
     labeling_job["Tags"] = generate_tags(username, project_name, env_variables[EnvVariable.SYSTEM_TAG])
 
-    # Print the labeling job configuration for debugging purposes
-    logger.info(f"Creating labeling job with configuration: {json.dumps(labeling_job, indent=4)}")
-                                                                        
     response = sagemaker.create_labeling_job(**labeling_job)
 
     # Create the record in the resource_metadata table

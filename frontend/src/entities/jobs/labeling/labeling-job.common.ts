@@ -71,8 +71,12 @@ export function getLabelingJobType (labelingJob: ILabelingJob): string {
     if (!labelingJob.HumanTaskConfig) {
         return '-';
     }
-    // ARN will end with something like 'PRE-BoundingBox', so this line will attempt to grab the last string
-    // separated by a hyphen. We can then use that in a lookup table for the official job type name.
+    
+    // Check if PreHumanTaskLambdaArn exists before accessing it
+    if (!labelingJob.HumanTaskConfig.PreHumanTaskLambdaArn) {
+        return 'Custom';
+    }
+    
     const preHumanTaskArnType = labelingJob.HumanTaskConfig.PreHumanTaskLambdaArn.split('-').pop();
     let jobType = 'Custom';
     if (preHumanTaskArnType !== undefined && jobTypeMap.has(preHumanTaskArnType)) {

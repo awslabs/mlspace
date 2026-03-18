@@ -112,3 +112,8 @@ export type ILabelingJobWorkteam = {
     WorkteamArn: string;
     WorkteamName: string;
 };
+
+export type ILabelingCustomJobCreate = {
+    CustomTaskTemplate?: string;
+    CustomTaskTitle?: string;
+};

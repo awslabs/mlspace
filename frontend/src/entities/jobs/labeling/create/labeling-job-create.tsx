@@ -67,8 +67,6 @@ export type ILabelingJobCreateForm = {
     shortInstruction: string;
     fullInstruction: string;
     description: string;
-    // Custom labeling job fields
-    custom_task_title?: string;
     custom_task_template?: string;
 };
 
@@ -175,7 +173,6 @@ export function LabelingJobCreate () {
             )
             .min(2, { message: 'A minimum of two labels are required.' }),
         description: z.string().min(1, { message: 'Brief description of task field is required.' }),
-        custom_task_title: z.string().max(128, { message: 'Task title cannot exceed 128 characters.' }).optional().or(z.literal('')),
         custom_task_template: z.string().optional().or(z.literal('')),
     });
 
@@ -199,7 +196,6 @@ export function LabelingJobCreate () {
                 TASK_TYPE_CONFIG[LabelingJobCategory.Image][LabelingJobTypes.ImageMultiClass]
                     .fullInstruction,
             description: '',
-            custom_task_title: '',
             custom_task_template: '',
         },
         activeStepIndex: 0,
@@ -224,7 +220,7 @@ export function LabelingJobCreate () {
             'job.OutputConfig.S3OutputPath',
         ],
         isCustomTask
-            ? ['job.HumanTaskConfig.WorkteamArn', 'custom_task_title', 'description', 'custom_task_template']
+            ? ['job.HumanTaskConfig.WorkteamArn', 'job.HumanTaskConfig.TaskTitle', 'job.HumanTaskConfig.TaskDescription', 'custom_task_template']
             : ['job.HumanTaskConfig'],
     ];
     function isStepValid (fields: string[], formErrors: any) {
@@ -274,6 +270,9 @@ export function LabelingJobCreate () {
                     ...state.form.job,
                     LabelAttributeName: labelAttributeNameComponents.join(''),
                 },
+                CustomLabelingJobVars: {
+                    CustomTaskTemplate: state.form.custom_task_template,
+                }
             })
         ).then((result: any) => {
             setState({ formSubmitting: false });
@@ -395,11 +394,9 @@ export function LabelingJobCreate () {
                         }}
                         onSubmit={() => {
                             const parseResult = formSchema.safeParse(state.form);
-                            console.log(parseResult.error);
-                            console.log(`labels: ${state.form.labels}`);
+
                             if (parseResult.success) {
                                 handleSubmit();
-                                console.log('B');
                             } else {
                                 setState({
                                     validateAll: true,

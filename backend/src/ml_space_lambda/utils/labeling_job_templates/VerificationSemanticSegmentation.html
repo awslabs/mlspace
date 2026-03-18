@@ -1,8 +1,7 @@
 <script src="{ASSET_JS}"></script>
 <crowd-form>
 
-    <!-- Note the overlay is specific to semantic segmentation -->
-    <!-- Review if quotations are needed wrapped around keys or not -->
+    <!-- Note that overlay is specific to bounding boxes and semantic segmentation -->
     <!-- Following example here https://docs.aws.amazon.com/sagemaker/latest/dg/general-topiclist.html#crowd-classifier-regions-classification-target -->
     <crowd-image-classifier
       id="image-classifier"
@@ -37,7 +36,7 @@
         }
       }'
     >
-      <full-instructions header="Verify bounding box labels">
+      <full-instructions header="Verify semantic segmentation labels">
         <!-- full-instructions start marker -->
         <!-- full-instructions end marker -->
       </full-instructions>

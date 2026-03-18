@@ -40,32 +40,39 @@ export function LabelingJobCustom (props: LabelingJobCustomProps) {
                         label='Task title'
                         description='Give your task a short title to display in the task queue page.'
                         constraintText={'Maximum of 128 characters.'}
-                        errorText={formErrors?.custom_task_title}
+                        errorText={formErrors?.job?.HumanTaskConfig.TaskTitle}
                     >
                         <Input
-                            value={item.custom_task_title || ''}
+                            value={item.job.HumanTaskConfig.TaskTitle || ''}
                             placeholder='Enter a title for your custom task'
                             onChange={(event) => {
-                                setFields({ custom_task_title: event.detail.value, labels: [{ label: 'custom-label-job-dummy-label-1' }, {label: 'custom-label-job-dummy-label-2'}]});
+                                setFields({
+                                    'job.HumanTaskConfig.TaskTitle': event.detail.value,
+                                    labels: [{ label: 'custom-label-job-dummy-label-1' }, {label: 'custom-label-job-dummy-label-2'}]
+                                });
                             }}
-                            onBlur={() => touchFields(['custom_task_title'])}
-                            data-cy='custom_task_title'
+                            onBlur={() => touchFields(['job.HumanTaskConfig.TaskTitle'])}
+                            data-cy='job.HumanTaskConfig.TaskTitle'
                         />
                     </FormField>
                     <FormField
                         label='Task description'
                         description='Enter a brief description of your task.'
                         constraintText={'Maximum of 255 characters.'}
-                        errorText={formErrors?.description}
+                        errorText={formErrors?.job?.HumanTaskConfig.TaskDescription}
                     >
                         <Input
-                            value={item.description || ''}
+                            value={item.job.HumanTaskConfig.TaskDescription || ''}
                             placeholder='Enter a description for your custom task'
                             onChange={(event) => {
-                                setFields({ description: event.detail.value, labels: [{ label: 'custom-label-job-dummy-label-1' }, {label: 'custom-label-job-dummy-label-2'}]});
+                                setFields({
+                                    'job.HumanTaskConfig.TaskDescription': event.detail.value,
+                                    description: event.detail.value,
+                                    labels: [{ label: 'custom-label-job-dummy-label-1' }, {label: 'custom-label-job-dummy-label-2'}]
+                                });
                             }}
-                            onBlur={() => touchFields(['description'])}
-                            data-cy='description'
+                            onBlur={() => touchFields(['job.HumanTaskConfig.TaskDescription'])}
+                            data-cy='job.HumanTaskConfig.TaskDescription'
                         />
                     </FormField>
                     <FormField
