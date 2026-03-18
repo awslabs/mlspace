@@ -54,6 +54,10 @@ class GroundTruthUtilsTest(unittest.TestCase):
         mock_session.get_partition_for_region.return_value = "aws"
 
         for task_type in TaskTypes:
+            # Skip PassThrough as its only used for custom labeling jobs and doesnt
+            # have a labeling-job-algorithm-specification
+            if task_type == TaskTypes.PassThrough:
+                continue
             assert (
                 get_auto_labeling_arn(task_type)
                 == f"arn:aws:sagemaker:us-east-1:432418664414:labeling-job-algorithm-specification/{_auto_labeling_task_arn_map[task_type]}"
