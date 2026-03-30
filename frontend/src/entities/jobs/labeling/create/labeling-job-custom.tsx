@@ -25,11 +25,23 @@ import {
     Textarea
 } from '@cloudscape-design/components';
 import LabelingJobWorkers from './labeling-job-workers';
+import { useEffect } from 'react';
 
 export type LabelingJobCustomProps = FormProps<ILabelingJobCreateForm>;
 
 export function LabelingJobCustom (props: LabelingJobCustomProps) {
     const { item, formErrors, setFields, touchFields } = props;
+
+    // Adjust the default task title to remove the hard-coded value
+    useEffect(() => {
+        if (item.job.HumanTaskConfig.TaskTitle === 'Custom: ') {
+            setFields({
+                'job.HumanTaskConfig.TaskTitle': 'Custom Task',
+                'job.HumanTaskConfig.TaskDescription': 'Custom Description',
+                description: 'Custom Description' // This is a placeholder to pass zod checks
+            });
+        }
+    }, [item.job.HumanTaskConfig.TaskTitle, item.job.HumanTaskConfig.TaskDescription, setFields, item.description]);
 
     return (
         <SpaceBetween direction='vertical' size='l'>

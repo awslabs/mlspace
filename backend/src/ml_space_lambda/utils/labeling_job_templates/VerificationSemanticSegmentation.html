@@ -27,12 +27,12 @@
 
               "{{class[1].class-name}}":{
                 "color": "{{class[1].hex-color}}"
-              },
+              }{% unless forloop.last %},{% endunless %}
             {% endfor %}
           },
           {% assign label_array = class_labels | split: "," %}
-          labels: [{{ label_array | uniq | join: ", " }}],
-          "src": "{{ task.input.manifestLine.label-attribute-name-from-prior-job | grant_read_access}}",
+          "labels": [{{ label_array | uniq | join: ", " }}],
+          "src": "{{ task.input.manifestLine.label-attribute-name-from-prior-job | grant_read_access}}"
         }
       }'
     >

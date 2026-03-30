@@ -83,6 +83,7 @@ export function LabelingJobTaskType (props: LabelingJobTaskTypeProps) {
                             }
                             if (detail.selectedOption.value === LabelingJobCategory.Custom) {
                                 taskSelection = LabelingJobTypes.PassThrough;
+                                delete item.job['LabelingJobAlgorithmsConfig'];
                             }
 
                             const newTaskConfig =
@@ -98,6 +99,7 @@ export function LabelingJobTaskType (props: LabelingJobTaskTypeProps) {
                             setFields({
                                 taskCategory: detail.selectedOption.value,
                                 taskSelection,
+                                enableAutomatedLabeling: false,
                                 ...commonTaskFields(newTaskConfig, description),
                             });
                         }}
@@ -121,9 +123,13 @@ export function LabelingJobTaskType (props: LabelingJobTaskTypeProps) {
                                 /^Get workers to /,
                                 ''
                             );
+                            if (!newTaskConfig.autoLabeling) {
+                                delete item.job.LabelingJobAlgorithmsConfig;
+                            }
                             touchFields(['labels'], ModifyMethod.Unset);
                             setFields({
                                 taskSelection: newTaskConfig.value,
+                                enableAutomatedLabeling: false,
                                 ...commonTaskFields(newTaskConfig, description),
                             });
                         }}

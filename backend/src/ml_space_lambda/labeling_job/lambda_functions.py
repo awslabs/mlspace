@@ -172,7 +172,10 @@ def create(event, context):
 
     if custom_labeling_job_fields and task_type == TaskTypes.PassThrough:
 
-        custom_template_html = custom_labeling_job_fields.get("CustomTaskTemplate")
+        custom_template_html = custom_labeling_job_fields.get("CustomTaskTemplate", "")
+
+        if custom_template_html == "":
+            raise Exception("CustomTaskTemplate is required for Custom task type")
 
         logger.info("PassThrough task type, using custom UI template")
         # Use custom template

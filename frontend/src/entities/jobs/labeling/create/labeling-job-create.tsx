@@ -161,7 +161,17 @@ export function LabelingJobCreate () {
                     }),
                 WorkteamArn: z.string().min(1, {
                     message: 'A labeling team must be selected.',
-                })
+                }),
+                TaskTitle: z
+                    .string()
+                    .min(1, { message: 'Task title is required.' })
+                    .max(128, { message: 'Task title must not exceed 128 characters.' })
+                    .optional(),
+                TaskDescription: z
+                    .string()
+                    .min(1, { message: 'Task description is required.' })
+                    .max(255, { message: 'Task description must not exceed 255 characters.' })
+                    .optional(),
             }),
         }),
         taskSelection: z.any(),
@@ -173,7 +183,16 @@ export function LabelingJobCreate () {
             )
             .min(2, { message: 'A minimum of two labels are required.' }),
         description: z.string().min(1, { message: 'Brief description of task field is required.' }),
-        custom_task_template: z.string().optional().or(z.literal('')),
+        custom_task_template: z.string().optional(),
+    }).refine((data) => {
+        // If the tasktype is PassThrough (Custom) ensure the template isn't blank
+        if (data.taskSelection === LabelingJobTypes.PassThrough) {
+            return data.custom_task_template && data.custom_task_template.trim().length > 0;
+        }
+        return true;
+    }, {
+        message: 'Custom task template is required.',
+        path: ['custom_task_template'],
     });
 
     const { state, setState, setFields, touchFields } = useValidationReducer(formSchema, {
@@ -270,9 +289,11 @@ export function LabelingJobCreate () {
                     ...state.form.job,
                     LabelAttributeName: labelAttributeNameComponents.join(''),
                 },
-                CustomLabelingJobVars: {
-                    CustomTaskTemplate: state.form.custom_task_template,
-                }
+                ...(state.form.taskSelection === LabelingJobTypes.PassThrough ? {
+                    CustomLabelingJobVars: {
+                        CustomTaskTemplate: state.form.custom_task_template,
+                    }
+                } : {})
             })
         ).then((result: any) => {
             setState({ formSubmitting: false });

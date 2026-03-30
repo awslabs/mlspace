@@ -37,12 +37,12 @@ export function LabelingJobInputLabelAttributeName (props: LabelingJobWorkersPro
                 <SpaceBetween direction='vertical' size='m'>
                     <FormField
                         label='Input Manifest Label Attribute Name'
-                        description="
+                        description={`
                         Choose the input manifest's label attribute name that you want to verify.
                         This should match the label attribute name from the output dataset of the previous labeling job.
                         If you do not specify the label attribute name, one will be attempted to be extracted from the input manifest file.
-                        "
-                        constraintText={'Maximum of 63 alphanumeric characters. Can include hyphens (-), but not spaces or reserved suffixes "-ref" and "-metadata".'}
+                        `}
+                        constraintText={'Maximum of 59 alphanumeric characters. Can include hyphens (-), but not spaces or reserved suffixes "-ref" and "-metadata".'}
                         errorText={formErrors?.job?.InputLabelAttributeName}
                     >
                         <Input

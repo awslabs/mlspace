@@ -54,7 +54,7 @@ class GroundTruthUtilsTest(unittest.TestCase):
         mock_session.get_partition_for_region.return_value = "aws"
 
         for task_type in TaskTypes:
-            # Skip PassThrough as its only used for custom labeling jobs and doesnt
+            # Skip PassThrough as it's only used for custom labeling jobs and doesn't
             # have a labeling-job-algorithm-specification
             if task_type == TaskTypes.PassThrough:
                 continue
