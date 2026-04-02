@@ -56,6 +56,21 @@ def _get_default_keep_versions() -> int:
         return 3
 
 
+def _secret_already_versioned_for_type(secret_id: str, expected: KeyType, secrets_client) -> bool:
+    """
+    Return True if the secret string parses as VersionedKeyData with matching key_type and keys.
+    """
+    try:
+        response = secrets_client.get_secret_value(SecretId=secret_id)
+        raw = response.get("SecretString") or ""
+        if not raw.strip():
+            return False
+        data = VersionedKeyData.from_secrets_manager_format(raw)
+        return data.key_type == expected and bool(data.keys)
+    except Exception:
+        return False
+
+
 def initialize_state_encryption_key(secret_arn: str) -> Dict:
     """
     Initialize state encryption key secret with versioned structure.
@@ -71,6 +86,14 @@ def initialize_state_encryption_key(secret_arn: str) -> Dict:
     """
     try:
         secrets_client = boto3.client("secretsmanager")
+
+        if _secret_already_versioned_for_type(secret_arn, KeyType.STATE, secrets_client):
+            logger.info("State encryption secret already in versioned JSON format; skipping initialization.")
+            return {
+                "success": True,
+                "skipped": True,
+                "key_type": KeyType.STATE,
+            }
 
         # Generate initial Fernet key
         initial_key = create_state_encryption_key()
@@ -113,6 +136,14 @@ def initialize_token_encryption_key(secret_arn: str) -> Dict:
     """
     try:
         secrets_client = boto3.client("secretsmanager")
+
+        if _secret_already_versioned_for_type(secret_arn, KeyType.TOKEN, secrets_client):
+            logger.info("Token encryption secret already in versioned JSON format; skipping initialization.")
+            return {
+                "success": True,
+                "skipped": True,
+                "key_type": KeyType.TOKEN,
+            }
 
         # Generate initial PASETO key
         initial_key = create_encryption_key()

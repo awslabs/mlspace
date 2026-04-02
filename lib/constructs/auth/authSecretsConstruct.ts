@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import { Duration } from 'aws-cdk-lib';
+import { AwsCustomResource, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { PolicyStatement, Effect, IRole } from 'aws-cdk-lib/aws-iam';
 import { Code, Function, IFunction, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -73,16 +74,75 @@ export class AuthSecretsConstruct extends Construct {
                 configured_at: new Date().toISOString()
             }))
         });
-        
+
+        const versionedSecretInit = this.createVersionedSecretInitResource(props);
+
         // Set up state key rotation if enabled
         if (props.enableStateKeyRotation) {
             this.setupStateKeyRotation(props);
+            this.stateKeyRotationSchedule!.node.addDependency(versionedSecretInit);
         }
-        
+
         // Set up token key rotation if enabled
         if (props.enableTokenKeyRotation) {
             this.setupTokenKeyRotation(props);
+            this.tokenKeyRotationSchedule!.node.addDependency(versionedSecretInit);
         }
+    }
+
+    /**
+     * Ensures state/token secrets hold VersionedKeyData JSON before rotation runs.
+     */
+    private createVersionedSecretInitResource (props: AuthSecretsConstructProps): AwsCustomResource {
+        const versionedInitFn = new Function(this, 'AuthSecretsVersionedJsonInit', {
+            functionName: 'mls-lambda-auth-secrets-versioned-json-init',
+            runtime: props.config.LAMBDA_RUNTIME,
+            architecture: props.config.LAMBDA_ARCHITECTURE,
+            code: Code.fromAsset(props.lambdaSourcePath),
+            handler: 'ml_space_lambda.auth.utils.rotation_handlers.deploy_time_auth_secrets_init',
+            timeout: Duration.minutes(2),
+            memorySize: 256,
+            layers: props.layers,
+            environment: {
+                AUTH_STATE_SECRET_NAME: props.config.AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME,
+                AUTH_TOKEN_SECRET_NAME: props.config.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,
+            },
+            vpc: props.vpc,
+            securityGroups: props.securityGroups,
+        });
+
+        this.stateEncryptionSecret.grantRead(versionedInitFn);
+        this.stateEncryptionSecret.grantWrite(versionedInitFn);
+        this.tokenEncryptionSecret.grantRead(versionedInitFn);
+        this.tokenEncryptionSecret.grantWrite(versionedInitFn);
+
+        versionedInitFn.grantInvoke(props.mlSpaceAppRole);
+
+        const invokeParams = {
+            FunctionName: versionedInitFn.functionName,
+            Payload: '{}',
+        };
+
+        const cr = new AwsCustomResource(this, 'InitAuthSecretsVersionedJson', {
+            onCreate: {
+                service: 'Lambda',
+                action: 'invoke',
+                parameters: invokeParams,
+                physicalResourceId: PhysicalResourceId.of('mlspace-auth-secrets-versioned-json-v1'),
+            },
+            onUpdate: {
+                service: 'Lambda',
+                action: 'invoke',
+                parameters: invokeParams,
+                physicalResourceId: PhysicalResourceId.of('mlspace-auth-secrets-versioned-json-v1'),
+            },
+            role: props.mlSpaceAppRole,
+            timeout: Duration.minutes(5),
+        });
+        cr.node.addDependency(versionedInitFn);
+        cr.node.addDependency(this.stateEncryptionSecret);
+        cr.node.addDependency(this.tokenEncryptionSecret);
+        return cr;
     }
     
     private setupStateKeyRotation (props: AuthSecretsConstructProps) {
