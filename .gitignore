@@ -21,3 +21,6 @@ memory-bank
 
 # Cypress Tests
 cypress/cypress/screenshots/
+
+# Environment-specific config
+lib/config.json
