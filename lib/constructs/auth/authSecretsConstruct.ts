@@ -75,25 +75,27 @@ export class AuthSecretsConstruct extends Construct {
             }))
         });
 
-        const versionedSecretInit = this.createVersionedSecretInitResource(props);
+        this.createVersionedSecretInitResource(props);
 
         // Set up state key rotation if enabled
         if (props.enableStateKeyRotation) {
             this.setupStateKeyRotation(props);
-            this.stateKeyRotationSchedule!.node.addDependency(versionedSecretInit);
         }
 
         // Set up token key rotation if enabled
         if (props.enableTokenKeyRotation) {
             this.setupTokenKeyRotation(props);
-            this.tokenKeyRotationSchedule!.node.addDependency(versionedSecretInit);
         }
+
+        // Do not addDependency(rotationSchedule, versionedSecretInit): that implies
+        // rotationSchedule -> InitCustomResource -> Secret, while Secret already owns the
+        // rotation schedule, which CloudFormation resolves as a circular dependency.
     }
 
     /**
      * Ensures state/token secrets hold VersionedKeyData JSON before rotation runs.
      */
-    private createVersionedSecretInitResource (props: AuthSecretsConstructProps): AwsCustomResource {
+    private createVersionedSecretInitResource (props: AuthSecretsConstructProps): void {
         const versionedInitFn = new Function(this, 'AuthSecretsVersionedJsonInit', {
             functionName: 'mls-lambda-auth-secrets-versioned-json-init',
             runtime: props.config.LAMBDA_RUNTIME,
@@ -145,7 +147,6 @@ export class AuthSecretsConstruct extends Construct {
         cr.node.addDependency(versionedInitFn);
         cr.node.addDependency(this.stateEncryptionSecret);
         cr.node.addDependency(this.tokenEncryptionSecret);
-        return cr;
     }
     
     private setupStateKeyRotation (props: AuthSecretsConstructProps) {
