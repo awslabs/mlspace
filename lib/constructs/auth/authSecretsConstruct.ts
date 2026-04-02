@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { Duration } from 'aws-cdk-lib';
-import { AwsCustomResource, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { PolicyStatement, Effect, IRole } from 'aws-cdk-lib/aws-iam';
 import { Code, Function, IFunction, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -116,7 +116,8 @@ export class AuthSecretsConstruct extends Construct {
         this.tokenEncryptionSecret.grantRead(versionedInitFn);
         this.tokenEncryptionSecret.grantWrite(versionedInitFn);
 
-        versionedInitFn.grantInvoke(props.mlSpaceAppRole);
+        // Do not use mlSpaceAppRole here: grantInvoke(role) lives on the IAM stack while this Lambda
+        // lives on Core, which already depends on that role — that creates a cross-stack cycle.
 
         const invokeParams = {
             FunctionName: versionedInitFn.functionName,
@@ -136,7 +137,9 @@ export class AuthSecretsConstruct extends Construct {
                 parameters: invokeParams,
                 physicalResourceId: PhysicalResourceId.of('mlspace-auth-secrets-versioned-json-v1'),
             },
-            role: props.mlSpaceAppRole,
+            policy: AwsCustomResourcePolicy.fromSdkCalls({
+                resources: [versionedInitFn.functionArn],
+            }),
             timeout: Duration.minutes(5),
         });
         cr.node.addDependency(versionedInitFn);
