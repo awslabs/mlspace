@@ -16,7 +16,7 @@
 
 import { createSlice, createAsyncThunk, isFulfilled, isPending } from '@reduxjs/toolkit';
 import axios, { setProjectHeader } from '../../../shared/util/axios-utils';
-import { ILabelingJob, ILabelingJobCreate, ILabelingJobWorkteam } from './labeling-job.model';
+import { ILabelingJob, ILabelingJobCreate, ILabelingJobWorkteam, ILabelingCustomJobCreate } from './labeling-job.model';
 import { LabelingJobResourceMetadata } from '../../../shared/model/resource-metadata.model';
 import { PagedResponsePayload, ServerRequestProps } from '../../../shared/util/table-utils';
 import { addPagingParams } from '../../../shared/util/url-utils';
@@ -40,6 +40,7 @@ export type CreateLabelingJobThunkPayload = {
     FullInstruction: string;
     Description: string;
     JobDefinition: ILabelingJobCreate;
+    CustomLabelingJobVars?: ILabelingCustomJobCreate;
 };
 
 // Actions

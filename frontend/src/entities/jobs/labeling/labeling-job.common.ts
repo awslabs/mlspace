@@ -18,6 +18,8 @@ import { ILabelingJob } from './labeling-job.model';
 
 export enum LabelingJobTypes {
     BoundingBox = 'BoundingBox',
+    VerificationBoundingBox = 'VerificationBoundingBox',
+    VerificationSemanticSegmentation = 'VerificationSemanticSegmentation',
     ImageMultiClass = 'ImageMultiClass',
     ImageMultiClassMultiLabel = 'ImageMultiClassMultiLabel',
     SemanticSegmentation = 'SemanticSegmentation',
@@ -25,6 +27,7 @@ export enum LabelingJobTypes {
     TextMultiClass = 'TextMultiClass',
     TextMultiClassMultiLabel = 'TextMultiClassMultiLabel',
     NamedEntityRecognition = 'NamedEntityRecognition',
+    PassThrough = 'PassThrough'
 }
 
 // a map of task types mapped to the name provided in these docs:
@@ -43,9 +46,9 @@ const jobTypeMap = new Map<string, string>([
     ['3DPointCloudObjectDetection', '3D Point Cloud Object Detection'],
     ['3DPointCloudObjectTracking', '3D Point Cloud Object Tracking'],
     ['3DPointCloudSemanticSegmentation', '3D Point Cloud Semantic Segmentation'],
-    ['VerificationBoundingBox', 'Bounding box verification'],
+    [LabelingJobTypes.VerificationBoundingBox, 'Bounding box verification'],
     ['AdjustmentBoundingBox', 'Bounding box adjustment'],
-    ['VerificationSemanticSegmentation', 'Semantic segmentation verification'],
+    [LabelingJobTypes.VerificationSemanticSegmentation, 'Semantic segmentation verification'],
     ['AdjustmentSemanticSegmentation', 'Semantic segmentation adjustment'],
     ['AdjustmentVideoObjectDetection', 'Video Frame Object Detection Adjustment'],
     ['AdjustmentVideoObjectTracking', 'Video Frame Object Tracking Adjustment'],
@@ -55,6 +58,7 @@ const jobTypeMap = new Map<string, string>([
         'Adjustment3DPointCloudSemanticSegmentation',
         '3D point cloud semantic segmentation adjustment',
     ],
+    [LabelingJobTypes.PassThrough, 'Generative AI/Custom'],
 ]);
 
 export function getTotalLabelingObjectCount (labelingJob: ILabelingJob): number {
@@ -67,8 +71,12 @@ export function getLabelingJobType (labelingJob: ILabelingJob): string {
     if (!labelingJob.HumanTaskConfig) {
         return '-';
     }
-    // ARN will end with something like 'PRE-BoundingBox', so this line will attempt to grab the last string
-    // separated by a hyphen. We can then use that in a lookup table for the official job type name.
+    
+    // Check if PreHumanTaskLambdaArn exists before accessing it
+    if (!labelingJob.HumanTaskConfig.PreHumanTaskLambdaArn) {
+        return 'Custom';
+    }
+    
     const preHumanTaskArnType = labelingJob.HumanTaskConfig.PreHumanTaskLambdaArn.split('-').pop();
     let jobType = 'Custom';
     if (preHumanTaskArnType !== undefined && jobTypeMap.has(preHumanTaskArnType)) {

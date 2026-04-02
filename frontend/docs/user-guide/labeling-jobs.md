@@ -24,7 +24,7 @@ In the Job overview section, provide the following information:
 
 In the Task type section, provide the following information:
 
-- Task category – Use the drop down menu to select Image or Text. Ground Truth will use all images found in the S3 manifest for input datasets as input for your labeling job.
+- Task category – Use the drop down menu to select Image, Text, or Custom. Ground Truth will use all images found in the S3 manifest for input datasets as input for your labeling job.
 - Task selection – Select one of the tiles to use the supported task types.
 
 Choose Next to move on to configuring your labeling job.
@@ -44,5 +44,10 @@ In the Label verification tool section, provide the following information:
 - Labels – Provide category names for the objects that the worker should identify.
 - Short instructions – Provides instructions that are displayed on the page with the image that your workers are labeling.
 - Full instructions – Provides more detailed instructions for your workers. Expand the Additional instructions section to include full instructions.
+
+### Custom Tasks
+Custom tasks allow you to upload your own html template file.  This template file will be what your labeling workforce will see when labeling the input dataset.
+- Select 'Custom' from the task category dropdown
+- Fill out the custom task title and description
 
 Both instructions areas are rich text editors enabling you to format your instructions in an organized and clean way. You can also add links and images to your instructions. To add a link, highlight the text you want to turn into a hyperlink and select the link icon. When you add an image by selecting the image icon, a tooltip will pop up allowing you to include a URL or an S3 URI to an image. When adding a S3 URI, enter `{{ 'https://s3.amazonaws.com/your-bucket-name/image-file-name' | grant_read_access }}`. This renders the image URL with a short-lived, one-time access code appended so the worker's browser can display it.

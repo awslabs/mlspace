@@ -1,0 +1,45 @@
+<script src="{ASSET_JS}"></script>
+<crowd-form>
+    <crowd-image-classifier
+      id="image-classifier"
+      name="imageClassifier"
+      src="{{ task.input.taskObject | grant_read_access }}"
+      header="DESCRIPTION_STUB"
+      categories="{{ task.input.labels | to_json | escape }}"
+      overlay='{
+        "boundingBox": {
+          value: [
+            {% assign label_strings = "" %}
+            {% for box in task.input.manifestLine.label-attribute-name-from-prior-job.annotations %}
+              {% capture class_id %}{{ box.class_id }}{% endcapture %}
+              {% assign label = task.input.manifestLine.label-attribute-name-from-prior-job-metadata.class-map[class_id] %}
+              {% if forloop.first %}
+                {% assign label_strings = '"' | append: label | append: '"' %}
+              {% else %}
+                {% assign label_strings = label_strings | append: ',"' | append: label | append: '"' %}
+              {% endif %}
+              {
+                label: "{{ label }}",
+                left: {{ box.left }},
+                top: {{ box.top }},
+                width: {{ box.width }},
+                height: {{ box.height }}
+              }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ],
+          {% assign label_array = label_strings | split: "," %}
+          labels: [{{ label_array | uniq | join: ", " }}]
+        }
+      }'
+    >
+      <full-instructions header="Verify bounding box labels">
+        <!-- full-instructions start marker -->
+        <!-- full-instructions end marker -->
+      </full-instructions>
+
+      <short-instructions>
+        <!-- short-instructions start marker -->
+        <!-- short-instructions end marker -->
+      </short-instructions>
+    </crowd-image-classifier>
+</crowd-form>
