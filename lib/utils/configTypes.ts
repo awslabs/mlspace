@@ -53,6 +53,9 @@ import {
     EXISTING_VPC_DEFAULT_SECURITY_GROUP,
     EXISTING_VPC_ID,
     EXISTING_VPC_NAME,
+    VPC_IPV4_IPAM_POOL_ID,
+    VPC_IPAM_IPV4_NETMASK_LENGTH,
+    VPC_SUBNET_IPV4_CIDR_MASK,
     IAM_RESOURCE_PREFIX,
     IDP_ENDPOINT_SSM_PARAM,
     INTERNAL_OIDC_URL,
@@ -176,6 +179,12 @@ export type MLSpaceConfig = {
     EXISTING_VPC_NAME: string,
     EXISTING_VPC_ID: string,
     EXISTING_VPC_DEFAULT_SECURITY_GROUP: string,
+    /** Optional IPAM pool for new VPC (IP version 4); empty = CDK default CIDR. */
+    VPC_IPV4_IPAM_POOL_ID: string,
+    /** VPC / mask length from IPAM when using VPC_IPV4_IPAM_POOL_ID. */
+    VPC_IPAM_IPV4_NETMASK_LENGTH: number | undefined,
+    /** Per-tier subnet mask for new VPC (public + private). */
+    VPC_SUBNET_IPV4_CIDR_MASK: number,
     S3_READER_ROLE_ARN: string,
     BUCKET_DEPLOYMENT_ROLE_ARN: string,
     ENDPOINT_CONFIG_INSTANCE_CONSTRAINT_POLICY_ARN: string,
@@ -199,6 +208,65 @@ const validateRequiredProperty = (val: string, name: string) => {
         'and select the Basic Configuration option, which will walk you through setting up all required fields');
     }
 };
+
+type AuthOidcBooleanKey = 'AUTH_OIDC_VERIFY_SSL' | 'AUTH_OIDC_VERIFY_SIGNATURE' | 'AUTH_OIDC_USE_PKCE';
+
+const AUTH_OIDC_BOOLEAN_FIELDS: { key: AuthOidcBooleanKey; fallback: boolean }[] = [
+    { key: 'AUTH_OIDC_VERIFY_SSL', fallback: AUTH_OIDC_VERIFY_SSL },
+    { key: 'AUTH_OIDC_VERIFY_SIGNATURE', fallback: AUTH_OIDC_VERIFY_SIGNATURE },
+    { key: 'AUTH_OIDC_USE_PKCE', fallback: AUTH_OIDC_USE_PKCE },
+];
+
+/**
+ * Parse a loose boolean (JSON merge may leave strings; deploy env is always a string).
+ * Returns undefined if the value cannot be interpreted as boolean.
+ */
+function parseLooseBoolean (value: unknown): boolean | undefined {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+        if (value === 0) {
+            return false;
+        }
+        if (value === 1) {
+            return true;
+        }
+        return undefined;
+    }
+    if (typeof value === 'string') {
+        const v = value.trim().toLowerCase();
+        if (['true', '1', 'yes'].includes(v)) {
+            return true;
+        }
+        if (['false', '0', 'no'].includes(v)) {
+            return false;
+        }
+        return undefined;
+    }
+    return undefined;
+}
+
+/** Coerce OIDC boolean flags after config merge; then apply optional CDK deploy-time process.env overrides. */
+function resolveAuthOidcBooleanFields (config: MLSpaceConfig) {
+    for (const { key, fallback } of AUTH_OIDC_BOOLEAN_FIELDS) {
+        const parsed = parseLooseBoolean(config[key]);
+        config[key] = parsed !== undefined ? parsed : fallback;
+    }
+    for (const { key } of AUTH_OIDC_BOOLEAN_FIELDS) {
+        const raw = process.env[key];
+        if (raw === undefined || raw === '') {
+            continue;
+        }
+        const parsed = parseLooseBoolean(raw);
+        if (parsed === undefined) {
+            throw new Error(
+                `Invalid ${key} environment variable: "${raw}". Use true/false, 1/0, or yes/no.`
+            );
+        }
+        config[key] = parsed;
+    }
+}
 
 /**
  * Generates an MLSpaceConfig object containing settings from config.json (if it exists), 
@@ -283,6 +351,9 @@ export function generateConfig (accountId?: string) {
         EXISTING_VPC_NAME: EXISTING_VPC_NAME,
         EXISTING_VPC_ID: EXISTING_VPC_ID,
         EXISTING_VPC_DEFAULT_SECURITY_GROUP: EXISTING_VPC_DEFAULT_SECURITY_GROUP,
+        VPC_IPV4_IPAM_POOL_ID: VPC_IPV4_IPAM_POOL_ID,
+        VPC_IPAM_IPV4_NETMASK_LENGTH: VPC_IPAM_IPV4_NETMASK_LENGTH,
+        VPC_SUBNET_IPV4_CIDR_MASK: VPC_SUBNET_IPV4_CIDR_MASK,
         S3_READER_ROLE_ARN: S3_READER_ROLE_ARN,
         BUCKET_DEPLOYMENT_ROLE_ARN: BUCKET_DEPLOYMENT_ROLE_ARN,
         NOTEBOOK_ROLE_ARN: NOTEBOOK_ROLE_ARN,
@@ -316,6 +387,10 @@ export function generateConfig (accountId?: string) {
             config.EMR_EC2_SSH_KEY = clusterConfig['ec2-key'];
         }
     }
+
+    // String values in config.json (e.g. "false") are truthy in JS and would break Lambda env emission;
+    // CI/CD may set AUTH_OIDC_* on the deploy process — merge those into config here.
+    resolveAuthOidcBooleanFields(config);
 
     validateRequiredProperty(config.AWS_ACCOUNT, 'AWS_ACCOUNT');
     validateRequiredProperty(config.AWS_REGION, 'AWS_REGION');
@@ -370,5 +445,84 @@ export function generateConfig (accountId?: string) {
         validateRequiredProperty(config.KEY_MANAGER_ROLE_NAME, 'KEY_MANAGER_ROLE_NAME');
     }
 
+    validateVpcNetworkingConfig(config);
+
     return config;
+}
+
+function parseConfigInt (value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') {
+        return undefined;
+    }
+    if (typeof value === 'number' && Number.isInteger(value)) {
+        return value;
+    }
+    if (typeof value === 'string' && value.trim() !== '') {
+        const n = parseInt(value.trim(), 10);
+        return Number.isNaN(n) ? undefined : n;
+    }
+    return undefined;
+}
+
+/**
+ * Optional VPC/IPAM settings: defaults preserve legacy behavior; invalid combinations fail fast with clear errors.
+ */
+function validateVpcNetworkingConfig (config: MLSpaceConfig) {
+    const existingVpc =
+        Boolean(config.EXISTING_VPC_ID?.trim()) &&
+        Boolean(config.EXISTING_VPC_NAME?.trim()) &&
+        Boolean(config.EXISTING_VPC_DEFAULT_SECURITY_GROUP?.trim());
+
+    const poolId =
+        typeof config.VPC_IPV4_IPAM_POOL_ID === 'string'
+            ? config.VPC_IPV4_IPAM_POOL_ID.trim()
+            : '';
+
+    if (poolId && existingVpc) {
+        throw new Error(
+            'VPC_IPV4_IPAM_POOL_ID applies only when MLSpace creates a new VPC. ' +
+            'Remove VPC_IPV4_IPAM_POOL_ID (and VPC_IPAM_IPV4_NETMASK_LENGTH) when using an existing VPC.'
+        );
+    }
+
+    const rawSubnet = config.VPC_SUBNET_IPV4_CIDR_MASK as unknown;
+    let subnetMask: number;
+    if (rawSubnet === undefined || rawSubnet === null || rawSubnet === '') {
+        subnetMask = VPC_SUBNET_IPV4_CIDR_MASK;
+    } else {
+        const parsed = parseConfigInt(rawSubnet);
+        if (parsed === undefined || parsed < 16 || parsed > 28) {
+            throw new Error(
+                'VPC_SUBNET_IPV4_CIDR_MASK must be an integer between 16 and 28 (per-tier subnet size).'
+            );
+        }
+        subnetMask = parsed;
+    }
+    config.VPC_SUBNET_IPV4_CIDR_MASK = subnetMask;
+
+    if (!poolId) {
+        const orphanVpcMask = parseConfigInt(config.VPC_IPAM_IPV4_NETMASK_LENGTH as unknown);
+        if (orphanVpcMask !== undefined) {
+            throw new Error(
+                'VPC_IPAM_IPV4_NETMASK_LENGTH is set but VPC_IPV4_IPAM_POOL_ID is empty. ' +
+                'Set both for IPAM, or remove VPC_IPAM_IPV4_NETMASK_LENGTH for the default (non-IPAM) VPC.'
+            );
+        }
+        config.VPC_IPAM_IPV4_NETMASK_LENGTH = undefined;
+        return;
+    }
+
+    const vpcMask = parseConfigInt(config.VPC_IPAM_IPV4_NETMASK_LENGTH as unknown);
+    if (vpcMask === undefined || vpcMask < 16 || vpcMask > 28) {
+        throw new Error(
+            'VPC_IPAM_IPV4_NETMASK_LENGTH is required when VPC_IPV4_IPAM_POOL_ID is set, ' +
+            'and must be an integer between 16 and 28 (VPC allocation size from the pool).'
+        );
+    }
+    if (subnetMask < vpcMask) {
+        throw new Error(
+            'VPC_SUBNET_IPV4_CIDR_MASK must be >= VPC_IPAM_IPV4_NETMASK_LENGTH so each subnet fits in the VPC CIDR.'
+        );
+    }
+    config.VPC_IPAM_IPV4_NETMASK_LENGTH = vpcMask;
 }
