@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Duration } from 'aws-cdk-lib';
-import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { CustomResource, Duration } from 'aws-cdk-lib';
+import { Provider } from 'aws-cdk-lib/custom-resources';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { PolicyStatement, Effect, IRole } from 'aws-cdk-lib/aws-iam';
 import { Code, Function, IFunction, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -121,28 +121,58 @@ export class AuthSecretsConstruct extends Construct {
         // Do not use mlSpaceAppRole here: grantInvoke(role) lives on the IAM stack while this Lambda
         // lives on Core, which already depends on that role — that creates a cross-stack cycle.
 
-        const invokeParams = {
-            FunctionName: versionedInitFn.functionName,
-            Payload: '{}',
-        };
+        // AwsCustomResource Lambda.invoke treats FunctionError as success (HTTP 200). A thin Node
+        // onEvent handler fails the stack when the init Lambda returns an error payload.
+        const invokerCode = `const AWS = require('aws-sdk');
+const lambda = new AWS.Lambda({ region: process.env.AWS_REGION });
+exports.handler = async (event) => {
+  const physicalId = 'mlspace-auth-secrets-versioned-json-v1';
+  if (event.RequestType === 'Delete') {
+    return { PhysicalResourceId: event.PhysicalResourceId || physicalId };
+  }
+  const target = process.env.TARGET_FUNCTION_NAME;
+  const result = await lambda.invoke({
+    FunctionName: target,
+    InvocationType: 'RequestResponse',
+    Payload: Buffer.from('{}'),
+  }).promise();
+  if (result.StatusCode === undefined || result.StatusCode < 200 || result.StatusCode >= 300) {
+    throw new Error('Lambda invoke failed with status ' + result.StatusCode);
+  }
+  if (result.FunctionError) {
+    let detail = '';
+    try {
+      const raw = result.Payload ? Buffer.from(result.Payload).toString() : '';
+      detail = raw ? JSON.parse(raw) : '';
+    } catch (e) {
+      detail = result.Payload ? Buffer.from(result.Payload).toString() : '';
+    }
+    throw new Error(result.FunctionError + ': ' + JSON.stringify(detail));
+  }
+  return { PhysicalResourceId: physicalId };
+};
+`;
 
-        const cr = new AwsCustomResource(this, 'InitAuthSecretsVersionedJson', {
-            onCreate: {
-                service: 'Lambda',
-                action: 'invoke',
-                parameters: invokeParams,
-                physicalResourceId: PhysicalResourceId.of('mlspace-auth-secrets-versioned-json-v1'),
-            },
-            onUpdate: {
-                service: 'Lambda',
-                action: 'invoke',
-                parameters: invokeParams,
-                physicalResourceId: PhysicalResourceId.of('mlspace-auth-secrets-versioned-json-v1'),
-            },
-            policy: AwsCustomResourcePolicy.fromSdkCalls({
-                resources: [versionedInitFn.functionArn],
-            }),
+        const invokerFn = new Function(this, 'AuthSecretsVersionedJsonInitInvoker', {
+            functionName: 'mls-lambda-auth-secrets-versioned-json-init-invoker',
+            runtime: Runtime.NODEJS_20_X,
+            handler: 'index.handler',
+            code: Code.fromInline(invokerCode),
             timeout: Duration.minutes(5),
+            memorySize: 128,
+            environment: {
+                TARGET_FUNCTION_NAME: versionedInitFn.functionName,
+            },
+        });
+
+        versionedInitFn.grantInvoke(invokerFn);
+
+        const provider = new Provider(this, 'InitAuthSecretsVersionedJsonProvider', {
+            onEventHandler: invokerFn,
+        });
+
+        const cr = new CustomResource(this, 'InitAuthSecretsVersionedJson', {
+            serviceToken: provider.serviceToken,
         });
         cr.node.addDependency(versionedInitFn);
         cr.node.addDependency(this.stateEncryptionSecret);

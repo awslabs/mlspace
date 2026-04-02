@@ -23,6 +23,7 @@ from datetime import datetime
 from unittest import mock
 
 import pytest
+from botocore.exceptions import ClientError
 
 from ml_space_lambda.auth.models.key_models import (
     KeyRotationResult,
@@ -86,6 +87,19 @@ class TestInitializeStateEncryptionKey:
 
         assert result["success"] is True
         assert result.get("skipped") is True
+        mock_secrets_client.update_secret.assert_not_called()
+
+    def test_initialize_state_key_propagates_get_secret_client_error(self, mock_secrets_client):
+        """Throttling or permission errors from GetSecretValue must not be treated as 'not versioned'."""
+        secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-state-key"
+        mock_secrets_client.get_secret_value.side_effect = ClientError(
+            {"Error": {"Code": "ThrottlingException", "Message": "Slow down"}},
+            "GetSecretValue",
+        )
+
+        with pytest.raises(ClientError):
+            initialize_state_encryption_key(secret_arn)
+
         mock_secrets_client.update_secret.assert_not_called()
 
     def test_initialize_state_key_failure(self, mock_secrets_client):

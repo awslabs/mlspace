@@ -457,9 +457,13 @@ function parseConfigInt (value: unknown): number | undefined {
     if (typeof value === 'number' && Number.isInteger(value)) {
         return value;
     }
-    if (typeof value === 'string' && value.trim() !== '') {
-        const n = parseInt(value.trim(), 10);
-        return Number.isNaN(n) ? undefined : n;
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed === '' || !/^\d+$/.test(trimmed)) {
+            return undefined;
+        }
+        const n = Number(trimmed);
+        return Number.isInteger(n) && Number.isSafeInteger(n) ? n : undefined;
     }
     return undefined;
 }
@@ -468,10 +472,29 @@ function parseConfigInt (value: unknown): number | undefined {
  * Optional VPC/IPAM settings: defaults preserve legacy behavior; invalid combinations fail fast with clear errors.
  */
 function validateVpcNetworkingConfig (config: MLSpaceConfig) {
-    const existingVpc =
-        Boolean(config.EXISTING_VPC_ID?.trim()) &&
-        Boolean(config.EXISTING_VPC_NAME?.trim()) &&
-        Boolean(config.EXISTING_VPC_DEFAULT_SECURITY_GROUP?.trim());
+    if (typeof config.EXISTING_VPC_ID === 'string') {
+        config.EXISTING_VPC_ID = config.EXISTING_VPC_ID.trim();
+    }
+    if (typeof config.EXISTING_VPC_NAME === 'string') {
+        config.EXISTING_VPC_NAME = config.EXISTING_VPC_NAME.trim();
+    }
+    if (typeof config.EXISTING_VPC_DEFAULT_SECURITY_GROUP === 'string') {
+        config.EXISTING_VPC_DEFAULT_SECURITY_GROUP = config.EXISTING_VPC_DEFAULT_SECURITY_GROUP.trim();
+    }
+
+    const hasExistingVpcId = Boolean(config.EXISTING_VPC_ID);
+    const hasExistingVpcName = Boolean(config.EXISTING_VPC_NAME);
+    const hasExistingVpcDefaultSecurityGroup = Boolean(config.EXISTING_VPC_DEFAULT_SECURITY_GROUP);
+    const existingVpcFieldCount =
+        Number(hasExistingVpcId) + Number(hasExistingVpcName) + Number(hasExistingVpcDefaultSecurityGroup);
+    if (existingVpcFieldCount > 0 && existingVpcFieldCount < 3) {
+        throw new Error(
+            'EXISTING_VPC_ID, EXISTING_VPC_NAME, and EXISTING_VPC_DEFAULT_SECURITY_GROUP must all be set to ' +
+                'non-empty values when using an existing VPC, or leave all three unset for a new VPC.'
+        );
+    }
+
+    const existingVpc = hasExistingVpcId && hasExistingVpcName && hasExistingVpcDefaultSecurityGroup;
 
     const poolId =
         typeof config.VPC_IPV4_IPAM_POOL_ID === 'string'
