@@ -457,7 +457,7 @@ export function TrainingJobDetail () {
                                             },
                                         },
                                         {
-                                            header: 'Log pattern',
+                                            header: 'Regex',
                                             cell (item) {
                                                 return item.Regex;
                                             },
