@@ -131,6 +131,8 @@ def initialize_state_encryption_key(secret_arn: str) -> Dict:
             "created_date": key_data.created_date.isoformat(),
         }
 
+    except ClientError:
+        raise
     except Exception as e:
         logger.error(f"State key initialization failed: {e}")
         raise Exception(f"State key initialization failed: {e}")
@@ -181,6 +183,8 @@ def initialize_token_encryption_key(secret_arn: str) -> Dict:
             "created_date": key_data.created_date.isoformat(),
         }
 
+    except ClientError:
+        raise
     except Exception as e:
         logger.error(f"Token key initialization failed: {e}")
         raise Exception(f"Token key initialization failed: {e}")
