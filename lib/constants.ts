@@ -62,6 +62,23 @@ export const NOTIFICATION_DISTRO = '';
 export const EXISTING_VPC_NAME = '';
 export const EXISTING_VPC_ID = '';
 export const EXISTING_VPC_DEFAULT_SECURITY_GROUP = '';
+
+/**
+ * New-VPC only: optional IPv4 IPAM pool ID (e.g. ipam-pool-0abc123). When set, the VPC primary
+ * IPv4 CIDR is allocated from this pool. Leave empty to keep the CDK default CIDR behavior (no IPAM).
+ * Requires VPC_IPAM_IPV4_NETMASK_LENGTH. Ignored when deploying into an existing VPC.
+ */
+export const VPC_IPV4_IPAM_POOL_ID = '';
+/**
+ * New-VPC + IPAM: CIDR prefix length for the VPC allocation from the pool (e.g. 16 for /16). Required
+ * when VPC_IPV4_IPAM_POOL_ID is set.
+ */
+export const VPC_IPAM_IPV4_NETMASK_LENGTH: number | undefined = undefined;
+/**
+ * New-VPC: IPv4 CIDR mask for each public and private subnet tier (e.g. 23 for /23). Valid range 16–28.
+ * Default preserves the historical MLSpace layout.
+ */
+export const VPC_SUBNET_IPV4_CIDR_MASK = 23;
 export const EXISTING_KMS_MASTER_KEY_ARN = '';
 export const KMS_INSTANCE_CONDITIONS_POLICY_ARN = '';
 export const S3_READER_ROLE_ARN = '';

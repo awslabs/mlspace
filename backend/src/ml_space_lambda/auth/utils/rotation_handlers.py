@@ -218,6 +218,22 @@ def token_key_secrets_manager_rotation_handler(event: Dict[str, Any], context: A
         raise
 
 
+def deploy_time_auth_secrets_init(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """
+    Deploy-time hook: ensure state and token secrets use VersionedKeyData JSON (not plaintext).
+
+    Secret names come from environment variables set by CDK.
+    """
+    state_name = os.environ.get("AUTH_STATE_SECRET_NAME", "").strip()
+    token_name = os.environ.get("AUTH_TOKEN_SECRET_NAME", "").strip()
+    results: Dict[str, Any] = {}
+    if state_name:
+        results["state"] = initialize_secret_handler({"secret_name": state_name, "key_type": KeyType.STATE}, context)
+    if token_name:
+        results["token"] = initialize_secret_handler({"secret_name": token_name, "key_type": KeyType.TOKEN}, context)
+    return results
+
+
 def initialize_secret_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
     Handler for initializing secrets with proper key structures.
@@ -237,6 +253,12 @@ def initialize_secret_handler(event: Dict[str, Any], context: Any) -> Dict[str, 
 
         if not secret_name:
             raise ValueError("secret_name is required")
+
+        if isinstance(key_type, str):
+            try:
+                key_type = KeyType(key_type)
+            except ValueError as e:
+                raise ValueError(f"Unknown key_type: {key_type}") from e
 
         if key_type == KeyType.STATE:
             result = initialize_state_encryption_key(secret_name)

@@ -27,6 +27,8 @@ import os
 from typing import Dict, Optional
 
 import boto3
+from botocore.exceptions import ClientError
+from pydantic import ValidationError
 
 from ml_space_lambda.auth.models.key_models import (
     KeyRotationResult,
@@ -56,6 +58,34 @@ def _get_default_keep_versions() -> int:
         return 3
 
 
+def _secret_already_versioned_for_type(secret_id: str, expected: KeyType, secrets_client) -> bool:
+    """
+    Return True if the secret string parses as VersionedKeyData with matching key_type and keys.
+
+    AWS API and permission errors propagate so deploy does not overwrite a valid secret after a
+    transient failure. Only empty, non-JSON, or structurally invalid payloads are treated as
+    not-yet-versioned.
+    """
+    try:
+        response = secrets_client.get_secret_value(SecretId=secret_id)
+    except ClientError:
+        raise
+
+    raw = response.get("SecretString") or ""
+    if not raw.strip():
+        return False
+    try:
+        data = VersionedKeyData.from_secrets_manager_format(raw)
+    except (json.JSONDecodeError, ValidationError, ValueError, TypeError) as e:
+        logger.info(
+            "Secret %s not in expected versioned JSON format; will initialize if needed: %s",
+            secret_id,
+            e,
+        )
+        return False
+    return data.key_type == expected and bool(data.keys)
+
+
 def initialize_state_encryption_key(secret_arn: str) -> Dict:
     """
     Initialize state encryption key secret with versioned structure.
@@ -71,6 +101,14 @@ def initialize_state_encryption_key(secret_arn: str) -> Dict:
     """
     try:
         secrets_client = boto3.client("secretsmanager")
+
+        if _secret_already_versioned_for_type(secret_arn, KeyType.STATE, secrets_client):
+            logger.info("State encryption secret already in versioned JSON format; skipping initialization.")
+            return {
+                "success": True,
+                "skipped": True,
+                "key_type": KeyType.STATE,
+            }
 
         # Generate initial Fernet key
         initial_key = create_state_encryption_key()
@@ -93,6 +131,8 @@ def initialize_state_encryption_key(secret_arn: str) -> Dict:
             "created_date": key_data.created_date.isoformat(),
         }
 
+    except ClientError:
+        raise
     except Exception as e:
         logger.error(f"State key initialization failed: {e}")
         raise Exception(f"State key initialization failed: {e}")
@@ -113,6 +153,14 @@ def initialize_token_encryption_key(secret_arn: str) -> Dict:
     """
     try:
         secrets_client = boto3.client("secretsmanager")
+
+        if _secret_already_versioned_for_type(secret_arn, KeyType.TOKEN, secrets_client):
+            logger.info("Token encryption secret already in versioned JSON format; skipping initialization.")
+            return {
+                "success": True,
+                "skipped": True,
+                "key_type": KeyType.TOKEN,
+            }
 
         # Generate initial PASETO key
         initial_key = create_encryption_key()
@@ -135,6 +183,8 @@ def initialize_token_encryption_key(secret_arn: str) -> Dict:
             "created_date": key_data.created_date.isoformat(),
         }
 
+    except ClientError:
+        raise
     except Exception as e:
         logger.error(f"Token key initialization failed: {e}")
         raise Exception(f"Token key initialization failed: {e}")

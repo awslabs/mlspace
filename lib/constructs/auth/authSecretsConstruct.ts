@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Duration } from 'aws-cdk-lib';
+import { CustomResource, Duration } from 'aws-cdk-lib';
+import { Provider } from 'aws-cdk-lib/custom-resources';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { PolicyStatement, Effect, IRole } from 'aws-cdk-lib/aws-iam';
 import { Code, Function, IFunction, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -73,16 +74,109 @@ export class AuthSecretsConstruct extends Construct {
                 configured_at: new Date().toISOString()
             }))
         });
-        
+
+        this.createVersionedSecretInitResource(props);
+
         // Set up state key rotation if enabled
         if (props.enableStateKeyRotation) {
             this.setupStateKeyRotation(props);
         }
-        
+
         // Set up token key rotation if enabled
         if (props.enableTokenKeyRotation) {
             this.setupTokenKeyRotation(props);
         }
+
+        // Do not addDependency(rotationSchedule, versionedSecretInit): that implies
+        // rotationSchedule -> InitCustomResource -> Secret, while Secret already owns the
+        // rotation schedule, which CloudFormation resolves as a circular dependency.
+    }
+
+    /**
+     * Ensures state/token secrets hold VersionedKeyData JSON before rotation runs.
+     */
+    private createVersionedSecretInitResource (props: AuthSecretsConstructProps): void {
+        const versionedInitFn = new Function(this, 'AuthSecretsVersionedJsonInit', {
+            functionName: 'mls-lambda-auth-secrets-versioned-json-init',
+            runtime: props.config.LAMBDA_RUNTIME,
+            architecture: props.config.LAMBDA_ARCHITECTURE,
+            code: Code.fromAsset(props.lambdaSourcePath),
+            handler: 'ml_space_lambda.auth.utils.rotation_handlers.deploy_time_auth_secrets_init',
+            timeout: Duration.minutes(2),
+            memorySize: 256,
+            layers: props.layers,
+            environment: {
+                AUTH_STATE_SECRET_NAME: props.config.AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME,
+                AUTH_TOKEN_SECRET_NAME: props.config.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,
+            },
+            vpc: props.vpc,
+            securityGroups: props.securityGroups,
+        });
+
+        this.stateEncryptionSecret.grantRead(versionedInitFn);
+        this.stateEncryptionSecret.grantWrite(versionedInitFn);
+        this.tokenEncryptionSecret.grantRead(versionedInitFn);
+        this.tokenEncryptionSecret.grantWrite(versionedInitFn);
+
+        // Do not use mlSpaceAppRole here: grantInvoke(role) lives on the IAM stack while this Lambda
+        // lives on Core, which already depends on that role — that creates a cross-stack cycle.
+
+        // AwsCustomResource Lambda.invoke treats FunctionError as success (HTTP 200). A thin Node
+        // onEvent handler fails the stack when the init Lambda returns an error payload.
+        const invokerCode = `const AWS = require('aws-sdk');
+const lambda = new AWS.Lambda({ region: process.env.AWS_REGION });
+exports.handler = async (event) => {
+  const physicalId = 'mlspace-auth-secrets-versioned-json-v1';
+  if (event.RequestType === 'Delete') {
+    return { PhysicalResourceId: event.PhysicalResourceId || physicalId };
+  }
+  const target = process.env.TARGET_FUNCTION_NAME;
+  const result = await lambda.invoke({
+    FunctionName: target,
+    InvocationType: 'RequestResponse',
+    Payload: Buffer.from('{}'),
+  }).promise();
+  if (result.StatusCode === undefined || result.StatusCode < 200 || result.StatusCode >= 300) {
+    throw new Error('Lambda invoke failed with status ' + result.StatusCode);
+  }
+  if (result.FunctionError) {
+    let detail = '';
+    try {
+      const raw = result.Payload ? Buffer.from(result.Payload).toString() : '';
+      detail = raw ? JSON.parse(raw) : '';
+    } catch (e) {
+      detail = result.Payload ? Buffer.from(result.Payload).toString() : '';
+    }
+    throw new Error(result.FunctionError + ': ' + JSON.stringify(detail));
+  }
+  return { PhysicalResourceId: physicalId };
+};
+`;
+
+        const invokerFn = new Function(this, 'AuthSecretsVersionedJsonInitInvoker', {
+            functionName: 'mls-lambda-auth-secrets-versioned-json-init-invoker',
+            runtime: Runtime.NODEJS_20_X,
+            handler: 'index.handler',
+            code: Code.fromInline(invokerCode),
+            timeout: Duration.minutes(5),
+            memorySize: 128,
+            environment: {
+                TARGET_FUNCTION_NAME: versionedInitFn.functionName,
+            },
+        });
+
+        versionedInitFn.grantInvoke(invokerFn);
+
+        const provider = new Provider(this, 'InitAuthSecretsVersionedJsonProvider', {
+            onEventHandler: invokerFn,
+        });
+
+        const cr = new CustomResource(this, 'InitAuthSecretsVersionedJson', {
+            serviceToken: provider.serviceToken,
+        });
+        cr.node.addDependency(versionedInitFn);
+        cr.node.addDependency(this.stateEncryptionSecret);
+        cr.node.addDependency(this.tokenEncryptionSecret);
     }
     
     private setupStateKeyRotation (props: AuthSecretsConstructProps) {

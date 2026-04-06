@@ -56,6 +56,7 @@ export type ITrainingJob = {
     TrainingTimeInSeconds?: number;
     BillableTimeInSeconds?: number;
     ProfilingStatus?: string;
+    FinalMetricDataList?: { MetricName: string; Value: number; Timestamp: string | number }[];
     ModelArtifacts?: {
         S3ModelArtifacts: string;
     };

@@ -17,6 +17,7 @@
 import { Stack } from 'aws-cdk-lib';
 import {
     GatewayVpcEndpointAwsService,
+    IpAddresses,
     ISecurityGroup,
     IVpc,
     InterfaceVpcEndpointAwsService,
@@ -49,24 +50,40 @@ export class VPCConstruct extends Construct {
             });
             this.vpcSecurityGroupId = props.mlspaceConfig.EXISTING_VPC_DEFAULT_SECURITY_GROUP;
         } else {
+            const subnetCidrMask = props.mlspaceConfig.VPC_SUBNET_IPV4_CIDR_MASK;
+            const subnetConfiguration = [
+                {
+                    cidrMask: subnetCidrMask,
+                    name: 'MLSpace-Public',
+                    subnetType: SubnetType.PUBLIC,
+                },
+                {
+                    cidrMask: subnetCidrMask,
+                    name: 'MLSpace-Private',
+                    subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+                },
+            ];
+
+            const poolId = props.mlspaceConfig.VPC_IPV4_IPAM_POOL_ID?.trim();
+            const vpcMask = props.mlspaceConfig.VPC_IPAM_IPV4_NETMASK_LENGTH;
+
+            /* eslint-disable spellcheck/spell-checker -- AWS CDK IpAddresses.awsIpamAllocation property names */
             const mlSpaceVPC = new Vpc(scope, 'MLSpace-VPC', {
                 enableDnsHostnames: true,
                 enableDnsSupport: true,
                 availabilityZones: isIsoB ? ['us-isob-east-1b', 'us-isob-east-1c'] : undefined,
                 restrictDefaultSecurityGroup: false,
-                subnetConfiguration: [
-                    {
-                        cidrMask: 23,
-                        name: 'MLSpace-Public',
-                        subnetType: SubnetType.PUBLIC,
-                    },
-                    {
-                        cidrMask: 23,
-                        name: 'MLSpace-Private',
-                        subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-                    },
-                ],
+                ...(poolId && vpcMask !== undefined
+                    ? {
+                        ipAddresses: IpAddresses.awsIpamAllocation({
+                            ipv4IpamPoolId: poolId,
+                            ipv4NetmaskLength: vpcMask,
+                        }),
+                    }
+                    : {}),
+                subnetConfiguration,
             });
+            /* eslint-enable spellcheck/spell-checker */
 
             this.vpc = mlSpaceVPC;
             this.vpcSecurityGroupId = mlSpaceVPC.vpcDefaultSecurityGroup;
