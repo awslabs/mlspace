@@ -16,6 +16,8 @@ npm-debug.log*
 .attach_pid*
 cdk.context.json
 .idea
+.cursor
+memory-bank
 
 # Cypress Tests
 cypress/cypress/screenshots/

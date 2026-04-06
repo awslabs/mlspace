@@ -142,7 +142,6 @@ def describe(event, context):
 
     # Emptying arrays with unnecessary details to handle response
     response["SecondaryStatusTransitions"] = []
-    response["FinalMetricDataList"] = []
 
     return response
 
