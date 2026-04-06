@@ -14,11 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import * as path from 'path';
 import { CustomResource, Duration } from 'aws-cdk-lib';
 import { Provider } from 'aws-cdk-lib/custom-resources';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { PolicyStatement, Effect, IRole } from 'aws-cdk-lib/aws-iam';
 import { Code, Function, IFunction, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Secret, RotationSchedule } from 'aws-cdk-lib/aws-secretsmanager';
 import { SecretValue } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
@@ -123,45 +125,20 @@ export class AuthSecretsConstruct extends Construct {
 
         // AwsCustomResource Lambda.invoke treats FunctionError as success (HTTP 200). A thin Node
         // onEvent handler fails the stack when the init Lambda returns an error payload.
-        const invokerCode = `const AWS = require('aws-sdk');
-const lambda = new AWS.Lambda({ region: process.env.AWS_REGION });
-exports.handler = async (event) => {
-  const physicalId = 'mlspace-auth-secrets-versioned-json-v1';
-  if (event.RequestType === 'Delete') {
-    return { PhysicalResourceId: event.PhysicalResourceId || physicalId };
-  }
-  const target = process.env.TARGET_FUNCTION_NAME;
-  const result = await lambda.invoke({
-    FunctionName: target,
-    InvocationType: 'RequestResponse',
-    Payload: Buffer.from('{}'),
-  }).promise();
-  if (result.StatusCode === undefined || result.StatusCode < 200 || result.StatusCode >= 300) {
-    throw new Error('Lambda invoke failed with status ' + result.StatusCode);
-  }
-  if (result.FunctionError) {
-    let detail = '';
-    try {
-      const raw = result.Payload ? Buffer.from(result.Payload).toString() : '';
-      detail = raw ? JSON.parse(raw) : '';
-    } catch (e) {
-      detail = result.Payload ? Buffer.from(result.Payload).toString() : '';
-    }
-    throw new Error(result.FunctionError + ': ' + JSON.stringify(detail));
-  }
-  return { PhysicalResourceId: physicalId };
-};
-`;
-
-        const invokerFn = new Function(this, 'AuthSecretsVersionedJsonInitInvoker', {
+        // Node.js 18+ runtimes do not ship aws-sdk v2; bundle @aws-sdk/client-lambda via NodejsFunction.
+        const invokerFn = new NodejsFunction(this, 'AuthSecretsVersionedJsonInitInvoker', {
             functionName: 'mls-lambda-auth-secrets-versioned-json-init-invoker',
             runtime: Runtime.NODEJS_20_X,
-            handler: 'index.handler',
-            code: Code.fromInline(invokerCode),
+            entry: path.join(process.cwd(), 'lib/lambdas/auth-secrets-init-invoker/index.ts'),
+            handler: 'handler',
             timeout: Duration.minutes(5),
             memorySize: 128,
             environment: {
                 TARGET_FUNCTION_NAME: versionedInitFn.functionName,
+            },
+            bundling: {
+                minify: true,
+                sourceMap: false,
             },
         });
 
