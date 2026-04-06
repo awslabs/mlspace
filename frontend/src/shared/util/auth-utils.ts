@@ -24,7 +24,7 @@ import { useAuth } from '../auth/hooks';
 export const  useUsername = (): string => {
     const auth = useAuth();
     
-    const username = auth.user?.displayName;
+    const username = auth.user?.id;
     if (!username) {
         throw new Error('No username available.');
     }
