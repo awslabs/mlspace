@@ -1,28 +1,29 @@
-# v1.7.1  
+# v1.7.2
 
-This minor release addresses initial v1.7 customer feedback. These updates make deployments smoother and more secure. 
+This release extends Amazon SageMaker Ground Truth labeling workflows, improves how training job metrics appear in the console, and delivers several reliability fixes raised through customer feedback.
 
-## Changes  
+## Changes
 
-* **CDK Synthesizer Customization** — The synthesizer and its settings can now be configured. This flexibility gives teams greater control over infrastructure generation.  
-* **Dependency Updates** — Third‑party libraries were upgraded to their latest versions to follow security best practices. Updated dependencies reduce exposure to known vulnerabilities and align with industry security standards.  
-* **Ease Deployments**
-    * Removed deprecated Lambda layer. This reduces package size and eliminates potential runtime conflicts.   
-    * Ensured `ADCLambdaCABundleAspect` is added to the Core stack for isolated regions. Adding the CABundle aspect ensures proper certificate handling in isolated regions.  
+* **Ground Truth labeling** 
+  * Added support for bounding box verification and semantic segmentation verification jobs, enabling users to verify previously completed labeling jobs.
+  * Added support for custom task types via the Custom category, allowing users to provide their own HTML templates for more tailored Ground Truth job configurations.
+  * Labeling job details now include a direct link to the Workforce Labeling Portal, giving labelers quick access to the task UI.
+* **Workforce labeling portal** — Ground Truth labeling job details include a link to open the **Workforce labeling portal** so labelers can reach the task UI quickly.
+* **Training job metrics** — The training job detail page shows **final metric values** (from SageMaker output) in a dedicated table, separate from algorithm **metric definitions** (log regex patterns), with clearer empty and in-progress messaging.
 
-## Bug Fixes  
+## Bug Fixes
 
-* **Respect `AUTH_OIDC_VERIFY_SSL`** — Communication with the IdP now honors this configuration when SSL verification is disabled.  Honoring the SSL verification flag prevents unexpected connection failures for customers who need to bypass verification in controlled environments.  
+* **Ground Truth private datasets** — The S3 put-notification handler for labeling datasets now infers the creating user from the object key path instead of defaulting to a placeholder user, correcting dataset ownership metadata for private datasets.
+* **Dataset scope and S3 URIs** — Fixed S3 URI construction when dataset scope affects naming.
+* **Authentication stack and CDK** — Resolved deploy-time setup for versioned authentication secrets (including a dedicated invoker) and related CDK synthesis issues so stacks deploy reliably.
 
-## Documentation  
+## Documentation
 
-* Updated custom domain documentation
-* Updated CDK synthesizer documentation
+* User guide updates for Ground Truth labeling jobs, including **Custom tasks** and short-lived access for worker instruction images referenced by S3 URIs.
 
+## Acknowledgements
 
+* @Ernest-Gray
+* @estohlmann
 
-## Acknowledgements  
-
-* @dustins  
-
-**Full Changelog**: [v1.7.0…v1.7.1](https://github.com/awslabs/mlspace/compare/v1.7.0...v1.7.1)
+**Full Changelog**: [v1.7.1…v1.7.2](https://github.com/awslabs/mlspace/compare/v1.7.1...v1.7.2)

@@ -23,6 +23,7 @@ from datetime import datetime
 from unittest import mock
 
 import pytest
+from botocore.exceptions import ClientError
 
 from ml_space_lambda.auth.models.key_models import (
     KeyRotationResult,
@@ -62,6 +63,7 @@ class TestInitializeStateEncryptionKey:
     def test_initialize_state_key_success(self, mock_secrets_client):
         """Test successful state key initialization."""
         secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-state-key"
+        mock_secrets_client.get_secret_value.return_value = {"SecretString": ""}
 
         result = initialize_state_encryption_key(secret_arn)
 
@@ -75,9 +77,35 @@ class TestInitializeStateEncryptionKey:
         assert call_args[1]["SecretId"] == secret_arn
         assert "SecretString" in call_args[1]
 
+    def test_initialize_state_key_skips_when_already_versioned(self, mock_secrets_client):
+        """Plaintext or legacy secrets are replaced; valid versioned JSON is left unchanged."""
+        secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-state-key"
+        existing = VersionedKeyData.create_initial(encoded_key="existing", key_type=KeyType.STATE)
+        mock_secrets_client.get_secret_value.return_value = {"SecretString": existing.to_secrets_manager_format()}
+
+        result = initialize_state_encryption_key(secret_arn)
+
+        assert result["success"] is True
+        assert result.get("skipped") is True
+        mock_secrets_client.update_secret.assert_not_called()
+
+    def test_initialize_state_key_propagates_get_secret_client_error(self, mock_secrets_client):
+        """Throttling or permission errors from GetSecretValue must not be treated as 'not versioned'."""
+        secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-state-key"
+        mock_secrets_client.get_secret_value.side_effect = ClientError(
+            {"Error": {"Code": "ThrottlingException", "Message": "Slow down"}},
+            "GetSecretValue",
+        )
+
+        with pytest.raises(ClientError):
+            initialize_state_encryption_key(secret_arn)
+
+        mock_secrets_client.update_secret.assert_not_called()
+
     def test_initialize_state_key_failure(self, mock_secrets_client):
         """Test state key initialization failure."""
         secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-state-key"
+        mock_secrets_client.get_secret_value.return_value = {"SecretString": ""}
         mock_secrets_client.update_secret.side_effect = Exception("AWS error")
 
         with pytest.raises(Exception, match="State key initialization failed"):
@@ -90,6 +118,7 @@ class TestInitializeTokenEncryptionKey:
     def test_initialize_token_key_success(self, mock_secrets_client):
         """Test successful token key initialization."""
         secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-token-key"
+        mock_secrets_client.get_secret_value.return_value = {"SecretString": ""}
 
         result = initialize_token_encryption_key(secret_arn)
 
@@ -100,9 +129,21 @@ class TestInitializeTokenEncryptionKey:
 
         mock_secrets_client.update_secret.assert_called_once()
 
+    def test_initialize_token_key_skips_when_already_versioned(self, mock_secrets_client):
+        secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-token-key"
+        existing = VersionedKeyData.create_initial(encoded_key="existing", key_type=KeyType.TOKEN)
+        mock_secrets_client.get_secret_value.return_value = {"SecretString": existing.to_secrets_manager_format()}
+
+        result = initialize_token_encryption_key(secret_arn)
+
+        assert result["success"] is True
+        assert result.get("skipped") is True
+        mock_secrets_client.update_secret.assert_not_called()
+
     def test_initialize_token_key_failure(self, mock_secrets_client):
         """Test token key initialization failure."""
         secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-token-key"
+        mock_secrets_client.get_secret_value.return_value = {"SecretString": ""}
         mock_secrets_client.update_secret.side_effect = Exception("AWS error")
 
         with pytest.raises(Exception, match="Token key initialization failed"):

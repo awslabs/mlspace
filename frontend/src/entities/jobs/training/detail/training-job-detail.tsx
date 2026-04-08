@@ -370,35 +370,102 @@ export function TrainingJobDetail () {
                     </Condition>
 
                     <Container header={<Header>Metrics</Header>}>
-                        <Table
-                            ariaLabels={{
-                                tableLabel: 'Metrics table',
-                            }}
-                            variant='embedded'
-                            items={
-                                trainingJob.AlgorithmSpecification?.MetricDefinitions?.map(
-                                    (value) => {
-                                        const { Name, Regex } = value;
-
-                                        return { Name, Regex };
+                        <SpaceBetween direction='vertical' size='l'>
+                            {trainingJob.FinalMetricDataList &&
+                            trainingJob.FinalMetricDataList.length > 0 ? (
+                                    <Table
+                                        ariaLabels={{
+                                            tableLabel: 'Final training metrics',
+                                        }}
+                                        variant='embedded'
+                                        header={<Header variant='h3'>Final metric values</Header>}
+                                        trackBy='MetricName'
+                                        items={trainingJob.FinalMetricDataList}
+                                        columnDefinitions={[
+                                            {
+                                                header: 'Metric',
+                                                cell (item) {
+                                                    return (
+                                                        <Box color='text-status-inactive'>
+                                                            {item.MetricName}
+                                                        </Box>
+                                                    );
+                                                },
+                                            },
+                                            {
+                                                header: 'Value',
+                                                cell (item) {
+                                                    return formatDisplayNumber(item.Value);
+                                                },
+                                            },
+                                            {
+                                                header: 'Timestamp',
+                                                cell (item) {
+                                                    const ts = item.Timestamp;
+                                                    if (ts === undefined || ts === null) {
+                                                        return '-';
+                                                    }
+                                                    const iso =
+                                                        typeof ts === 'number'
+                                                            ? new Date(
+                                                                ts > 1e12 ? ts : ts * 1000
+                                                            ).toISOString()
+                                                            : String(ts);
+                                                    return formatDate(iso);
+                                                },
+                                            },
+                                        ]}
+                                    />
+                                ) : (
+                                    <Box color='text-status-inactive'>
+                                        {trainingJob.TrainingJobStatus === JobStatus.InProgress
+                                            ? 'Final metric values will appear here when training completes.'
+                                            : 'No final metrics were reported for this job.'}
+                                    </Box>
+                                )}
+                            {trainingJob.AlgorithmSpecification?.MetricDefinitions &&
+                                trainingJob.AlgorithmSpecification.MetricDefinitions.length >
+                                    0 && (
+                                <Table
+                                    ariaLabels={{
+                                        tableLabel: 'Metric definition patterns',
+                                    }}
+                                    variant='embedded'
+                                    header={
+                                        <Header variant='h3'>
+                                            Metric definitions (log patterns)
+                                        </Header>
                                     }
-                                ) || []
-                            }
-                            columnDefinitions={[
-                                {
-                                    header: 'Key',
-                                    cell (item) {
-                                        return <Box color='text-status-inactive'>{item.Name}</Box>;
-                                    },
-                                },
-                                {
-                                    header: 'Value',
-                                    cell (item) {
-                                        return item.Regex;
-                                    },
-                                },
-                            ]}
-                        />
+                                    trackBy='Name'
+                                    items={
+                                        trainingJob.AlgorithmSpecification.MetricDefinitions.map(
+                                            (value) => ({
+                                                Name: value.Name,
+                                                Regex: value.Regex,
+                                            })
+                                        )
+                                    }
+                                    columnDefinitions={[
+                                        {
+                                            header: 'Name',
+                                            cell (item) {
+                                                return (
+                                                    <Box color='text-status-inactive'>
+                                                        {item.Name}
+                                                    </Box>
+                                                );
+                                            },
+                                        },
+                                        {
+                                            header: 'Regex',
+                                            cell (item) {
+                                                return item.Regex;
+                                            },
+                                        },
+                                    ]}
+                                />
+                            )}
+                        </SpaceBetween>
                     </Container>
 
                     <Container header={<Header>Output data configuration</Header>}>

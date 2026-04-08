@@ -33,6 +33,7 @@ export type ILabelingJob = {
     LabelingJobName: string;
     LabelingJobArn: string;
     LabelAttributeName: string;
+    InputLabelAttributeName?: string;
     InputConfig: {
         DataSource: {
             S3DataSource: {
@@ -104,9 +105,15 @@ export type ILabelingJobCreate = Omit<
 export enum LabelingJobCategory {
     Image = 'Image',
     Text = 'Text',
+    Custom = 'Custom'
 }
 
 export type ILabelingJobWorkteam = {
     WorkteamArn: string;
     WorkteamName: string;
+};
+
+export type ILabelingCustomJobCreate = {
+    CustomTaskTemplate?: string;
+    CustomTaskTitle?: string;
 };

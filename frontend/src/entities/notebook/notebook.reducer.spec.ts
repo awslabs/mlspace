@@ -16,7 +16,7 @@
 
 import mockAxios from 'jest-mock-axios';
 import configureStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
+import { thunk } from 'redux-thunk';
 import { INotebook, defaultNotebook } from '../../shared/model/notebook.model';
 import { NotebookResourceMetadata, ResourceType } from '../../shared/model/resource-metadata.model';
 import reducer, {

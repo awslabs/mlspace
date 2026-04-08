@@ -42,12 +42,11 @@ mock_response = {
 def test_describe_training_job_success(mock_sagemaker):
     mock_sagemaker.describe_training_job.return_value = mock_response
 
-    mock_response["SecondaryStatusTransitions"] = []
-    mock_response["FinalMetricDataList"] = []
+    result = lambda_handler(mock_event, mock_context)
 
-    expected_response = generate_html_response(200, mock_response)
-
-    assert lambda_handler(mock_event, mock_context) == expected_response
+    assert mock_response["SecondaryStatusTransitions"] == []
+    assert mock_response["FinalMetricDataList"] == [{"MetricName": "string", "Timestamp": 1, "Value": 1}]
+    assert result == generate_html_response(200, mock_response)
 
     mock_sagemaker.describe_training_job.assert_called_with(TrainingJobName="example_job_name")
 

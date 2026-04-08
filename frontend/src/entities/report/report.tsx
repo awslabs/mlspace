@@ -257,7 +257,7 @@ export function Report () {
                             try {
                                 const result = await downloadReport(report[0].Name!);
                                 setDownloadReportUrl(result);
-                            } catch (err) {
+                            } catch {
                                 notificationService.generateNotification(
                                     `Error generating presigned URL for ${report[0].Name}`,
                                     'error'

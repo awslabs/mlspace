@@ -45,7 +45,7 @@ const generateDescription = () => {
         be available for use within notebooks. IAM permissions  that control access to these services within 
         the MLSpace user interface and Jupyter Notebooks will automatically update.  Deactivating services will 
         suspend all active corresponding jobs and instances associated with the service.` : 
-        `. Due to dynamic roles not being in use, deactivating a service will not limit the ability of users to
+            `. Due to dynamic roles not being in use, deactivating a service will not limit the ability of users to
         leverage that service in notebooks.`}
     `;
 };

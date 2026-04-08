@@ -171,7 +171,7 @@ export const formatDate = (dateString?: string) => {
 
     try {
         return dateToDisplayString(new Date(Date.parse(dateString)));
-    } catch (error) {
+    } catch {
         return dateString;
     }
 };

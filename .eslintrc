@@ -11,8 +11,7 @@
     ],
     "extends": [
         "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
-        "plugin:react-hooks/recommended"
+        "plugin:@typescript-eslint/recommended"
     ],
     "rules": {
         "eqeqeq": [
@@ -53,9 +52,6 @@
         ],
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-explicit-any": "off",
-        "react-hooks/rules-of-hooks": "error",
-        "react-hooks/exhaustive-deps": "error",
-        "react/prop-types": "off",
         "spellcheck/spell-checker": [
             "error",
             {
@@ -216,6 +212,7 @@
                     "Inservice",
                     "instanceof",
                     "interactable",
+                    "invoker",
                     "ipinsights",
                     "iss",
                     "iter",
@@ -250,6 +247,7 @@
                     "mlogloss",
                     "mlp",
                     "mls",
+                    "minify",
                     "mlspace",
                     "msd",
                     "mse",
@@ -260,6 +258,7 @@
                     "ndcg",
                     "nlists",
                     "ngrams",
+                    "nodejs",
                     "nms",
                     "nonpositive",
                     "nthread",

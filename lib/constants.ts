@@ -14,8 +14,6 @@
   limitations under the License.
 */
 
-import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
-
 // DynamoDB table names. If you modify these you may need to modify the application role policy
 // statements to ensure actions are allowed against the correct resources. The default policy
 // relies on all mlspace tables having a prefix of "mlspace-"
@@ -62,6 +60,23 @@ export const NOTIFICATION_DISTRO = '';
 export const EXISTING_VPC_NAME = '';
 export const EXISTING_VPC_ID = '';
 export const EXISTING_VPC_DEFAULT_SECURITY_GROUP = '';
+
+/**
+ * New-VPC only: optional IPv4 IPAM pool ID (e.g. ipam-pool-0abc123). When set, the VPC primary
+ * IPv4 CIDR is allocated from this pool. Leave empty to keep the CDK default CIDR behavior (no IPAM).
+ * Requires VPC_IPAM_IPV4_NETMASK_LENGTH. Ignored when deploying into an existing VPC.
+ */
+export const VPC_IPV4_IPAM_POOL_ID = '';
+/**
+ * New-VPC + IPAM: CIDR prefix length for the VPC allocation from the pool (e.g. 16 for /16). Required
+ * when VPC_IPV4_IPAM_POOL_ID is set.
+ */
+export const VPC_IPAM_IPV4_NETMASK_LENGTH: number | undefined = undefined;
+/**
+ * New-VPC: IPv4 CIDR mask for each public and private subnet tier (e.g. 23 for /23). Valid range 16–28.
+ * Default preserves the historical MLSpace layout.
+ */
+export const VPC_SUBNET_IPV4_CIDR_MASK = 23;
 export const EXISTING_KMS_MASTER_KEY_ARN = '';
 export const KMS_INSTANCE_CONDITIONS_POLICY_ARN = '';
 export const S3_READER_ROLE_ARN = '';
@@ -108,8 +123,7 @@ export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = true;
 // SSM property names
 export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
 
-// The default name for the application
-export const APPLICATION_NAME = 'MLSpace';
+export { APPLICATION_NAME } from './application-metadata';
 
 // Policy names attached to NOTEBOOK_ROLE_ARN that restricts instance types that a notebook
 // can use for each service
@@ -144,6 +158,13 @@ export const AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/token-encrypt
 export const AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME = 'mlspace/auth/state-encryption-key'; // Simple secret for state encryption key (deploy-time generated)
 export const AUTH_KEY_VERSIONS_TO_KEEP = 3; // Number of key versions to retain during rotation
 
+// DEVELOPMENT ONLY - allow localhost specific configuration for auth cookie
+// To disable CORS use the following command to run chrome without CORS *DEVELOPMENT ONLY*
+// eslint-disable-next-line spellcheck/spell-checker
+// "C:\Program Files\Google\Chrome\Application\chrome.exe" --user-data-dir=C:\chrome-dev-data\ --disable-web-security
+// Without setting this to true, localhost login will redirect to the deployed frontend, not the locally hosted react app.
+export const ALLOW_LOCALHOST = undefined; // Allow localhost:3000 redirects for local development (SECURITY: set to false in production)
+
 // Legacy OIDC configuration (deprecated - maintained for backward compatibility during migration)
 // Use AUTH_OIDC_URL, AUTH_OIDC_CLIENT_ID, and other AUTH_* constants instead
 export const IDP_ENDPOINT_SSM_PARAM = undefined; // Deprecated: Use AUTH_OIDC_URL instead
@@ -167,8 +188,7 @@ export const BACKGROUND_REFRESH_INTERVAL = 60;
 // The default suspension state for new users. If true, new users are suspended and can't perform actions until validated by a SysAdmin
 export const NEW_USERS_SUSPENDED = false;
 
-export const LAMBDA_ARCHITECTURE = Architecture.X86_64;
-export const LAMBDA_RUNTIME = Runtime.PYTHON_3_11;
+export { LAMBDA_ARCHITECTURE, LAMBDA_RUNTIME } from './lambda-defaults';
 
 export const SHOW_MIGRATION_OPTIONS = false;
 

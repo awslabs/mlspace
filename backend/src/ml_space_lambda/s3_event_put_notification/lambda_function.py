@@ -89,11 +89,11 @@ def _handle_front_end_upload(bucket, key):
         _create_dataset_record(metadata, key)
 
 
-def _handle_notebook_upload(bucket, key, username):
+def _handle_notebook_upload(bucket, key):
     # Split the S3 key and use it to determine the dataset type and scope
     split_key = key.split("/")
 
-    # TODO: Is there anyway we can get the actual dataset creator here?
+    username = _resolve_user_from_key(key)
     type = split_key[0].lower()
     values = {}
     if type == DatasetType.GLOBAL:
@@ -113,6 +113,15 @@ def _handle_notebook_upload(bucket, key, username):
             _create_dataset_record(values, key)
         else:
             logger.error(f"Failed to tag dataset (Bucket: {bucket}, Key: {key}")
+
+
+def _resolve_user_from_key(key):
+    """Extract username from S3 key for private paths, e.g. private/{username}/datasets/..."""
+    split_key = key.split("/")
+    dataset_type = split_key[0].lower() if split_key else ""
+    if dataset_type == DatasetType.PRIVATE and len(split_key) > 1:
+        return split_key[1]
+    return "default-user"
 
 
 def _check_key(key):
@@ -150,7 +159,7 @@ def lambda_handler(event, context):
         # If the request came from the UI, run this code
         if "mls-lambda" in requester_arn:
             _handle_front_end_upload(bucket, key)
-        # Else, request is coming from a notebook and we have to create some reasonable tags
-        # derived from the S3 key
+        # Else, request is coming from a notebook/SageMaker job and we have to create some
+        # reasonable tags derived from the S3 key
         else:
-            _handle_notebook_upload(bucket, key, "default-user")
+            _handle_notebook_upload(bucket, key)

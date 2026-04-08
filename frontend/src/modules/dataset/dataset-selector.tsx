@@ -138,7 +138,7 @@ export function DatasetResourceSelector (props: DatasetResourceSelectorProps) {
                         <Condition condition={!!props.alertOnEmpty && state.isEmpty}>
                             <Alert statusIconAriaLabel='Warning' type='warning'>
                                 <Condition condition={notFoundTypes.length > 0}>
-                                        No file(s) found with this {notFoundTypes.join(' or ')}.
+                                    No file(s) found with this {notFoundTypes.join(' or ')}.
                                 </Condition>
                             </Alert>
                         </Condition>

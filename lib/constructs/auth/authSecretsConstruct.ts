@@ -14,10 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Duration } from 'aws-cdk-lib';
+import * as path from 'path';
+import { CustomResource, Duration } from 'aws-cdk-lib';
+import { Provider } from 'aws-cdk-lib/custom-resources';
 import { ISecurityGroup, IVpc } from 'aws-cdk-lib/aws-ec2';
 import { PolicyStatement, Effect, IRole } from 'aws-cdk-lib/aws-iam';
 import { Code, Function, IFunction, ILayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Secret, RotationSchedule } from 'aws-cdk-lib/aws-secretsmanager';
 import { SecretValue } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
@@ -73,16 +76,84 @@ export class AuthSecretsConstruct extends Construct {
                 configured_at: new Date().toISOString()
             }))
         });
-        
+
+        this.createVersionedSecretInitResource(props);
+
         // Set up state key rotation if enabled
         if (props.enableStateKeyRotation) {
             this.setupStateKeyRotation(props);
         }
-        
+
         // Set up token key rotation if enabled
         if (props.enableTokenKeyRotation) {
             this.setupTokenKeyRotation(props);
         }
+
+        // Do not addDependency(rotationSchedule, versionedSecretInit): that implies
+        // rotationSchedule -> InitCustomResource -> Secret, while Secret already owns the
+        // rotation schedule, which CloudFormation resolves as a circular dependency.
+    }
+
+    /**
+     * Ensures state/token secrets hold VersionedKeyData JSON before rotation runs.
+     */
+    private createVersionedSecretInitResource (props: AuthSecretsConstructProps): void {
+        const versionedInitFn = new Function(this, 'AuthSecretsVersionedJsonInit', {
+            functionName: 'mls-lambda-auth-secrets-versioned-json-init',
+            runtime: props.config.LAMBDA_RUNTIME,
+            architecture: props.config.LAMBDA_ARCHITECTURE,
+            code: Code.fromAsset(props.lambdaSourcePath),
+            handler: 'ml_space_lambda.auth.utils.rotation_handlers.deploy_time_auth_secrets_init',
+            timeout: Duration.minutes(2),
+            memorySize: 256,
+            layers: props.layers,
+            environment: {
+                AUTH_STATE_SECRET_NAME: props.config.AUTH_STATE_ENCRYPTION_KEY_SECRET_NAME,
+                AUTH_TOKEN_SECRET_NAME: props.config.AUTH_TOKEN_ENCRYPTION_KEY_SECRET_NAME,
+            },
+            vpc: props.vpc,
+            securityGroups: props.securityGroups,
+        });
+
+        this.stateEncryptionSecret.grantRead(versionedInitFn);
+        this.stateEncryptionSecret.grantWrite(versionedInitFn);
+        this.tokenEncryptionSecret.grantRead(versionedInitFn);
+        this.tokenEncryptionSecret.grantWrite(versionedInitFn);
+
+        // Do not use mlSpaceAppRole here: grantInvoke(role) lives on the IAM stack while this Lambda
+        // lives on Core, which already depends on that role — that creates a cross-stack cycle.
+
+        // AwsCustomResource Lambda.invoke treats FunctionError as success (HTTP 200). A thin Node
+        // onEvent handler fails the stack when the init Lambda returns an error payload.
+        // Node.js 18+ runtimes do not ship aws-sdk v2; bundle @aws-sdk/client-lambda via NodejsFunction.
+        const invokerFn = new NodejsFunction(this, 'AuthSecretsVersionedJsonInitInvoker', {
+            functionName: 'mls-lambda-auth-secrets-versioned-json-init-invoker',
+            runtime: Runtime.NODEJS_20_X,
+            entry: path.join(process.cwd(), 'lib/lambdas/auth-secrets-init-invoker/index.ts'),
+            handler: 'handler',
+            timeout: Duration.minutes(5),
+            memorySize: 128,
+            environment: {
+                TARGET_FUNCTION_NAME: versionedInitFn.functionName,
+            },
+            bundling: {
+                minify: true,
+                sourceMap: false,
+            },
+        });
+
+        versionedInitFn.grantInvoke(invokerFn);
+
+        const provider = new Provider(this, 'InitAuthSecretsVersionedJsonProvider', {
+            onEventHandler: invokerFn,
+        });
+
+        const cr = new CustomResource(this, 'InitAuthSecretsVersionedJson', {
+            serviceToken: provider.serviceToken,
+        });
+        cr.node.addDependency(versionedInitFn);
+        cr.node.addDependency(this.stateEncryptionSecret);
+        cr.node.addDependency(this.tokenEncryptionSecret);
     }
     
     private setupStateKeyRotation (props: AuthSecretsConstructProps) {

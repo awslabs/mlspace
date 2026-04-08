@@ -63,6 +63,8 @@ class LambdaTypes(str, Enum):
 
 class TaskTypes(str, Enum):
     BoundingBox = auto()
+    VerificationBoundingBox = auto()
+    VerificationSemanticSegmentation = auto()
     ImageMultiClass = auto()
     ImageMultiClassMultiLabel = auto()
     SemanticSegmentation = auto()
@@ -70,10 +72,13 @@ class TaskTypes(str, Enum):
     TextMultiClass = auto()
     TextMultiClassMultiLabel = auto()
     NamedEntityRecognition = auto()
+    PassThrough = auto()
 
 
 _auto_labeling_task_arn_map = {
     TaskTypes.BoundingBox: "image-classification",
+    TaskTypes.VerificationBoundingBox: "image-classification",
+    TaskTypes.VerificationSemanticSegmentation: "image-classification",
     TaskTypes.ImageMultiClass: "image-classification",
     TaskTypes.ImageMultiClassMultiLabel: "image-classification",
     TaskTypes.SemanticSegmentation: "semantic-segmentation",
@@ -125,6 +130,59 @@ def generate_labels_configuration_file(labels: list, job_name: str, data_bucket_
     return f"s3://{data_bucket_name}/{s3_key}"
 
 
+def generate_custom_ui_template(
+    custom_template_html: str,
+    job_name: str,
+    description: str,
+    full_instructions: str,
+    short_instructions: str,
+    data_bucket_name: str,
+    output_dir_key: str,
+    label_attribute_name: str = None,
+) -> str:
+    """
+    Generate a UI template from a custom HTML template string.
+    Processes the template by replacing placeholders and uploads it to S3.
+
+    :param custom_template_html: The HTML template as a string
+    :param job_name: Name of the labeling job
+    :param description: Task description
+    :param full_instructions: Full instructions for the task
+    :param short_instructions: Short instructions for the task
+    :param data_bucket_name: S3 bucket name for storing the template
+    :param output_dir_key: Output directory key in S3
+    :param label_attribute_name: Label attribute name for verification jobs
+    :return: S3 URI of the uploaded template
+    """
+    file_content: list[str] = []
+
+    for line in custom_template_html.splitlines():
+        if "{ASSET_JS}" in line:
+            file_content.append(
+                line.replace(
+                    "{ASSET_JS}",
+                    f"https://{get_groundtruth_assets_domain()}/crowd-html-elements.js",
+                )
+            )
+        elif "<!-- full-instructions start marker -->" in line:
+            file_content.append(line)
+            file_content.append(full_instructions)
+        elif "<!-- short-instructions start marker -->" in line:
+            file_content.append(line)
+            file_content.append(short_instructions)
+        elif "DESCRIPTION_STUB" in line:
+            file_content.append(line.replace("DESCRIPTION_STUB", description))
+        elif "label-attribute-name-from-prior-job" in line and label_attribute_name:
+            file_content.append(line.replace("label-attribute-name-from-prior-job", label_attribute_name))
+        else:
+            file_content.append(line)
+
+    template_key = os.path.join(output_dir_key, job_name, "annotation-tool/template.liquid")
+    s3.put_object(Bucket=data_bucket_name, Key=template_key, Body="\n".join(file_content))
+
+    return f"s3://{data_bucket_name}/{template_key}"
+
+
 def generate_ui_template(
     job_name: str,
     task_type: TaskTypes,
@@ -133,6 +191,7 @@ def generate_ui_template(
     short_instructions: str,
     data_bucket_name: str,
     output_dir_key: str,
+    label_attribute_name: str = None,
 ) -> str:
     template_key = None
     template_path = os.path.join(
@@ -159,6 +218,8 @@ def generate_ui_template(
                     file_content.append(short_instructions)
                 elif "DESCRIPTION_STUB" in line:
                     file_content.append(line.replace("DESCRIPTION_STUB", description))
+                elif "label-attribute-name-from-prior-job" in line and label_attribute_name:
+                    file_content.append(line.replace("label-attribute-name-from-prior-job", label_attribute_name))
                 else:
                     file_content.append(line)
 

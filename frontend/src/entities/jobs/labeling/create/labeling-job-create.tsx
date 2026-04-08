@@ -26,6 +26,7 @@ import { ILabelingJobCreate, LabelingJobCategory } from '../labeling-job.model';
 import { createDefaultLabelingJob } from '../../create.functions';
 import LabelingJobSpecifyDetails from './labeling-job-specify-details';
 import LabelingJobSelectWorkers from './labeling-job-select-workers';
+import { LabelingJobCustom } from './labeling-job-custom';
 import z from 'zod';
 import {
     issuesToErrors,
@@ -66,6 +67,7 @@ export type ILabelingJobCreateForm = {
     shortInstruction: string;
     fullInstruction: string;
     description: string;
+    custom_task_template?: string;
 };
 
 export type LabelingJobCreateState = {
@@ -101,13 +103,25 @@ export function LabelingJobCreate () {
                 .regex(/[a-zA-Z0-9]$/),
             LabelAttributeName: z
                 .string()
-                .min(1)
                 .max(59)
                 .regex(/^[a-zA-Z0-9-]+(?<!-metadata)$/, { message: 'Must not end with -metadata' })
                 .regex(/^[a-zA-Z0-9-]+(?<!-ref)$/, { message: 'Must not end with -ref' })
                 .regex(/^[a-zA-Z0-9]/)
                 .regex(/[a-zA-Z0-9]$/)
-                .optional(),
+                .optional()
+                .or(z.literal('')),
+            InputLabelAttributeName: z
+                .string()
+                .max(59)
+                .regex(/^[a-zA-Z0-9-]+$/, {
+                    message: 'Name can only contain alphanumeric characters and hyphens (-)',
+                })
+                .regex(/^[a-zA-Z0-9-]+(?<!-metadata)$/, { message: 'Must not end with -metadata' })
+                .regex(/^[a-zA-Z0-9-]+(?<!-ref)$/, { message: 'Must not end with -ref' })
+                .regex(/^[a-zA-Z0-9]/)
+                .regex(/[a-zA-Z0-9]$/)
+                .optional()
+                .or(z.literal('')),
             InputConfig: z.object({
                 DataSource: z.object({
                     S3DataSource: z.object({
@@ -147,7 +161,17 @@ export function LabelingJobCreate () {
                     }),
                 WorkteamArn: z.string().min(1, {
                     message: 'A labeling team must be selected.',
-                })
+                }),
+                TaskTitle: z
+                    .string()
+                    .min(1, { message: 'Task title is required.' })
+                    .max(128, { message: 'Task title must not exceed 128 characters.' })
+                    .optional(),
+                TaskDescription: z
+                    .string()
+                    .min(1, { message: 'Task description is required.' })
+                    .max(255, { message: 'Task description must not exceed 255 characters.' })
+                    .optional(),
             }),
         }),
         taskSelection: z.any(),
@@ -159,6 +183,16 @@ export function LabelingJobCreate () {
             )
             .min(2, { message: 'A minimum of two labels are required.' }),
         description: z.string().min(1, { message: 'Brief description of task field is required.' }),
+        custom_task_template: z.string().optional(),
+    }).refine((data) => {
+        // If the tasktype is PassThrough (Custom) ensure the template isn't blank
+        if (data.taskSelection === LabelingJobTypes.PassThrough) {
+            return data.custom_task_template && data.custom_task_template.trim().length > 0;
+        }
+        return true;
+    }, {
+        message: 'Custom task template is required.',
+        path: ['custom_task_template'],
     });
 
     const { state, setState, setFields, touchFields } = useValidationReducer(formSchema, {
@@ -181,6 +215,7 @@ export function LabelingJobCreate () {
                 TASK_TYPE_CONFIG[LabelingJobCategory.Image][LabelingJobTypes.ImageMultiClass]
                     .fullInstruction,
             description: '',
+            custom_task_template: '',
         },
         activeStepIndex: 0,
     } as LabelingJobCreateState);
@@ -194,6 +229,8 @@ export function LabelingJobCreate () {
         );
     }
 
+    const isCustomTask = state.form.taskSelection === LabelingJobTypes.PassThrough;
+
     const stepValidator = [
         [
             'job.LabelingJobName',
@@ -201,7 +238,9 @@ export function LabelingJobCreate () {
             'job.InputConfig.DataSource.S3DataSource.ManifestS3Uri',
             'job.OutputConfig.S3OutputPath',
         ],
-        ['job.HumanTaskConfig'],
+        isCustomTask
+            ? ['job.HumanTaskConfig.WorkteamArn', 'job.HumanTaskConfig.TaskTitle', 'job.HumanTaskConfig.TaskDescription', 'custom_task_template']
+            : ['job.HumanTaskConfig'],
     ];
     function isStepValid (fields: string[], formErrors: any) {
         return fields.filter((field) => _.has(formErrors, field)).length === 0;
@@ -250,6 +289,11 @@ export function LabelingJobCreate () {
                     ...state.form.job,
                     LabelAttributeName: labelAttributeNameComponents.join(''),
                 },
+                ...(state.form.taskSelection === LabelingJobTypes.PassThrough ? {
+                    CustomLabelingJobVars: {
+                        CustomTaskTemplate: state.form.custom_task_template,
+                    }
+                } : {})
             })
         ).then((result: any) => {
             setState({ formSubmitting: false });
@@ -266,6 +310,32 @@ export function LabelingJobCreate () {
                 );
             }
         });
+    };
+
+    const step2 = isCustomTask ? {
+        title: 'Select workers and setup custom labeling job',
+        content: (
+            <LabelingJobCustom
+                {...{
+                    item: state.form,
+                    setFields,
+                    touchFields,
+                    formErrors,
+                }}
+            />
+        ),
+    } : {
+        title: 'Select workers and configure tool',
+        content: (
+            <LabelingJobSelectWorkers
+                {...{
+                    item: state.form,
+                    setFields,
+                    touchFields,
+                    formErrors,
+                }}
+            />
+        ),
     };
 
     return (
@@ -336,19 +406,7 @@ export function LabelingJobCreate () {
                                     />
                                 ),
                             },
-                            {
-                                title: 'Select workers and configure tool',
-                                content: (
-                                    <LabelingJobSelectWorkers
-                                        {...{
-                                            item: state.form,
-                                            setFields,
-                                            touchFields,
-                                            formErrors,
-                                        }}
-                                    />
-                                ),
-                            },
+                            step2,
                         ]}
                         onCancel={() => {
                             navigate(`/project/${projectName}/jobs/labeling`, {
@@ -357,6 +415,7 @@ export function LabelingJobCreate () {
                         }}
                         onSubmit={() => {
                             const parseResult = formSchema.safeParse(state.form);
+
                             if (parseResult.success) {
                                 handleSubmit();
                             } else {

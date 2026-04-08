@@ -19,6 +19,7 @@ import logging
 import os
 
 import boto3
+from botocore.exceptions import ClientError
 
 from ml_space_lambda.data_access_objects.project_user import ProjectUserDAO
 from ml_space_lambda.data_access_objects.resource_metadata import ResourceMetadataDAO
@@ -27,6 +28,7 @@ from ml_space_lambda.utils.common_functions import api_wrapper, generate_tags, q
 from ml_space_lambda.utils.groundtruth_utils import (
     LambdaTypes,
     TaskTypes,
+    generate_custom_ui_template,
     generate_labels_configuration_file,
     generate_ui_template,
     get_auto_labeling_arn,
@@ -39,6 +41,13 @@ logger = logging.getLogger(__name__)
 sagemaker = boto3.client("sagemaker", config=retry_config)
 resource_metadata_dao = ResourceMetadataDAO()
 project_user_dao = ProjectUserDAO()
+
+_labeling_portal_domain_map = {
+    "us-iso-east-1": "labeling.us-iso-east-1.sagemaker.c2s.ic.gov",
+    "us-isob-east-1": "labeling.us-isob-east-1.sagemaker.sc2s.sgov.gov",
+    "us-isof-south-1": "labeling.us-isof-south-1.sagemaker.csp.hci.ic.gov",
+    "us-isof-east-1": "labeling.us-isof-east-1.sagemaker.csp.hci.ic.gov",
+}
 
 
 @api_wrapper
@@ -69,6 +78,22 @@ def list_workteams(event, context):
 
 
 @api_wrapper
+def get_workforce_portal_url(event, context):
+    workforce = sagemaker.describe_workforce(WorkforceName="default")["Workforce"]
+    sub_domain = workforce.get("SubDomain", "")
+    if not sub_domain:
+        return {"PortalUrl": ""}
+    # Full hostname returned (e.g. newer API responses)
+    if "." in sub_domain:
+        return {"PortalUrl": f"https://{sub_domain}"}
+    # Short subdomain — construct the portal URL using the region's labeling domain
+    session = boto3.session.Session()
+    region = session.region_name
+    labeling_domain = _labeling_portal_domain_map.get(region, f"labeling.{region}.sagemaker.aws")
+    return {"PortalUrl": f"https://{sub_domain}.{labeling_domain}"}
+
+
+@api_wrapper
 def create(event, context):
     labeling_job_request = json.loads(event["body"])
     username = event["requestContext"]["authorizer"]["principalId"]
@@ -77,12 +102,74 @@ def create(event, context):
     env_variables = get_environment_variables()
     data_bucket_name = param_file["pSMSDataBucketName"]
     task_type = TaskTypes[labeling_job_request["TaskType"]]
-    labeling_job = labeling_job_request["JobDefinition"]
+    labeling_job: dict = labeling_job_request["JobDefinition"]
     description = labeling_job["HumanTaskConfig"]["TaskDescription"]
     full_instructions = labeling_job_request["FullInstruction"]
     short_instructions = labeling_job_request["ShortInstruction"]
     labeling_job_name = labeling_job["LabelingJobName"]
     labeling_job["LabelingJobName"] = labeling_job_name
+
+    #  Check to see if InputLabelAttributeName was included in the request.
+    label_attr = labeling_job.pop(
+        "InputLabelAttributeName", None
+    )  # pop removes it from the dict, needed for clean sagemaker api call
+    if task_type == TaskTypes.VerificationBoundingBox or task_type == TaskTypes.VerificationSemanticSegmentation:
+        logger.info("Verification job - Locating LabelAttributeName for the input manifest")
+
+        # If the label_attr was found, dont search the manifest file
+        if label_attr and label_attr != "":
+            logger.info(f"Found InputLabelAttributeName in request: {label_attr}")
+
+        else:  # If not provided, look in the manfiest file
+
+            logger.warning(f"No InputLabelAttributeName found in request event.  Searching input manifest")
+
+            # Pull the input manifest file
+            manifest_s3_uri = labeling_job["InputConfig"]["DataSource"]["S3DataSource"]["ManifestS3Uri"]
+
+            # Parse S3 URI
+            s3_uri_parts = manifest_s3_uri.replace("s3://", "").split("/", 1)
+            bucket = s3_uri_parts[0]
+            key = s3_uri_parts[1]
+
+            # Read first line from S3 manifest file
+            s3_client = boto3.client("s3", config=retry_config)
+            logger.info("Reading manifest file from S3...")
+
+            try:
+                response = s3_client.get_object(Bucket=bucket, Key=key)
+                first_line = response["Body"].read().decode("utf-8").split("\n")[0]
+
+                # Parse JSON and get the second key
+                manifest_entry = json.loads(first_line)
+
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code", "Unknown")
+                logger.error(f"S3 error reading manifest file {manifest_s3_uri}: {error_code} - {e}")
+                raise ValueError(f"Could not read manifest file from {manifest_s3_uri}. Error: {error_code}")
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in manifest file {manifest_s3_uri}: {e}")
+                raise ValueError(f"Manifest file contains invalid JSON at {manifest_s3_uri}: {str(e)}")
+
+            except Exception as e:
+                logger.error(f"Unexpected error reading manifest file {manifest_s3_uri}: {e}")
+                raise ValueError(f"Failed to process manifest file from {manifest_s3_uri}: {str(e)}")
+            keys = list(manifest_entry.keys())
+
+            # Check the 2nd item in the keys, this should be the LabelAttributeName
+            if len(keys) >= 2:
+                label_attr = keys[1]
+                logger.info(f"Extracted LabelAttributeName: {label_attr}")
+            else:
+                label_attr = None
+                logger.warning(f"Manifest entry has fewer than 2 keys. Keys: {keys}")
+
+        if not label_attr or not label_attr.strip():
+            logger.error("The input manifest's LabelAttributeName is missing or empty for VerificationBoundingBox job")
+            raise ValueError("The input manifest's LabelAttributeName is required for VerificationBoundingBox jobs")
+
+        logger.info(f"Successfully found the LabelAttributeName for the input manifest: {label_attr}")
 
     # Generate labels config file and store in S3 bucket
     stripped_protocol_output_path = labeling_job["OutputConfig"]["S3OutputPath"].removeprefix("s3://")
@@ -103,15 +190,40 @@ def create(event, context):
         get_groundtruth_lambda_arn(LambdaTypes.ACS, task_type)
     )
 
-    template_uri = generate_ui_template(
-        labeling_job_name,
-        task_type,
-        description,
-        full_instructions,
-        short_instructions,
-        data_bucket_name,
-        output_path,
-    )
+    # Check for custom labeling job fields
+    custom_labeling_job_fields = labeling_job_request.get("CustomLabelingJobVars")
+
+    if custom_labeling_job_fields and task_type == TaskTypes.PassThrough:
+
+        custom_template_html = custom_labeling_job_fields.get("CustomTaskTemplate", "")
+
+        if custom_template_html == "":
+            raise Exception("CustomTaskTemplate is required for Custom task type")
+
+        logger.info("PassThrough task type, using custom UI template")
+        # Use custom template
+        template_uri = generate_custom_ui_template(
+            custom_template_html,
+            labeling_job_name,
+            description,
+            full_instructions,
+            short_instructions,
+            data_bucket_name,
+            output_path,
+            label_attr,
+        )
+    else:
+        # Use standard template based on task type
+        template_uri = generate_ui_template(
+            labeling_job_name,
+            task_type,
+            description,
+            full_instructions,
+            short_instructions,
+            data_bucket_name,
+            output_path,
+            label_attr,
+        )
 
     if template_uri is not None:
         labeling_job["HumanTaskConfig"]["UiConfig"]["UiTemplateS3Uri"] = template_uri

@@ -215,6 +215,7 @@ export class IAMConstruct extends Construct {
                         'ec2:DescribeSecurityGroups',
                         'ec2:DescribeVpcs',
                         // SageMaker list actions that are not bound by resource identifier.
+                        'sagemaker:DescribeWorkforce',
                         'sagemaker:DescribeWorkteam',
                         'sagemaker:ListEndpointConfigs',
                         'sagemaker:ListEndpoints',
