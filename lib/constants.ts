@@ -14,8 +14,6 @@
   limitations under the License.
 */
 
-import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
-
 // DynamoDB table names. If you modify these you may need to modify the application role policy
 // statements to ensure actions are allowed against the correct resources. The default policy
 // relies on all mlspace tables having a prefix of "mlspace-"
@@ -125,8 +123,7 @@ export const CREATE_MLSPACE_CLOUDTRAIL_TRAIL = true;
 // SSM property names
 export const COMMON_LAYER_ARN_PARAM = '/mlspace/common-lambda-layer';
 
-// The default name for the application
-export const APPLICATION_NAME = 'MLSpace';
+export { APPLICATION_NAME } from './application-metadata';
 
 // Policy names attached to NOTEBOOK_ROLE_ARN that restricts instance types that a notebook
 // can use for each service
@@ -191,8 +188,7 @@ export const BACKGROUND_REFRESH_INTERVAL = 60;
 // The default suspension state for new users. If true, new users are suspended and can't perform actions until validated by a SysAdmin
 export const NEW_USERS_SUSPENDED = false;
 
-export const LAMBDA_ARCHITECTURE = Architecture.X86_64;
-export const LAMBDA_RUNTIME = Runtime.PYTHON_3_11;
+export { LAMBDA_ARCHITECTURE, LAMBDA_RUNTIME } from './lambda-defaults';
 
 export const SHOW_MIGRATION_OPTIONS = false;
 
