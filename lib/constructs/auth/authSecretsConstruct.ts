@@ -128,7 +128,7 @@ export class AuthSecretsConstruct extends Construct {
         // Node.js 18+ runtimes do not ship aws-sdk v2; bundle @aws-sdk/client-lambda via NodejsFunction.
         const invokerFn = new NodejsFunction(this, 'AuthSecretsVersionedJsonInitInvoker', {
             functionName: 'mls-lambda-auth-secrets-versioned-json-init-invoker',
-            runtime: Runtime.NODEJS_20_X,
+            runtime: Runtime.NODEJS_22_X,
             entry: path.join(process.cwd(), 'lib/lambdas/auth-secrets-init-invoker/index.ts'),
             handler: 'handler',
             timeout: Duration.minutes(5),
