@@ -124,7 +124,7 @@ export default function AppRoutes () {
                         element={
                             <SpaceBetween size={'xxl'} direction='vertical'>
                                 <h1 className='landing-page-header'>
-                                        Welcome to {window.env.APPLICATION_NAME}
+                                    Welcome to {window.env.APPLICATION_NAME}
                                 </h1>
                                 <p className='landing-page-description'>{window.env.APPLICATION_NAME} is an open source, web based, data science environment. Through {window.env.APPLICATION_NAME}&apos;s accessible portal, users leverage the power of Amazon SageMaker, a fully managed machine learning service, without needing individual AWS Accounts. {window.env.APPLICATION_NAME} allows data science teams to collaboratively build, train, and deploy machine learning models.</p>
                                 <ColumnLayout columns={4}>
@@ -155,7 +155,7 @@ export default function AppRoutes () {
                                             onClick={() => {
                                                 auth.login();
                                             }}>
-                                                Login
+                                            Login
                                         </Button>
                                     </Container>
                                     <Container

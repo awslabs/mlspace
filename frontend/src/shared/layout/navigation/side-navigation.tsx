@@ -52,13 +52,15 @@ export default function SideNavigation () {
     const [selectedOption, setSelectedOption] = React.useState(defaultState);
 
     useEffect(() => {
-        project.name
-            ? setSelectedOption({
+        if (project.name) {
+            setSelectedOption({
                 label: project.name,
                 value: project.name,
                 description: project.description,
-            })
-            : setSelectedOption(defaultState);
+            });
+        } else {
+            setSelectedOption(defaultState);
+        }
 
         // Disable exhaustive-deps rule to skip having to add defaultState to dependency list
         // since it will never be updated

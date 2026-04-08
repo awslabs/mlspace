@@ -208,7 +208,7 @@ export function DynamicConfiguration () {
                                     }
                                 }}
                             >
-                                    Actions
+                                Actions
                             </ButtonDropdown>
                         </SpaceBetween>
                     </Grid>
@@ -285,7 +285,7 @@ export function DynamicConfiguration () {
                             data-cy='dynamic-configuration-submit'
                             disabled={state.formSubmitting}
                         >
-                        Save Changes
+                            Save Changes
                         </Button>
                     </SpaceBetween>
                 </SpaceBetween>

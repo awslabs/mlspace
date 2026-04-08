@@ -54,6 +54,10 @@ jobs:
         working-directory: ./frontend
         run: |
           npm install
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm run build
       - name: Install CDK dependencies
         run: |
           npm install

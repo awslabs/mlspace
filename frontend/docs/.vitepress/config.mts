@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitepress';
-import { APPLICATION_NAME } from '../../../lib/constants';
+import { APPLICATION_NAME } from '../../../lib/application-metadata';
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 
 const docItems = [

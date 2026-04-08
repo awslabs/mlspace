@@ -1,5 +1,7 @@
 {
     "compilerOptions": {
+        "ignoreDeprecations": "6.0",
+        "rootDir": "./src/shared/model",
         "target": "es5",
         "lib": ["dom", "dom.iterable", "esnext"],
         "allowJs": true,

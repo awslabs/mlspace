@@ -161,7 +161,7 @@ export function GroupCreate ({isEdit}: GroupCreateProperties) {
                     'error'
                 );
             }
-        } catch (e) {
+        } catch {
             notificationService.generateNotification(
                 `Failed to ${isEdit ? 'update' : 'create'} group ${state.form.name}`,
                 'error'

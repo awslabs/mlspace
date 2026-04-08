@@ -20,7 +20,6 @@ import {
     SpaceBetween,
     Header,
     Button,
-    Link,
     StatusIndicator,
 } from '@cloudscape-design/components';
 import React, { useEffect, ReactNode, useState } from 'react';
@@ -43,28 +42,18 @@ import DetailsContainer from '../../../../modules/details-container';
 import { useBackgroundRefresh } from '../../../../shared/util/hooks';
 import { JobStatus } from '../../job.model';
 import ContentLayout from '../../../../shared/layout/content-layout';
-import axios from '../../../../shared/util/axios-utils';
 
 export function LabelingJobDetail () {
     const { projectName, jobName } = useParams();
     const labelingJob: ILabelingJob = useAppSelector(selectLabelingJob);
     const loadingJobDetails = useAppSelector(loadingLabelingJobDetails);
     const [initialLoaded, setInitialLoaded] = useState(false);
-    const [portalUrl, setPortalUrl] = useState('');
 
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
     scrollToPageHeader();
     DocTitle('Labeling Job Details: ', jobName);
-
-    useEffect(() => {
-        if (projectName) {
-            axios.get<{PortalUrl: string}>(`project/${projectName}/jobs/labeling/workforce-portal-url`)
-                .then((response) => setPortalUrl(response.data.PortalUrl))
-                .catch(() => setPortalUrl(''));
-        }
-    }, [projectName]);
 
     useEffect(() => {
         dispatch(describeLabelingJob(String(jobName)))
@@ -112,12 +101,6 @@ export function LabelingJobDetail () {
     labelingJobSettings.set('ARN', labelingJob.LabelingJobArn);
     labelingJobSettings.set('Output dataset location', labelingJob.OutputConfig?.S3OutputPath);
     labelingJobSettings.set('Workteam ARN', labelingJob.HumanTaskConfig?.WorkteamArn);
-    labelingJobSettings.set(
-        'Workforce labeling portal',
-        portalUrl ? (
-            <Link external href={portalUrl}>{portalUrl}</Link>
-        ) : '-'
-    );
     labelingJobSettings.set('Task type', getLabelingJobType(labelingJob));
 
     return (

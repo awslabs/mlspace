@@ -223,7 +223,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
             if (response.data.idpLogoutUrl) {
                 window.location.href = response.data.idpLogoutUrl;
             }
-        } catch (error) {
+        } catch {
             setState((prev) => ({
                 ...prev,
                 error: 'Failed to logout'

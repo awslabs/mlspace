@@ -40,10 +40,11 @@ export const Notebook = () => {
     const isProjectPage = !!projectName;
 
     const dispatch = useAppDispatch();
-    // const
-    isProjectPage
-        ? DocTitle(`${projectName} Notebook Instances`)
-        : DocTitle('Notebook Instances');
+    if (isProjectPage) {
+        DocTitle(`${projectName} Notebook Instances`);
+    } else {
+        DocTitle('Notebook Instances');
+    }
 
     useEffect(() => {
         let breadcrumbHref;
