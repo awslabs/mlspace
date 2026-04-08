@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Run ESLint with the binary that matches each package. Invokes at most three processes total
-# (frontend paths, cypress paths, CDK/other paths) instead of one process per file.
+# Run ESLint with the binary and config that match each package. Invokes at most three
+# processes total (frontend paths, cypress paths, CDK/other paths) instead of one per file.
 set -uo pipefail
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
 root_eslint="${root}/node_modules/.bin/eslint"
 front_eslint="${root}/frontend/node_modules/.bin/eslint"
+cypress_eslint="${root}/cypress/node_modules/.bin/eslint"
 
 if [[ ! -x "$root_eslint" ]]; then
   echo "error: missing ${root_eslint} — run npm install at the repo root" >&2
@@ -17,14 +18,12 @@ if [[ ! -x "$front_eslint" ]]; then
   exit 1
 fi
 
-export ESLINT_USE_FLAT_CONFIG=false
-
-# Cypress configs live under cypress/; ESLint resolves plugins from that directory unless we point it
-# at frontend/node_modules (where eslint-plugin-react and friends are installed).
-front_plugin_root="${root}/frontend/node_modules"
+# Root + frontend still use .eslintrc (legacy). Cypress uses eslint.config.mjs in cypress/.
+# If Cypress files were linted via the frontend binary, ESLint would walk up and apply the
+# repo-root .eslintrc (spellcheck, etc.) — wrong for the e2e package.
 
 front_paths=()
-cypress_paths_rel=()
+cypress_pkg_paths=()
 root_paths=()
 
 for arg in "$@"; do
@@ -37,8 +36,7 @@ for arg in "$@"; do
       front_paths+=("${f#frontend/}")
       ;;
     cypress/*)
-      # Same binary as frontend; run from frontend/ so ../cypress/... resolves (eslint ignores non-matching cwd).
-      cypress_paths_rel+=("../$f")
+      cypress_pkg_paths+=("${f#cypress/}")
       ;;
     *)
       root_paths+=("$f")
@@ -48,14 +46,17 @@ done
 
 status=0
 if [[ ${#front_paths[@]} -gt 0 ]]; then
-  (cd "${root}/frontend" && "$front_eslint" --fix "${front_paths[@]}") || status=$?
+  (cd "${root}/frontend" && ESLINT_USE_FLAT_CONFIG=false "$front_eslint" --fix "${front_paths[@]}") || status=$?
 fi
-if [[ ${#cypress_paths_rel[@]} -gt 0 ]]; then
-  (cd "${root}/frontend" && \
-    "$front_eslint" --resolve-plugins-relative-to "$front_plugin_root" --fix "${cypress_paths_rel[@]}") || status=$?
+if [[ ${#cypress_pkg_paths[@]} -gt 0 ]]; then
+  if [[ ! -x "$cypress_eslint" ]]; then
+    echo "error: missing ${cypress_eslint} — run npm install in cypress/" >&2
+    exit 1
+  fi
+  (cd "${root}/cypress" && "$cypress_eslint" --fix "${cypress_pkg_paths[@]}") || status=$?
 fi
 if [[ ${#root_paths[@]} -gt 0 ]]; then
-  (cd "$root" && "$root_eslint" --fix "${root_paths[@]}") || status=$?
+  (cd "$root" && ESLINT_USE_FLAT_CONFIG=false "$root_eslint" --fix "${root_paths[@]}") || status=$?
 fi
 
 exit "$status"

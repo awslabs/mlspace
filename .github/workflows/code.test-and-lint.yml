@@ -105,6 +105,10 @@ jobs:
     - name: Install dependencies
       run: |
         npm install
+    - name: Install Cypress dependencies
+      working-directory: ./cypress
+      run: |
+        npm install
     - name: Lint
       working-directory: ./cypress
       run: |
@@ -129,6 +133,10 @@ jobs:
         npm install
     - name: Install dependencies Root
       working-directory: ./
+      run: |
+        npm install
+    - name: Install dependencies Cypress
+      working-directory: ./cypress
       run: |
         npm install
     - uses: pre-commit/action@v3.0.1

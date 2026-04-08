@@ -71,7 +71,6 @@ describe('Notebook Tests', () => {
                     eventId: '37454466097320577689651565999376913764533911265058488321'
                 }
             ],
-            // eslint-disable-next-line spellcheck/spell-checker
             nextToken: 'Bxkq6kVGFtq2y_MoigeqscPOdhXVbhiVtLoAmXb5jCqS'
         });
         // Call login routine

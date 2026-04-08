@@ -60,7 +60,6 @@ describe('GroundTruth Labeling Job Tests', () => {
         'InputConfig': {
             'DataSource': {
                 'S3DataSource': {
-                    // eslint-disable-next-line spellcheck/spell-checker
                     'ManifestS3Uri': 's3://mlspace-data-123456789012/global/datasets/AircraftImages/dataset-aircraftlabelingmanifest.manifest'
                 }
             }
@@ -69,7 +68,6 @@ describe('GroundTruth Labeling Job Tests', () => {
             'S3OutputPath': 's3://mlspace-data-123456789012/global/datasets/AircraftImages',
             'KmsKeyId': ''
         },
-        // eslint-disable-next-line spellcheck/spell-checker
         'RoleArn': 'arn:aws:iam::123456789012:role/MLSpace-DemoProject1-132f8610d7775fd995226598a19c912fa5fb15df75',
         'LabelCategoryConfigS3Uri': `s3://mlspace-data-123456789012/global/datasets/AircraftImages/${testLabelingJobName}/annotation-tool/data.json`,
         'StoppingConditions': {
