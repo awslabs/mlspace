@@ -23,7 +23,7 @@ import Image from '@tiptap/extension-image';
 import Button from '@cloudscape-design/components/button';
 
 import Document from '@tiptap/extension-document';
-import TextStyle from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style';
 import Link from '@tiptap/extension-link';
 import { Color } from '@tiptap/extension-color';
 import { ColumnLayout, Container, Icon, SpaceBetween } from '@cloudscape-design/components';

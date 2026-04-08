@@ -34,7 +34,7 @@
   },
   "scripts": {
     "start": "PORT=3000 react-scripts start",
-    "build": "node ./scripts/set-revision-info.mjs && react-scripts build && npm run docs:build",
+    "build": "node ./scripts/set-revision-info.mjs && DISABLE_ESLINT_PLUGIN=true react-scripts build && npm run docs:build",
     "test": "CI=true react-scripts test --coverage",
     "eject": "react-scripts eject",
     "lint:fix": "eslint --fix src/",
@@ -60,6 +60,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "ajv": "^8.17.1",
     "@typescript-eslint/eslint-plugin": "^8.58.1",
     "@typescript-eslint/parser": "^8.58.1",
     "@stylistic/eslint-plugin": "^5.10.0",
