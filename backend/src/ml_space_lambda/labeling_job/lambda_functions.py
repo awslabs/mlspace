@@ -42,6 +42,13 @@ sagemaker = boto3.client("sagemaker", config=retry_config)
 resource_metadata_dao = ResourceMetadataDAO()
 project_user_dao = ProjectUserDAO()
 
+_labeling_portal_domain_map = {
+    "us-iso-east-1": "labeling.us-iso-east-1.sagemaker.c2s.ic.gov",
+    "us-isob-east-1": "labeling.us-isob-east-1.sagemaker.sc2s.sgov.gov",
+    "us-isof-south-1": "labeling.us-isof-south-1.sagemaker.csp.hci.ic.gov",
+    "us-isof-east-1": "labeling.us-isof-east-1.sagemaker.csp.hci.ic.gov",
+}
+
 
 @api_wrapper
 def describe(event, context):
@@ -68,6 +75,22 @@ def list_workteams(event, context):
             result["Workteams"],
         )
     )
+
+
+@api_wrapper
+def get_workforce_portal_url(event, context):
+    workforce = sagemaker.describe_workforce(WorkforceName="default")["Workforce"]
+    sub_domain = workforce.get("SubDomain", "")
+    if not sub_domain:
+        return {"PortalUrl": ""}
+    # Full hostname returned (e.g. newer API responses)
+    if "." in sub_domain:
+        return {"PortalUrl": f"https://{sub_domain}"}
+    # Short subdomain — construct the portal URL using the region's labeling domain
+    session = boto3.session.Session()
+    region = session.region_name
+    labeling_domain = _labeling_portal_domain_map.get(region, f"labeling.{region}.sagemaker.aws")
+    return {"PortalUrl": f"https://{sub_domain}.{labeling_domain}"}
 
 
 @api_wrapper

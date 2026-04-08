@@ -180,6 +180,13 @@ export class ProjectsApiConstruct extends Construct {
                 method: 'GET',
             },
             {
+                name: 'get_workforce_portal_url',
+                resource: 'labeling_job',
+                description: 'Gets the workforce portal URL',
+                path: 'project/{projectName}/jobs/labeling/workforce-portal-url',
+                method: 'GET',
+            },
+            {
                 name: 'list_resources',
                 resource: 'notebook',
                 description: 'List all notebook instances in MLSpace',
