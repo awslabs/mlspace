@@ -112,8 +112,7 @@ mock.patch.TEST_PREFIX = (
 )
 
 
-@moto.mock_sts
-@moto.mock_iam
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestIAMSupport(TestCase):
     def setUp(self):

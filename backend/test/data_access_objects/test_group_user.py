@@ -55,7 +55,7 @@ MOCK_GROUP_NAME = "fake-group"
 MOCK_SECOND_GROUP = "secondGroup"
 
 
-@moto.mock_dynamodb
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestGroupUserDAO(TestCase):
     def setUp(self):
