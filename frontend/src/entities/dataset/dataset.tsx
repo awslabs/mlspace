@@ -42,8 +42,10 @@ export const Dataset = ({isAdmin}: DatasetProperties) => {
 
     if (isAdmin) {
         DocTitle('All Datasets');
+    } else if (!projectName) {
+        DocTitle('Datasets');
     } else {
-        !projectName ? DocTitle('Datasets') : DocTitle(projectName!.concat(' Datasets'));
+        DocTitle(projectName!.concat(' Datasets'));
     }
 
     useEffect(() => {

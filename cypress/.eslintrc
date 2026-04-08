@@ -4,6 +4,10 @@
         "ecmaVersion": 12,
         "sourceType": "module"
     },
+    "plugins": [
+        "react",
+        "react-hooks"
+    ],
     "rules": {
         "eqeqeq": [
             "error",

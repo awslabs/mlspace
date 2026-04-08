@@ -1,12 +1,16 @@
 {
     "compilerOptions": {
-        "target": "ES2018",
+        "ignoreDeprecations": "6.0",
+        "target": "ES2022",
         "module": "commonjs",
         "lib": [
-            "es2016",
-            "es2017.object",
-            "es2017.string"
+            "ES2022"
         ],
+        "moduleResolution": "node10",
+        "types": [
+            "node"
+        ],
+        "skipLibCheck": true,
         "declaration": true,
         "outDir": "./dist/lib",
         "declarationDir": "./dist/types",

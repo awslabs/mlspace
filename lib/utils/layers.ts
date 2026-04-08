@@ -15,7 +15,7 @@
 */
 
 import * as path from 'path';
-import { existsSync, mkdirSync, rmdirSync, cpSync } from 'fs';
+import { existsSync, mkdirSync, rmSync, cpSync } from 'fs';
 import { Architecture, Code, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { Asset } from 'aws-cdk-lib/aws-s3-assets';
 import { BundlingOutput } from 'aws-cdk-lib';
@@ -100,7 +100,7 @@ export class LambdaLayer extends Construct {
     cleanBuildDir (buildDir: string, layerDir: string, bundleAction: () => Code) {
         // ensure nothing was leftover from before
         if (existsSync(buildDir)) {
-            rmdirSync(buildDir, { recursive: true });
+            rmSync(buildDir, { recursive: true, force: true });
         }
 
         // create the build directory
@@ -119,7 +119,7 @@ export class LambdaLayer extends Construct {
         } finally {
             // cleanup
             if (existsSync(buildDir)) {
-                rmdirSync(buildDir, { recursive: true, });
+                rmSync(buildDir, { recursive: true, force: true });
             }
         }
     }

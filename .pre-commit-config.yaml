@@ -24,13 +24,17 @@ repos:
     - id: flake8
       args: ["--count", "--select=E9,F63,F7,F82", "--show-source", "--statistics", "--max-line-length=127"]
 
-- repo: https://github.com/pre-commit/mirrors-eslint
-  rev: v8.56.0
+# mirrors-eslint pins ESLint 8; root uses ESLint 10 + @typescript-eslint 8 (incompatible). Run
+# package-local ESLint: root for lib/, frontend's for frontend/ + cypress/ (react-hooks).
+- repo: local
   hooks:
     - id: eslint
+      name: eslint
+      language: system
+      entry: scripts/precommit-eslint.sh
       files: \.[jt]sx?$  # *.js, *.jsx, *.ts and *.tsx
+      exclude: ^frontend/docs/
       types: [file]
-      language_version: system
 
 - repo: https://github.com/Lucas-C/pre-commit-hooks
   rev: v1.5.5

@@ -83,7 +83,7 @@ export const EndpointConfig = ({
             try {
                 const selectedConfig = await getEndpointConfigByName(endpointConfigs[0].resourceId);
                 return setSelectedConfig(selectedConfig.data);
-            } catch (err) {
+            } catch {
                 notificationService.generateNotification(
                     'Failed to retrieve endpoint configuration details.',
                     'error'

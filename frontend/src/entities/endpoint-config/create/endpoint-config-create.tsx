@@ -140,7 +140,7 @@ export function EndpointConfigCreate ({ createConfigCallback }: EndpointConfigCr
                                     `${newEndpointConfig.EndpointConfigName!}`
                                 );
                                 createConfigCallback(newConfig.data, true);
-                            } catch (err) {
+                            } catch {
                                 notificationService.generateNotification(
                                     `Failed to retrieve endpoint configuration details with error: ${response.data}`,
                                     'error'
