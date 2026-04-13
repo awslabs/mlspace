@@ -54,7 +54,7 @@ mock.patch.TEST_PREFIX = (
 MOCK_GROUP_NAME = "fake-group"
 
 
-@moto.mock_dynamodb
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestGroupMembershipHistoryDAO(TestCase):
     def setUp(self):

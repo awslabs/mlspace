@@ -58,7 +58,7 @@ def default_message(id: str) -> str:
     return f"This is a message for entry number: {id}"
 
 
-@moto.mock_dynamodb
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestDynamoDataStore(TestCase):
     def setUp(self):

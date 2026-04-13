@@ -284,7 +284,7 @@ LEGACY_PRIVATE_DATASETS = [
 ]
 
 
-@moto.mock_dynamodb
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestProjectDAO(TestCase):
     def setUp(self):

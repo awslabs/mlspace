@@ -87,7 +87,7 @@ def assert_resources(
             assert res.metadata["ResourceStatus"] == expected_status
 
 
-@moto.mock_dynamodb
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestResourceMetadataDAO(TestCase):
     def setUp(self):

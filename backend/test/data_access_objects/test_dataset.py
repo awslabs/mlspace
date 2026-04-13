@@ -57,7 +57,7 @@ SAMPLE_DATASET_GLOBAL = "global"
 SAMPLE_DATASET_GROUP = "group"
 
 
-@moto.mock_dynamodb
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestDatasetDAO(TestCase):
     def setUp(self):

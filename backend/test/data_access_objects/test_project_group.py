@@ -54,7 +54,7 @@ mock.patch.TEST_PREFIX = (
 MOCK_PROJECT_NAME = "fake-project"
 
 
-@moto.mock_dynamodb
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestProjectUserDAO(TestCase):
     def setUp(self):

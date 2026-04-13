@@ -121,7 +121,7 @@ def generate_test_config(config_scope: str, version_id: int, is_project: bool) -
     return config
 
 
-@moto.mock_dynamodb
+@moto.mock_aws
 @mock.patch.dict("os.environ", TEST_ENV_CONFIG, clear=True)
 class TestAppConfigDAO(TestCase):
     def setUp(self):
