@@ -95,7 +95,7 @@ export default function SideNavigation () {
         {
             type: 'link',
             text: 'Documentation',
-            href: `${window.env.LAMBDA_ENDPOINT}docs/index.html`,
+            href: `${window.env.LAMBDA_ENDPOINT.endsWith('/') ? window.env.LAMBDA_ENDPOINT : window.env.LAMBDA_ENDPOINT + '/'}docs/index.html`,
             external: true,
             externalIconAriaLabel: '(opens in a new tab)',
         },
